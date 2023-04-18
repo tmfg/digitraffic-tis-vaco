@@ -1,0 +1,32 @@
+version: '3.8'
+
+name: 'tis/vaco'
+
+services:
+  db:
+    container_name: '${COMPOSE_PROJECT_NAME}_postgresql15'
+    image: postgres:15-bullseye
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dwULL632mdJZ
+      POSTGRES_DB: vaco
+    ports:
+      - "54321:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  pgadmin:
+    container_name: '${COMPOSE_PROJECT_NAME}_pgadmin14'
+    image: dpage/pgadmin4:6
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: noreply@solita.fi
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5480:80"
+    depends_on:
+      - db
+
+volumes:
+  postgres-data:
