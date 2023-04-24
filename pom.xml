@@ -125,6 +125,11 @@
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>localstack</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!-- XXX: Flyway is for now only a test-time dependency. This might change in the future, we'll see how the
                   development starts rolling. -->
