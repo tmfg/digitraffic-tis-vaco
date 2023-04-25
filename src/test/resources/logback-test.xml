@@ -4,16 +4,31 @@
         <!-- encoders are assigned the type
              ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %yellow([%thread]) %highlight(%-5level) %logger{50} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %yellow([%thread]) %highlight(%-5level) %logger{150} - %msg%n</pattern>
         </encoder>
     </appender>
+
+    <!-- disable JDK internal logging -->
+    <logger name="jdk" level="ERROR" />
+
+    <!-- Spring natives and its related frameworks -->
+    <logger name="org.springframework" level="INFO" />
+    <logger name="_org.springframework" level="INFO" />
+    <logger name="org.springdoc" level="INFO" />
+
+    <!-- Embedded Tomcat prints exceptions as DEBUG as part of its normal startup, producing excess log noise -->
+    <logger name="org.apache.catalina" level="WARN" />
+
+    <!-- various libraries -->
+    <logger name="software.amazon.awssdk" level="INFO" />
+    <logger name="org.apache.http" level="WARN" />
+
+    <!-- ### Testing dependency only log adjustments below ### -->
 
     <!-- Silence most of Testcontainers internal logging -->
     <logger name="org.testcontainers" level="WARN" />
     <logger name="com.github.dockerjava" level="WARN" />
     <logger name="tc" level="INFO" />
-    <logger name="software.amazon.awssdk" level="INFO" />
-    <logger name="org.apache.http" level="WARN" />
 
     <root level="trace">
         <appender-ref ref="STDOUT" />
