@@ -90,12 +90,6 @@
             <version>2.0.1.Final</version>
         </dependency>
 
-        <!-- Monitoring and management utilities -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
         <!-- Database connectivity -->
         <dependency>
             <groupId>org.postgresql</groupId>
