@@ -1,0 +1,7 @@
+version: 2
+updates:
+  # keep Maven dependencies up to date with weekly checks to keep noise to minimal
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
