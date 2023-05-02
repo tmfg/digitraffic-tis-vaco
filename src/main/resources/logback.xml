@@ -8,8 +8,21 @@
         </encoder>
     </appender>
 
+    <!-- disable JDK internal logging -->
+    <logger name="jdk" level="ERROR" />
+
+    <!-- Spring natives and its related frameworks -->
+    <logger name="org.springframework" level="INFO" />
+    <logger name="_org.springframework" level="INFO" />
+    <logger name="org.springdoc" level="INFO" />
+
+    <!-- Embedded Tomcat prints exceptions as DEBUG as part of its normal startup, producing excess log noise -->
+    <logger name="org.apache.catalina" level="WARN" />
+
+    <!-- various libraries -->
     <logger name="software.amazon.awssdk" level="INFO" />
     <logger name="org.apache.http" level="WARN" />
+
 
     <root level="INFO">
         <appender-ref ref="STDOUT" />
