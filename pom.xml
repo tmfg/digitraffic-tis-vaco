@@ -37,7 +37,7 @@
                    avoid conflicts -->
         <junit5.version>5.9.2</junit5.version>
         <testcontainers.version>1.18.0</testcontainers.version>
-        <awssdk.version>2.20.51</awssdk.version>
+        <awssdk.version>2.20.57</awssdk.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- derived properties -->
