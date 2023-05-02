@@ -7,6 +7,10 @@ on:
     branches:
       - main
 
+permissions:
+  checks: write  # required by scacap/action-surefire-report
+  contents: read  # required by scacap/action-surefire-report
+
 jobs:
   build:
     runs-on: ubuntu-latest
