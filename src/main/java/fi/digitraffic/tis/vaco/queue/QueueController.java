@@ -3,8 +3,9 @@ package fi.digitraffic.tis.vaco.queue;
 import fi.digitraffic.tis.vaco.queue.entry.QueueEntryCommand;
 import fi.digitraffic.tis.vaco.queue.entry.QueueEntryResource;
 import fi.digitraffic.tis.vaco.queue.entry.QueueEntryView;
+import fi.digitraffic.tis.vaco.utils.CustomLink;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
+import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -21,7 +22,10 @@ public class QueueController {
         String ticketId = queueService.processQueueEntry(queueEntryCommand);
 
         QueueEntryResource queueEntryResource = new QueueEntryResource(ticketId);
-        Link selfLink = linkTo(QueueController.class).slash(ticketId).withSelfRel();
+        CustomLink selfLink = new CustomLink(
+            linkTo(QueueController.class).slash(ticketId).withSelfRel().getHref(),
+            IanaLinkRelations.SELF,
+            RequestMethod.GET.name());
         queueEntryResource.add(selfLink);
 
         return queueEntryResource;
