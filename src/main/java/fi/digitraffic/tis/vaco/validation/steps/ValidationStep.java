@@ -1,4 +1,4 @@
 package fi.digitraffic.tis.vaco.validation.steps;
 
-public enum ValidationStatusEnum {
+public enum ValidationStep {
 }
