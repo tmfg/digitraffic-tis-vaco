@@ -19,11 +19,11 @@ public class QueueController {
 
     @RequestMapping(path = "", method = RequestMethod.POST)
     public QueueEntryResource createQueueEntry(QueueEntryCommand queueEntryCommand) {
-        String ticketId = queueService.processQueueEntry(queueEntryCommand);
+        String entryId = queueService.processQueueEntry(queueEntryCommand);
 
-        QueueEntryResource queueEntryResource = new QueueEntryResource(ticketId);
+        QueueEntryResource queueEntryResource = new QueueEntryResource(entryId);
         CustomLink selfLink = new CustomLink(
-            linkTo(QueueController.class).slash(ticketId).withSelfRel().getHref(),
+            linkTo(QueueController.class).slash(entryId).withSelfRel().getHref(),
             IanaLinkRelations.SELF,
             RequestMethod.GET.name());
         queueEntryResource.add(selfLink);
@@ -31,8 +31,8 @@ public class QueueController {
         return queueEntryResource;
     }
 
-    @RequestMapping(path = "/{publicId}", method = RequestMethod.GET )
-    public QueueEntryView getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
+    @RequestMapping(path = "/{entryId}", method = RequestMethod.GET )
+    public QueueEntryView getQueueEntryOutcome(@PathVariable("entryId") String publicId) {
         return queueService.getQueueEntryView(publicId);
     }
 }
