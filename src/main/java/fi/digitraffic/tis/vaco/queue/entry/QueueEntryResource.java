@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.queue;
+package fi.digitraffic.tis.vaco.queue.entry;
 
 import org.springframework.hateoas.RepresentationModel;
 
@@ -6,14 +6,14 @@ import javax.validation.constraints.NotNull;
 
 public class QueueEntryResource extends RepresentationModel<QueueEntryResource> {
 
-    public QueueEntryResource(String ticketId) {
-        this.ticketId = ticketId;
+    public QueueEntryResource(String entryId) {
+        this.entryId = entryId;
     }
 
     @NotNull
-    private final String ticketId;
+    private final String entryId;
 
-    public String getTicketId() {
-        return ticketId;
+    public String getEntryId() {
+        return entryId;
     }
 }

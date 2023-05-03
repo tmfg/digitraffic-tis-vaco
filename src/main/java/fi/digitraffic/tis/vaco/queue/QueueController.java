@@ -1,7 +1,11 @@
 package fi.digitraffic.tis.vaco.queue;
 
+import fi.digitraffic.tis.vaco.queue.entry.QueueEntryCommand;
+import fi.digitraffic.tis.vaco.queue.entry.QueueEntryResource;
+import fi.digitraffic.tis.vaco.queue.entry.QueueEntryView;
+import fi.digitraffic.tis.vaco.utils.CustomLink;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
+import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -15,17 +19,20 @@ public class QueueController {
 
     @RequestMapping(path = "", method = RequestMethod.POST)
     public QueueEntryResource createQueueEntry(QueueEntryCommand queueEntryCommand) {
-        String ticketId = queueService.processQueueEntry(queueEntryCommand);
+        String entryId = queueService.processQueueEntry(queueEntryCommand);
 
-        QueueEntryResource queueEntryResource = new QueueEntryResource(ticketId);
-        Link selfLink = linkTo(QueueController.class).slash(ticketId).withSelfRel();
+        QueueEntryResource queueEntryResource = new QueueEntryResource(entryId);
+        CustomLink selfLink = new CustomLink(
+            linkTo(QueueController.class).slash(entryId).withSelfRel().getHref(),
+            IanaLinkRelations.SELF,
+            RequestMethod.GET.name());
         queueEntryResource.add(selfLink);
 
         return queueEntryResource;
     }
 
-    @RequestMapping(path = "/{ticketId}", method = RequestMethod.GET )
-    public QueueEntryView getQueueEntryOutcome(@PathVariable("ticketId") String ticketId) {
-        return queueService.getQueueEntryOutcome(ticketId);
+    @RequestMapping(path = "/{entryId}", method = RequestMethod.GET )
+    public QueueEntryView getQueueEntryOutcome(@PathVariable("entryId") String publicId) {
+        return queueService.getQueueEntryView(publicId);
     }
 }
