@@ -1,6 +1,7 @@
-package fi.digitraffic.tis.vaco.queue;
+package fi.digitraffic.tis.vaco.queue.entry;
 
 import fi.digitraffic.tis.vaco.conversion.ConversionCommand;
+import fi.digitraffic.tis.vaco.queue.InputMetadata;
 import fi.digitraffic.tis.vaco.validation.ValidationCommand;
 
 import javax.validation.constraints.NotNull;

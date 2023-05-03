@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.queue;
+package fi.digitraffic.tis.vaco.queue.entry;
 
 import org.springframework.hateoas.RepresentationModel;
 

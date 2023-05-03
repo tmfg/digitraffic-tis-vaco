@@ -1,5 +1,8 @@
 package fi.digitraffic.tis.vaco.queue;
 
+import fi.digitraffic.tis.vaco.queue.entry.QueueEntryCommand;
+import fi.digitraffic.tis.vaco.queue.entry.QueueEntryResource;
+import fi.digitraffic.tis.vaco.queue.entry.QueueEntryView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +27,8 @@ public class QueueController {
         return queueEntryResource;
     }
 
-    @RequestMapping(path = "/{ticketId}", method = RequestMethod.GET )
-    public QueueEntryView getQueueEntryOutcome(@PathVariable("ticketId") String ticketId) {
-        return queueService.getQueueEntryOutcome(ticketId);
+    @RequestMapping(path = "/{publicId}", method = RequestMethod.GET )
+    public QueueEntryView getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
+        return queueService.getQueueEntryView(publicId);
     }
 }
