@@ -2,14 +2,13 @@ package fi.digitraffic.tis.vaco.queuehandler.dto.entry;
 
 import fi.digitraffic.tis.vaco.conversion.ConversionView;
 import fi.digitraffic.tis.vaco.validation.ValidationView;
-
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record EntryView(
-    @NotNull
+    @NotBlank
     String format,
 
-    @NotNull
+    @NotBlank
     String url,
 
     String etag,

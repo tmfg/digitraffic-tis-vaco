@@ -1,10 +1,10 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import javax.validation.constraints.NotBlank;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 
