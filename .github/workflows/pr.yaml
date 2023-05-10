@@ -14,15 +14,26 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: ./digitraffic-tis-vaco
     steps:
-      - name: Checkout
+      - name: Checkout project files
         uses: actions/checkout@v3
+        with:
+          path: digitraffic-tis-vaco
+
+      - name: Checkout database migrations
+        uses: actions/checkout@v3
+        with:
+          repository: tmfg/digitraffic-tis-dbmigrator
+          ssh-key: ${{ secrets.DBMIGRATOR_DEPLOY_KEY }}
+          path: digitraffic-tis-dbmigrator
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version-file: '.java-version'
+          java-version-file: './digitraffic-tis-vaco/.java-version'
           distribution: 'temurin'
           cache: maven
 
