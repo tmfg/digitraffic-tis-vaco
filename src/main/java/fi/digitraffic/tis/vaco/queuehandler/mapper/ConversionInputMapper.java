@@ -10,5 +10,4 @@ import java.math.BigInteger;
 @Mapper(componentModel = "spring")
 public interface ConversionInputMapper {
     ConversionInput fromConversionCommandToInput(BigInteger entryId, ConversionCommand conversionCommand);
-    ConversionView fromConversionInputToView(ConversionInput conversionInput);
 }

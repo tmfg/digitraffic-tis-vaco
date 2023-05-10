@@ -4,9 +4,9 @@ import org.springframework.hateoas.RepresentationModel;
 
 import javax.validation.constraints.NotNull;
 
-public class EntryResource extends RepresentationModel<EntryResource> {
+public class EntryResultResource extends RepresentationModel<EntryResultResource> {
 
-    public EntryResource(String entryId) {
+    public EntryResultResource(String entryId) {
         this.entryId = entryId;
     }
 

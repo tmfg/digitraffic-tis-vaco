@@ -8,6 +8,6 @@ public record EntryStatus(
 
     String summary,
 
-    List<PhaseView> steps
+    List<PhaseView> phases
 ) {
 }

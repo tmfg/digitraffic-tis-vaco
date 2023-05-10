@@ -1,12 +1,17 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
-import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResource;
-import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryView;
+import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResult;
+import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResultResource;
 import fi.digitraffic.tis.vaco.utils.CustomLink;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.IanaLinkRelations;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -14,25 +19,28 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 @RequestMapping("/queue")
 public class QueueHandlerController {
 
-    @Autowired
-    private QueueHandlerService queueHandlerService;
+    private final QueueHandlerService queueHandlerService;
+
+    public QueueHandlerController(QueueHandlerService queueHandlerService) {
+        this.queueHandlerService = queueHandlerService;
+    }
 
     @RequestMapping(path = "", method = RequestMethod.POST)
-    public EntryResource createQueueEntry(@RequestBody EntryCommand entryCommand) {
+    public EntryResultResource createQueueEntry(@Valid @RequestBody EntryCommand entryCommand) {
         String entryId = queueHandlerService.processQueueEntry(entryCommand);
 
-        EntryResource entryResource = new EntryResource(entryId);
+        EntryResultResource entryResultResource = new EntryResultResource(entryId);
         CustomLink selfLink = new CustomLink(
             linkTo(QueueHandlerController.class).slash(entryId).withSelfRel().getHref(),
             IanaLinkRelations.SELF,
             RequestMethod.GET.name());
-        entryResource.add(selfLink);
+        entryResultResource.add(selfLink);
 
-        return entryResource;
+        return entryResultResource;
     }
 
     @RequestMapping(path = "/{publicId}", method = RequestMethod.GET )
-    public EntryView getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
+    public EntryResult getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
         return queueHandlerService.getQueueEntryView(publicId);
     }
 }

@@ -7,7 +7,7 @@ public record PhaseView(
     String name,
 
     @NotNull
-    String stepSummary,
+    String summary,
 
     @NotNull
     long timestamp

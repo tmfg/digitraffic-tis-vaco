@@ -1,68 +1,77 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.vaco.conversion.ConversionView;
-import fi.digitraffic.tis.vaco.queuehandler.dto.Metadata;
 import fi.digitraffic.tis.vaco.queuehandler.dto.PhaseView;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
+import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResult;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryStatus;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryView;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryMapper;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.PhaseMapper;
-import fi.digitraffic.tis.vaco.queuehandler.model.*;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.ConversionInputMapper;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.PhaseMapper;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.ValidationInputMapper;
+import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
+import fi.digitraffic.tis.vaco.queuehandler.model.PhaseName;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.ConversionInputRepository;
 import fi.digitraffic.tis.vaco.queuehandler.repository.EntryRepository;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.ValidationInputMapper;
 import fi.digitraffic.tis.vaco.queuehandler.repository.PhaseRepository;
 import fi.digitraffic.tis.vaco.queuehandler.repository.ValidationInputRepository;
 import fi.digitraffic.tis.vaco.validation.ValidationView;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class QueueHandlerService {
 
-    @Autowired
-    private ConversionInputRepository conversionInputRepository;
+    private final ConversionInputRepository conversionInputRepository;
 
-    @Autowired
-    private ValidationInputRepository validationInputRepository;
+    private final ValidationInputRepository validationInputRepository;
 
-    @Autowired
-    private PhaseRepository phaseRepository;
+    private final PhaseRepository phaseRepository;
 
-    @Autowired
-    private EntryRepository entryRepository;
+    private final EntryRepository entryRepository;
 
-    @Autowired
-    private EntryMapper entryMapper;
+    private final ValidationInputMapper validationInputMapper;
 
-    @Autowired
-    private ValidationInputMapper validationInputMapper;
+    private final ConversionInputMapper conversionInputMapper;
 
-    @Autowired
-    private ConversionInputMapper conversionInputMapper;
+    private final PhaseMapper phaseMapper;
 
-    @Autowired
-    private PhaseMapper phaseMapper;
+    public QueueHandlerService(ConversionInputRepository conversionInputRepository, ValidationInputRepository validationInputRepository, PhaseRepository phaseRepository, EntryRepository entryRepository, ValidationInputMapper validationInputMapper, ConversionInputMapper conversionInputMapper, PhaseMapper phaseMapper) {
+        this.conversionInputRepository = conversionInputRepository;
+        this.validationInputRepository = validationInputRepository;
+        this.phaseRepository = phaseRepository;
+        this.entryRepository = entryRepository;
+        this.validationInputMapper = validationInputMapper;
+        this.conversionInputMapper = conversionInputMapper;
+        this.phaseMapper = phaseMapper;
+    }
 
     @Transactional
     public String processQueueEntry(EntryCommand entryCommand) {
+        // TODO: fix nanoid generation
         String publicId = "temporary-" +  new Timestamp(System.currentTimeMillis()).getTime();
-        Entry entry = entryMapper.fromMetadataToEntry(publicId, entryCommand.input());
+        // No builder yet ;(
+        Entry entry = new Entry(null,
+            publicId,
+            entryCommand.format(),
+            entryCommand.url(),
+            entryCommand.etag());
         Entry savedEntry = entryRepository.save(entry);
 
-        // This perhaps needs to go into own dedicated ValidationService:
+        // TODO: This perhaps needs to go into own dedicated ValidationService:
         ValidationInput validationInput = validationInputMapper
             .fromValidationCommandToInput(savedEntry.id(), entryCommand.validation());
         validationInputRepository.save(validationInput);
 
-        // This perhaps needs to go into own dedicated ConversionService later:
+        // TODO: This perhaps needs to go into own dedicated ConversionService later:
         ConversionInput conversionInput = conversionInputMapper
             .fromConversionCommandToInput(savedEntry.id(), entryCommand.conversion());
         conversionInputRepository.save(conversionInput);
@@ -77,18 +86,22 @@ public class QueueHandlerService {
         return savedEntry.publicId();
     }
 
-    public EntryView getQueueEntryView(String publicId) {
-        // Instead of just entry, there will be another class in /model that
-        // will encompass stuff from entry, conversion and validation:
+    public EntryResult getQueueEntryView(String publicId) {
         Entry entry = entryRepository.findByPublicId(publicId);
-        Metadata metadata = entryMapper.fromEntryToMetadata(entry);
-        // This needs to go into own dedicated PhaseService later:
+
+        // TODO: This needs to go into own dedicated PhaseService later:
         List<Phase> phases = phaseRepository.findByEntryId(entry.id());
         List<PhaseView> phaseViews = phases.stream()
-            .map(phase -> phaseMapper.fromPhaseToPhaseView(phase))
+            .map(phaseMapper::fromPhaseToPhaseView)
             .collect(Collectors.toList());
-
         EntryStatus entryStatus = new EntryStatus("Test!", phaseViews);
-        return  new EntryView(entryStatus, metadata, null, null);
+
+        EntryView entryView = new EntryView(entry.format(),
+            entry.url(),
+            entry.etag(),
+            new ValidationView(),
+            new ConversionView());
+
+        return new EntryResult(entryStatus, new ArrayList<>(), entryView);
     }
 }

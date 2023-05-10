@@ -5,6 +5,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+//TODO: replace with java.time
 import java.sql.Timestamp;
 
 @Mapper(componentModel = "spring")
