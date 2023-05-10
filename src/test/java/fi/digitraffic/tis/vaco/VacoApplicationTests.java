@@ -1,10 +1,9 @@
 package fi.digitraffic.tis.vaco;
 
+import fi.digitraffic.tis.SpringBootIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class VacoApplicationTests {
+class VacoApplicationTests extends SpringBootIntegrationTest {
 
     @Test
     void contextLoads() {

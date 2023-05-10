@@ -16,8 +16,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout project files
         uses: actions/checkout@v3
+
+      - name: Checkout database migrations
+        uses: actions/checkout@v3
+        with:
+          repository: tmfg/digitraffic-tis-dbmigrator
+          ssh-key: ${{ secrets.DBMIGRATOR_DEPLOY_KEY }}
+          path: digitraffic-tis-dbmigrator
 
       - name: Set up JDK
         uses: actions/setup-java@v3

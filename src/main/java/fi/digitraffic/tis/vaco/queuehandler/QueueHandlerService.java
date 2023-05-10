@@ -44,7 +44,13 @@ public class QueueHandlerService {
 
     private final PhaseMapper phaseMapper;
 
-    public QueueHandlerService(ConversionInputRepository conversionInputRepository, ValidationInputRepository validationInputRepository, PhaseRepository phaseRepository, EntryRepository entryRepository, ValidationInputMapper validationInputMapper, ConversionInputMapper conversionInputMapper, PhaseMapper phaseMapper) {
+    public QueueHandlerService(ConversionInputRepository conversionInputRepository,
+                               ValidationInputRepository validationInputRepository,
+                               PhaseRepository phaseRepository,
+                               EntryRepository entryRepository,
+                               ValidationInputMapper validationInputMapper,
+                               ConversionInputMapper conversionInputMapper,
+                               PhaseMapper phaseMapper) {
         this.conversionInputRepository = conversionInputRepository;
         this.validationInputRepository = validationInputRepository;
         this.phaseRepository = phaseRepository;
@@ -57,7 +63,7 @@ public class QueueHandlerService {
     @Transactional
     public String processQueueEntry(EntryCommand entryCommand) {
         // TODO: fix nanoid generation
-        String publicId = "temporary-" +  new Timestamp(System.currentTimeMillis()).getTime();
+        String publicId = "temporary-" + new Timestamp(System.currentTimeMillis()).getTime();
         // No builder yet ;(
         Entry entry = new Entry(null,
             publicId,
