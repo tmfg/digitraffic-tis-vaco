@@ -39,6 +39,7 @@
         <testcontainers.version>1.18.0</testcontainers.version>
         <awssdk.version>2.20.58</awssdk.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+        <org.apache.maven.plugins.version>3.11.0</org.apache.maven.plugins.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- derived properties -->
@@ -189,7 +190,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>${org.apache.maven.plugins.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
