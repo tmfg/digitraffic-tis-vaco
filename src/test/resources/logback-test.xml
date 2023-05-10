@@ -18,10 +18,14 @@
 
     <!-- Embedded Tomcat prints exceptions as DEBUG as part of its normal startup, producing excess log noise -->
     <logger name="org.apache.catalina" level="WARN" />
+    <logger name="org.apache.tomcat" level="WARN" />
 
     <!-- various libraries -->
     <logger name="software.amazon.awssdk" level="INFO" />
     <logger name="org.apache.http" level="WARN" />
+    <logger name="org.postgresql" level="WARN" />
+    <logger name="org.flywaydb" level="WARN" />
+    <logger name="com.zaxxer.hikari" level="WARN" />
 
     <!-- ### Testing dependency only log adjustments below ### -->
 
