@@ -1,18 +1,9 @@
 package fi.digitraffic.tis.vaco.queuehandler.dto.entry;
 
-import jakarta.validation.constraints.NotBlank;
-import org.springframework.hateoas.RepresentationModel;
+import fi.digitraffic.tis.vaco.utils.Link;
+import jakarta.validation.constraints.NotNull;
 
-public class EntryResultResource extends RepresentationModel<EntryResultResource> {
+import java.util.Map;
 
-    public EntryResultResource(String entryId) {
-        this.entryId = entryId;
-    }
-
-    @NotBlank
-    private final String entryId;
-
-    public String getEntryId() {
-        return entryId;
-    }
+public record EntryResultResource(@NotNull String entryId, Map<String, Link> links) {
 }

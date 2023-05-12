@@ -1,30 +1,50 @@
 package fi.digitraffic.tis;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.VacoApplication;
+import fi.digitraffic.tis.vaco.utils.Link;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.UnsupportedEncodingException;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
 /**
- * Base class to extend from when implementing Spring Boot integration tests. Wires Flyway and Testcontainers to Spring
- * Data repositories with all necessary DI.
+ * Base class to extend from when implementing Spring Boot integration tests.
+ *
+ *  - Wires Flyway and Testcontainers to Spring Data repositories with all necessary DI
+ *  - Runs migrations from the `digitraffic-tis-dbmigrator` project
+ *  - Provides useful helpers for API endpoint testing
  */
 @Testcontainers
 @SpringBootTest(
     classes = VacoApplication.class,
     webEnvironment = WebEnvironment.RANDOM_PORT
 )
+@AutoConfigureMockMvc
 public abstract class SpringBootIntegrationTestBase {
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer("postgres:15-bullseye")
+    public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-bullseye")
         .withDatabaseName("vaco")
         .withUsername("postgres")
-        .withPassword("dwULL632mdJZ");
+        .withPassword("dwULL632mdJZ")
+        .withUrlParam("currentSchema", "vaco");
 
     // TODO: This works, but is rather verbose and ugly so we might want to replace this with test profile
     @DynamicPropertySource
@@ -40,5 +60,31 @@ public abstract class SpringBootIntegrationTestBase {
         registry.add("spring.flyway.schemas", () -> "vaco");
         registry.add("spring.flyway.locations", () -> "filesystem:../digitraffic-tis-dbmigrator/db/migrations");
         registry.add("spring.flyway.fail-on-missing-locations", () -> true);
+    }
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    protected <C> ResultActions apiCall(MockHttpServletRequestBuilder request) throws Exception {
+        return mockMvc.perform(request.contentType(MediaType.APPLICATION_JSON));
+    }
+
+    protected ResultActions apiCall(Link link) throws Exception {
+        return apiCall(switch (link.method()) {
+            case GET -> get(link.href());
+            case POST -> post(link.href());
+            default -> throw new AssertionError("%s %s not supported! Please define functionality to apiCall() method for this".formatted(link.method(), link.href()));
+        });
+    }
+
+    protected <C> String toJson(C command) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(command);
+    }
+
+    protected <T> T apiResponse(MvcResult response, Class<T> result) throws UnsupportedEncodingException, JsonProcessingException {
+        return objectMapper.readValue(response.getResponse().getContentAsString(), result);
     }
 }

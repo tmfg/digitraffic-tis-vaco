@@ -78,12 +78,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Support for HATEOAS linking -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-hateoas</artifactId>
-        </dependency>
-
         <!-- Request validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
