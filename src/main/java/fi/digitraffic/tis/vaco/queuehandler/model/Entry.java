@@ -1,5 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
+
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
@@ -25,6 +27,9 @@ public record Entry(
     String url,
 
     @Column
-    String etag
+    String etag,
+
+    @Column
+    JsonNode metadata
 ) {
 }
