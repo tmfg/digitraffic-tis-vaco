@@ -69,7 +69,8 @@ public class QueueHandlerService {
             publicId,
             entryCommand.format(),
             entryCommand.url(),
-            entryCommand.etag());
+            entryCommand.etag(),
+            entryCommand.metadata());
         Entry savedEntry = entryRepository.save(entry);
 
         // TODO: This perhaps needs to go into own dedicated ValidationService:
@@ -106,7 +107,8 @@ public class QueueHandlerService {
             entry.url(),
             entry.etag(),
             new ValidationView(),
-            new ConversionView());
+            new ConversionView(),
+            entry.metadata());
 
         return new EntryResult(entryStatus, new ArrayList<>(), entryView);
     }

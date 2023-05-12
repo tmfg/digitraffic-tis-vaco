@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler.dto.entry;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ConversionCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ValidationCommand;
 
@@ -13,6 +14,8 @@ public record EntryCommand(
     String url,
 
     String etag,
+
+    JsonNode metadata,
 
     ValidationCommand validation,
 

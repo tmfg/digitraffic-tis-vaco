@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler.dto.entry;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.vaco.conversion.ConversionView;
 import fi.digitraffic.tis.vaco.validation.ValidationView;
 
@@ -16,6 +17,8 @@ public record EntryView(
 
     ValidationView validation,
 
-    ConversionView conversion
+    ConversionView conversion,
+
+    JsonNode metadata
 ) {
 }
