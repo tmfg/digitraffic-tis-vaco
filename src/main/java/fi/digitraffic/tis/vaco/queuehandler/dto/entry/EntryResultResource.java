@@ -1,8 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler.dto.entry;
 
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.hateoas.RepresentationModel;
-
-import javax.validation.constraints.NotNull;
 
 public class EntryResultResource extends RepresentationModel<EntryResultResource> {
 
@@ -10,7 +9,7 @@ public class EntryResultResource extends RepresentationModel<EntryResultResource
         this.entryId = entryId;
     }
 
-    @NotNull
+    @NotBlank
     private final String entryId;
 
     public String getEntryId() {

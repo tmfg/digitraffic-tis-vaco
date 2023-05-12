@@ -4,14 +4,13 @@ import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResult;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResultResource;
 import fi.digitraffic.tis.vaco.utils.CustomLink;
+import jakarta.validation.Valid;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.validation.Valid;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
