@@ -18,7 +18,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
     classes = VacoApplication.class,
     webEnvironment = WebEnvironment.RANDOM_PORT
 )
-public abstract class SpringBootIntegrationTest {
+public abstract class SpringBootIntegrationTestBase {
 
     @Container
     public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer("postgres:15-bullseye")
