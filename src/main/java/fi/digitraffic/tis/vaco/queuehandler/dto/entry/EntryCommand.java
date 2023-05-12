@@ -3,14 +3,13 @@ package fi.digitraffic.tis.vaco.queuehandler.dto.entry;
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ConversionCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ValidationCommand;
-
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record EntryCommand(
-    @NotNull
+    @NotBlank
     String format,
 
-    @NotNull
+    @NotBlank
     String url,
 
     String etag,

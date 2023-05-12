@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   build:
+    name: Verify Pull Request
     runs-on: ubuntu-latest
     defaults:
       run:

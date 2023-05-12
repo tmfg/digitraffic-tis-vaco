@@ -1,11 +1,12 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
+
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import javax.validation.constraints.NotNull;
 import java.math.BigInteger;
 
 @Table("queue_entry")
@@ -17,11 +18,11 @@ public record Entry(
     @Column
     String publicId,
 
-    @NotNull
+    @NotBlank
     @Column
     String format,
 
-    @NotNull
+    @NotBlank
     @Column
     String url,
 

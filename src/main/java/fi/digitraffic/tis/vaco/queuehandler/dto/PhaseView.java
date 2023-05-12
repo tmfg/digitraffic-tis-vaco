@@ -1,15 +1,15 @@
 package fi.digitraffic.tis.vaco.queuehandler.dto;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record PhaseView(
-    @NotNull
+    @NotBlank
     String name,
 
-    @NotNull
+    @NotBlank
     String summary,
 
-    @NotNull
+    @NotBlank
     long timestamp
 ) {
 }
