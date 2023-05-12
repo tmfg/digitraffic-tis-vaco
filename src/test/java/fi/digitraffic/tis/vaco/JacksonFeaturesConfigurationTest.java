@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import fi.digitraffic.tis.SpringBootIntegrationTest;
+import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class JacksonFeaturesConfigurationTest extends SpringBootIntegrationTest {
+class JacksonFeaturesConfigurationTest extends SpringBootIntegrationTestBase {
 
     private String primitiveValues = """
             {
