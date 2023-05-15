@@ -37,7 +37,7 @@
                    avoid conflicts -->
         <junit5.version>5.9.2</junit5.version>
         <testcontainers.version>1.18.1</testcontainers.version>
-        <awssdk.version>2.20.58</awssdk.version>
+        <awssdk.version>2.20.65</awssdk.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.apache.maven.plugins.version>3.11.0</org.apache.maven.plugins.version>
         <!-- tooling parameters -->
