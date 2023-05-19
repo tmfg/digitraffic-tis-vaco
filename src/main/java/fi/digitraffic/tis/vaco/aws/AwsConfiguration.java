@@ -20,11 +20,14 @@ public class AwsConfiguration {
             .configure(options -> options
                 // use manual acknowledgement to ensure each message gets correctly processed at least once
                 .acknowledgementMode(AcknowledgementMode.MANUAL)
-                .acknowledgementInterval(Duration.ofSeconds(3))
+                .acknowledgementInterval(Duration.ZERO)
                 .acknowledgementThreshold(5)
                 .acknowledgementOrdering(AcknowledgementOrdering.PARALLEL)
                 // do not create queues on the fly
                 .queueNotFoundStrategy(QueueNotFoundStrategy.FAIL)
+                // because of manual acknowledgement we can shut down immediately
+                .listenerShutdownTimeout(Duration.ZERO)
+                .acknowledgementShutdownTimeout(Duration.ZERO)
             )
             .sqsAsyncClient(sqsAsyncClient)
             .build();

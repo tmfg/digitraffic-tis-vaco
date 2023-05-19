@@ -26,6 +26,9 @@
     <logger name="org.postgresql" level="WARN" />
     <logger name="org.flywaydb" level="INFO" />
     <logger name="com.zaxxer.hikari" level="WARN" />
+    <logger name="io.netty" level="WARN" />
+    <logger name="io.awspring.cloud" level="WARN" />
+    <logger name="org.hibernate.validator" level="WARN" />
 
     <!-- ### Testing dependency only log adjustments below ### -->
 
@@ -33,6 +36,7 @@
     <logger name="org.testcontainers" level="WARN" />
     <logger name="com.github.dockerjava" level="WARN" />
     <logger name="tc" level="INFO" />
+    <logger name="org.junit" level="WARN" />
 
     <root level="trace">
         <appender-ref ref="STDOUT" />
