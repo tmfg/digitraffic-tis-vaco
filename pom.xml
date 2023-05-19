@@ -40,6 +40,7 @@
         <awssdk.version>2.20.65</awssdk.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.apache.maven.plugins.version>3.11.0</org.apache.maven.plugins.version>
+        <io.awspring.cloud-version>3.0.1</io.awspring.cloud-version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- derived properties -->
@@ -61,10 +62,20 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- NOTE: This is order dependent, AWS SDK must be before Spring Cloud AWS.
+                       See https://docs.awspring.io/spring-cloud-aws/docs/3.0.1/reference/html/index.html#choosing-aws-sdk-version
+            -->
             <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
                 <version>${awssdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.awspring.cloud</groupId>
+                <artifactId>spring-cloud-aws-dependencies</artifactId>
+                <version>${io.awspring.cloud-version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -112,7 +123,7 @@
             <version>2.1.0</version>
         </dependency>
 
-        <!-- AWS SDK modules -->
+        <!-- AWS integration -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
@@ -120,6 +131,10 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sqs</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-sqs</artifactId>
         </dependency>
 
         <!-- Testing libraries -->
