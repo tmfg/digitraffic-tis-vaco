@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.aws;
 
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
-import io.awspring.cloud.sqs.listener.QueueNotFoundStrategy;
 import io.awspring.cloud.sqs.listener.acknowledgement.AcknowledgementOrdering;
 import io.awspring.cloud.sqs.listener.acknowledgement.handler.AcknowledgementMode;
 import org.springframework.context.annotation.Bean;
@@ -21,10 +20,8 @@ public class AwsConfiguration {
                 // use manual acknowledgement to ensure each message gets correctly processed at least once
                 .acknowledgementMode(AcknowledgementMode.MANUAL)
                 .acknowledgementInterval(Duration.ZERO)
-                .acknowledgementThreshold(5)
+                .acknowledgementThreshold(0)
                 .acknowledgementOrdering(AcknowledgementOrdering.PARALLEL)
-                // do not create queues on the fly
-                .queueNotFoundStrategy(QueueNotFoundStrategy.FAIL)
                 // because of manual acknowledgement we can shut down immediately
                 .listenerShutdownTimeout(Duration.ZERO)
                 .acknowledgementShutdownTimeout(Duration.ZERO)
