@@ -53,7 +53,7 @@ public class SqsQueueListeners {
 
     @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
     public void listenVacoJobsValidation(JobDescription jobDescription, Acknowledgement acknowledgement) {
-        LOGGER.debug("Got message " + jobDescription + " from " + MessageQueue.JOBS_VALIDATION + ", do nothing...");
+        LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_VALIDATION + ", validate...");
         try {
             validationService.validate();
             // TODO: possibly use return value from #validate() to produce the next step
@@ -67,7 +67,7 @@ public class SqsQueueListeners {
 
     @SqsListener(QueueNames.VACO_JOBS_CONVERSION)
     public void listenVacoJobsConversion(JobDescription jobDescription, Acknowledgement acknowledgement) {
-        LOGGER.debug("Got message " + jobDescription + " from " + MessageQueue.JOBS_CONVERSION + ", do nothing...");
+        LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_CONVERSION + ", convert...");
         try {
             conversionService.convert();
             // TODO: possibly use return value from #convert() to produce the next step
