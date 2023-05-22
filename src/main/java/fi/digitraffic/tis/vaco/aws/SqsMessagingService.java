@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.aws;
 
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
-import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import io.awspring.cloud.sqs.operations.MessagingOperationFailedException;
 import io.awspring.cloud.sqs.operations.SendResult;
 import io.awspring.cloud.sqs.operations.SqsTemplate;

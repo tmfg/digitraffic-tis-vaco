@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.aws;
 
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
@@ -16,13 +17,13 @@ public class SqsQueueListeners {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqsQueueListeners.class);
 
-    private final SqsMessagingService messagingService;
+    private final MessagingService messagingService;
 
     private final ValidationService validationService;
 
     private final ConversionService conversionService;
 
-    public SqsQueueListeners(SqsMessagingService messagingService,
+    public SqsQueueListeners(MessagingService messagingService,
                              ValidationService validationService,
                              ConversionService conversionService) {
         this.messagingService = messagingService;

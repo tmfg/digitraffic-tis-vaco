@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.vaco.conversion.ConversionView;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
-import fi.digitraffic.tis.vaco.aws.SqsMessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.dto.PhaseView;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
@@ -51,7 +51,7 @@ public class QueueHandlerService {
 
     private final PhaseMapper phaseMapper;
 
-    private final SqsMessagingService messagingService;
+    private final MessagingService messagingService;
 
     public QueueHandlerService(ConversionInputRepository conversionInputRepository,
                                ValidationInputRepository validationInputRepository,
@@ -60,7 +60,7 @@ public class QueueHandlerService {
                                ValidationInputMapper validationInputMapper,
                                ConversionInputMapper conversionInputMapper,
                                PhaseMapper phaseMapper,
-                               SqsMessagingService messagingService) {
+                               MessagingService messagingService) {
         this.conversionInputRepository = conversionInputRepository;
         this.validationInputRepository = validationInputRepository;
         this.phaseRepository = phaseRepository;
