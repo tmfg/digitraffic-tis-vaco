@@ -1,13 +1,13 @@
 package fi.digitraffic.tis.vaco.queuehandler.repository;
 
-import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigInteger;
 
 @Repository
-public interface ConversionInputRepository extends CrudRepository<ConversionInput, BigInteger> {
+public interface ConversionInputRepository extends CrudRepository<ImmutableConversionInput, BigInteger> {
 
-    ConversionInput findByEntryId(BigInteger entryId);
+    ImmutableConversionInput findByEntryId(BigInteger entryId);
 }

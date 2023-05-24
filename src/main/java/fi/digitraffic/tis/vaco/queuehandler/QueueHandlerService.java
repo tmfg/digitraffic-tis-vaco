@@ -9,14 +9,15 @@ import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryView;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.ConversionInputMapper;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.PhaseMapper;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.ValidationInputMapper;
-import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableYay;
 import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
 import fi.digitraffic.tis.vaco.queuehandler.model.PhaseName;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.ConversionInputRepository;
 import fi.digitraffic.tis.vaco.queuehandler.repository.EntryRepository;
 import fi.digitraffic.tis.vaco.queuehandler.repository.PhaseRepository;
+import fi.digitraffic.tis.vaco.queuehandler.repository.TestRepository;
 import fi.digitraffic.tis.vaco.queuehandler.repository.ValidationInputRepository;
 import fi.digitraffic.tis.vaco.validation.ValidationView;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,13 +46,16 @@ public class QueueHandlerService {
 
     private final PhaseMapper phaseMapper;
 
+    private final TestRepository testRepository;
+
     public QueueHandlerService(ConversionInputRepository conversionInputRepository,
                                ValidationInputRepository validationInputRepository,
                                PhaseRepository phaseRepository,
                                EntryRepository entryRepository,
                                ValidationInputMapper validationInputMapper,
                                ConversionInputMapper conversionInputMapper,
-                               PhaseMapper phaseMapper) {
+                               PhaseMapper phaseMapper,
+                               TestRepository testRepository) {
         this.conversionInputRepository = conversionInputRepository;
         this.validationInputRepository = validationInputRepository;
         this.phaseRepository = phaseRepository;
@@ -58,6 +63,7 @@ public class QueueHandlerService {
         this.validationInputMapper = validationInputMapper;
         this.conversionInputMapper = conversionInputMapper;
         this.phaseMapper = phaseMapper;
+        this.testRepository = testRepository;
     }
 
     @Transactional
@@ -65,13 +71,17 @@ public class QueueHandlerService {
         // TODO: fix nanoid generation
         String publicId = "temporary-" + new Timestamp(System.currentTimeMillis()).getTime();
         // No builder yet ;(
-        Entry entry = new Entry(null,
-            publicId,
+        Entry entry = new Entry(null, null,
             entryCommand.format(),
             entryCommand.url(),
             entryCommand.etag(),
             entryCommand.metadata());
         Entry savedEntry = entryRepository.save(entry);
+
+        ImmutableYay yay = ImmutableYay.builder().name("yay!").build();
+        ImmutableYay s = testRepository.save(yay);
+
+        Optional<ImmutableYay> yuppi =  testRepository.findById(s.getId());
 
         // TODO: This perhaps needs to go into own dedicated ValidationService:
         ValidationInput validationInput = validationInputMapper
@@ -79,9 +89,9 @@ public class QueueHandlerService {
         validationInputRepository.save(validationInput);
 
         // TODO: This perhaps needs to go into own dedicated ConversionService later:
-        ConversionInput conversionInput = conversionInputMapper
-            .fromConversionCommandToInput(savedEntry.id(), entryCommand.conversion());
-        conversionInputRepository.save(conversionInput);
+       // ImmutableConversionInput conversionInput = ImmutableConversionInput.builder().build(); //conversionInputMapper
+            //.fromConversionCommandToInput(savedEntry.id(), entryCommand.conversion());
+       // conversionInputRepository.save(conversionInput);
 
         // No builder yet...
         Phase processingStarted = new Phase(null,
@@ -90,11 +100,12 @@ public class QueueHandlerService {
             new Timestamp(System.currentTimeMillis()));
         phaseRepository.save(processingStarted);
 
-        return savedEntry.publicId();
+        return publicId;
     }
 
     public EntryResult getQueueEntryView(String publicId) {
         Entry entry = entryRepository.findByPublicId(publicId);
+
 
         // TODO: This needs to go into own dedicated PhaseService later:
         List<Phase> phases = phaseRepository.findByEntryId(entry.id());
@@ -110,6 +121,11 @@ public class QueueHandlerService {
             new ConversionView(),
             entry.metadata());
 
-        return new EntryResult(entryStatus, new ArrayList<>(), entryView);
+        ImmutableYay yay = ImmutableYay.builder().name("yay!").build();
+        ImmutableYay s = testRepository.save(yay);
+
+        Optional<ImmutableYay> yuppi =  testRepository.findById(s.getId());
+
+        return new EntryResult(entryStatus, new ArrayList<>(), entryView, yuppi.get());
     }
 }

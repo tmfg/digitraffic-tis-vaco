@@ -1,23 +1,27 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotBlank;
 import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigInteger;
 
-@Table("queue_conversion_input")
-@Value.Immutable
-public abstract class ConversionInput{
+@Table("test")
+@Immutable
+@Value.Style(passAnnotations = Primary.class)
+public abstract class Yay {
+
+    @Column("id")
     @Id
-    @Column
+    //@Value.Parameter
     @Nullable
     public abstract BigInteger getId();
 
-    @NotBlank
-    @Column
-    public abstract BigInteger getEntryId();
+    @Column("name")
+   // @Value.Parameter
+    public abstract String getName();
 }

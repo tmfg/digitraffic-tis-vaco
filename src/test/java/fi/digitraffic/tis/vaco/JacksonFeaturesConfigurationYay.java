@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class JacksonFeaturesConfigurationTest extends SpringBootIntegrationTestBase {
+class JacksonFeaturesConfigurationYay extends SpringBootIntegrationTestBase {
 
     private String primitiveValues = """
             {

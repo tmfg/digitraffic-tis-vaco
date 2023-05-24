@@ -4,6 +4,7 @@ package fi.digitraffic.tis.vaco.queuehandler.model;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -15,7 +16,7 @@ public record Entry(
     @Column
     BigInteger id,
 
-    @Column
+    @ReadOnlyProperty
     String publicId,
 
     @NotBlank

@@ -19,5 +19,6 @@ public record EntryCommand(
     ValidationCommand validation,
 
     ConversionCommand conversion
+    //ImmutableConversionCommand conversion
 ) {
 }
