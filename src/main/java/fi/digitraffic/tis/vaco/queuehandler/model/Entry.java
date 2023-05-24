@@ -16,6 +16,7 @@ public record Entry(
     BigInteger id,
 
     @Column
+    //@ReadOnlyProperty
     String publicId,
 
     @NotBlank

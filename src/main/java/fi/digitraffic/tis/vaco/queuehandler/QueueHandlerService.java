@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,7 +65,22 @@ public class QueueHandlerService {
     public String processQueueEntry(EntryCommand entryCommand) {
         // TODO: fix nanoid generation
         String publicId = "temporary-" + new Timestamp(System.currentTimeMillis()).getTime();
+
+        // Approach 1: getting publicId first from a query
+        /*publicId = entryRepository.getNanoid();
         // No builder yet ;(
+        Entry entry = new Entry(null,
+            publicId,
+            entryCommand.format(),
+            entryCommand.url(),
+            entryCommand.etag(),
+            entryCommand.metadata());*/
+
+        // Approach 2: making publicId @ReadOnlyProperty
+        // and then re-fetching entry because otherwise publicId stays null in savedEntry
+        // From docs: "Spring Data JDBC will not automatically reload an entity after writing it.
+        // Therefore, you have to reload it explicitly if you want to see data that was generated in the database for such columns."
+        // However, no clue yet how to do that "reload"
         Entry entry = new Entry(null,
             publicId,
             entryCommand.format(),
@@ -72,6 +88,13 @@ public class QueueHandlerService {
             entryCommand.etag(),
             entryCommand.metadata());
         Entry savedEntry = entryRepository.save(entry);
+        Optional<Entry> savedEntryOpt = entryRepository.findById(savedEntry.id());
+
+        // Approach 3:
+        // Use choose either of the previous approaches but put those away into a lifecycle-based callback
+        // E.g. intervening the saving with a callback on BeforeSave or AfterSave events,
+        // and either set the publicId before the save there or re-retrieve/reload entry after it's saved.
+        // At least would hide the ugly reality away from this code spot
 
         // TODO: This perhaps needs to go into own dedicated ValidationService:
         ValidationInput validationInput = validationInputMapper
@@ -90,7 +113,7 @@ public class QueueHandlerService {
             new Timestamp(System.currentTimeMillis()));
         phaseRepository.save(processingStarted);
 
-        return savedEntry.publicId();
+        return savedEntryOpt.get().publicId();
     }
 
     public EntryResult getQueueEntryView(String publicId) {

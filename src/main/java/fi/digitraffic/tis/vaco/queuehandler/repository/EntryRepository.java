@@ -13,4 +13,7 @@ public interface EntryRepository extends CrudRepository<Entry, BigInteger> {
 
     @Query("SELECT * FROM queue_entry WHERE public_id=:publicId")
     Entry findByPublicId(@Param("publicId") String publicId);
+
+    @Query("select nanoid()")
+    String getNanoid();
 }
