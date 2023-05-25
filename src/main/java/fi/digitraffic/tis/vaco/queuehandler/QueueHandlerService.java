@@ -75,7 +75,7 @@ public class QueueHandlerService {
     public String processQueueEntry(EntryCommand entryCommand) {
         // TODO: fix nanoid generation
         String publicId = "temporary-" + new Timestamp(System.currentTimeMillis()).getTime();
-        // No builder yet ;(
+
         Entry entry = new Entry(null,
             publicId,
             entryCommand.format(),

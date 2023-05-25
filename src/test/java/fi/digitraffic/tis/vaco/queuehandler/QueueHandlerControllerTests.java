@@ -1,8 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ConversionCommand;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ValidationCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResult;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResultResource;
@@ -20,7 +18,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
     @Test
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
-        EntryCommand command = new EntryCommand("format", "url", null, null, new ValidationCommand(), new ConversionCommand());
+        EntryCommand command = new EntryCommand("format", "url", null, null, new EntryCommand.Validation(), new EntryCommand.Conversion());
         MvcResult response = apiCall(post("/queue").content(toJson(command)))
                 .andExpect(status().isOk())
                 .andReturn();
