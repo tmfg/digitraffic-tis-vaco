@@ -1,20 +1,12 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
+import org.immutables.value.Value;
 
-import jakarta.validation.constraints.NotBlank;
-import java.math.BigInteger;
-
-@Table("queue_conversion_input")
-public record ConversionInput(
-    @Id
-    @Column
-    BigInteger id,
-
-    @NotBlank
-    @Column
-    BigInteger entryId
-) {
+@Value.Immutable
+@JsonSerialize(as = ImmutableConversionInput.class)
+@JsonDeserialize(as = ImmutableConversionInput.class)
+public interface ConversionInput {
 }

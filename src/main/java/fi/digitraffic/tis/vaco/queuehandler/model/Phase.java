@@ -1,28 +1,17 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
-import jakarta.validation.constraints.NotBlank;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
+import org.immutables.value.Value;
 
-import java.math.BigInteger;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
-@Table("queue_phase")
-public record Phase(
-    @Id
-    @Column
-    BigInteger id,
-
-    @NotBlank
-    @Column
-    BigInteger entryId,
-
-    @NotBlank
-    @Column
-    PhaseName name,
-
-    @Column
-    Timestamp started
-) {
+@Value.Immutable
+@JsonSerialize(as = ImmutablePhase.class)
+@JsonDeserialize(as = ImmutablePhase.class)
+public interface Phase {
+    Long id();
+    String name();
+    LocalDateTime started();
 }
