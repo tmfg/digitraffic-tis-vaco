@@ -1,6 +1,9 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.vaco.conversion.ConversionView;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
+import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.dto.PhaseView;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResult;
@@ -19,6 +22,8 @@ import fi.digitraffic.tis.vaco.queuehandler.repository.EntryRepository;
 import fi.digitraffic.tis.vaco.queuehandler.repository.PhaseRepository;
 import fi.digitraffic.tis.vaco.queuehandler.repository.ValidationInputRepository;
 import fi.digitraffic.tis.vaco.validation.ValidationView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +34,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class QueueHandlerService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueueHandlerService.class);
 
     private final ConversionInputRepository conversionInputRepository;
 
@@ -44,13 +51,16 @@ public class QueueHandlerService {
 
     private final PhaseMapper phaseMapper;
 
+    private final MessagingService messagingService;
+
     public QueueHandlerService(ConversionInputRepository conversionInputRepository,
                                ValidationInputRepository validationInputRepository,
                                PhaseRepository phaseRepository,
                                EntryRepository entryRepository,
                                ValidationInputMapper validationInputMapper,
                                ConversionInputMapper conversionInputMapper,
-                               PhaseMapper phaseMapper) {
+                               PhaseMapper phaseMapper,
+                               MessagingService messagingService) {
         this.conversionInputRepository = conversionInputRepository;
         this.validationInputRepository = validationInputRepository;
         this.phaseRepository = phaseRepository;
@@ -58,6 +68,7 @@ public class QueueHandlerService {
         this.validationInputMapper = validationInputMapper;
         this.conversionInputMapper = conversionInputMapper;
         this.phaseMapper = phaseMapper;
+        this.messagingService = messagingService;
     }
 
     @Transactional
@@ -89,6 +100,8 @@ public class QueueHandlerService {
             PhaseName.STARTED,
             new Timestamp(System.currentTimeMillis()));
         phaseRepository.save(processingStarted);
+
+        messagingService.sendMessage(MessageQueue.JOBS, new JobDescription("Hello", null));
 
         return savedEntry.publicId();
     }
