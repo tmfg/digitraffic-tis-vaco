@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
-import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryCommandMapper;
@@ -35,10 +35,11 @@ public class QueueHandlerService {
 
     @Transactional
     public ImmutableQueueEntry processQueueEntry(EntryCommand entryCommand) {
-        ImmutableQueueEntry e = entryCommandMapper.toQueueEntry(entryCommand);
-        ImmutableQueueEntry result = queueHandlerRepository.create(e);
+        ImmutableQueueEntry converted = entryCommandMapper.toQueueEntry(entryCommand);
+        ImmutableQueueEntry result = queueHandlerRepository.create(converted);
 
-        messagingService.sendMessage(MessageQueue.JOBS, new JobDescription("Hello", null));
+        ImmutableJobDescription job = ImmutableJobDescription.builder().message(result).build();
+        messagingService.sendMessage(MessageQueue.JOBS, job);
 
         return result;
     }
