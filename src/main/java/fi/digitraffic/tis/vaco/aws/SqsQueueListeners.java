@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.aws;
 
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
-import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
@@ -32,9 +32,9 @@ public class SqsQueueListeners {
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
-    public void listenVacoJobs(JobDescription jobDescription, Acknowledgement acknowledgement) {
+    public void listenVacoJobs(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
+        ImmutableJobDescription jobjob = jobDescription.withPrevious("jobs");
 
-        JobDescription jobjob = new JobDescription(jobDescription.message() + " via JOBS", "jobs");
         if (jobDescription.previous() == null) {
             LOGGER.info("Got message %s without previous, sending to validation".formatted(jobDescription));
             messagingService.sendMessage(MessageQueue.JOBS_VALIDATION, jobjob);
@@ -52,12 +52,12 @@ public class SqsQueueListeners {
     }
 
     @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
-    public void listenVacoJobsValidation(JobDescription jobDescription, Acknowledgement acknowledgement) {
+    public void listenVacoJobsValidation(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
         LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_VALIDATION + ", validate...");
         try {
             validationService.validate();
             // TODO: possibly use return value from #validate() to produce the next step
-            messagingService.sendMessage(MessageQueue.JOBS, new JobDescription(jobDescription.message() + " via VALIDATION", "validation"));
+            messagingService.sendMessage(MessageQueue.JOBS, jobDescription.withPrevious("validation"));
         } catch (Exception e) {
             LOGGER.warn("Unhandled exception caught during validation job processing", e);
         } finally {
@@ -66,12 +66,12 @@ public class SqsQueueListeners {
     }
 
     @SqsListener(QueueNames.VACO_JOBS_CONVERSION)
-    public void listenVacoJobsConversion(JobDescription jobDescription, Acknowledgement acknowledgement) {
+    public void listenVacoJobsConversion(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
         LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_CONVERSION + ", convert...");
         try {
             conversionService.convert();
             // TODO: possibly use return value from #convert() to produce the next step
-            messagingService.sendMessage(MessageQueue.JOBS, new JobDescription(jobDescription.message() + " via CONVERSION", "conversion"));
+            messagingService.sendMessage(MessageQueue.JOBS, jobDescription.withPrevious("conversion"));
         } catch (Exception e) {
             LOGGER.warn("Unhandled exception caught during conversion job processing", e);
         } finally {
