@@ -55,9 +55,8 @@ public class SqsQueueListeners {
     public void listenVacoJobsValidation(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
         LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_VALIDATION + ", validate...");
         try {
-            validationService.validate();
-            // TODO: possibly use return value from #validate() to produce the next step
-            messagingService.sendMessage(MessageQueue.JOBS, jobDescription.withPrevious("validation"));
+            ImmutableJobDescription updated = validationService.validate(jobDescription);
+            messagingService.sendMessage(MessageQueue.JOBS, updated.withPrevious("validation"));
         } catch (Exception e) {
             LOGGER.warn("Unhandled exception caught during validation job processing", e);
         } finally {
@@ -69,9 +68,8 @@ public class SqsQueueListeners {
     public void listenVacoJobsConversion(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
         LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_CONVERSION + ", convert...");
         try {
-            conversionService.convert();
-            // TODO: possibly use return value from #convert() to produce the next step
-            messagingService.sendMessage(MessageQueue.JOBS, jobDescription.withPrevious("conversion"));
+            ImmutableJobDescription updated = conversionService.convert(jobDescription);
+            messagingService.sendMessage(MessageQueue.JOBS, updated.withPrevious("conversion"));
         } catch (Exception e) {
             LOGGER.warn("Unhandled exception caught during conversion job processing", e);
         } finally {
