@@ -41,6 +41,7 @@
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.apache.maven.plugins.version>3.11.0</org.apache.maven.plugins.version>
         <io.awspring.cloud-version>3.0.1</io.awspring.cloud-version>
+        <org.immutables-version>2.9.3</org.immutables-version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- derived properties -->
@@ -79,6 +80,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.immutables</groupId>
+                <artifactId>bom</artifactId>
+                <version>${org.immutables-version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -95,12 +103,18 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- Mapping, e.g. between DTO and entity classes -->
+        <!-- Data model tools, including immutable object creation and object mappers -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${org.mapstruct.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.immutables</groupId>
+            <artifactId>value</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
 
         <!-- Database connectivity -->
         <dependency>
@@ -203,11 +217,21 @@
                     <target>${java.version}</target>
                     <annotationProcessorPaths>
                         <path>
+                            <groupId>org.immutables</groupId>
+                            <artifactId>value</artifactId>
+                            <version>${org.immutables-version}</version>
+                        </path>
+                        <path>
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
                             <version>${org.mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>
+                            -Amapstruct.verbose=true
+                        </arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
         </plugins>

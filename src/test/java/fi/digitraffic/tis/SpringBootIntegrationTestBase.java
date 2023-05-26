@@ -1,6 +1,7 @@
 package fi.digitraffic.tis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.VacoApplication;
 import fi.digitraffic.tis.vaco.utils.Link;
@@ -95,7 +96,7 @@ public abstract class SpringBootIntegrationTestBase {
         return objectMapper.writeValueAsString(command);
     }
 
-    protected <T> T apiResponse(MvcResult response, Class<T> result) throws UnsupportedEncodingException, JsonProcessingException {
+    protected <T> T apiResponse(MvcResult response, TypeReference<T> result) throws UnsupportedEncodingException, JsonProcessingException {
         return objectMapper.readValue(response.getResponse().getContentAsString(), result);
     }
 }

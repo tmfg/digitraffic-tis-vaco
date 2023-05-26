@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
-import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResult;
-import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryResultResource;
+import fi.digitraffic.tis.vaco.queuehandler.dto.entry.QueueHandlerResource;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.utils.Link;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
@@ -28,19 +29,24 @@ public class QueueHandlerController {
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "")
-    public ResponseEntity<EntryResultResource> createQueueEntry(@Valid @RequestBody EntryCommand entryCommand) {
-        String entryId = queueHandlerService.processQueueEntry(entryCommand);
-        String selfLink = MvcUriComponentsBuilder.fromMethodCall(on(QueueHandlerController.class).getQueueEntryOutcome(entryId)).toUriString();
+    public ResponseEntity<QueueHandlerResource<ImmutableQueueEntry>> createQueueEntry(@Valid @RequestBody EntryCommand entryCommand) {
+        ImmutableQueueEntry entry = queueHandlerService.processQueueEntry(entryCommand);
 
-        var links = Map.of("self", new Link(selfLink, RequestMethod.GET));
-
-        EntryResultResource entryResultResource = new EntryResultResource(entryId, links);
-
-        return ResponseEntity.ok(entryResultResource);
+        return ResponseEntity.ok(new QueueHandlerResource<>(entry, Map.of("self", linkToGetEntry(entry))));
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/{publicId}")
-    public ResponseEntity<EntryResult> getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
-        return ResponseEntity.ok(queueHandlerService.getQueueEntryView(publicId));
+    public ResponseEntity<QueueHandlerResource<ImmutableQueueEntry>> getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
+        Optional<ImmutableQueueEntry> entry = queueHandlerService.getQueueEntryView(publicId);
+
+        return ResponseEntity.ok(new QueueHandlerResource<>(entry.orElse(null), Map.of()));
+    }
+
+    private static Link linkToGetEntry(ImmutableQueueEntry entryId) {
+        return new Link(
+            MvcUriComponentsBuilder
+                .fromMethodCall(on(QueueHandlerController.class).getQueueEntryOutcome(entryId.publicId()))
+                .toUriString(),
+            RequestMethod.GET);
     }
 }
