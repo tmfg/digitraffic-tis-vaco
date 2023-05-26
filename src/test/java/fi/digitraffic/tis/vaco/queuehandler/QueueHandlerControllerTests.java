@@ -10,6 +10,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -38,5 +40,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
             () -> assertThat(fetchResult.data().url(), equalTo(command.url())),
             () -> assertThat(fetchResult.data().etag(), equalTo(command.etag())),
             () -> assertThat(fetchResult.data().format(), equalTo(command.format())));
+
+        assertThat("API endpoints should not expose internal IDs.", fetchResult.data().id(), is(nullValue()));
     }
 }
