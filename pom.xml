@@ -46,6 +46,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
+        <org.springframework.boot-version>${project.parent.version}</org.springframework.boot-version>
     </properties>
 
     <dependencyManagement>
@@ -91,10 +92,16 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- this is a Web service -->
+        <!-- This application is built on Spring Boot 3 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- Enable configuration classes -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- Request validation -->
@@ -225,6 +232,11 @@
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
                             <version>${org.mapstruct.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                            <version>${org.springframework.boot-version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
