@@ -5,6 +5,7 @@ import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
+import fi.digitraffic.tis.vaco.validation.ValidationProcessException;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -57,6 +58,9 @@ public class SqsQueueListeners {
         try {
             ImmutableJobDescription updated = validationService.validate(jobDescription);
             messagingService.sendMessage(MessageQueue.JOBS, updated.withPrevious("validation"));
+        } catch (ValidationProcessException vpe) {
+            // TODO: update DB phase?
+            LOGGER.warn("Unhandled exception caught during validation job processing", vpe);
         } catch (Exception e) {
             LOGGER.warn("Unhandled exception caught during validation job processing", e);
         } finally {
