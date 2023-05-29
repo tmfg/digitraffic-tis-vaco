@@ -145,9 +145,25 @@
         </dependency>
 
         <!-- AWS integration -->
+        <!-- Clients are listed separately to keep the underlying clients up-to-date independently of AWS Spring.
+             Also CRT based higher level S3 transfer manager is used to simplify and speed up transfers.
+             See https://docs.awspring.io/spring-cloud-aws/docs/3.0.1/reference/html/index.html#using-s3transfermanager-and-crt-based-s3-client
+         -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3-transfer-manager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-s3</artifactId>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>

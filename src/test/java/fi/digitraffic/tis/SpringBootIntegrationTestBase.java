@@ -47,7 +47,7 @@ public abstract class SpringBootIntegrationTestBase {
 
     @Container
     static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.0.2"))
-        .withServices(Service.SQS);
+        .withServices(Service.SQS, Service.S3); // TODO: config
 
 
     @Container
