@@ -53,8 +53,10 @@ public class ValidationService {
 
     private String downloadFile(JobDescription jobDescription) {
         QueueEntry queueEntry = jobDescription.message();
-        ImmutablePhase downloadPhase = queueHandlerService.reportPhase(queueEntry.id(), ImmutablePhase.builder().entryId(queueEntry.id()).name("validation.download").build(), PhaseState.START);
-
+        ImmutablePhase downloadPhase = queueHandlerService.reportPhase(
+                queueEntry.id(),
+                "validation.download",
+                PhaseState.START);
         Path downloadFile = createDownloadTempFile(queueEntry);
         HttpRequest request = buildRequest(queueEntry);
         return HttpClient.newBuilder()
@@ -121,7 +123,7 @@ public class ValidationService {
             } catch (IOException e) {
                 LOGGER.warn("Could not delete temporary file {}", downloadFile, e);
             }
-            queueHandlerService.reportPhase(downloadPhase.entryId(), downloadPhase, PhaseState.COMPLETE);
+            queueHandlerService.reportPhase(downloadPhase.entryId(), "validation.download", PhaseState.COMPLETE);
             return upload.path;
         };
     }

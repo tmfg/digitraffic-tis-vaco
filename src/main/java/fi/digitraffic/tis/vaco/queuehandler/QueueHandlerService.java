@@ -52,9 +52,13 @@ public class QueueHandlerService {
         return result;
     }
 
-    public ImmutablePhase reportPhase(Long entryId, ImmutablePhase phase, PhaseState state) {
+    public ImmutablePhase reportPhase(Long entryId, String phaseName, PhaseState state) {
+        ImmutablePhase phase = ImmutablePhase.builder()
+                .entryId(entryId)
+                .name(phaseName)
+                .build();
         return switch (state) {
-            case START -> queueHandlerRepository.startPhase(phase.withEntryId(entryId));
+            case START -> queueHandlerRepository.startPhase(phase);
             case UPDATED -> null;
             case COMPLETE -> queueHandlerRepository.completePhase(phase);
         };
