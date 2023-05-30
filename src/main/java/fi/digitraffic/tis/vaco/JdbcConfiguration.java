@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
+@Deprecated
 public class JdbcConfiguration extends AbstractJdbcConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcConfiguration.class);

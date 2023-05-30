@@ -28,7 +28,7 @@ public class VacoProperties {
     }
 
     public String getTemporaryDirectory() {
-        return temporaryDirectory;
+        return temporaryDirectory != null ? temporaryDirectory : System.getProperty("java.io.tmpdir");
     }
 
     public String getS3processingBucket() {

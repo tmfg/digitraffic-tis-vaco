@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,13 +37,16 @@ public class ValidationService {
     private final VacoProperties vacoProperties;
     private final S3TransferManager s3TransferManager;
     private final QueueHandlerService queueHandlerService;
+    private final HttpClient httpClient;
 
     public ValidationService(VacoProperties vacoProperties,
                              S3TransferManager s3TransferManager,
-                             QueueHandlerService queueHandlerService) {
+                             QueueHandlerService queueHandlerService,
+                             HttpClient httpClient) {
         this.vacoProperties = vacoProperties;
         this.s3TransferManager = s3TransferManager;
         this.queueHandlerService = queueHandlerService;
+        this.httpClient = httpClient;
     }
 
     public ImmutableJobDescription validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
@@ -59,9 +63,8 @@ public class ValidationService {
                 PhaseState.START);
         Path downloadFile = createDownloadTempFile(queueEntry);
         HttpRequest request = buildRequest(queueEntry);
-        return HttpClient.newBuilder()
-                .build()
-                .sendAsync(request, HttpResponse.BodyHandlers.ofFile(downloadFile))
+        HttpResponse.BodyHandler<Path> bodyHandler = BodyHandlers.ofFile(downloadFile);
+        return httpClient.sendAsync(request, bodyHandler)
                 .thenCompose(uploadToS3(queueEntry))
                 .thenApply(cleanDownload(downloadFile, downloadPhase))
                 .join(); // wait for finish - might be temporary
@@ -119,7 +122,9 @@ public class ValidationService {
         return upload -> {
             LOGGER.info("S3 path: {}, upload status: {}", upload.path, upload.upload);
             try {
-                Files.delete(downloadFile);
+                if (Files.exists(downloadFile)) {
+                    Files.delete(downloadFile);
+                }
             } catch (IOException e) {
                 LOGGER.warn("Could not delete temporary file {}", downloadFile, e);
             }

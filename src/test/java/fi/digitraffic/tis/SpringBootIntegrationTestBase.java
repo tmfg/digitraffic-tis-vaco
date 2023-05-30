@@ -47,14 +47,14 @@ public abstract class SpringBootIntegrationTestBase {
 
     @Container
     static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.0.2"))
-        .withServices(Service.SQS, Service.S3); // TODO: config
+        .withServices(Service.SQS, Service.S3);
 
 
     @Container
     public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-bullseye")
         .withDatabaseName("vaco")
         .withUsername("postgres")
-        .withPassword("dwULL632mdJZ")
+        .withPassword("h.pG2S\\~*H<-agvw")
         .withUrlParam("currentSchema", "vaco");
 
     // TODO: This works, but is rather verbose and ugly so we might want to replace this with test profile
@@ -72,6 +72,7 @@ public abstract class SpringBootIntegrationTestBase {
         registry.add("spring.flyway.locations", () -> "filesystem:../digitraffic-tis-dbmigrator/db/migrations");
         registry.add("spring.flyway.fail-on-missing-locations", () -> true);
         registry.add("spring.cloud.aws.sqs.endpoint", () -> localstack.getEndpointOverride(Service.SQS));
+        registry.add("spring.cloud.aws.s3.endpoint", () -> localstack.getEndpointOverride(Service.S3));
     }
 
     @Autowired

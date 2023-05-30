@@ -43,6 +43,7 @@
         <io.awspring.cloud-version>3.0.1</io.awspring.cloud-version>
         <org.immutables-version>2.9.3</org.immutables-version>
         <com.fasterxml.jackson-version>2.15.1</com.fasterxml.jackson-version>
+        <org.mockito-version>5.3.1</org.mockito-version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- derived properties -->
@@ -205,6 +206,12 @@
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${org.mockito-version}</version>
             <scope>test</scope>
         </dependency>
 

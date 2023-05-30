@@ -178,10 +178,10 @@ public class QueueHandlerRepository {
                      UPDATE queue_phase
                         SET updated = NOW(),
                             completed = NOW()
-                      WHERE id = ?
+                      WHERE entry_id = ? AND name = ?
                   RETURNING id, entry_id, name, started, updated, completed
                 """,
                 RowMappers.PHASE,
-                phase.id());
+                phase.entryId(), phase.name());
     }
 }
