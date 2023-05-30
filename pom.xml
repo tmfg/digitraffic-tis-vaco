@@ -42,10 +42,13 @@
         <org.apache.maven.plugins.version>3.11.0</org.apache.maven.plugins.version>
         <io.awspring.cloud-version>3.0.1</io.awspring.cloud-version>
         <org.immutables-version>2.9.3</org.immutables-version>
+        <com.fasterxml.jackson-version>2.15.1</com.fasterxml.jackson-version>
+        <org.mockito-version>5.3.1</org.mockito-version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
+        <org.springframework.boot-version>${project.parent.version}</org.springframework.boot-version>
     </properties>
 
     <dependencyManagement>
@@ -87,14 +90,36 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${com.fasterxml.jackson-version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
-        <!-- this is a Web service -->
+        <!-- This application is built on Spring Boot 3 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- Enable configuration classes -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- Handle JDK8 new classes and JSR-310 date/time types correctly when (de)serializing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
         <!-- Request validation -->
@@ -138,9 +163,25 @@
         </dependency>
 
         <!-- AWS integration -->
+        <!-- Clients are listed separately to keep the underlying clients up-to-date independently of AWS Spring.
+             Also CRT based higher level S3 transfer manager is used to simplify and speed up transfers.
+             See https://docs.awspring.io/spring-cloud-aws/docs/3.0.1/reference/html/index.html#using-s3transfermanager-and-crt-based-s3-client
+         -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3-transfer-manager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-s3</artifactId>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -165,6 +206,12 @@
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${org.mockito-version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -225,6 +272,11 @@
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
                             <version>${org.mapstruct.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                            <version>${org.springframework.boot-version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>

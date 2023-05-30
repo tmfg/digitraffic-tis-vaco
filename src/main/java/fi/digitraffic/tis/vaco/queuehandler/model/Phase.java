@@ -1,8 +1,10 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.DataVisibility;
+import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.time.LocalDateTime;
@@ -11,7 +13,21 @@ import java.time.LocalDateTime;
 @JsonSerialize(as = ImmutablePhase.class)
 @JsonDeserialize(as = ImmutablePhase.class)
 public interface Phase {
+    @Nullable
+    @JsonView(DataVisibility.Internal.class)
     Long id();
+
+    @JsonView(DataVisibility.Internal.class)
+    Long entryId();
+
     String name();
+
+    @Nullable
     LocalDateTime started();
+
+    @Nullable
+    LocalDateTime updated();
+
+    @Nullable
+    LocalDateTime completed();
 }

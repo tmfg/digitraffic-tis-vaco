@@ -68,11 +68,7 @@ public class QueueHandlerRepository {
         return phases.stream()
                 .map(phase -> jdbcTemplate.queryForObject(
                         "INSERT INTO queue_phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
-                        (rs, rowNum) -> ImmutablePhase.builder()
-                                .id(rs.getLong("id"))
-                                .name(rs.getString("name"))
-                                .started(rs.getTimestamp("started").toLocalDateTime())
-                                .build(),
+                        RowMappers.PHASE,
                         entryId))
                 .toList();
     }
@@ -101,7 +97,6 @@ public class QueueHandlerRepository {
                 .withConversion((findConversionInput(entry.id()))));
     }
 
-
     private Optional<ImmutableQueueEntry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(
@@ -121,13 +116,9 @@ public class QueueHandlerRepository {
         }
     }
 
-    private List<Phase> findPhases(Long entryId) {
+    private List<ImmutablePhase> findPhases(Long entryId) {
         return jdbcTemplate.query("SELECT * FROM queue_phase qp WHERE qp.entry_id = ?",
-            (rs, row) -> ImmutablePhase.builder()
-                .id(rs.getLong("id"))
-                .name(rs.getString("name"))
-                .started(rs.getTimestamp("started").toLocalDateTime())
-                .build(),
+                RowMappers.PHASE,
             entryId);
     }
 
@@ -170,5 +161,27 @@ public class QueueHandlerRepository {
         }
         // TODO: This is potentially fatal, we could re-throw instead
         return null;
+    }
+
+    public ImmutablePhase startPhase(ImmutablePhase phase) {
+        return jdbcTemplate.queryForObject("""
+                INSERT INTO queue_phase (entry_id, name, updated)
+                     VALUES (?, ?, NOW())
+                  RETURNING id, entry_id, name, started, updated, completed
+                """,
+                RowMappers.PHASE,
+                phase.entryId(), phase.name());
+    }
+
+    public ImmutablePhase completePhase(ImmutablePhase phase) {
+        return jdbcTemplate.queryForObject("""
+                     UPDATE queue_phase
+                        SET updated = NOW(),
+                            completed = NOW()
+                      WHERE entry_id = ? AND name = ?
+                  RETURNING id, entry_id, name, started, updated, completed
+                """,
+                RowMappers.PHASE,
+                phase.entryId(), phase.name());
     }
 }

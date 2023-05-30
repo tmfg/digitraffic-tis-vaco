@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.messaging.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -10,7 +10,7 @@ import org.immutables.value.Value;
 @JsonSerialize(as = ImmutableJobDescription.class)
 @JsonDeserialize(as = ImmutableJobDescription.class)
 public interface JobDescription {
-    ImmutableQueueEntry message();
+    QueueEntry message();
     @Nullable
     String previous();
 }
