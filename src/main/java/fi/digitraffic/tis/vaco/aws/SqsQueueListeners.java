@@ -1,12 +1,9 @@
 package fi.digitraffic.tis.vaco.aws;
 
-import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.validation.ValidationProcessException;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.slf4j.Logger;
@@ -20,16 +17,8 @@ public class SqsQueueListeners {
 
     private final MessagingService messagingService;
 
-    private final ValidationService validationService;
-
-    private final ConversionService conversionService;
-
-    public SqsQueueListeners(MessagingService messagingService,
-                             ValidationService validationService,
-                             ConversionService conversionService) {
+    public SqsQueueListeners(MessagingService messagingService) {
         this.messagingService = messagingService;
-        this.validationService = validationService;
-        this.conversionService = conversionService;
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -52,32 +41,4 @@ public class SqsQueueListeners {
         acknowledgement.acknowledge();
     }
 
-    @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
-    public void listenVacoJobsValidation(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
-        LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_VALIDATION + ", validate...");
-        try {
-            ImmutableJobDescription updated = validationService.validate(jobDescription);
-            messagingService.sendMessage(MessageQueue.JOBS, updated.withPrevious("validation"));
-        } catch (ValidationProcessException vpe) {
-            // TODO: update DB phase?
-            LOGGER.warn("Unhandled exception caught during validation job processing", vpe);
-        } catch (Exception e) {
-            LOGGER.warn("Unhandled exception caught during validation job processing", e);
-        } finally {
-            acknowledgement.acknowledge();
-        }
-    }
-
-    @SqsListener(QueueNames.VACO_JOBS_CONVERSION)
-    public void listenVacoJobsConversion(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
-        LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_CONVERSION + ", convert...");
-        try {
-            ImmutableJobDescription updated = conversionService.convert(jobDescription);
-            messagingService.sendMessage(MessageQueue.JOBS, updated.withPrevious("conversion"));
-        } catch (Exception e) {
-            LOGGER.warn("Unhandled exception caught during conversion job processing", e);
-        } finally {
-            acknowledgement.acknowledge();
-        }
-    }
 }
