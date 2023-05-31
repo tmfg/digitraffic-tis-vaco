@@ -7,6 +7,8 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.PhaseState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.validation.model.RuleSet;
+import fi.digitraffic.tis.vaco.validation.repository.RulesetsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -38,19 +41,24 @@ public class ValidationService {
     private final S3TransferManager s3TransferManager;
     private final QueueHandlerService queueHandlerService;
     private final HttpClient httpClient;
+    private final RulesetsRepository rulesetsRepository;
 
     public ValidationService(VacoProperties vacoProperties,
                              S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
-                             HttpClient httpClient) {
+                             HttpClient httpClient,
+                             RulesetsRepository rulesetsRepository) {
         this.vacoProperties = vacoProperties;
         this.s3TransferManager = s3TransferManager;
         this.queueHandlerService = queueHandlerService;
         this.httpClient = httpClient;
+        this.rulesetsRepository = rulesetsRepository;
     }
 
     public ImmutableJobDescription validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
         String s3path = downloadFile(jobDescription);
+
+        Set<RuleSet> ruleSets = selectRulesets(jobDescription);
 
         return jobDescription;
     }
@@ -133,12 +141,17 @@ public class ValidationService {
     }
 
     private class S3UploadResult {
+
         final String path;
         final CompletedFileUpload upload;
-
         public S3UploadResult(String path, CompletedFileUpload upload) {
             this.path = path;
             this.upload = upload;
         }
+
+    }
+    private Set<RuleSet> selectRulesets(ImmutableJobDescription jobDescription) {
+        Set<RuleSet> ruleSets = rulesetsRepository.findRulesets(jobDescription.message().businessId());
+        return ruleSets;
     }
 }

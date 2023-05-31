@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.entry.QueueHandlerResource;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
@@ -23,7 +24,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
     @Test
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
-        EntryCommand command = new EntryCommand("format", "url", "etag", null, new EntryCommand.Validation(), new EntryCommand.Conversion());
+        EntryCommand command = new EntryCommand("format", "url", "etag", TestConstants.FINTRAFFIC_BUSINESS_ID, null, new EntryCommand.Validation(), new EntryCommand.Conversion());
         MvcResult response = apiCall(post("/queue").content(toJson(command)))
             .andExpect(status().isOk())
             .andReturn();

@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
@@ -99,10 +100,11 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     private ImmutableQueueEntry createQueueEntryForTesting() {
-        ImmutableQueueEntry entry = queueHandlerRepository.create(ImmutableQueueEntry.builder()
-                .format("huuhaa")
-                .url("https://testfile")
-                .build());
-        return entry;
+        return queueHandlerRepository.create(
+                ImmutableQueueEntry.builder()
+                        .format("huuhaa")
+                        .url("https://testfile")
+                        .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
+                        .build());
     }
 }

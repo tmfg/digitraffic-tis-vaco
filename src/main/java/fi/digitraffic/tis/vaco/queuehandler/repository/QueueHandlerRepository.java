@@ -59,6 +59,7 @@ public class QueueHandlerRepository {
                 .metadata(readJson(rs, "metadata"))
                 .build(),
             entry.format(), entry.url(), entry.etag(), writeJson(entry.metadata()));
+            entry.businessId(), entry.format(), entry.url(), entry.etag(), writeJson(entry.metadata()));
     }
 
     private List<ImmutablePhase> createPhases(Long entryId, List<Phase> phases) {

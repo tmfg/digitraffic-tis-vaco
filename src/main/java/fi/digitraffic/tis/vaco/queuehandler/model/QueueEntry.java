@@ -25,6 +25,8 @@ public interface QueueEntry {
 
     String url();
 
+    String businessId();
+
     @Nullable
     String etag();
 
