@@ -77,7 +77,6 @@ public class ValidationService {
 
             Files.createDirectories(downloadDir);
             Path downloadFile = downloadDir.resolve(queueEntry.format() + ".download");
-            // TODO: if file exists checks here...
             if (Files.exists(downloadFile)) {
                 throw new ValidationProcessException("File already exists! Is the process running twice?");
             }
