@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.queuehandler.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
@@ -19,7 +20,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -46,19 +46,12 @@ public class QueueHandlerRepository {
 
     private ImmutableQueueEntry createEntry(QueueEntry entry) {
         return jdbcTemplate.queryForObject("""
-                INSERT INTO queue_entry(format, url, etag, metadata)
-                     VALUES (?,?,?,?)
-                  RETURNING id, public_id, format, url, etag, metadata
+                INSERT INTO queue_entry(business_id, format, url, etag, metadata)
+                     VALUES (?, ?, ?, ?, ?)
+                  RETURNING id, public_id, business_id, format, url, etag, metadata
                 """,
-            (rs, rowNum) -> ImmutableQueueEntry.builder()
-                .id(rs.getLong("id"))
-                .publicId(rs.getString("public_id"))
-                .format(rs.getString("format"))
-                .url(rs.getString("url"))
-                .etag(rs.getString("etag"))
-                .metadata(readJson(rs, "metadata"))
-                .build(),
-            entry.format(), entry.url(), entry.etag(), writeJson(entry.metadata()));
+            RowMappers.QUEUE_ENTRY.apply(objectMapper),
+            entry.businessId(), entry.format(), entry.url(), entry.etag(), writeJson(entry.metadata()));
     }
 
     private List<ImmutablePhase> createPhases(Long entryId, List<Phase> phases) {
@@ -99,17 +92,13 @@ public class QueueHandlerRepository {
 
     private Optional<ImmutableQueueEntry> findEntry(String publicId) {
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(
-                "SELECT id, public_id, format, url, etag, metadata FROM queue_entry qe WHERE qe.public_id = ?",
-                (rs, row) -> ImmutableQueueEntry.builder()
-                    .id(rs.getLong("id"))
-                    .publicId(rs.getString("public_id"))
-                    .format(rs.getString("format"))
-                    .url(rs.getString("url"))
-                    .etag(rs.getString("etag"))
-                    .metadata(readJson(rs, "metadata"))
-                    .build(),
-                publicId));
+            return Optional.ofNullable(jdbcTemplate.queryForObject("""
+                        SELECT id, public_id, business_id, format, url, etag, metadata
+                          FROM queue_entry qe
+                         WHERE qe.public_id = ?
+                        """,
+                        RowMappers.QUEUE_ENTRY.apply(objectMapper),
+                        publicId));
 
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
@@ -134,35 +123,6 @@ public class QueueHandlerRepository {
             entryId);
     }
 
-
-    private JsonNode readJson(ResultSet rs, String metadata) {
-        try {
-            PGobject source = (PGobject) rs.getObject(metadata);
-            if (source != null) {
-                return objectMapper.readTree(source.getValue());
-            }
-        } catch (SQLException | JsonProcessingException e) {
-            LOGGER.error("Failed Jdbc conversion from PGobject to JsonNode", e);
-        }
-        // TODO: This is potentially fatal, we could re-throw instead
-        return null;
-    }
-
-    private PGobject writeJson(JsonNode tree) {
-        try {
-            if (tree != null) {
-                PGobject pgo = new PGobject();
-                pgo.setType("jsonb");
-                pgo.setValue(objectMapper.writeValueAsString(tree));
-                return pgo;
-            }
-        } catch (SQLException | JsonProcessingException e) {
-            LOGGER.error("Failed Jdbc conversion from PGobject to JsonNode", e);
-        }
-        // TODO: This is potentially fatal, we could re-throw instead
-        return null;
-    }
-
     public ImmutablePhase startPhase(ImmutablePhase phase) {
         return jdbcTemplate.queryForObject("""
                 INSERT INTO queue_phase (entry_id, name, updated)
@@ -183,5 +143,20 @@ public class QueueHandlerRepository {
                 """,
                 RowMappers.PHASE,
                 phase.entryId(), phase.name());
+    }
+
+    private PGobject writeJson(JsonNode tree) {
+        try {
+            if (tree != null) {
+                PGobject pgo = new PGobject();
+                pgo.setType("jsonb");
+                pgo.setValue(objectMapper.writeValueAsString(tree));
+                return pgo;
+            }
+        } catch (SQLException | JsonProcessingException e) {
+            LOGGER.error("Failed Jdbc conversion from PGobject to JsonNode", e);
+        }
+        // TODO: This is potentially fatal, we could re-throw instead
+        return null;
     }
 }

@@ -12,6 +12,9 @@ public record EntryCommand(
 
     String etag,
 
+    @NotBlank
+    String businessId,
+
     JsonNode metadata,
 
     Validation validation,
