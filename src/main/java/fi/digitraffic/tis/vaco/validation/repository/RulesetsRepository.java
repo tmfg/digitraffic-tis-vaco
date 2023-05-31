@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.validation.repository;
 
-import fi.digitraffic.tis.vaco.queuehandler.repository.RowMappers;
+import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableRuleSet;
 import fi.digitraffic.tis.vaco.validation.model.RuleSet;
 import org.springframework.jdbc.core.JdbcTemplate;

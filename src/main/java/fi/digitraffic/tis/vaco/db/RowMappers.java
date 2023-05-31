@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.queuehandler.repository;
+package fi.digitraffic.tis.vaco.db;
 
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.validation.model.Category;
