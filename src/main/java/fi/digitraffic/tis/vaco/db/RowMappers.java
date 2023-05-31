@@ -9,7 +9,7 @@ import fi.digitraffic.tis.vaco.validation.model.Category;
 import fi.digitraffic.tis.vaco.validation.model.CooperationType;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableRuleSet;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ import java.util.function.Function;
 public class RowMappers {
     private static final Logger LOGGER = LoggerFactory.getLogger(RowMappers.class);
 
-    public static final RowMapper<ImmutableRuleSet> RULESET = (rs, rowNum) -> ImmutableRuleSet.builder()
+    public static final RowMapper<ImmutableValidationRule> RULESET = (rs, rowNum) -> ImmutableValidationRule.builder()
             .id(rs.getLong("id"))
             .publicId(rs.getString("public_id"))
             .ownerId(rs.getLong("owner_id"))

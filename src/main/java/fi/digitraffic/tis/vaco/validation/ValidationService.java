@@ -7,8 +7,8 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.PhaseState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
-import fi.digitraffic.tis.vaco.validation.model.RuleSet;
-import fi.digitraffic.tis.vaco.validation.repository.RulesetsRepository;
+import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
+import fi.digitraffic.tis.vaco.validation.repository.RuleSetsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -41,13 +41,13 @@ public class ValidationService {
     private final S3TransferManager s3TransferManager;
     private final QueueHandlerService queueHandlerService;
     private final HttpClient httpClient;
-    private final RulesetsRepository rulesetsRepository;
+    private final RuleSetsRepository rulesetsRepository;
 
     public ValidationService(VacoProperties vacoProperties,
                              S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
                              HttpClient httpClient,
-                             RulesetsRepository rulesetsRepository) {
+                             RuleSetsRepository rulesetsRepository) {
         this.vacoProperties = vacoProperties;
         this.s3TransferManager = s3TransferManager;
         this.queueHandlerService = queueHandlerService;
@@ -58,7 +58,7 @@ public class ValidationService {
     public ImmutableJobDescription validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
         String s3path = downloadFile(jobDescription);
 
-        Set<RuleSet> ruleSets = selectRulesets(jobDescription);
+        Set<ValidationRule> validationRules = selectRulesets(jobDescription);
 
         return jobDescription;
     }
@@ -150,8 +150,8 @@ public class ValidationService {
         }
 
     }
-    private Set<RuleSet> selectRulesets(ImmutableJobDescription jobDescription) {
-        Set<RuleSet> ruleSets = rulesetsRepository.findRulesets(jobDescription.message().businessId());
-        return ruleSets;
+    private Set<ValidationRule> selectRulesets(ImmutableJobDescription jobDescription) {
+        Set<ValidationRule> validationRules = rulesetsRepository.findRulesets(jobDescription.message().businessId());
+        return validationRules;
     }
 }

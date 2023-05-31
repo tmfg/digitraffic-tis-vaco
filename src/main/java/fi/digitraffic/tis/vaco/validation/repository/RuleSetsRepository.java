@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.validation.repository;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableRuleSet;
-import fi.digitraffic.tis.vaco.validation.model.RuleSet;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
+import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -10,16 +10,16 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public class RulesetsRepository {
+public class RuleSetsRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public RulesetsRepository(JdbcTemplate jdbcTemplate) {
+    public RuleSetsRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public Set<RuleSet> findRulesets(String businessId) {
-        List<ImmutableRuleSet> ruleSets = jdbcTemplate.query("""
+    public Set<ValidationRule> findRulesets(String businessId) {
+        List<ImmutableValidationRule> ruleSets = jdbcTemplate.query("""
                 WITH partnering_business AS (
                     SELECT ? AS business_id
                 ),
@@ -38,7 +38,7 @@ public class RulesetsRepository {
         return Set.copyOf(ruleSets);
     }
 
-    public ImmutableRuleSet createRuleSet(ImmutableRuleSet ruleSet) {
+    public ImmutableValidationRule createRuleSet(ImmutableValidationRule ruleSet) {
         return jdbcTemplate.queryForObject("""
                 INSERT INTO validation_ruleset(owner_id, category, identifying_name, description)
                      VALUES (?, ?::validation_ruleset_category, ?, ?)

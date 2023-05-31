@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.validation.model.Category;
 import fi.digitraffic.tis.vaco.validation.model.CooperationType;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableRuleSet;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -15,13 +15,13 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-class RulesetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
+class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     OrganizationsRepository organizationsRepository;
 
     @Autowired
-    RulesetsRepository rulesetsRepository;
+    RuleSetsRepository rulesetsRepository;
 
     @Test
     void rulesetsAreChosenBasedOnOwnership() {
@@ -50,16 +50,16 @@ class RulesetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
                         .partnerB(tesmOrg.id())
                         .build());
 
-        ImmutableRuleSet ruleForAll = rulesetsRepository.createRuleSet(
-                ImmutableRuleSet.builder()
+        ImmutableValidationRule ruleForAll = rulesetsRepository.createRuleSet(
+                ImmutableValidationRule.builder()
                         .ownerId(fintraffic.id())
                         .category(Category.GENERIC)
                         .identifyingName("all the rules")
                         .description("just testing")
                         .build());
 
-        ImmutableRuleSet eskoOrgRule = rulesetsRepository.createRuleSet(
-                ImmutableRuleSet.builder()
+        ImmutableValidationRule eskoOrgRule = rulesetsRepository.createRuleSet(
+                ImmutableValidationRule.builder()
                         .ownerId(eskoOrg.id())
                         .category(Category.SPECIFIC)
                         .identifyingName("just a rule")

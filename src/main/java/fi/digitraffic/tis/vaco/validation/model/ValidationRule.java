@@ -10,9 +10,9 @@ import org.immutables.value.Value;
 
 // TODO: probably in wrong subsystem package
 @Value.Immutable
-@JsonSerialize(as = ImmutableRuleSet.class)
-@JsonDeserialize(as = ImmutableRuleSet.class)
-public interface RuleSet {
+@JsonSerialize(as = ImmutableValidationRule.class)
+@JsonDeserialize(as = ImmutableValidationRule.class)
+public interface ValidationRule {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
     Long id();
