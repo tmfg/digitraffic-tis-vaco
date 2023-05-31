@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.queuehandler.dto.entry;
+package fi.digitraffic.tis.vaco.queuehandler.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotBlank;

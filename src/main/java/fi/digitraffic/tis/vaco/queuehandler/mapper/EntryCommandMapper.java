@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler.mapper;
 
-import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
+import fi.digitraffic.tis.vaco.queuehandler.dto.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;

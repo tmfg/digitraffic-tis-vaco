@@ -2,10 +2,10 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
-import fi.digitraffic.tis.vaco.queuehandler.dto.entry.QueueHandlerResource;
+import fi.digitraffic.tis.vaco.queuehandler.dto.EntryCommand;
+import fi.digitraffic.tis.vaco.queuehandler.dto.QueueHandlerResource;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
-import fi.digitraffic.tis.vaco.utils.Link;
+import fi.digitraffic.tis.vaco.queuehandler.dto.Link;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
