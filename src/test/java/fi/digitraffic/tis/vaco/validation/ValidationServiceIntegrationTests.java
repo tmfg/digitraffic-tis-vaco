@@ -8,8 +8,10 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.Category;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
 import fi.digitraffic.tis.vaco.validation.model.Result;
+import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -62,11 +64,8 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 }
 
                 @Override
-                public CompletableFuture<Result> execute() {
-                    return CompletableFuture.completedFuture(
-                            ImmutableResult.builder()
-                                    .result(TEST_RULE_RESULT)
-                                    .build());
+                public CompletableFuture<ValidationReport> execute() {
+                    return CompletableFuture.completedFuture(ImmutableValidationReport.of(TEST_RULE_NAME, TEST_RULE_RESULT));
                 }
             };
         }
@@ -145,13 +144,13 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void executesRulesBasedOnIdentifyingName() {
-        List<Result> results = validationService.executeRulesets(null,
-                Set.of(ImmutableValidationRule.builder()
-                        .identifyingName(TEST_RULE_NAME)
-                        .description("running hello rule from tests")
-                        .category(Category.SPECIFIC)
-                        .build()));
+        Result<List<ValidationReport>> results = validationService.executeRules(null,
+            Set.of(ImmutableValidationRule.builder()
+                .identifyingName(TEST_RULE_NAME)
+                .description("running hello rule from tests")
+                .category(Category.SPECIFIC)
+                .build()));
 
-        assertThat(results, equalTo(List.of(ImmutableResult.builder().result(TEST_RULE_RESULT).build())));
+        assertThat(results, equalTo(ImmutableResult.of(List.of(ImmutableValidationReport.of(TEST_RULE_NAME, TEST_RULE_RESULT)))));
     }
 }
