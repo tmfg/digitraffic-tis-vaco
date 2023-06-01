@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.validation;
 
+import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
@@ -7,8 +8,10 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.PhaseState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.validation.model.Result;
 import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
 import fi.digitraffic.tis.vaco.validation.repository.RuleSetsRepository;
+import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,10 +31,14 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ValidationService {
@@ -42,23 +49,28 @@ public class ValidationService {
     private final QueueHandlerService queueHandlerService;
     private final HttpClient httpClient;
     private final RuleSetsRepository rulesetsRepository;
+    private final Map<String, Rule> rules;
 
     public ValidationService(VacoProperties vacoProperties,
                              S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
                              HttpClient httpClient,
-                             RuleSetsRepository rulesetsRepository) {
+                             RuleSetsRepository rulesetsRepository,
+                             List<Rule> rules) {
         this.vacoProperties = vacoProperties;
         this.s3TransferManager = s3TransferManager;
         this.queueHandlerService = queueHandlerService;
         this.httpClient = httpClient;
         this.rulesetsRepository = rulesetsRepository;
+        this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
     }
 
     public ImmutableJobDescription validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
         String s3path = downloadFile(jobDescription);
 
         Set<ValidationRule> validationRules = selectRulesets(jobDescription);
+
+        executeRulesets(s3path, validationRules);
 
         return jobDescription;
     }
@@ -144,6 +156,7 @@ public class ValidationService {
     private class S3UploadResult {
 
         final String path;
+
         final CompletedFileUpload upload;
         public S3UploadResult(String path, CompletedFileUpload upload) {
             this.path = path;
@@ -156,5 +169,24 @@ public class ValidationService {
     Set<ValidationRule> selectRulesets(ImmutableJobDescription jobDescription) {
         Set<ValidationRule> validationRules = rulesetsRepository.findRulesets(jobDescription.message().businessId());
         return validationRules;
+    }
+
+    @VisibleForTesting
+    List<Result> executeRulesets(String s3path, Set<ValidationRule> validationRules) {
+        return validationRules.parallelStream()
+                .map(this::findMatchingRule)
+                .filter(Optional::isPresent)
+                .map(r -> r.get().execute())
+                .map(CompletableFuture::join)
+                .toList();  // TODO: return value?
+    }
+
+    private Optional<Rule> findMatchingRule(ValidationRule validationRule) {
+        String identifyingName = validationRule.identifyingName();
+        Optional<Rule> rule = Optional.ofNullable(rules.get(identifyingName));
+        if (rule.isEmpty()) {
+            LOGGER.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
+        }
+        return rule;
     }
 }
