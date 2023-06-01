@@ -63,7 +63,8 @@ public class ValidationService {
         return jobDescription;
     }
 
-    private String downloadFile(JobDescription jobDescription) {
+    @VisibleForTesting
+    String downloadFile(JobDescription jobDescription) {
         QueueEntry queueEntry = jobDescription.message();
         ImmutablePhase downloadPhase = queueHandlerService.reportPhase(
                 queueEntry.id(),
@@ -150,7 +151,9 @@ public class ValidationService {
         }
 
     }
-    private Set<ValidationRule> selectRulesets(ImmutableJobDescription jobDescription) {
+
+    @VisibleForTesting
+    Set<ValidationRule> selectRulesets(ImmutableJobDescription jobDescription) {
         Set<ValidationRule> validationRules = rulesetsRepository.findRulesets(jobDescription.message().businessId());
         return validationRules;
     }
