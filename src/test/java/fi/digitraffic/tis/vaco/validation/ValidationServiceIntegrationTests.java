@@ -6,12 +6,22 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.validation.model.Category;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
+import fi.digitraffic.tis.vaco.validation.model.Result;
+import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
+import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
@@ -29,13 +39,37 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.when;
 
+@Import(ValidationServiceIntegrationTests.ContextConfiguration.class)
 class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
+
+    public static final String TEST_RULE_NAME = "hello world";
+    public static final String TEST_RULE_RESULT = "The world was greeted";
+
+    @TestConfiguration
+    public static class ContextConfiguration {
+
+        @Bean
+        public Rule monitoringService() {
+            return new Rule() {
+                @Override
+                public String getIdentifyingName() {
+                    return TEST_RULE_NAME;
+                }
+
+                @Override
+                public CompletableFuture<ValidationReport> execute() {
+                    return CompletableFuture.completedFuture(ImmutableValidationReport.of(TEST_RULE_NAME, TEST_RULE_RESULT));
+                }
+            };
+        }
+    }
 
     @Autowired
     private VacoProperties vacoProperties;
@@ -72,7 +106,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         ImmutableQueueEntry entry = createQueueEntryForTesting();
         s3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3processingBucket()).build());
 
-        validationService.validate(ImmutableJobDescription.builder()
+        validationService.downloadFile(ImmutableJobDescription.builder()
                 .message(entry)
                 .build());
 
@@ -106,5 +140,17 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                         .url("https://testfile")
                         .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
                         .build());
+    }
+
+    @Test
+    void executesRulesBasedOnIdentifyingName() {
+        Result<List<ValidationReport>> results = validationService.executeRules(null,
+            Set.of(ImmutableValidationRule.builder()
+                .identifyingName(TEST_RULE_NAME)
+                .description("running hello rule from tests")
+                .category(Category.SPECIFIC)
+                .build()));
+
+        assertThat(results, equalTo(ImmutableResult.of(List.of(ImmutableValidationReport.of(TEST_RULE_NAME, TEST_RULE_RESULT)))));
     }
 }

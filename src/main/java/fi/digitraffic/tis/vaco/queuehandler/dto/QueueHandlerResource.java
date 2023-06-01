@@ -1,6 +1,5 @@
-package fi.digitraffic.tis.vaco.queuehandler.dto.entry;
+package fi.digitraffic.tis.vaco.queuehandler.dto;
 
-import fi.digitraffic.tis.vaco.utils.Link;
 import jakarta.annotation.Nullable;
 
 import java.util.Map;

@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.utils;
+package fi.digitraffic.tis.vaco.queuehandler.dto;
 
 import org.springframework.web.bind.annotation.RequestMethod;
 

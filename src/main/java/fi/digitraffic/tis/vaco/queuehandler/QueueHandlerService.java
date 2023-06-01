@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.queuehandler;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
-import fi.digitraffic.tis.vaco.queuehandler.dto.entry.EntryCommand;
+import fi.digitraffic.tis.vaco.queuehandler.dto.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryCommandMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
