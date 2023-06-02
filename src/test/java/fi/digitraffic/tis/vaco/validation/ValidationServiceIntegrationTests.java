@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.Category;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
@@ -66,7 +66,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 }
 
                 @Override
-                public CompletableFuture<Result<ValidationReport>> execute(ImmutablePhaseData<FileReferences> phaseData) {
+                public CompletableFuture<Result<ValidationReport>> execute(ImmutablePhaseData<ImmutableFileReferences> phaseData) {
                     return CompletableFuture.completedFuture(
                             ImmutableResult.of(
                                     TEST_PHASE_NAME,

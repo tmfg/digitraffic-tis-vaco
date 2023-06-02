@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.PhaseState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobResult;
@@ -73,7 +73,7 @@ public class ValidationService {
     }
 
     public ValidationJobResult validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
-        Result<FileReferences> s3path = downloadFile(jobDescription.message());
+        Result<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());
 
         Result<Set<ValidationRule>> validationRules = selectRulesets(jobDescription.message(), jobDescription);
 
@@ -93,8 +93,8 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    Result<FileReferences> downloadFile(QueueEntry queueEntry) {
-        ImmutablePhaseData<FileReferences> phaseData = ImmutablePhaseData.of(
+    Result<ImmutableFileReferences> downloadFile(QueueEntry queueEntry) {
+        ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), PhaseState.START));
 
         Path downloadFile = createDownloadTempFile(queueEntry);
@@ -108,11 +108,11 @@ public class ValidationService {
             .join(); // wait for finish - might be temporary
     }
 
-    private Function<HttpResponse<Path>, ImmutablePhaseData<FileReferences>> wrapHttpResult(ImmutablePhaseData<FileReferences> phaseData) {
+    private Function<HttpResponse<Path>, ImmutablePhaseData<ImmutableFileReferences>> wrapHttpResult(ImmutablePhaseData<ImmutableFileReferences> phaseData) {
         return path -> phaseData
                 // download done -> update phase
                 .withPhase(queueHandlerService.reportPhase(phaseData.phase(), PhaseState.UPDATE))
-                .withPayload(new FileReferences(path.body(), null, null));
+                .withPayload(ImmutableFileReferences.builder().localPath(path.body()).build());
     }
 
     private Path createDownloadTempFile(QueueEntry queueEntry) {
@@ -147,7 +147,7 @@ public class ValidationService {
         }
     }
 
-    private Function<ImmutablePhaseData<FileReferences>, CompletableFuture<ImmutablePhaseData<FileReferences>>> uploadToS3(QueueEntry queueEntry) {
+    private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(QueueEntry queueEntry) {
         return phaseData -> {
             String s3Path = "entries/" + queueEntry.publicId() + "/download/" + queueEntry.format() + ".original";
 
@@ -165,9 +165,9 @@ public class ValidationService {
         };
     }
 
-    private Function<PhaseData<FileReferences>, Result<FileReferences>> completeDownloadPhase() {
+    private Function<PhaseData<ImmutableFileReferences>, Result<ImmutableFileReferences>> completeDownloadPhase() {
         return phaseData -> {
-            FileReferences fileRefs = phaseData.payload();
+            ImmutableFileReferences fileRefs = phaseData.payload();
             LOGGER.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
             // download complete, mark to database as complete and unwrap payload
             queueHandlerService.reportPhase(phaseData.phase(), PhaseState.COMPLETE);
@@ -188,8 +188,8 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    List<Result<ValidationReport>> executeRules(QueueEntry queueEntry, FileReferences fileReferences, Set<ValidationRule> validationRules) {
-        ImmutablePhaseData<FileReferences> phaseData = ImmutablePhaseData.<FileReferences>builder()
+    List<Result<ValidationReport>> executeRules(QueueEntry queueEntry, ImmutableFileReferences fileReferences, Set<ValidationRule> validationRules) {
+        ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.<ImmutableFileReferences>builder()
                 .phase(queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), EXECUTION_PHASE), PhaseState.START))
                 .payload(fileReferences)
                 .build();

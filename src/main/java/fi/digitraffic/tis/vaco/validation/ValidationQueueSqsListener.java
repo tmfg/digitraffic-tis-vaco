@@ -21,14 +21,11 @@ public class ValidationQueueSqsListener {
 
     private final ValidationService validationService;
 
-    private final QueueHandlerRepository queueHandlerRepository;
-
     public ValidationQueueSqsListener(MessagingService messagingService,
                                       ValidationService validationService,
                                       QueueHandlerRepository queueHandlerRepository) {
         this.messagingService = messagingService;
         this.validationService = validationService;
-        this.queueHandlerRepository = queueHandlerRepository;
     }
 
     @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
@@ -38,10 +35,9 @@ public class ValidationQueueSqsListener {
                  final acknowledgment should always happen as well.
          */
         try {
+            // TODO: We have full results available here, but don't do anything with them - maybe we don't need 'em?
             ValidationJobResult result = validationService.validate(jobDescription);
             messagingService.sendMessage(MessageQueue.JOBS, jobDescription.withPrevious("validation"));
-
-            // TODO: result-lista tässä kohtaa on...mitä varten?
         } catch (ValidationProcessException vpe) {
             // TODO: update DB phase?
             LOGGER.warn("Unhandled exception caught during validation job processing", vpe);
