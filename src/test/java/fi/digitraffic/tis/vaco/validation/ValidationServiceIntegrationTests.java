@@ -3,10 +3,11 @@ package fi.digitraffic.tis.vaco.validation;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.VacoProperties;
-import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.Category;
+import fi.digitraffic.tis.vaco.validation.model.FileReferences;
+import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
@@ -49,6 +50,7 @@ import static org.mockito.Mockito.when;
 @Import(ValidationServiceIntegrationTests.ContextConfiguration.class)
 class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
+    public static final String TEST_PHASE_NAME = "test.helloworld";
     public static final String TEST_RULE_NAME = "hello world";
     public static final String TEST_RULE_RESULT = "The world was greeted";
 
@@ -64,8 +66,11 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 }
 
                 @Override
-                public CompletableFuture<ValidationReport> execute() {
-                    return CompletableFuture.completedFuture(ImmutableValidationReport.of(TEST_RULE_NAME, TEST_RULE_RESULT));
+                public CompletableFuture<Result<ValidationReport>> execute(ImmutablePhaseData<FileReferences> phaseData) {
+                    return CompletableFuture.completedFuture(
+                            ImmutableResult.of(
+                                    TEST_PHASE_NAME,
+                                    ImmutableValidationReport.of(TEST_RULE_NAME, TEST_RULE_RESULT)));
                 }
             };
         }
@@ -106,9 +111,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         ImmutableQueueEntry entry = createQueueEntryForTesting();
         s3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3processingBucket()).build());
 
-        validationService.downloadFile(ImmutableJobDescription.builder()
-                .message(entry)
-                .build());
+        validationService.downloadFile(entry);
 
         assertThat(requestCaptor.getValue().uri(), equalTo(new URI("https://testfile")));
 
@@ -144,13 +147,17 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void executesRulesBasedOnIdentifyingName() {
-        Result<List<ValidationReport>> results = validationService.executeRules(null,
-            Set.of(ImmutableValidationRule.builder()
-                .identifyingName(TEST_RULE_NAME)
-                .description("running hello rule from tests")
-                .category(Category.SPECIFIC)
-                .build()));
+        ImmutableQueueEntry entry = createQueueEntryForTesting();
+        List<Result<ValidationReport>> results = validationService.executeRules(entry, null,
+                Set.of(ImmutableValidationRule.builder()
+                        .identifyingName(TEST_RULE_NAME)
+                        .description("running hello rule from tests")
+                        .category(Category.SPECIFIC)
+                        .build()));
 
-        assertThat(results, equalTo(ImmutableResult.of(List.of(ImmutableValidationReport.of(TEST_RULE_NAME, TEST_RULE_RESULT)))));
+        assertThat(results, equalTo(List.of(
+                ImmutableResult.of(
+                        TEST_PHASE_NAME,
+                        ImmutableValidationReport.of(TEST_RULE_NAME, TEST_RULE_RESULT)))));
     }
 }
