@@ -12,9 +12,11 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.validation.ValidationProcessException;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -67,11 +69,10 @@ public class QueueHandlerRepository {
     }
 
     private ValidationInput createValidationInput(Long entryId, ValidationInput validation) {
-        ValidationInput result = jdbcTemplate.queryForObject(
+        return jdbcTemplate.queryForObject(
                 "INSERT INTO queue_validation_input (entry_id) VALUES (?) RETURNING id, entry_id",
                 (rs, rowNum) -> ImmutableValidationInput.builder().build(),
                 entryId);
-        return result;
     }
 
     private ConversionInput createConversionInput(Long entryId, ConversionInput conversion) {
@@ -124,13 +125,29 @@ public class QueueHandlerRepository {
     }
 
     public ImmutablePhase startPhase(ImmutablePhase phase) {
-        return jdbcTemplate.queryForObject("""
+        try {
+            return jdbcTemplate.queryForObject("""
                 INSERT INTO queue_phase (entry_id, name, updated)
                      VALUES (?, ?, NOW())
                   RETURNING id, entry_id, name, started, updated, completed
                 """,
                 RowMappers.PHASE,
                 phase.entryId(), phase.name());
+        } catch (DuplicateKeyException dke) {
+            throw new ValidationProcessException("Failed to start phase " + phase + ", did you try to START the same phase twice?", dke);
+        }
+    }
+
+    public ImmutablePhase updatePhase(ImmutablePhase phase) {
+        return jdbcTemplate.queryForObject("""
+                     UPDATE queue_phase
+                        SET updated = NOW()
+                      WHERE id = ?
+                  RETURNING id, entry_id, name, started, updated, completed
+                """,
+                RowMappers.PHASE,
+                phase.id());
+
     }
 
     public ImmutablePhase completePhase(ImmutablePhase phase) {
@@ -138,11 +155,11 @@ public class QueueHandlerRepository {
                      UPDATE queue_phase
                         SET updated = NOW(),
                             completed = NOW()
-                      WHERE entry_id = ? AND name = ?
+                      WHERE id = ?
                   RETURNING id, entry_id, name, started, updated, completed
                 """,
                 RowMappers.PHASE,
-                phase.entryId(), phase.name());
+                phase.id());
     }
 
     private PGobject writeJson(JsonNode tree) {

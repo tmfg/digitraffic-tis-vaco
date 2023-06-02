@@ -11,5 +11,8 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface Result<R> {
     @Value.Parameter
+    String phase();
+
+    @Value.Parameter
     R result();
 }

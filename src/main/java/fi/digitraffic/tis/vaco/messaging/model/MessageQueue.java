@@ -5,7 +5,7 @@ public enum MessageQueue {
     JOBS_VALIDATION(QueueNames.VACO_JOBS_VALIDATION),
     JOBS_CONVERSION(QueueNames.VACO_JOBS_CONVERSION);
 
-    private String queueName;
+    private final String queueName;
 
     MessageQueue(String queueName) {
         this.queueName = queueName;

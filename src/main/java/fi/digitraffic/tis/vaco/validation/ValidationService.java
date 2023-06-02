@@ -3,13 +3,17 @@ package fi.digitraffic.tis.vaco.validation;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
-import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.PhaseState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
+import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobResult;
+import fi.digitraffic.tis.vaco.validation.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.Result;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobResult;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
 import fi.digitraffic.tis.vaco.validation.repository.RuleSetsRepository;
@@ -18,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
 import software.amazon.awssdk.transfer.s3.model.FileUpload;
 import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
@@ -44,6 +47,9 @@ import java.util.stream.Collectors;
 @Service
 public class ValidationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidationService.class);
+    private static final String DOWNLOAD_PHASE = "validation.download";
+    private static final String RULESET_SELECTION_PHASE = "validation.rulesets";
+    private static final String EXECUTION_PHASE = "validation.execute";
 
     private final VacoProperties vacoProperties;
     private final S3TransferManager s3TransferManager;
@@ -66,30 +72,47 @@ public class ValidationService {
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
     }
 
-    public ImmutableJobDescription validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
-        Result<FileReferences> s3path = downloadFile(jobDescription);
+    public ValidationJobResult validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
+        Result<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());
 
-        Result<Set<ValidationRule>> validationRules = selectRulesets(jobDescription);
+        Result<Set<ValidationRule>> validationRules = selectRulesets(jobDescription.message(), jobDescription);
 
-        Result<List<ValidationReport>> results = executeRules(s3path.result(), validationRules.result());
+        List<Result<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRules.result());
 
-        return jobDescription;
+        return ImmutableValidationJobResult.builder()
+                .addResults(s3path, validationRules)
+                .addAllResults(validationReports)
+                .build();
+    }
+
+    private static ImmutablePhase uninitializedPhase(Long entryId, String phaseName) {
+        return ImmutablePhase.builder()
+                .entryId(entryId)
+                .name(phaseName)
+                .build();
     }
 
     @VisibleForTesting
-    Result<FileReferences> downloadFile(JobDescription jobDescription) {
-        QueueEntry queueEntry = jobDescription.message();
-        ImmutablePhase downloadPhase = queueHandlerService.reportPhase(
-            queueEntry.id(),
-            "validation.download",
-            PhaseState.START);
+    Result<ImmutableFileReferences> downloadFile(QueueEntry queueEntry) {
+        ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
+                queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), PhaseState.START));
+
         Path downloadFile = createDownloadTempFile(queueEntry);
         HttpRequest request = buildRequest(queueEntry);
         HttpResponse.BodyHandler<Path> bodyHandler = BodyHandlers.ofFile(downloadFile);
+
         return httpClient.sendAsync(request, bodyHandler)
+                .thenApply(wrapHttpResult(phaseData))
             .thenCompose(uploadToS3(queueEntry))
-            .thenApply(completeDownloadPhase(downloadPhase))
+            .thenApply(completeDownloadPhase())
             .join(); // wait for finish - might be temporary
+    }
+
+    private Function<HttpResponse<Path>, ImmutablePhaseData<ImmutableFileReferences>> wrapHttpResult(ImmutablePhaseData<ImmutableFileReferences> phaseData) {
+        return path -> phaseData
+                // download done -> update phase
+                .withPhase(queueHandlerService.reportPhase(phaseData.phase(), PhaseState.UPDATE))
+                .withPayload(ImmutableFileReferences.builder().localPath(path.body()).build());
     }
 
     private Path createDownloadTempFile(QueueEntry queueEntry) {
@@ -124,61 +147,62 @@ public class ValidationService {
         }
     }
 
-    private Function<HttpResponse<Path>, CompletableFuture<FileReferences>> uploadToS3(QueueEntry queueEntry) {
-        return path -> {
+    private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(QueueEntry queueEntry) {
+        return phaseData -> {
             String s3Path = "entries/" + queueEntry.publicId() + "/download/" + queueEntry.format() + ".original";
 
             UploadFileRequest ufr = UploadFileRequest.builder()
                 .putObjectRequest(req -> req.bucket(vacoProperties.getS3processingBucket()).key(s3Path))
                 .addTransferListener(LoggingTransferListener.create())
-                .source(path.body())
+                .source(phaseData.payload().localPath())
                 .build();
             FileUpload upload = s3TransferManager.uploadFile(ufr);
 
             return upload.completionFuture()
-                .thenApply(u -> new FileReferences(path.body(), s3Path, u));
+                .thenApply(u -> phaseData
+                        // upload done -> update phase
+                        .withPhase(queueHandlerService.reportPhase(phaseData.phase(), PhaseState.UPDATE)));
         };
     }
 
-    private Function<FileReferences, Result<FileReferences>> completeDownloadPhase(ImmutablePhase downloadPhase) {
-        return uploadResult -> {
-            LOGGER.info("S3 path: {}, upload status: {}", uploadResult.s3Path, uploadResult.upload);
-            queueHandlerService.reportPhase(downloadPhase.entryId(), "validation.download", PhaseState.COMPLETE);
-            return ImmutableResult.<FileReferences>builder().result(uploadResult).build();
+    private Function<PhaseData<ImmutableFileReferences>, Result<ImmutableFileReferences>> completeDownloadPhase() {
+        return phaseData -> {
+            ImmutableFileReferences fileRefs = phaseData.payload();
+            LOGGER.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
+            // download complete, mark to database as complete and unwrap payload
+            queueHandlerService.reportPhase(phaseData.phase(), PhaseState.COMPLETE);
+            return ImmutableResult.of(DOWNLOAD_PHASE, fileRefs);
         };
-    }
-
-    /**
-     * Wrapper for getting reference to the downloaded file. Keeps both local file reference and S3 path reference in
-     * case local file gets reaped before usage for any reason.
-     */
-    private class FileReferences {
-        final Path localPath;
-        final String s3Path;
-        final CompletedFileUpload upload;
-
-        public FileReferences(Path localPath, String s3Path, CompletedFileUpload upload) {
-            this.localPath = localPath;
-            this.s3Path = s3Path;
-            this.upload = upload;
-        }
-
     }
 
     @VisibleForTesting
-    Result<Set<ValidationRule>> selectRulesets(ImmutableJobDescription jobDescription) {
+    Result<Set<ValidationRule>> selectRulesets(QueueEntry queueEntry, ImmutableJobDescription jobDescription) {
+        ImmutablePhaseData<ValidationRule> phaseData = ImmutablePhaseData.of(
+                queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), PhaseState.START));
+
         Set<ValidationRule> validationRules = rulesetsRepository.findRulesets(jobDescription.message().businessId());
-        return ImmutableResult.of(validationRules);
+
+        phaseData.withPhase(queueHandlerService.reportPhase(phaseData.phase(), PhaseState.COMPLETE));
+
+        return ImmutableResult.of("validation.rulesets", validationRules);
     }
 
     @VisibleForTesting
-    Result<List<ValidationReport>> executeRules(FileReferences fileReferences, Set<ValidationRule> validationRules) {
-        return ImmutableResult.of(validationRules.parallelStream()
-            .map(this::findMatchingRule)
-            .filter(Optional::isPresent)
-            .map(r -> r.get().execute())
-            .map(CompletableFuture::join)
-            .toList());
+    List<Result<ValidationReport>> executeRules(QueueEntry queueEntry, ImmutableFileReferences fileReferences, Set<ValidationRule> validationRules) {
+        ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.<ImmutableFileReferences>builder()
+                .phase(queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), EXECUTION_PHASE), PhaseState.START))
+                .payload(fileReferences)
+                .build();
+
+        List<Result<ValidationReport>> results = validationRules.parallelStream()
+                .map(this::findMatchingRule)
+                .filter(Optional::isPresent)
+                .map(r -> r.get().execute(phaseData))
+                .map(CompletableFuture::join)
+                .toList();
+        // everything's done at this point because of the ::join call, complete phase and return
+        queueHandlerService.reportPhase(phaseData.phase(), PhaseState.COMPLETE);
+        return results;
     }
 
     private Optional<Rule> findMatchingRule(ValidationRule validationRule) {
@@ -189,4 +213,5 @@ public class ValidationService {
         }
         return rule;
     }
+
 }

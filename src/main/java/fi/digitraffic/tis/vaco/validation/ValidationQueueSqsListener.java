@@ -4,6 +4,8 @@ import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
+import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobResult;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.slf4j.Logger;
@@ -19,7 +21,9 @@ public class ValidationQueueSqsListener {
 
     private final ValidationService validationService;
 
-    public ValidationQueueSqsListener(MessagingService messagingService, ValidationService validationService) {
+    public ValidationQueueSqsListener(MessagingService messagingService,
+                                      ValidationService validationService,
+                                      QueueHandlerRepository queueHandlerRepository) {
         this.messagingService = messagingService;
         this.validationService = validationService;
     }
@@ -27,9 +31,13 @@ public class ValidationQueueSqsListener {
     @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
     public void listenVacoJobsValidation(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
         LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_VALIDATION + ", validate...");
+        /* TODO: This method needs to be bulletproof for exceptions; each line should be wrapped in try...catch and the
+                 final acknowledgment should always happen as well.
+         */
         try {
-            ImmutableJobDescription updated = validationService.validate(jobDescription);
-            messagingService.sendMessage(MessageQueue.JOBS, updated.withPrevious("validation"));
+            // TODO: We have full results available here, but don't do anything with them - maybe we don't need 'em?
+            ValidationJobResult result = validationService.validate(jobDescription);
+            messagingService.sendMessage(MessageQueue.JOBS, jobDescription.withPrevious("validation"));
         } catch (ValidationProcessException vpe) {
             // TODO: update DB phase?
             LOGGER.warn("Unhandled exception caught during validation job processing", vpe);
