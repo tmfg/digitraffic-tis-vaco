@@ -17,6 +17,7 @@ public interface Phase {
     @JsonView(DataVisibility.Internal.class)
     Long id();
 
+    @Nullable  // needs to be here for the Mapstruct automated mapping to work
     @JsonView(DataVisibility.Internal.class)
     Long entryId();
 
