@@ -69,11 +69,10 @@ public class QueueHandlerRepository {
     }
 
     private ValidationInput createValidationInput(Long entryId, ValidationInput validation) {
-        ValidationInput result = jdbcTemplate.queryForObject(
+        return jdbcTemplate.queryForObject(
                 "INSERT INTO queue_validation_input (entry_id) VALUES (?) RETURNING id, entry_id",
                 (rs, rowNum) -> ImmutableValidationInput.builder().build(),
                 entryId);
-        return result;
     }
 
     private ConversionInput createConversionInput(Long entryId, ConversionInput conversion) {

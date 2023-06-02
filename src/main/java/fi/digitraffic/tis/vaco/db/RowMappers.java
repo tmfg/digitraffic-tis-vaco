@@ -56,7 +56,7 @@ public class RowMappers {
             .build();
     public static final Function<ObjectMapper, RowMapper<ImmutableQueueEntry>> QUEUE_ENTRY = RowMappers::mapRow;
 
-    private static <I,O> O nullable(I input, Function<I, O> i2o) throws SQLException {
+    private static <I,O> O nullable(I input, Function<I, O> i2o) {
         return Optional.ofNullable(input).map(i2o).orElse(null);
     }
 

@@ -47,9 +47,7 @@ public class QueueHandlerService {
     }
 
     public Optional<ImmutableQueueEntry> getQueueEntryView(String publicId) {
-        Optional<ImmutableQueueEntry> result = queueHandlerRepository.findByPublicId(publicId);
-
-        return result;
+        return queueHandlerRepository.findByPublicId(publicId);
     }
 
     public ImmutablePhase reportPhase(ImmutablePhase phase, PhaseState state) {
