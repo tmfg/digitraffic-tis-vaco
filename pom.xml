@@ -39,13 +39,14 @@
         <testcontainers.version>1.18.1</testcontainers.version>
         <awssdk.version>2.20.74</awssdk.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <org.apache.maven.plugins.version>3.11.0</org.apache.maven.plugins.version>
         <io.awspring.cloud-version>3.0.1</io.awspring.cloud-version>
         <org.immutables-version>2.9.3</org.immutables-version>
         <com.fasterxml.jackson-version>2.15.1</com.fasterxml.jackson-version>
         <org.mockito-version>5.3.1</org.mockito-version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <org.apache.maven.plugins.maven-compiler-plugin.version>3.11.0</org.apache.maven.plugins.maven-compiler-plugin.version>
+        <org.apache.maven.plugins.maven-surefire-plugin.version>3.1.0</org.apache.maven.plugins.maven-surefire-plugin.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <org.springframework.boot-version>${project.parent.version}</org.springframework.boot-version>
@@ -252,13 +253,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>${org.apache.maven.plugins.maven-surefire-plugin.version}</version>
             </plugin>
             <!-- The mapstruct-processor is used to generate the mapper implementation during the build -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${org.apache.maven.plugins.version}</version>
+                <version>${org.apache.maven.plugins.maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
