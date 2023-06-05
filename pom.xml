@@ -242,7 +242,19 @@
             <artifactId>flyway-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.MobilityData</groupId>
+            <artifactId>gtfs-validator</artifactId>
+            <version>v4.0.0</version>
+        </dependency>
     </dependencies>
+
+    <repositories>
+        <repository> <!-- Needed for MobilityData/gtfs-validator -->
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>

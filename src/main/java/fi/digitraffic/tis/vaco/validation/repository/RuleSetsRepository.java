@@ -3,6 +3,8 @@ package fi.digitraffic.tis.vaco.validation.repository;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
 import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +13,8 @@ import java.util.Set;
 
 @Repository
 public class RuleSetsRepository {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RuleSetsRepository.class);
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -35,6 +39,7 @@ public class RuleSetsRepository {
                 """,
                 RowMappers.RULESET,
                 businessId);
+        LOGGER.info("Found {} rulesets for {}: {}", ruleSets.size(), businessId, ruleSets.stream().map(ValidationRule::identifyingName).toList());
         return Set.copyOf(ruleSets);
     }
 

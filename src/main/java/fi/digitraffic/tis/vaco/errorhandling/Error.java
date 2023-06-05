@@ -1,4 +1,9 @@
 package fi.digitraffic.tis.vaco.errorhandling;
 
-public record Error() {
+import org.immutables.value.Value;
+
+@Value.Immutable
+public interface Error {
+    @Value.Parameter
+    String message();
 }
