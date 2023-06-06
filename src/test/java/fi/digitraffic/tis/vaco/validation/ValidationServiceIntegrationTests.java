@@ -50,7 +50,6 @@ import static org.mockito.Mockito.when;
 @Import(ValidationServiceIntegrationTests.ContextConfiguration.class)
 class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
-    public static final String TEST_PHASE_NAME = "test.helloworld";
     public static final String TEST_RULE_NAME = "hello world";
     public static final String TEST_RULE_RESULT = "The world was greeted";
 
@@ -152,9 +151,8 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                         .category(Category.SPECIFIC)
                         .build()));
 
-        assertThat(results, equalTo(List.of(
-                ImmutableResult.of(
-                        TEST_PHASE_NAME,
-                        ImmutableValidationReport.of(TEST_RULE_RESULT)))));
+        assertThat(results, equalTo(ImmutableResult.of(
+                        ValidationService.EXECUTION_PHASE,
+                        List.of(ImmutableValidationReport.of(TEST_RULE_RESULT)))));
     }
 }

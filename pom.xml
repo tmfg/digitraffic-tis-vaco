@@ -43,6 +43,7 @@
         <org.immutables-version>2.9.3</org.immutables-version>
         <com.fasterxml.jackson-version>2.15.1</com.fasterxml.jackson-version>
         <org.mockito-version>5.3.1</org.mockito-version>
+        <com.github.ben-manes.caffeine-version>3.1.6</com.github.ben-manes.caffeine-version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.11.0</org.apache.maven.plugins.maven-compiler-plugin.version>
@@ -242,10 +243,19 @@
             <artifactId>flyway-core</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Canonical GTFS validator -->
         <dependency>
             <groupId>com.github.MobilityData</groupId>
             <artifactId>gtfs-validator</artifactId>
             <version>v4.0.0</version>
+        </dependency>
+
+        <!-- Near-optimal caching library -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${com.github.ben-manes.caffeine-version}</version>
         </dependency>
     </dependencies>
 

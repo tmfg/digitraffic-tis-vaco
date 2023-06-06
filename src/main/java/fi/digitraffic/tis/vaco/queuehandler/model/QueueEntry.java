@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.errorhandling.Error;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -45,4 +46,7 @@ public interface QueueEntry {
 
     @Nullable
     ConversionInput conversion();
+
+    @Nullable
+    List<Error> errors();
 }

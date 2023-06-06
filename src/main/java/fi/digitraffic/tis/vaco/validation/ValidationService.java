@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
@@ -58,19 +59,22 @@ public class ValidationService {
     private final HttpClient httpClient;
     private final RuleSetsRepository rulesetsRepository;
     private final Map<String, Rule> rules;
+    private final ErrorHandlerService errorHandlerService;
 
     public ValidationService(VacoProperties vacoProperties,
                              S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
                              HttpClient httpClient,
                              RuleSetsRepository rulesetsRepository,
-                             List<Rule> rules) {
+                             List<Rule> rules,
+                             ErrorHandlerService errorHandlerService) {
         this.vacoProperties = vacoProperties;
         this.s3TransferManager = s3TransferManager;
         this.queueHandlerService = queueHandlerService;
         this.httpClient = httpClient;
         this.rulesetsRepository = rulesetsRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
+        this.errorHandlerService = errorHandlerService;
     }
 
     public ValidationJobResult validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {

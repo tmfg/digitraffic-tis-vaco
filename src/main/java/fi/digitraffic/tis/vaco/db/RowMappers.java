@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.db;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.validation.model.Category;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -54,13 +56,32 @@ public class RowMappers {
             .partnerA(rs.getLong("partner_a_id"))
             .partnerB(rs.getLong("partner_b_id"))
             .build();
-    public static final Function<ObjectMapper, RowMapper<ImmutableQueueEntry>> QUEUE_ENTRY = RowMappers::mapRow;
+
+    public static final Function<ObjectMapper, RowMapper<ImmutableQueueEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
+    public static final Function<ObjectMapper, RowMapper<ImmutableError>> ERROR = RowMappers::mapError;
+
+    private static RowMapper<ImmutableError> mapError(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> {
+            ImmutableError.Builder b = ImmutableError.builder()
+                    .id(rs.getLong("id"))
+                    .publicId(rs.getString("public_id"))
+                    .phaseId(rs.getLong("phase_id"))
+                    .rulesetId(rs.getLong("ruleset_id"))
+                    .message(rs.getString("message"));
+            try {
+                b = b.raw(objectMapper.readTree(rs.getBytes("raw")));  // TODO: this is byte[] while it could be JSONB
+            } catch (IOException e) {
+                LOGGER.warn("Failed to read field 'raw' of Error row. Not JSON?", e);
+            }
+            return b.build();
+        };
+    }
 
     private static <I,O> O nullable(I input, Function<I, O> i2o) {
         return Optional.ofNullable(input).map(i2o).orElse(null);
     }
 
-    private static RowMapper<ImmutableQueueEntry> mapRow(ObjectMapper objectMapper) {
+    private static RowMapper<ImmutableQueueEntry> mapQueueEntry(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableQueueEntry.builder()
                 .id(rs.getLong("id"))
                 .publicId(rs.getString("public_id"))
