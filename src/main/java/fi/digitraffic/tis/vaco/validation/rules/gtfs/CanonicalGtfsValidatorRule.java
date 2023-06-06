@@ -11,6 +11,8 @@ import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.mobilitydata.gtfsvalidator.input.CountryCode;
 import org.mobilitydata.gtfsvalidator.runner.ValidationRunner;
 import org.mobilitydata.gtfsvalidator.runner.ValidationRunnerConfig;
+import org.mobilitydata.gtfsvalidator.util.VersionInfo;
+import org.mobilitydata.gtfsvalidator.util.VersionResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
@@ -21,7 +23,9 @@ import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class CanonicalGtfsValidatorRule implements Rule {
@@ -108,6 +112,37 @@ public class CanonicalGtfsValidatorRule implements Rule {
             return CountryCode.forStringOrUnknown(queueEntry.metadata().get("gtfs.countryCode").asText());
         } else {
             return CountryCode.forStringOrUnknown(CountryCode.ZZ);
+        }
+    }
+
+    /**
+     * Canonical GTFS validator contains a home calling version check component which is completely pointless for us. This
+     * variant disables the feature by enforcing the current version to be the latest.
+     */
+    private static class StaticVersionResolver extends VersionResolver {
+        @Override
+        public VersionInfo getVersionInfoWithTimeout(Duration timeout) {
+            return new VersionInfo() {
+                @Override
+                public Optional<String> currentVersion() {
+                    return Optional.of("4.0.0");
+                }
+
+                @Override
+                public Optional<String> latestReleaseVersion() {
+                    return currentVersion();
+                }
+
+                @Override
+                public boolean updateAvailable() {
+                    return false;
+                }
+            };
+        }
+
+        @Override
+        public synchronized void resolve() {
+            // do nothing, on purpose
         }
     }
 }
