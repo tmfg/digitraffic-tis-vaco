@@ -16,7 +16,7 @@ import fi.digitraffic.tis.vaco.validation.model.Result;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobResult;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
-import fi.digitraffic.tis.vaco.validation.repository.RuleSetsRepository;
+import fi.digitraffic.tis.vaco.validation.repository.RuleSetRepository;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,14 +55,14 @@ public class ValidationService {
     private final S3TransferManager s3TransferManager;
     private final QueueHandlerService queueHandlerService;
     private final HttpClient httpClient;
-    private final RuleSetsRepository rulesetsRepository;
+    private final RuleSetRepository rulesetsRepository;
     private final Map<String, Rule> rules;
 
     public ValidationService(VacoProperties vacoProperties,
                              S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
                              HttpClient httpClient,
-                             RuleSetsRepository rulesetsRepository,
+                             RuleSetRepository rulesetsRepository,
                              List<Rule> rules) {
         this.vacoProperties = vacoProperties;
         this.s3TransferManager = s3TransferManager;

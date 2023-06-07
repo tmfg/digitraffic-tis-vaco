@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public class RuleSetsRepository {
+public class RuleSetRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public RuleSetsRepository(JdbcTemplate jdbcTemplate) {
+    public RuleSetRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
