@@ -22,14 +22,18 @@ public interface ValidationRule {
 
     @Nullable
     @JsonView(DataVisibility.Internal.class)
+    @Value.Parameter
     Long ownerId();  // TODO: We might want to be able to show this with publicId in some cases
 
     @NotBlank
+    @Value.Parameter
     String identifyingName();
 
     @NotBlank
+    @Value.Parameter
     String description();
 
     @NotBlank
+    @Value.Parameter
     Category category();
 }
