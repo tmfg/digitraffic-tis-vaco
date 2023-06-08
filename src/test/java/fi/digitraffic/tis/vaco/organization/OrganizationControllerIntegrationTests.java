@@ -1,9 +1,9 @@
-package fi.digitraffic.tis.vaco.tis;
+package fi.digitraffic.tis.vaco.organization;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 

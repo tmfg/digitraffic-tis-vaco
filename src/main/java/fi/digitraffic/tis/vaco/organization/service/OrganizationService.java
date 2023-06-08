@@ -1,8 +1,8 @@
-package fi.digitraffic.tis.vaco.tis.service;
+package fi.digitraffic.tis.vaco.organization.service;
 
 import fi.digitraffic.tis.vaco.ItemExistsException;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.tis.repository.OrganizationRepository;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

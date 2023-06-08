@@ -2,12 +2,12 @@ package fi.digitraffic.tis.vaco.validation.repository;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
-import fi.digitraffic.tis.vaco.tis.repository.CooperationRepository;
-import fi.digitraffic.tis.vaco.tis.repository.OrganizationRepository;
+import fi.digitraffic.tis.vaco.organization.model.CooperationType;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
+import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
 import fi.digitraffic.tis.vaco.validation.model.Category;
-import fi.digitraffic.tis.vaco.tis.model.CooperationType;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

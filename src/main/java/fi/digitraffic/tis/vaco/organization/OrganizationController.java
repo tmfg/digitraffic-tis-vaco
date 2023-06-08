@@ -1,10 +1,10 @@
-package fi.digitraffic.tis.vaco.tis;
+package fi.digitraffic.tis.vaco.organization;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.ItemExistsException;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.tis.service.OrganizationService;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
 import jakarta.validation.Valid;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;

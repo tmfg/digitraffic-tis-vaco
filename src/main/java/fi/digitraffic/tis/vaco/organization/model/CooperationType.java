@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.tis.model;
+package fi.digitraffic.tis.vaco.organization.model;
 
 import fi.digitraffic.tis.vaco.validation.model.InvalidMappingException;
 import fi.digitraffic.tis.vaco.validation.model.PersistableEnum;

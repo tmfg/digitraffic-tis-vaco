@@ -1,8 +1,8 @@
-package fi.digitraffic.tis.vaco.tis.repository;
+package fi.digitraffic.tis.vaco.organization.repository;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.tis.model.CooperationType;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.organization.model.CooperationType;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -31,7 +31,8 @@ public class CooperationRepository {
                                                     Long partnerAId,
                                                     Long partnerBId) {
         return jdbcTemplate.query("""
-                SELECT * FROM tis_cooperation WHERE type = ?::tis_cooperation_type AND partner_a_id = ? AND partner_b_id = ?
+                SELECT * FROM tis_cooperation
+                    WHERE type = ?::tis_cooperation_type AND partner_a_id = ? AND partner_b_id = ?
                 """,
             RowMappers.COOPERATION,
             type.fieldName(), partnerAId, partnerBId).stream().findFirst();

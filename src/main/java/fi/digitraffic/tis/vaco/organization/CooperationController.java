@@ -1,11 +1,11 @@
-package fi.digitraffic.tis.vaco.tis;
+package fi.digitraffic.tis.vaco.organization;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.InvalidInputException;
 import fi.digitraffic.tis.vaco.ItemExistsException;
-import fi.digitraffic.tis.vaco.tis.service.CooperationService;
-import fi.digitraffic.tis.vaco.validation.dto.ImmutableCooperationDto;
+import fi.digitraffic.tis.vaco.organization.service.CooperationService;
+import fi.digitraffic.tis.vaco.validation.dto.ImmutableCooperationCommand;
 import jakarta.validation.Valid;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -28,9 +28,9 @@ public class CooperationController {
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<ImmutableCooperationDto> createCooperation(@Valid @RequestBody ImmutableCooperationDto cooperationDto) {
+    public ResponseEntity<ImmutableCooperationCommand> createCooperation(@Valid @RequestBody ImmutableCooperationCommand cooperationDto) {
         try {
-            ImmutableCooperationDto cooperation = cooperationService.create(cooperationDto);
+            ImmutableCooperationCommand cooperation = cooperationService.create(cooperationDto);
             return ResponseEntity.ok(cooperation);
         } catch (EmptyResultDataAccessException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

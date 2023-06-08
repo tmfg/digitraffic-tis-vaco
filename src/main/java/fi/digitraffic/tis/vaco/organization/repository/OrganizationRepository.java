@@ -1,7 +1,7 @@
-package fi.digitraffic.tis.vaco.tis.repository;
+package fi.digitraffic.tis.vaco.organization.repository;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 

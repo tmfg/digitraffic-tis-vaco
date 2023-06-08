@@ -1,12 +1,12 @@
-package fi.digitraffic.tis.vaco.tis.service;
+package fi.digitraffic.tis.vaco.organization.service;
 
 import fi.digitraffic.tis.vaco.InvalidInputException;
 import fi.digitraffic.tis.vaco.ItemExistsException;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.tis.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.tis.repository.CooperationRepository;
-import fi.digitraffic.tis.vaco.tis.repository.OrganizationRepository;
-import fi.digitraffic.tis.vaco.validation.dto.ImmutableCooperationDto;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
+import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
+import fi.digitraffic.tis.vaco.validation.dto.ImmutableCooperationCommand;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,7 +20,7 @@ public class CooperationService {
         this.cooperationRepository = cooperationRepository;
     }
 
-    public ImmutableCooperationDto create(ImmutableCooperationDto cooperationDto) {
+    public ImmutableCooperationCommand create(ImmutableCooperationCommand cooperationDto) {
         if(cooperationDto.partnerABusinessId().equals(cooperationDto.partnerBBusinessId())) {
             // This perhaps could have been validation on ImmutableCooperationDto validation annotations level
             // but not clear how yet
