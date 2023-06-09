@@ -1,13 +1,13 @@
 package fi.digitraffic.tis.vaco.organization.service;
 
-import fi.digitraffic.tis.vaco.InvalidInputException;
-import fi.digitraffic.tis.vaco.ItemExistsException;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
+import fi.digitraffic.tis.vaco.organization.mapper.CooperationCommandMapper;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
-import fi.digitraffic.tis.vaco.validation.dto.ImmutableCooperationCommand;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class CooperationService {
@@ -15,31 +15,26 @@ public class CooperationService {
     private final OrganizationRepository organizationRepository;
     private final CooperationRepository cooperationRepository;
 
-    public CooperationService(OrganizationRepository organizationRepository, CooperationRepository cooperationRepository) {
+    private final CooperationCommandMapper cooperationCommandMapper;
+
+    public CooperationService(OrganizationRepository organizationRepository, CooperationRepository cooperationRepository, CooperationCommandMapper cooperationCommandMapper) {
         this.organizationRepository = organizationRepository;
         this.cooperationRepository = cooperationRepository;
+        this.cooperationCommandMapper = cooperationCommandMapper;
     }
 
-    public ImmutableCooperationCommand create(ImmutableCooperationCommand cooperationDto) {
-        if(cooperationDto.partnerABusinessId().equals(cooperationDto.partnerBBusinessId())) {
-            // This perhaps could have been validation on ImmutableCooperationDto validation annotations level
-            // but not clear how yet
-            // TODO: error messages need to move into constants and maybe be stored somewhere special
-            throw new InvalidInputException("Cooperation partners cannot be the same");
-        }
-        ImmutableOrganization partnerA = organizationRepository.getByBusinessId(cooperationDto.partnerABusinessId());
-        ImmutableOrganization partnerB = organizationRepository.getByBusinessId(cooperationDto.partnerBBusinessId());
-        if(cooperationRepository.findByIds(cooperationDto.cooperationType(),
+    public Optional<ImmutableCooperationCommand> create(ImmutableCooperationCommand cooperationCommand) {
+        ImmutableOrganization partnerA = organizationRepository.getByBusinessId(cooperationCommand.partnerABusinessId());
+        ImmutableOrganization partnerB = organizationRepository.getByBusinessId(cooperationCommand.partnerBBusinessId());
+        if(cooperationRepository.findByIds(cooperationCommand.cooperationType(),
             partnerA.id(), partnerB.id()).isPresent()) {
-            throw new ItemExistsException("A cooperation between given business ID-s already exists");
+            return Optional.empty();
         }
 
-        ImmutableCooperation cooperation = ImmutableCooperation.builder()
-            .cooperationType(cooperationDto.cooperationType())
-            .partnerA(partnerA.id())
-            .partnerB(partnerB.id())
-            .build();
-        cooperationRepository.create(cooperation);
-        return cooperationDto;
+        cooperationRepository.create(cooperationCommandMapper.toCooperationCommand(
+            cooperationCommand.cooperationType(),
+            partnerA.id(),
+            partnerB.id()));
+        return Optional.of(cooperationCommand);
     }
 }

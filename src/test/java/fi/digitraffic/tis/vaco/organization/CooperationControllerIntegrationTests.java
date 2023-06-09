@@ -3,8 +3,8 @@ package fi.digitraffic.tis.vaco.organization;
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.validation.dto.ImmutableCooperationCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBase {
-    TypeReference<ImmutableCooperationCommand> cooperationDtoType = new TypeReference<>() {};
+    TypeReference<ImmutableCooperationCommand> cooperationCommandType = new TypeReference<>() {};
     ImmutableOrganization organizationA = TestObjects.anOrganization().build();
     ImmutableOrganization organizationB = TestObjects.anOrganization().build();
 
@@ -34,60 +34,63 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
 
     @Test
     void canCreateCooperation() throws Exception {
-        ImmutableCooperationCommand cooperationDto = TestObjects.aCooperationDto()
+        ImmutableCooperationCommand cooperationCommand = TestObjects.aCooperationCommand()
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(organizationB.businessId())
             .build();
-        MvcResult response = apiCall(post("/cooperation").content(toJson(cooperationDto)))
+        MvcResult response = apiCall(post("/cooperation").content(toJson(cooperationCommand)))
             .andExpect(status().isOk())
             .andReturn();
 
-        ImmutableCooperationCommand createdCooperationDto = apiResponse(response, cooperationDtoType);
+        ImmutableCooperationCommand createdcooperationCommand = apiResponse(response, cooperationCommandType);
 
         assertAll("Base fields are stored properly",
-            () -> assertThat(createdCooperationDto.cooperationType(), equalTo(cooperationDto.cooperationType())),
-            () -> assertThat(createdCooperationDto.partnerABusinessId(), equalTo(cooperationDto.partnerABusinessId())),
-            () -> assertThat(createdCooperationDto.partnerBBusinessId(), equalTo(cooperationDto.partnerBBusinessId())));
+            () -> assertThat(createdcooperationCommand.cooperationType(), equalTo(cooperationCommand.cooperationType())),
+            () -> assertThat(createdcooperationCommand.partnerABusinessId(), equalTo(cooperationCommand.partnerABusinessId())),
+            () -> assertThat(createdcooperationCommand.partnerBBusinessId(), equalTo(cooperationCommand.partnerBBusinessId())));
     }
 
     @Test
     void duplicateCooperationCreationFails() throws Exception {
-        ImmutableCooperationCommand cooperationDto = TestObjects.aCooperationDto()
+        ImmutableCooperationCommand cooperationCommand = TestObjects.aCooperationCommand()
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(organizationB.businessId())
             .build();
-        apiCall(post("/cooperation").content(toJson(cooperationDto)))
+        apiCall(post("/cooperation").content(toJson(cooperationCommand)))
             .andExpect(status().isOk())
             .andReturn();
-        apiCall(post("/cooperation").content(toJson(cooperationDto)))
+        apiCall(post("/cooperation").content(toJson(cooperationCommand)))
             .andExpect(status().isConflict())
             .andReturn();
     }
 
     @Test
     void cooperationCreationBetweenSamePartnersFails() throws Exception {
-        ImmutableCooperationCommand cooperationDto = TestObjects.aCooperationDto()
+        ImmutableCooperationCommand cooperationCommand = TestObjects.aCooperationCommand()
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(organizationA.businessId())
             .build();
-        apiCall(post("/cooperation").content(toJson(cooperationDto)))
+        apiCall(post("/cooperation").content(toJson(cooperationCommand)))
             .andExpect(status().isBadRequest())
             .andReturn();
     }
 
     @Test
     void cooperationCreationBetweenNonExistingPartnersFails() throws Exception {
-        ImmutableCooperationCommand cooperationDto = TestObjects.aCooperationDto()
+        ImmutableCooperationCommand cooperationCommand = TestObjects.aCooperationCommand()
             .partnerABusinessId(UUID.randomUUID().toString())
             .partnerBBusinessId(organizationB.businessId())
             .build();
-        apiCall(post("/cooperation").content(toJson(cooperationDto)))
+        apiCall(post("/cooperation").content(toJson(cooperationCommand)))
             .andExpect(status().isBadRequest())
             .andReturn();
 
-        ImmutableCooperationCommand cooperationDto2 = TestObjects.aCooperationDto()
+        ImmutableCooperationCommand cooperationCommand2 = TestObjects.aCooperationCommand()
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(UUID.randomUUID().toString())
             .build();
+        apiCall(post("/cooperation").content(toJson(cooperationCommand)))
+            .andExpect(status().isBadRequest())
+            .andReturn();
     }
 }

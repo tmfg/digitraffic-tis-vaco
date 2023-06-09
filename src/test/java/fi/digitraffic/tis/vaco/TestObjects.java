@@ -1,9 +1,9 @@
 package fi.digitraffic.tis.vaco;
 
+import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.validation.dto.ImmutableCooperationCommand;
 
 import java.util.UUID;
 
@@ -22,7 +22,7 @@ public class TestObjects {
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }
 
-    public static ImmutableCooperationCommand.Builder aCooperationDto() {
+    public static ImmutableCooperationCommand.Builder aCooperationCommand() {
         return ImmutableCooperationCommand.builder()
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }

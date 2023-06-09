@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.validation.dto;
+package fi.digitraffic.tis.vaco.organization.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -8,6 +8,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @JsonSerialize(as = ImmutableCooperationCommand.class)
 @JsonDeserialize(as = ImmutableCooperationCommand.class)
+@UniquePartners
 public interface CooperationCommand {
     CooperationType cooperationType();
 
