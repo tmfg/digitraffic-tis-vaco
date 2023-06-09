@@ -54,7 +54,7 @@ public class QueueHandlerRepository {
         return jdbcTemplate.queryForObject("""
                 INSERT INTO queue_entry(business_id, format, url, etag, metadata)
                      VALUES (?, ?, ?, ?, ?)
-                  RETURNING id, public_id, business_id, format, url, etag, metadata
+                  RETURNING id, public_id, business_id, format, url, etag, metadata, started, updated, completed
                 """,
             RowMappers.QUEUE_ENTRY.apply(objectMapper),
             entry.businessId(), entry.format(), entry.url(), entry.etag(), writeJson(entry.metadata()));
@@ -99,7 +99,7 @@ public class QueueHandlerRepository {
     private Optional<ImmutableQueueEntry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject("""
-                        SELECT id, public_id, business_id, format, url, etag, metadata
+                        SELECT id, public_id, business_id, format, url, etag, metadata, started, updated, completed
                           FROM queue_entry qe
                          WHERE qe.public_id = ?
                         """,
@@ -164,6 +164,35 @@ public class QueueHandlerRepository {
                 """,
                 RowMappers.PHASE,
                 phase.id());
+    }
+
+    public void startEntryProcessing(QueueEntry entry) {
+        jdbcTemplate.update("""
+                UPDATE queue_entry
+                   SET started=NOW(),
+                       updated=NOW()
+                 WHERE id = ?
+                """,
+                entry.id());
+    }
+
+    public void updateEntryProcessing(QueueEntry entry) {
+        jdbcTemplate.update("""
+                UPDATE queue_entry
+                   SET updated=NOW()
+                 WHERE id = ?
+                """,
+                entry.id());
+    }
+
+    public void completeEntryProcessing(QueueEntry entry) {
+        jdbcTemplate.update("""
+                UPDATE queue_entry
+                   SET updated=NOW(),
+                       completed=NOW()
+                 WHERE id = ?
+                """,
+                entry.id());
     }
 
     private PGobject writeJson(JsonNode tree) {
