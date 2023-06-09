@@ -9,6 +9,11 @@ import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
 import fi.digitraffic.tis.vaco.validation.model.Category;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
+import fi.digitraffic.tis.vaco.validation.rules.gtfs.CanonicalGtfsValidatorRule;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,51 +33,107 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @Autowired
     RuleSetRepository rulesetRepository;
 
-    @Test
-    void rulesetsAreChosenBasedOnOwnership() {
-        ImmutableOrganization fintraffic = organizationRepository.getByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
-        ImmutableOrganization eskoOrg = organizationRepository.create(
+    private ImmutableOrganization fintraffic;
+    private ImmutableOrganization parentOrg;
+    private ImmutableOrganization currentOrg;
+    private ImmutableOrganization otherOrg;
+    private ImmutableValidationRule parentRuleA;
+    private ImmutableValidationRule parentRuleB;
+    private ImmutableValidationRule currentRuleC;
+    private ImmutableValidationRule currentRuleD;
+    private ImmutableValidationRule otherRuleE;
+
+    @BeforeEach
+    void setUp() {
+        fintraffic = organizationRepository.findByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID).get();
+        parentOrg = organizationRepository.create(
+                ImmutableOrganization.builder()
+                        .name("test parent")
+                        .businessId("4433221-1")
+                        .build());
+        currentOrg = organizationRepository.create(
                 ImmutableOrganization.builder()
                         .name("Esko testaa")
                         .businessId("1234567-8")
                         .build());
-        ImmutableOrganization tesmOrg = organizationRepository.create(
+        otherOrg = organizationRepository.create(
                 ImmutableOrganization.builder()
                         .name("tesmaava Esko")
                         .businessId("8765432-1")
                         .build());
+        cooperationRepository.create(partnership(parentOrg, currentOrg));
+        cooperationRepository.create(partnership(parentOrg, otherOrg));
 
-        ImmutableCooperation fintrafficAndEskoCoop = cooperationRepository.create(
-                ImmutableCooperation.builder()
-                        .cooperationType(CooperationType.AUTHORITY_PROVIDER)
-                        .partnerA(fintraffic.id())
-                        .partnerB(eskoOrg.id())
-                        .build());
-        ImmutableCooperation fintrafficAndTesmCoop = cooperationRepository.create(
-                ImmutableCooperation.builder()
-                        .cooperationType(CooperationType.AUTHORITY_PROVIDER)
-                        .partnerA(fintraffic.id())
-                        .partnerB(tesmOrg.id())
-                        .build());
+        parentRuleA = rulesetRepository.createRuleSet(
+                ImmutableValidationRule.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC));
+        parentRuleB = rulesetRepository.createRuleSet(
+                ImmutableValidationRule.of(parentOrg.id(), "SPECIFIC_B", "SPECIFIC_B", Category.SPECIFIC));
+        currentRuleC = rulesetRepository.createRuleSet(
+                ImmutableValidationRule.of(currentOrg.id(), "SPECIFIC_C", "SPECIFIC_C", Category.SPECIFIC));
+        currentRuleD = rulesetRepository.createRuleSet(
+                ImmutableValidationRule.of(currentOrg.id(), "SPECIFIC_D", "SPECIFIC_D", Category.SPECIFIC));
+        otherRuleE = rulesetRepository.createRuleSet(
+                ImmutableValidationRule.of(otherOrg.id(), "SPECIFIC_E", "SPECIFIC_E", Category.SPECIFIC));
+    }
 
-        ImmutableValidationRule ruleForAll = rulesetRepository.createRuleSet(
-                ImmutableValidationRule.builder()
-                        .ownerId(fintraffic.id())
-                        .category(Category.GENERIC)
-                        .identifyingName("all the rules")
-                        .description("just testing")
-                        .build());
+    @AfterEach
+    void tearDown() {
+        organizationRepository.delete(parentOrg.businessId());
+        organizationRepository.delete(currentOrg.businessId());
+        organizationRepository.delete(otherOrg.businessId());
+        rulesetRepository.deleteRuleSet(parentRuleA);
+        rulesetRepository.deleteRuleSet(parentRuleB);
+        rulesetRepository.deleteRuleSet(currentRuleC);
+        rulesetRepository.deleteRuleSet(currentRuleD);
+        rulesetRepository.deleteRuleSet(otherRuleE);
+    }
 
-        ImmutableValidationRule eskoOrgRule = rulesetRepository.createRuleSet(
-                ImmutableValidationRule.builder()
-                        .ownerId(eskoOrg.id())
-                        .category(Category.SPECIFIC)
-                        .identifyingName("just a rule")
-                        .description("these are mine")
-                        .build());
+    /**
+     * Everything under Fintraffic will always get default rules. See `R__seed_data.sql` in DB Migrator repository.
+     */
+    @Test
+    void hasDefaultRulesAlwaysAvailable() {
+        ValidationRule canonicalGtfsValidator = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
+        assertThat(rulesetRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(canonicalGtfsValidator)));
+    }
 
-        assertThat(rulesetRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(ruleForAll)));
-        assertThat(rulesetRepository.findRulesets(tesmOrg.businessId()), equalTo(Set.of(ruleForAll)));
-        assertThat(rulesetRepository.findRulesets(eskoOrg.businessId()), equalTo(Set.of(ruleForAll, eskoOrgRule)));
+    @Test
+    void rulesetsAreChosenBasedOnOwnership() {
+        assertThat(rulesetRepository.findRulesets(parentOrg.businessId()), equalTo(Set.of(parentRuleA, parentRuleB)));
+        assertThat(rulesetRepository.findRulesets(otherOrg.businessId()), equalTo(Set.of(parentRuleA, otherRuleE)));
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId()), equalTo(Set.of(parentRuleA, currentRuleC, currentRuleD)));
+    }
+
+    /**
+     * @see <a href="https://finrail.atlassian.net/browse/TIS-79">TIS-79</a>
+     */
+    @Test
+    void currentsSpecificRulesCanBeFiltered() {
+        // parent's generic is always returned even when not requested, self specific is returned on request
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("GENERIC_A", "SPECIFIC_C")),
+                equalTo(Set.of(parentRuleA, currentRuleC)));
+    }
+
+    @Test
+    void parentsGenericRuleIsAlwaysReturned() {
+        // parent's generic is always returned even when not requested
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_C")),
+                equalTo(Set.of(parentRuleA, currentRuleC)));
+    }
+
+    @Test
+    void parentsSpecificRulesCannotBeSelected() {
+        // parent's generic is always returned even when not requested, can't request parent's specific rules
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_B")),
+                equalTo(Set.of(parentRuleA)));
+    }
+
+    @NotNull
+    private ImmutableCooperation partnership(ImmutableOrganization partnerA, ImmutableOrganization partnerB) {
+        return ImmutableCooperation.builder()
+                .cooperationType(CooperationType.AUTHORITY_PROVIDER)
+                .partnerA(partnerA.id())
+                .partnerB(partnerB.id())
+                .build();
     }
 }

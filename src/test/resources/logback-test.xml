@@ -29,6 +29,7 @@
     <logger name="io.netty" level="WARN" />
     <logger name="io.awspring.cloud" level="WARN" />
     <logger name="org.hibernate.validator" level="WARN" />
+    <logger name="org.mobilitydata" level="WARN" />
 
     <!-- ### Testing dependency only log adjustments below ### -->
 
@@ -37,6 +38,7 @@
     <logger name="com.github.dockerjava" level="WARN" />
     <logger name="tc" level="INFO" />
     <logger name="org.junit" level="WARN" />
+    <logger name="org.thymeleaf" level="WARN" />
 
     <root level="trace">
         <appender-ref ref="STDOUT" />

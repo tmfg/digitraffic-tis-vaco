@@ -45,4 +45,8 @@ public class OrganizationRepository {
                 RowMappers.ORGANIZATION,
                 businessId).stream().findFirst();
     }
+
+    public void delete(String businessId) {
+        jdbcTemplate.update("DELETE FROM tis_organization WHERE business_id = ?", businessId);
+    }
 }
