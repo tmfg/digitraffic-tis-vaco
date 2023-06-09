@@ -81,7 +81,7 @@ public class QueueHandlerRepository {
 
     private ConversionInput createConversionInput(Long entryId, ConversionInput conversion) {
         ConversionInput result = jdbcTemplate.queryForObject(
-                "INSERT INTO queue_Conversion_input (entry_id) VALUES (?) RETURNING id, entry_id",
+                "INSERT INTO queue_conversion_input (entry_id) VALUES (?) RETURNING id, entry_id",
                 (rs, rowNum) -> ImmutableConversionInput.builder().build(),
                 entryId);
         return result;

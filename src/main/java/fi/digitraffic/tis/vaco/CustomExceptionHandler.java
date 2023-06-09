@@ -19,16 +19,21 @@ public class CustomExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
         List<String> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map((e) -> "Field '%s' %s (was %s)".formatted(e.getField(), e.getDefaultMessage(), e.getRejectedValue()))
-                .toList();
+            .getFieldErrors()
+            .stream()
+            .map((e) -> "Field '%s' %s (was %s)".formatted(e.getField(), e.getDefaultMessage(), e.getRejectedValue()))
+            .toList();
+        errors.addAll(ex.getBindingResult()
+            .getGlobalErrors()
+            .stream()
+            .map((e) -> "Object '%s' %s (%s %s)".formatted(e.getObjectName(), e.getDefaultMessage(), e.getCode(), e.getArguments()))
+            .toList());
         return new ResponseEntity<>(createBody(errors), HttpStatus.BAD_REQUEST);
     }
 
     private static Map<String, Object> createBody(List<String> errors) {
         return Map.of(
-                "errors", errors,
-                "timestamp", LocalDateTime.now());
+            "errors", errors,
+            "timestamp", LocalDateTime.now());
     }
 }

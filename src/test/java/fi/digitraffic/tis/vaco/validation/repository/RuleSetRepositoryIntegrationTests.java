@@ -2,10 +2,12 @@ package fi.digitraffic.tis.vaco.validation.repository;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.organization.model.CooperationType;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
+import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
 import fi.digitraffic.tis.vaco.validation.model.Category;
-import fi.digitraffic.tis.vaco.validation.model.CooperationType;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -20,13 +22,16 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
+class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
-    OrganizationsRepository organizationsRepository;
+    CooperationRepository cooperationRepository;
 
     @Autowired
-    RuleSetsRepository rulesetsRepository;
+    OrganizationRepository organizationRepository;
+
+    @Autowired
+    RuleSetRepository rulesetRepository;
 
     private ImmutableOrganization fintraffic;
     private ImmutableOrganization parentOrg;
@@ -40,47 +45,47 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        fintraffic = organizationsRepository.findByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
-        parentOrg = organizationsRepository.createOrganization(
+        fintraffic = organizationRepository.findByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID).get();
+        parentOrg = organizationRepository.create(
                 ImmutableOrganization.builder()
                         .name("test parent")
                         .businessId("4433221-1")
                         .build());
-        currentOrg = organizationsRepository.createOrganization(
+        currentOrg = organizationRepository.create(
                 ImmutableOrganization.builder()
                         .name("Esko testaa")
                         .businessId("1234567-8")
                         .build());
-        otherOrg = organizationsRepository.createOrganization(
+        otherOrg = organizationRepository.create(
                 ImmutableOrganization.builder()
                         .name("tesmaava Esko")
                         .businessId("8765432-1")
                         .build());
-        organizationsRepository.createCooperation(partnership(parentOrg, currentOrg));
-        organizationsRepository.createCooperation(partnership(parentOrg, otherOrg));
+        cooperationRepository.create(partnership(parentOrg, currentOrg));
+        cooperationRepository.create(partnership(parentOrg, otherOrg));
 
-        parentRuleA = rulesetsRepository.createRuleSet(
+        parentRuleA = rulesetRepository.createRuleSet(
                 ImmutableValidationRule.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC));
-        parentRuleB = rulesetsRepository.createRuleSet(
+        parentRuleB = rulesetRepository.createRuleSet(
                 ImmutableValidationRule.of(parentOrg.id(), "SPECIFIC_B", "SPECIFIC_B", Category.SPECIFIC));
-        currentRuleC = rulesetsRepository.createRuleSet(
+        currentRuleC = rulesetRepository.createRuleSet(
                 ImmutableValidationRule.of(currentOrg.id(), "SPECIFIC_C", "SPECIFIC_C", Category.SPECIFIC));
-        currentRuleD = rulesetsRepository.createRuleSet(
+        currentRuleD = rulesetRepository.createRuleSet(
                 ImmutableValidationRule.of(currentOrg.id(), "SPECIFIC_D", "SPECIFIC_D", Category.SPECIFIC));
-        otherRuleE = rulesetsRepository.createRuleSet(
+        otherRuleE = rulesetRepository.createRuleSet(
                 ImmutableValidationRule.of(otherOrg.id(), "SPECIFIC_E", "SPECIFIC_E", Category.SPECIFIC));
     }
 
     @AfterEach
     void tearDown() {
-        organizationsRepository.deleteOrganization(parentOrg.businessId());
-        organizationsRepository.deleteOrganization(currentOrg.businessId());
-        organizationsRepository.deleteOrganization(otherOrg.businessId());
-        rulesetsRepository.deleteRuleSet(parentRuleA);
-        rulesetsRepository.deleteRuleSet(parentRuleB);
-        rulesetsRepository.deleteRuleSet(currentRuleC);
-        rulesetsRepository.deleteRuleSet(currentRuleD);
-        rulesetsRepository.deleteRuleSet(otherRuleE);
+        organizationRepository.delete(parentOrg.businessId());
+        organizationRepository.delete(currentOrg.businessId());
+        organizationRepository.delete(otherOrg.businessId());
+        rulesetRepository.deleteRuleSet(parentRuleA);
+        rulesetRepository.deleteRuleSet(parentRuleB);
+        rulesetRepository.deleteRuleSet(currentRuleC);
+        rulesetRepository.deleteRuleSet(currentRuleD);
+        rulesetRepository.deleteRuleSet(otherRuleE);
     }
 
     /**
@@ -88,15 +93,15 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
      */
     @Test
     void hasDefaultRulesAlwaysAvailable() {
-        ValidationRule canonicalGtfsValidator = rulesetsRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
-        assertThat(rulesetsRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(canonicalGtfsValidator)));
+        ValidationRule canonicalGtfsValidator = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
+        assertThat(rulesetRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(canonicalGtfsValidator)));
     }
 
     @Test
     void rulesetsAreChosenBasedOnOwnership() {
-        assertThat(rulesetsRepository.findRulesets(parentOrg.businessId()), equalTo(Set.of(parentRuleA, parentRuleB)));
-        assertThat(rulesetsRepository.findRulesets(otherOrg.businessId()), equalTo(Set.of(parentRuleA, otherRuleE)));
-        assertThat(rulesetsRepository.findRulesets(currentOrg.businessId()), equalTo(Set.of(parentRuleA, currentRuleC, currentRuleD)));
+        assertThat(rulesetRepository.findRulesets(parentOrg.businessId()), equalTo(Set.of(parentRuleA, parentRuleB)));
+        assertThat(rulesetRepository.findRulesets(otherOrg.businessId()), equalTo(Set.of(parentRuleA, otherRuleE)));
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId()), equalTo(Set.of(parentRuleA, currentRuleC, currentRuleD)));
     }
 
     /**
@@ -105,21 +110,21 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void currentsSpecificRulesCanBeFiltered() {
         // parent's generic is always returned even when not requested, self specific is returned on request
-        assertThat(rulesetsRepository.findRulesets(currentOrg.businessId(), Set.of("GENERIC_A", "SPECIFIC_C")),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("GENERIC_A", "SPECIFIC_C")),
                 equalTo(Set.of(parentRuleA, currentRuleC)));
     }
 
     @Test
     void parentsGenericRuleIsAlwaysReturned() {
         // parent's generic is always returned even when not requested
-        assertThat(rulesetsRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_C")),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_C")),
                 equalTo(Set.of(parentRuleA, currentRuleC)));
     }
 
     @Test
     void parentsSpecificRulesCannotBeSelected() {
         // parent's generic is always returned even when not requested, can't request parent's specific rules
-        assertThat(rulesetsRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_B")),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_B")),
                 equalTo(Set.of(parentRuleA)));
     }
 

@@ -18,17 +18,17 @@ import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public class RuleSetsRepository {
+public class RuleSetRepository {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RuleSetsRepository.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RuleSetRepository.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final Cache<String, ValidationRule> rulesetNameCache;
 
-    public RuleSetsRepository(JdbcTemplate jdbcTemplate,
-                              NamedParameterJdbcTemplate namedParameterJdbcTemplate,
-                              @Qualifier("rulesetNameCache") Cache<String, ValidationRule> rulesetNameCache) {
+    public RuleSetRepository(JdbcTemplate jdbcTemplate,
+                             NamedParameterJdbcTemplate namedParameterJdbcTemplate,
+                             @Qualifier("rulesetNameCache") Cache<String, ValidationRule> rulesetNameCache) {
         this.jdbcTemplate = jdbcTemplate;
         this.rulesetNameCache = warmup(rulesetNameCache);
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;

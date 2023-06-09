@@ -1,4 +1,7 @@
-package fi.digitraffic.tis.vaco.validation.model;
+package fi.digitraffic.tis.vaco.organization.model;
+
+import fi.digitraffic.tis.vaco.validation.model.InvalidMappingException;
+import fi.digitraffic.tis.vaco.validation.model.PersistableEnum;
 
 public enum CooperationType implements PersistableEnum {
     AUTHORITY_PROVIDER("authority-provider");

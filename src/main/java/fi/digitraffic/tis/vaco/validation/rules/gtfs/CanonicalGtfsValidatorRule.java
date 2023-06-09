@@ -12,7 +12,7 @@ import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.repository.RuleSetsRepository;
+import fi.digitraffic.tis.vaco.validation.repository.RuleSetRepository;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.immutables.value.Value;
 import org.mobilitydata.gtfsvalidator.input.CountryCode;
@@ -47,14 +47,14 @@ public class CanonicalGtfsValidatorRule implements Rule {
     private final S3TransferManager s3TransferManager;
     private final VacoProperties vacoProperties;
     private final ErrorHandlerService errorHandlerService;
-    private final RuleSetsRepository ruleSetsRepository;
+    private final RuleSetRepository ruleSetsRepository;
 
     public CanonicalGtfsValidatorRule(
             ObjectMapper objectMapper,
             VacoProperties vacoProperties,
             S3TransferManager s3TransferManager,
             ErrorHandlerService errorHandlerService,
-            RuleSetsRepository ruleSetsRepository) {
+            RuleSetRepository ruleSetsRepository) {
         this.objectMapper = objectMapper;
         this.s3TransferManager = s3TransferManager;
         this.vacoProperties = vacoProperties;
