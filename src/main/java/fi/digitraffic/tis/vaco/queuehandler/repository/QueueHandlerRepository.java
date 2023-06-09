@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
@@ -31,11 +32,14 @@ public class QueueHandlerRepository {
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueHandlerRepository.class);
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final ErrorHandlerRepository errorHandlerRepository;
 
     public QueueHandlerRepository(JdbcTemplate jdbcTemplate,
-                                  ObjectMapper objectMapper) {
+                                  ObjectMapper objectMapper,
+                                  ErrorHandlerRepository errorHandlerRepository) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
+        this.errorHandlerRepository = errorHandlerRepository;
     }
 
     @Transactional
@@ -86,9 +90,10 @@ public class QueueHandlerRepository {
     @Transactional
     public Optional<ImmutableQueueEntry> findByPublicId(String publicId) {
         return findEntry(publicId).map(entry ->
-            entry.withPhases(findPhases(entry.id()))
-                .withValidation(findValidationInput(entry.id()))
-                .withConversion((findConversionInput(entry.id()))));
+                entry.withPhases(findPhases(entry.id()))
+                        .withValidation(findValidationInput(entry.id()))
+                        .withConversion(findConversionInput(entry.id()))
+                        .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id())));
     }
 
     private Optional<ImmutableQueueEntry> findEntry(String publicId) {
@@ -100,7 +105,6 @@ public class QueueHandlerRepository {
                         """,
                         RowMappers.QUEUE_ENTRY.apply(objectMapper),
                         publicId));
-
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }

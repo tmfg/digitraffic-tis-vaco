@@ -7,6 +7,8 @@ import fi.digitraffic.tis.vaco.validation.model.CooperationType;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
+import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
+import fi.digitraffic.tis.vaco.validation.rules.gtfs.CanonicalGtfsValidatorRule;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -22,6 +24,13 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     RuleSetsRepository rulesetsRepository;
+
+    @Test
+    void hasDefaultRulesAlwaysAvailable() {
+        ImmutableOrganization fintraffic = organizationsRepository.findByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
+        ValidationRule canonicalGtfsValidator = rulesetsRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
+        assertThat(rulesetsRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(canonicalGtfsValidator)));
+    }
 
     @Test
     void rulesetsAreChosenBasedOnOwnership() {
@@ -50,13 +59,7 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
                         .partnerB(tesmOrg.id())
                         .build());
 
-        ImmutableValidationRule ruleForAll = rulesetsRepository.createRuleSet(
-                ImmutableValidationRule.builder()
-                        .ownerId(fintraffic.id())
-                        .category(Category.GENERIC)
-                        .identifyingName("all the rules")
-                        .description("just testing")
-                        .build());
+        ValidationRule canonicalGtfsValidator = rulesetsRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
 
         ImmutableValidationRule eskoOrgRule = rulesetsRepository.createRuleSet(
                 ImmutableValidationRule.builder()
@@ -66,8 +69,8 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
                         .description("these are mine")
                         .build());
 
-        assertThat(rulesetsRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(ruleForAll)));
-        assertThat(rulesetsRepository.findRulesets(tesmOrg.businessId()), equalTo(Set.of(ruleForAll)));
-        assertThat(rulesetsRepository.findRulesets(eskoOrg.businessId()), equalTo(Set.of(ruleForAll, eskoOrgRule)));
+        assertThat(rulesetsRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(canonicalGtfsValidator)));
+        assertThat(rulesetsRepository.findRulesets(tesmOrg.businessId()), equalTo(Set.of(canonicalGtfsValidator)));
+        assertThat(rulesetsRepository.findRulesets(eskoOrg.businessId()), equalTo(Set.of(canonicalGtfsValidator, eskoOrgRule)));
     }
 }

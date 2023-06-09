@@ -28,6 +28,7 @@
     <logger name="io.netty" level="WARN" />
     <logger name="io.awspring.cloud" level="WARN" />
     <logger name="org.hibernate.validator" level="WARN" />
+    <logger name="org.mobilitydata" level="WARN" />
 
     <root level="INFO">
         <appender-ref ref="STDOUT" />

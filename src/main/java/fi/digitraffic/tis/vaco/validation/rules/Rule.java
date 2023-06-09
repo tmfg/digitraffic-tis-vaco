@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.validation.rules;
 
-import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
-import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
-import fi.digitraffic.tis.vaco.validation.model.Result;
+import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.validation.model.FileReferences;
+import fi.digitraffic.tis.vaco.validation.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 
 import java.util.concurrent.CompletableFuture;
@@ -10,5 +10,5 @@ import java.util.concurrent.CompletableFuture;
 public interface Rule {
     String getIdentifyingName();
 
-    CompletableFuture<Result<ValidationReport>> execute(ImmutablePhaseData<ImmutableFileReferences> phaseData);
+    CompletableFuture<ValidationReport> execute(QueueEntry queueEntry, PhaseData<FileReferences> phaseData);
 }
