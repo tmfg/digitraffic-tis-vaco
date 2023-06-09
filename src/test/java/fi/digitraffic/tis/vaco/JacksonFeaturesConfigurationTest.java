@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JacksonFeaturesConfigurationTest extends SpringBootIntegrationTestBase {
 
-    private String primitiveValues = """
+    private final String primitiveValues = """
             {
               "notAnInteger": 123,
               "notAFloat": 45.678,

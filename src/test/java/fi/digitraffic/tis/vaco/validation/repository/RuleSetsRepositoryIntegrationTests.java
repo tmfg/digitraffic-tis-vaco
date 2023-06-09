@@ -10,6 +10,8 @@ import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
+import fi.digitraffic.tis.vaco.validation.rules.gtfs.CanonicalGtfsValidatorRule;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,6 +29,7 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     RuleSetsRepository rulesetsRepository;
 
     private ImmutableOrganization fintraffic;
+    private ImmutableOrganization parentOrg;
     private ImmutableOrganization currentOrg;
     private ImmutableOrganization otherOrg;
     private ImmutableValidationRule parentRuleA;
@@ -38,6 +41,11 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @BeforeEach
     void setUp() {
         fintraffic = organizationsRepository.findByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
+        parentOrg = organizationsRepository.createOrganization(
+                ImmutableOrganization.builder()
+                        .name("test parent")
+                        .businessId("4433221-1")
+                        .build());
         currentOrg = organizationsRepository.createOrganization(
                 ImmutableOrganization.builder()
                         .name("Esko testaa")
@@ -48,13 +56,13 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
                         .name("tesmaava Esko")
                         .businessId("8765432-1")
                         .build());
-        organizationsRepository.createCooperation(partnership(fintraffic, currentOrg));
-        organizationsRepository.createCooperation(partnership(fintraffic, otherOrg));
+        organizationsRepository.createCooperation(partnership(parentOrg, currentOrg));
+        organizationsRepository.createCooperation(partnership(parentOrg, otherOrg));
 
         parentRuleA = rulesetsRepository.createRuleSet(
-                ImmutableValidationRule.of(fintraffic.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC));
+                ImmutableValidationRule.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC));
         parentRuleB = rulesetsRepository.createRuleSet(
-                ImmutableValidationRule.of(fintraffic.id(), "SPECIFIC_B", "SPECIFIC_B", Category.SPECIFIC));
+                ImmutableValidationRule.of(parentOrg.id(), "SPECIFIC_B", "SPECIFIC_B", Category.SPECIFIC));
         currentRuleC = rulesetsRepository.createRuleSet(
                 ImmutableValidationRule.of(currentOrg.id(), "SPECIFIC_C", "SPECIFIC_C", Category.SPECIFIC));
         currentRuleD = rulesetsRepository.createRuleSet(
@@ -65,6 +73,7 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
+        organizationsRepository.deleteOrganization(parentOrg.businessId());
         organizationsRepository.deleteOrganization(currentOrg.businessId());
         organizationsRepository.deleteOrganization(otherOrg.businessId());
         rulesetsRepository.deleteRuleSet(parentRuleA);
@@ -74,9 +83,18 @@ class RuleSetsRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         rulesetsRepository.deleteRuleSet(otherRuleE);
     }
 
+    /**
+     * Everything under Fintraffic will always get default rules. See `R__seed_data.sql` in DB Migrator repository.
+     */
+    @Test
+    void hasDefaultRulesAlwaysAvailable() {
+        ValidationRule canonicalGtfsValidator = rulesetsRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
+        assertThat(rulesetsRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(canonicalGtfsValidator)));
+    }
+
     @Test
     void rulesetsAreChosenBasedOnOwnership() {
-        assertThat(rulesetsRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(parentRuleA, parentRuleB)));
+        assertThat(rulesetsRepository.findRulesets(parentOrg.businessId()), equalTo(Set.of(parentRuleA, parentRuleB)));
         assertThat(rulesetsRepository.findRulesets(otherOrg.businessId()), equalTo(Set.of(parentRuleA, otherRuleE)));
         assertThat(rulesetsRepository.findRulesets(currentOrg.businessId()), equalTo(Set.of(parentRuleA, currentRuleC, currentRuleD)));
     }

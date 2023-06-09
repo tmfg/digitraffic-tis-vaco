@@ -1,29 +1,41 @@
 package fi.digitraffic.tis.vaco.validation.repository;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
 import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
 public class RuleSetsRepository {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RuleSetsRepository.class);
+
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final Cache<String, ValidationRule> rulesetNameCache;
 
     public RuleSetsRepository(JdbcTemplate jdbcTemplate,
-                              NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+                              NamedParameterJdbcTemplate namedParameterJdbcTemplate,
+                              @Qualifier("rulesetNameCache") Cache<String, ValidationRule> rulesetNameCache) {
         this.jdbcTemplate = jdbcTemplate;
+        this.rulesetNameCache = warmup(rulesetNameCache);
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
     public Set<ValidationRule> findRulesets(String businessId) {
-        return Set.copyOf(jdbcTemplate.query("""
+        List<ImmutableValidationRule> ruleSets = jdbcTemplate.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM tis_organization
@@ -44,14 +56,16 @@ public class RuleSetsRepository {
                    AND vr.category = 'generic'
                 """,
                 RowMappers.RULESET,
-                businessId));
+                businessId);
+        LOGGER.info("Found {} rulesets for {}: {}", ruleSets.size(), businessId, ruleSets.stream().map(ValidationRule::identifyingName).toList());
+        return Set.copyOf(ruleSets);
     }
 
     public Set<ValidationRule> findRulesets(String businessId, Set<String> ruleNames) {
         if (ruleNames.isEmpty()) {
             return findRulesets(businessId);
         }
-        return Set.copyOf(namedParameterJdbcTemplate.query("""
+        List<ImmutableValidationRule> ruleSets = namedParameterJdbcTemplate.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM tis_organization
@@ -80,7 +94,9 @@ public class RuleSetsRepository {
                 new MapSqlParameterSource()
                         .addValue("businessId", businessId)
                         .addValue("ruleNames", ruleNames),
-                RowMappers.RULESET));
+                RowMappers.RULESET);
+        LOGGER.info("Found {} rulesets for {}: resolved {}, requested {}", ruleSets.size(), businessId, ruleSets.stream().map(ValidationRule::identifyingName).toList(), ruleNames);
+        return Set.copyOf(ruleSets);
     }
 
     public ImmutableValidationRule createRuleSet(ImmutableValidationRule ruleSet) {
@@ -93,8 +109,29 @@ public class RuleSetsRepository {
                 ruleSet.ownerId(), ruleSet.category().fieldName(), ruleSet.identifyingName(), ruleSet.description());
     }
 
+    public Optional<ValidationRule> findByName(String ruleName) {
+        try {
+            return Optional.ofNullable(rulesetNameCache.get(ruleName, r -> jdbcTemplate.queryForObject("""
+                    SELECT id, public_id, owner_id, category, identifying_name, description
+                      FROM validation_ruleset
+                     WHERE identifying_name = ?
+                    """,
+                RowMappers.RULESET,
+                ruleName)));
+        } catch (EmptyResultDataAccessException erdae) {
+            return Optional.empty();
+        }
+    }
 
     public void deleteRuleSet(ImmutableValidationRule rule) {
         jdbcTemplate.update("DELETE FROM validation_ruleset WHERE public_id = ?", rule.publicId());
     }
+
+    private Cache warmup(Cache<String, ValidationRule> rulesetNameCache) {
+        jdbcTemplate.query("SELECT * FROM validation_ruleset", RowMappers.RULESET).forEach(ruleset -> {
+            rulesetNameCache.put(ruleset.identifyingName(), ruleset);
+        });
+        return rulesetNameCache;
+    }
+
 }

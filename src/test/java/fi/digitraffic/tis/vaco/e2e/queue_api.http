@@ -1,0 +1,24 @@
+POST http://localhost:8080/queue
+Content-Type: application/json
+
+{
+  "url": "http://localhost:8080/static/testfiles/padasjoen_kunta.zip",
+  "format": "gtfs",
+  "businessId": "2942108-7",
+  "etag": "etagg",
+  "validation": {},
+  "conversion": {},
+  "metadata": {
+      "brewingEquipment": "teapot",
+      "capacity (ml)": 1500
+  }
+}
+
+> {%
+    client.global.set("entry_details_link", response.body.links.self.href)
+%}
+
+###
+
+GET {{entry_details_link}}
+Content-Type: application/json
