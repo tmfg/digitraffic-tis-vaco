@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.aws;
+package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SqsQueueListeners {
+public class JobQueueSqsListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqsQueueListeners.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobQueueSqsListener.class);
 
     private final MessagingService messagingService;
 
-    public SqsQueueListeners(MessagingService messagingService) {
+    public JobQueueSqsListener(MessagingService messagingService) {
         this.messagingService = messagingService;
     }
 
