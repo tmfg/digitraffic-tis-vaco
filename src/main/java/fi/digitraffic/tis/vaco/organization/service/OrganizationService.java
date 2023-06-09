@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.organization.service;
 
-import fi.digitraffic.tis.vaco.ItemExistsException;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
 import org.springframework.stereotype.Service;
@@ -16,15 +15,15 @@ public class OrganizationService {
         this.organizationRepository = organizationRepository;
     }
 
-    public ImmutableOrganization createOrganization(ImmutableOrganization organization) {
+    public Optional<ImmutableOrganization> createOrganization(ImmutableOrganization organization) {
         Optional<ImmutableOrganization> existing = organizationRepository.findByBusinessId(organization.businessId());
         if(existing.isPresent()) {
-            throw new ItemExistsException("An organization with given business ID already exists");
+            return Optional.empty();
         }
-        return organizationRepository.create(organization);
+        return Optional.of(organizationRepository.create(organization));
     }
 
-    public ImmutableOrganization getByBusinessId(String businessId) {
-        return organizationRepository.getByBusinessId(businessId);
+    public Optional<ImmutableOrganization> findByBusinessId(String businessId) {
+        return organizationRepository.findByBusinessId(businessId);
     }
 }

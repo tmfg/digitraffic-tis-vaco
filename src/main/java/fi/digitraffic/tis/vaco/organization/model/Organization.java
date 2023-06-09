@@ -7,7 +7,6 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
-// TODO: probably in wrong subsystem package
 @Value.Immutable
 @JsonSerialize(as = ImmutableOrganization.class)
 @JsonDeserialize(as = ImmutableOrganization.class)
@@ -17,6 +16,7 @@ public interface Organization {
     @JsonView(DataVisibility.Internal.class)
     Long id();
 
+    // TODO: think about removing publicId
     @Nullable
     String publicId();
 
