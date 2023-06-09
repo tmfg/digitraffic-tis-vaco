@@ -77,10 +77,6 @@ public class RowMappers {
         };
     }
 
-    private static <I,O> O nullable(I input, Function<I, O> i2o) {
-        return Optional.ofNullable(input).map(i2o).orElse(null);
-    }
-
     private static RowMapper<ImmutableQueueEntry> mapQueueEntry(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableQueueEntry.builder()
                 .id(rs.getLong("id"))
@@ -90,7 +86,14 @@ public class RowMappers {
                 .url(rs.getString("url"))
                 .etag(rs.getString("etag"))
                 .metadata(readJson(objectMapper, rs, "metadata"))
+                .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
+                .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
+                .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
                 .build();
+    }
+
+    private static <I,O> O nullable(I input, Function<I, O> i2o) {
+        return Optional.ofNullable(input).map(i2o).orElse(null);
     }
 
     private static JsonNode readJson(ObjectMapper objectMapper, ResultSet rs, String field) {

@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.errorhandling.Error;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Value.Immutable
@@ -49,4 +50,13 @@ public interface QueueEntry {
 
     @Nullable
     List<Error> errors();
+
+    @Nullable
+    LocalDateTime started();
+
+    @Nullable
+    LocalDateTime updated();
+
+    @Nullable
+    LocalDateTime completed();
 }
