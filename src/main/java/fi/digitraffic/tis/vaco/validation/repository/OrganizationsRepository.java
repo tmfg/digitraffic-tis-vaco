@@ -44,4 +44,8 @@ public class OrganizationsRepository {
                 RowMappers.COOPERATION,
                 cooperation.cooperationType().fieldName(), cooperation.partnerA(), cooperation.partnerB());
     }
+
+    public void deleteOrganization(String businessId) {
+        jdbcTemplate.update("DELETE FROM tis_organization WHERE business_id = ?", businessId);
+    }
 }
