@@ -14,13 +14,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = { UniquePartners.Validator.class })
 public @interface UniquePartners {
-    // message is required by Jakarta Validation, the curly syntax is a property lookup
-    String message() default "{fi.digitraffic.tis.constraint.ExampleMessage}";
+    // TODO: move to a proper centralized place for error messages
+    String message() default "Provided partners' business ID are the same";
 
-    // groups is required by Jakarta Validation, empty is fine
     Class<?>[] groups() default {};
 
-    // payload is required by Jakarta Validation, empty is fine
     Class<? extends Payload>[] payload() default {};
 
     class Validator implements ConstraintValidator<UniquePartners, CooperationCommand> {
