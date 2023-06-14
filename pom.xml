@@ -49,9 +49,11 @@
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.11.0</org.apache.maven.plugins.maven-compiler-plugin.version>
         <org.apache.maven.plugins.maven-surefire-plugin.version>3.1.2</org.apache.maven.plugins.maven-surefire-plugin.version>
         <org.apache.maven.plugins.maven-jar-plugin.version>3.3.0</org.apache.maven.plugins.maven-jar-plugin.version>
+        <jib-maven-plugin.version>3.3.2</jib-maven-plugin.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <org.springframework.boot-version>${project.parent.version}</org.springframework.boot-version>
+        <jib-maven-plugin.configuration.to.image>${env.CONTAINER_REGISTRY_URI}/${project.groupId}.${project.name}:${project.version}</jib-maven-plugin.configuration.to.image>
     </properties>
 
     <dependencyManagement>
@@ -108,6 +110,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <!-- Exclude the Tomcat dependency -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-undertow</artifactId>
         </dependency>
         <!-- Enable configuration classes -->
         <dependency>
@@ -319,6 +332,23 @@
                         <exclude>application-*</exclude>
                         <exclude>**/testfiles/*</exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>${jib-maven-plugin.version}</version>
+                <configuration>
+                    <container>
+                        <mainClass>fi.digitraffic.tis.vaco.VacoApplication</mainClass>
+                        <user>nobody:nobody</user> <!-- "homeless" Linux default user -->
+                    </container>
+                    <to>
+                        <image>${jib-maven-plugin.configuration.to.image}</image>
+                    </to>
+                    <from>
+                        <image>gcr.io/distroless/java17-debian11:nonroot@sha256:61463fa9d1bb9994de4e50e71f3e487d0e61f1676e26306388a743ff96311777</image>
+                    </from>
                 </configuration>
             </plugin>
         </plugins>
