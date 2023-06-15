@@ -1,10 +1,8 @@
 # Original from https://github.com/actions/checkout/issues/512#issuecomment-1264735491
-# updated to match current GitHub Actions recommendations and best practices
+# updated to match current GitHub Actions recommendations and best practices and further modified for our needs
 
-# This is essentially the same as actions/checkout, but will
-# fallback to the default branch if the ref does not exist.
-# https://github.com/actions/checkout
-
+# Checkout specified repository using SSH deploy key, matching the repository's branch name to the branch name of the
+# repository this action is being run in, falling back to inputs.default-branch if ref doesn't exist.
 name: Conditional Checkout
 
 inputs:
@@ -14,10 +12,6 @@ inputs:
     type: number
   repository:
     required: true
-    type: string
-  ref:
-    default: ''
-    required: false
     type: string
   path:
     default: ''
