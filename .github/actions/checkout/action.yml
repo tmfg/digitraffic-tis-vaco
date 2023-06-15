@@ -44,7 +44,7 @@ runs:
           echo "::notice::Checkout: ${{ inputs.repository }} using ${{ inputs.default-branch }}"
           echo "ref-exists=true" >> $GITHUB_OUTPUT
         else
-          if git ls-remote --heads --quiet --exit-code git@github.com:${{ inpu¡ts.repository }}.git ${{ steps.extract_branch.outputs.branch }}
+          if git ls-remote --heads --quiet --exit-code git@github.com:${{ inputs.repository }}.git ${{ steps.extract_branch.outputs.branch }}
           then
             echo "::notice::Checkout: ${{ inputs.repository }} using ${{ steps.extract_branch.outputs.branch }}"
             echo "ref-exists=true" >> $GITHUB_OUTPUT
