@@ -35,13 +35,17 @@ runs:
   using: composite
 
   steps:
+    - id: extract_branch
+      name: Extract branch name
+      shell: bash
+      run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
     - uses: webfactory/ssh-agent@v0.7.0
       with:
         ssh-private-key: ${{ inputs.deploy-key }}
     - id: repo
       shell: bash
       run: |
-        if [[ -z "${{ inputs.ref }}" ]]
+        if [[ -z "${{ steps.extract_branch.outputs.branch }}" ]]
         then
           if [[ "${{ inputs.repository }}" != "${{ github.repository }}" ]]
           then
@@ -52,13 +56,13 @@ runs:
           echo "::notice::Checkout: ${{ inputs.repository }} using ${USING}"
           echo "ref-exists=true" >> $GITHUB_OUTPUT
         else
-          if git ls-remote --heads --quiet --exit-code git@github.com:${{ inputs.repository }}.git ${{ inputs.ref }}
+          if git ls-remote --heads --quiet --exit-code git@github.com:${{ inputs.repository }}.git ${{ steps.extract_branch.outputs.branch }}
           then
-            echo "::notice::Checkout: ${{ inputs.repository }} using ${{ inputs.ref }}"
+            echo "::notice::Checkout: ${{ inputs.repository }} using ${{ steps.extract_branch.outputs.branch }}"
             echo "ref-exists=true" >> $GITHUB_OUTPUT
           else
             USING="$(gh api /repos/${{ inputs.repository }} --jq '.default_branch')"
-            echo "::notice::Checkout: ${{ inputs.repository }} does not have ref ${{ inputs.ref }} (fallback to ${USING})"
+            echo "::notice::Checkout: ${{ inputs.repository }} does not have ref ${{ steps.extract_branch.outputs.branch }} (fallback to ${USING})"
             echo "ref-exists=false" >> $GITHUB_OUTPUT
             echo "default-branch=${USING}" >> $GITHUB_OUTPUT
           fi
@@ -68,7 +72,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: ${{ inputs.repository }}
-        ref: ${{ inputs.ref }}
+        ref: ${{ steps.extract_branch.outputs.branch }}
         path: ${{ inputs.path }}
         ssh-key: ${{ inputs.deploy-key }}
         fetch-depth: ${{ inputs.fetch-depth }}
