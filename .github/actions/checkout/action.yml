@@ -41,24 +41,16 @@ runs:
       run: |
         if [[ -z "${{ steps.extract_branch.outputs.branch }}" ]]
         then
-          if [[ "${{ inputs.repository }}" != "${{ github.repository }}" ]]
-          then
-            USING="${{ inputs.default-branch }}"
-          else
-            USING="$(gh api /repos/${{ inputs.repository }}/commits/${{ github.sha }}/branches-where-head --jq '.[0].name')"
-          fi
-          echo "::notice::Checkout: ${{ inputs.repository }} using ${USING}"
+          echo "::notice::Checkout: ${{ inputs.repository }} using ${{ inputs.default-branch }}"
           echo "ref-exists=true" >> $GITHUB_OUTPUT
         else
-          if git ls-remote --heads --quiet --exit-code git@github.com:${{ inputs.repository }}.git ${{ steps.extract_branch.outputs.branch }}
+          if git ls-remote --heads --quiet --exit-code git@github.com:${{ inpu¡ts.repository }}.git ${{ steps.extract_branch.outputs.branch }}
           then
             echo "::notice::Checkout: ${{ inputs.repository }} using ${{ steps.extract_branch.outputs.branch }}"
             echo "ref-exists=true" >> $GITHUB_OUTPUT
           else
-            USING="$(gh api /repos/${{ inputs.repository }} --jq '.default_branch')"
-            echo "::notice::Checkout: ${{ inputs.repository }} does not have ref ${{ steps.extract_branch.outputs.branch }} (fallback to ${USING})"
+            echo "::notice::Checkout: ${{ inputs.repository }} does not have ref ${{ steps.extract_branch.outputs.branch }} (fallback to ${{ inputs.default-branch }})"
             echo "ref-exists=false" >> $GITHUB_OUTPUT
-            echo "default-branch=${USING}" >> $GITHUB_OUTPUT
           fi
         fi
 
@@ -75,7 +67,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: ${{ inputs.repository }}
-        ref: ${{ steps.repo.outputs.default-branch }}
+        ref: ${{ inputs.default-branch }}
         path: ${{ inputs.path }}
         ssh-key: ${{ inputs.deploy-key }}
         fetch-depth: ${{ inputs.fetch-depth }}
