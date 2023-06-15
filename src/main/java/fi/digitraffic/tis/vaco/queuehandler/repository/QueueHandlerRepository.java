@@ -80,11 +80,12 @@ public class QueueHandlerRepository {
     }
 
     private ConversionInput createConversionInput(Long entryId, ConversionInput conversion) {
-        ConversionInput result = jdbcTemplate.queryForObject(
-                "INSERT INTO queue_conversion_input (entry_id) VALUES (?) RETURNING id, entry_id",
-                (rs, rowNum) -> ImmutableConversionInput.builder().build(),
-                entryId);
-        return result;
+        return conversion != null
+            ? jdbcTemplate.queryForObject(
+                "INSERT INTO queue_conversion_input (entry_id, target_format) VALUES (?, ?) RETURNING id, entry_id, target_format",
+                    (rs, rowNum) -> ImmutableConversionInput.builder().build(),
+                    entryId, conversion.targetFormat())
+            : null;
     }
 
     @Transactional
@@ -92,7 +93,7 @@ public class QueueHandlerRepository {
         return findEntry(publicId).map(entry ->
                 entry.withPhases(findPhases(entry.id()))
                         .withValidation(findValidationInput(entry.id()))
-                        .withConversion(findConversionInput(entry.id()))
+                        .withConversion(findConversionInput(entry.id()).orElse(null))
                         .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id())));
     }
 
@@ -122,10 +123,14 @@ public class QueueHandlerRepository {
             entryId);
     }
 
-    private ConversionInput findConversionInput(Long entryId) {
-        return jdbcTemplate.queryForObject("SELECT * FROM queue_conversion_input qci WHERE qci.entry_id = ?",
-            (rs, row) -> null,
-            entryId);
+    private Optional<ConversionInput> findConversionInput(Long entryId) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT * FROM queue_conversion_input qci WHERE qci.entry_id = ?",
+                (rs, row) -> null,
+                entryId));
+        } catch (EmptyResultDataAccessException erdae) {
+            return Optional.empty();
+        }
     }
 
     public ImmutablePhase startPhase(ImmutablePhase phase) {

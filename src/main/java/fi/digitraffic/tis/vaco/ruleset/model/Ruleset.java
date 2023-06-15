@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.validation.model;
+package fi.digitraffic.tis.vaco.ruleset.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,9 +10,9 @@ import org.immutables.value.Value;
 
 // TODO: probably in wrong subsystem package
 @Value.Immutable
-@JsonSerialize(as = ImmutableValidationRule.class)
-@JsonDeserialize(as = ImmutableValidationRule.class)
-public interface ValidationRule {
+@JsonSerialize(as = ImmutableRuleset.class)
+@JsonDeserialize(as = ImmutableRuleset.class)
+public interface Ruleset {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
     Long id();
@@ -36,4 +36,8 @@ public interface ValidationRule {
     @NotBlank
     @Value.Parameter
     Category category();
+
+    @NotBlank
+    @Value.Parameter
+    Type type();
 }

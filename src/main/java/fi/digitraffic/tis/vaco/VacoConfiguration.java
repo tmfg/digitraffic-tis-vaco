@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,8 +21,8 @@ public class VacoConfiguration {
     }
 
     @Bean(name = "rulesetNameCache")
-    public Cache<String, ValidationRule> rulesetNameCache() {
-        Cache<String, ValidationRule> cache = Caffeine.newBuilder()
+    public Cache<String, Ruleset> rulesetNameCache() {
+        Cache<String, Ruleset> cache = Caffeine.newBuilder()
             .maximumSize(500)
             .expireAfterWrite(Duration.ofHours(1))
             .build();

@@ -7,13 +7,15 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
-import fi.digitraffic.tis.vaco.validation.model.Category;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
+import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.ruleset.model.Category;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.validation.rules.gtfs.CanonicalGtfsValidatorRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
-import fi.digitraffic.tis.vaco.validation.rules.gtfs.CanonicalGtfsValidatorRule;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -31,17 +33,17 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     OrganizationRepository organizationRepository;
 
     @Autowired
-    RuleSetRepository rulesetRepository;
+    RulesetRepository rulesetRepository;
 
     private ImmutableOrganization fintraffic;
     private ImmutableOrganization parentOrg;
     private ImmutableOrganization currentOrg;
     private ImmutableOrganization otherOrg;
-    private ImmutableValidationRule parentRuleA;
-    private ImmutableValidationRule parentRuleB;
-    private ImmutableValidationRule currentRuleC;
-    private ImmutableValidationRule currentRuleD;
-    private ImmutableValidationRule otherRuleE;
+    private ImmutableRuleset parentRuleA;
+    private ImmutableRuleset parentRuleB;
+    private ImmutableRuleset currentRuleC;
+    private ImmutableRuleset currentRuleD;
+    private ImmutableRuleset otherRuleE;
 
     @BeforeEach
     void setUp() {
@@ -64,16 +66,16 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         cooperationRepository.create(partnership(parentOrg, currentOrg));
         cooperationRepository.create(partnership(parentOrg, otherOrg));
 
-        parentRuleA = rulesetRepository.createRuleSet(
-                ImmutableValidationRule.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC));
-        parentRuleB = rulesetRepository.createRuleSet(
-                ImmutableValidationRule.of(parentOrg.id(), "SPECIFIC_B", "SPECIFIC_B", Category.SPECIFIC));
-        currentRuleC = rulesetRepository.createRuleSet(
-                ImmutableValidationRule.of(currentOrg.id(), "SPECIFIC_C", "SPECIFIC_C", Category.SPECIFIC));
-        currentRuleD = rulesetRepository.createRuleSet(
-                ImmutableValidationRule.of(currentOrg.id(), "SPECIFIC_D", "SPECIFIC_D", Category.SPECIFIC));
-        otherRuleE = rulesetRepository.createRuleSet(
-                ImmutableValidationRule.of(otherOrg.id(), "SPECIFIC_E", "SPECIFIC_E", Category.SPECIFIC));
+        parentRuleA = rulesetRepository.createRuleset(
+                ImmutableRuleset.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC, Type.VALIDATION_SYNTAX));
+        parentRuleB = rulesetRepository.createRuleset(
+                ImmutableRuleset.of(parentOrg.id(), "SPECIFIC_B", "SPECIFIC_B", Category.SPECIFIC, Type.VALIDATION_SYNTAX));
+        currentRuleC = rulesetRepository.createRuleset(
+                ImmutableRuleset.of(currentOrg.id(), "SPECIFIC_C", "SPECIFIC_C", Category.SPECIFIC, Type.VALIDATION_SYNTAX));
+        currentRuleD = rulesetRepository.createRuleset(
+                ImmutableRuleset.of(currentOrg.id(), "SPECIFIC_D", "SPECIFIC_D", Category.SPECIFIC, Type.VALIDATION_SYNTAX));
+        otherRuleE = rulesetRepository.createRuleset(
+                ImmutableRuleset.of(otherOrg.id(), "SPECIFIC_E", "SPECIFIC_E", Category.SPECIFIC, Type.VALIDATION_SYNTAX));
     }
 
     @AfterEach
@@ -81,11 +83,11 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         organizationRepository.delete(parentOrg.businessId());
         organizationRepository.delete(currentOrg.businessId());
         organizationRepository.delete(otherOrg.businessId());
-        rulesetRepository.deleteRuleSet(parentRuleA);
-        rulesetRepository.deleteRuleSet(parentRuleB);
-        rulesetRepository.deleteRuleSet(currentRuleC);
-        rulesetRepository.deleteRuleSet(currentRuleD);
-        rulesetRepository.deleteRuleSet(otherRuleE);
+        rulesetRepository.deleteRuleset(parentRuleA);
+        rulesetRepository.deleteRuleset(parentRuleB);
+        rulesetRepository.deleteRuleset(currentRuleC);
+        rulesetRepository.deleteRuleset(currentRuleD);
+        rulesetRepository.deleteRuleset(otherRuleE);
     }
 
     /**
@@ -93,15 +95,15 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
      */
     @Test
     void hasDefaultRulesAlwaysAvailable() {
-        ValidationRule canonicalGtfsValidator = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
-        assertThat(rulesetRepository.findRulesets(fintraffic.businessId()), equalTo(Set.of(canonicalGtfsValidator)));
+        Ruleset canonicalGtfsValidator = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
+        assertThat(rulesetRepository.findRulesets(fintraffic.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(canonicalGtfsValidator)));
     }
 
     @Test
     void rulesetsAreChosenBasedOnOwnership() {
-        assertThat(rulesetRepository.findRulesets(parentOrg.businessId()), equalTo(Set.of(parentRuleA, parentRuleB)));
-        assertThat(rulesetRepository.findRulesets(otherOrg.businessId()), equalTo(Set.of(parentRuleA, otherRuleE)));
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId()), equalTo(Set.of(parentRuleA, currentRuleC, currentRuleD)));
+        assertThat(rulesetRepository.findRulesets(parentOrg.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(parentRuleA, parentRuleB)));
+        assertThat(rulesetRepository.findRulesets(otherOrg.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(parentRuleA, otherRuleE)));
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(parentRuleA, currentRuleC, currentRuleD)));
     }
 
     /**
@@ -110,21 +112,21 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void currentsSpecificRulesCanBeFiltered() {
         // parent's generic is always returned even when not requested, self specific is returned on request
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("GENERIC_A", "SPECIFIC_C")),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("GENERIC_A", "SPECIFIC_C"), Type.VALIDATION_SYNTAX),
                 equalTo(Set.of(parentRuleA, currentRuleC)));
     }
 
     @Test
     void parentsGenericRuleIsAlwaysReturned() {
         // parent's generic is always returned even when not requested
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_C")),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_C"), Type.VALIDATION_SYNTAX),
                 equalTo(Set.of(parentRuleA, currentRuleC)));
     }
 
     @Test
     void parentsSpecificRulesCannotBeSelected() {
         // parent's generic is always returned even when not requested, can't request parent's specific rules
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_B")),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_B"), Type.VALIDATION_SYNTAX),
                 equalTo(Set.of(parentRuleA)));
     }
 

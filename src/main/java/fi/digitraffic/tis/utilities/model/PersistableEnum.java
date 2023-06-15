@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.validation.model;
+package fi.digitraffic.tis.utilities.model;
 
 /**
  * Interface for enums which should map 1:1 to database and back.

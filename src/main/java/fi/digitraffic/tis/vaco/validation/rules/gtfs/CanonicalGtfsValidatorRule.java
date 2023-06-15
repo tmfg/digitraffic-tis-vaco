@@ -8,11 +8,11 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.repository.RuleSetRepository;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.immutables.value.Value;
 import org.mobilitydata.gtfsvalidator.input.CountryCode;
@@ -47,19 +47,19 @@ public class CanonicalGtfsValidatorRule implements Rule {
     private final S3TransferManager s3TransferManager;
     private final VacoProperties vacoProperties;
     private final ErrorHandlerService errorHandlerService;
-    private final RuleSetRepository ruleSetsRepository;
+    private final RulesetRepository rulesetRepository;
 
     public CanonicalGtfsValidatorRule(
-            ObjectMapper objectMapper,
-            VacoProperties vacoProperties,
-            S3TransferManager s3TransferManager,
-            ErrorHandlerService errorHandlerService,
-            RuleSetRepository ruleSetsRepository) {
+        ObjectMapper objectMapper,
+        VacoProperties vacoProperties,
+        S3TransferManager s3TransferManager,
+        ErrorHandlerService errorHandlerService,
+        RulesetRepository rulesetRepository) {
         this.objectMapper = objectMapper;
         this.s3TransferManager = s3TransferManager;
         this.vacoProperties = vacoProperties;
         this.errorHandlerService = errorHandlerService;
-        this.ruleSetsRepository = ruleSetsRepository;
+        this.rulesetRepository = rulesetRepository;
     }
 
     @Override
@@ -77,10 +77,10 @@ public class CanonicalGtfsValidatorRule implements Rule {
                 return runCanonicalValidator(queueEntry, phaseData);
             } else {
                 ImmutableError error = ImmutableError.of(
-                        queueEntry.id(),
-                        phaseData.phase().id(),
-                        ruleSetsRepository.findByName(RULE_NAME).orElseThrow().id(),
-                        "Wrong format! Expected 'gtfs', was '%s'".formatted(queueEntry.format()));
+                    queueEntry.id(),
+                    phaseData.phase().id(),
+                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                    "Wrong format! Expected 'gtfs', was '%s'".formatted(queueEntry.format()));
                 errorHandlerService.reportError(error);
                 return ImmutableValidationReport.of("what").withErrors(error);
             }
@@ -132,7 +132,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
                             .map(sn -> ImmutableError.of(
                                             queueEntry.id(),
                                             phaseData.phase().id(),
-                                            ruleSetsRepository.findByName(RULE_NAME).orElseThrow().id(),
+                                            rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
                                             notice.code())
                                     .withRaw(sn)))
                     .filter(Objects::nonNull)
@@ -162,7 +162,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
             ImmutableError error = ImmutableError.of(
                     queueEntry.id(),
                     phaseData.phase().id(),
-                    ruleSetsRepository.findByName(RULE_NAME).orElseThrow().id(),
+                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
                     "Failed to upload produced output file from %s to S3 %s:%s".formatted(
                             failure.request().source(),
                             failure.request().putObjectRequest().bucket(),

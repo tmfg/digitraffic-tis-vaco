@@ -1,4 +1,7 @@
-package fi.digitraffic.tis.vaco.validation.model;
+package fi.digitraffic.tis.vaco.ruleset.model;
+
+import fi.digitraffic.tis.utilities.model.PersistableEnum;
+import fi.digitraffic.tis.vaco.validation.model.InvalidMappingException;
 
 public enum Category implements PersistableEnum {
     GENERIC("generic"), SPECIFIC("specific");

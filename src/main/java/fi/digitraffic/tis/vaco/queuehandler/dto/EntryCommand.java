@@ -24,6 +24,6 @@ public record EntryCommand(
     public record Validation() {
     }
 
-    public record Conversion() {
+    public record Conversion(String targetFormat) {
     }
 }
