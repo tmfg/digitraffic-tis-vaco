@@ -35,6 +35,9 @@ runs:
   using: composite
 
   steps:
+    - uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ inputs.deploy-key }}
     - id: repo
       shell: bash
       env:
@@ -51,7 +54,7 @@ runs:
           echo "::notice::Checkout: ${{ inputs.repository }} using ${USING}"
           echo "ref-exists=true" >> $GITHUB_OUTPUT
         else
-          if git ls-remote --heads --quiet --exit-code https://${{ inputs.token }}@github.com/${{ inputs.repository }}.git ${{ inputs.ref }}
+          if git ls-remote --heads --quiet --exit-code git@github.com:${{ inputs.repository }}.git ${{ inputs.ref }}
           then
             echo "::notice::Checkout: ${{ inputs.repository }} using ${{ inputs.ref }}"
             echo "ref-exists=true" >> $GITHUB_OUTPUT
