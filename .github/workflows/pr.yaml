@@ -29,7 +29,7 @@ jobs:
         with:
           repository: tmfg/digitraffic-tis-dbmigrator
           path: digitraffic-tis-dbmigrator
-          ref: ${{ github.base_ref }}
+          ref: ${{ github.head_ref }}
           deploy-key: ${{ secrets.DBMIGRATOR_DEPLOY_KEY }}
 
       - name: Set up JDK
