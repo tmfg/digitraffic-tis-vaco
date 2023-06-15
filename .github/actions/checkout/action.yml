@@ -40,8 +40,6 @@ runs:
         ssh-private-key: ${{ inputs.deploy-key }}
     - id: repo
       shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.token }}
       run: |
         if [[ -z "${{ inputs.ref }}" ]]
         then
