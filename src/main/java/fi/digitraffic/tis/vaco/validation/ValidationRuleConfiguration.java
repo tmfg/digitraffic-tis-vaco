@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.validation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
-import fi.digitraffic.tis.vaco.validation.repository.RuleSetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RuleSetRepository;
 import fi.digitraffic.tis.vaco.validation.rules.gtfs.CanonicalGtfsValidatorRule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

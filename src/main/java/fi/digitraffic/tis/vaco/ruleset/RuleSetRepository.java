@@ -1,9 +1,9 @@
-package fi.digitraffic.tis.vaco.validation.repository;
+package fi.digitraffic.tis.vaco.ruleset;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
-import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,111 +24,116 @@ public class RuleSetRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-    private final Cache<String, ValidationRule> rulesetNameCache;
+    private final Cache<String, Ruleset> rulesetNameCache;
 
     public RuleSetRepository(JdbcTemplate jdbcTemplate,
                              NamedParameterJdbcTemplate namedParameterJdbcTemplate,
-                             @Qualifier("rulesetNameCache") Cache<String, ValidationRule> rulesetNameCache) {
+                             @Qualifier("rulesetNameCache") Cache<String, Ruleset> rulesetNameCache) {
         this.jdbcTemplate = jdbcTemplate;
         this.rulesetNameCache = warmup(rulesetNameCache);
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
-    public Set<ValidationRule> findRulesets(String businessId) {
-        List<ImmutableValidationRule> ruleSets = jdbcTemplate.query("""
-                WITH current_id AS (
-                    SELECT id
-                      FROM tis_organization
-                     WHERE business_id = ?
-                ),
-                parents AS (
-                    SELECT partner_a_id AS id
-                      FROM tis_cooperation, current_id
-                     WHERE partner_b_id = current_id.id
-                )
-                SELECT DISTINCT vr.*
-                  FROM validation_ruleset vr, current_id
-                 WHERE vr.owner_id = current_id.id
-                UNION
-                SELECT DISTINCT vr.*
-                  FROM validation_ruleset vr, parents
-                 WHERE vr.owner_id IN (parents.id)
-                   AND vr.category = 'generic'
-                """,
-                RowMappers.RULESET,
-                businessId);
-        LOGGER.info("Found {} rulesets for {}: {}", ruleSets.size(), businessId, ruleSets.stream().map(ValidationRule::identifyingName).toList());
-        return Set.copyOf(ruleSets);
-    }
-
-    public Set<ValidationRule> findRulesets(String businessId, Set<String> ruleNames) {
-        if (ruleNames.isEmpty()) {
-            return findRulesets(businessId);
-        }
-        List<ImmutableValidationRule> ruleSets = namedParameterJdbcTemplate.query("""
+    public Set<Ruleset> findRulesets(String businessId, String typePrefix) {
+        List<ImmutableRuleset> rulesets = namedParameterJdbcTemplate.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM tis_organization
                      WHERE business_id = :businessId
                 ),
-                specific_rules AS (
+                parents AS (
+                    SELECT partner_a_id AS id
+                      FROM tis_cooperation, current_id
+                     WHERE partner_b_id = current_id.id
+                )
+                SELECT DISTINCT r.*
+                  FROM ruleset r, current_id
+                 WHERE r.owner_id = current_id.id AND r.type LIKE :typePrefix || '%'
+                UNION
+                SELECT DISTINCT r.*
+                  FROM ruleset r, parents
+                 WHERE r.owner_id IN (parents.id)
+                   AND r.category = 'generic' AND r.type LIKE :typePrefix || '%'
+                """,
+            new MapSqlParameterSource()
+                .addValue("businessId", businessId)
+                .addValue("typePrefix", typePrefix),
+            RowMappers.RULESET);
+        LOGGER.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
+        return Set.copyOf(rulesets);
+    }
+
+    public Set<Ruleset> findRulesets(String businessId, Set<String> rulesetNames, String typePrefix) {
+        if (rulesetNames.isEmpty()) {
+            return findRulesets(businessId, typePrefix);
+        }
+        List<ImmutableRuleset> rulesets = namedParameterJdbcTemplate.query("""
+                WITH current_id AS (
                     SELECT id
-                      FROM validation_ruleset
-                     WHERE identifying_name IN (:ruleNames)
+                      FROM tis_organization
+                     WHERE business_id = :businessId
+                ),
+                specific_rulesets AS (
+                    SELECT id
+                      FROM ruleset
+                     WHERE identifying_name IN (:rulesetNames) AND "type" LIKE :typePrefix || '%'
                 ),
                 parents AS (
                     SELECT partner_a_id AS id
                       FROM tis_cooperation, current_id
                      WHERE partner_b_id = current_id.id
                 )
-                SELECT DISTINCT vr.*
-                  FROM validation_ruleset vr, current_id, specific_rules
-                 WHERE vr.owner_id = current_id.id
-                   AND vr.id IN (specific_rules.id)
+                SELECT DISTINCT r.*
+                  FROM ruleset r, current_id, specific_rulesets
+                 WHERE r.owner_id = current_id.id
+                   AND r.id IN (specific_rulesets.id)
+                   AND r.type LIKE :typePrefix || '%'
                 UNION
-                SELECT DISTINCT vr.*
-                  FROM validation_ruleset vr, parents, specific_rules
-                 WHERE vr.owner_id IN (parents.id)
-                   AND vr.category = 'generic'
+                SELECT DISTINCT r.*
+                  FROM ruleset r, parents, specific_rulesets
+                 WHERE r.owner_id IN (parents.id)
+                   AND r.category = 'generic'
                 """,
-                new MapSqlParameterSource()
-                        .addValue("businessId", businessId)
-                        .addValue("ruleNames", ruleNames),
-                RowMappers.RULESET);
-        LOGGER.info("Found {} rulesets for {}: resolved {}, requested {}", ruleSets.size(), businessId, ruleSets.stream().map(ValidationRule::identifyingName).toList(), ruleNames);
-        return Set.copyOf(ruleSets);
+            new MapSqlParameterSource()
+                .addValue("businessId", businessId)
+                .addValue("rulesetNames", rulesetNames)
+                .addValue("typePrefix", typePrefix),
+            RowMappers.RULESET);
+        LOGGER.info("Found {} rulesets of type {} for {}: resolved {}, requested {}", rulesets.size(), typePrefix,
+            businessId, rulesets.stream().map(Ruleset::identifyingName).toList(), rulesetNames);
+        return Set.copyOf(rulesets);
     }
 
-    public ImmutableValidationRule createRuleSet(ImmutableValidationRule ruleSet) {
+    public ImmutableRuleset createRuleset(ImmutableRuleset ruleset) {
         return jdbcTemplate.queryForObject("""
-                INSERT INTO validation_ruleset(owner_id, category, identifying_name, description)
-                     VALUES (?, ?::validation_ruleset_category, ?, ?)
-                  RETURNING id, public_id, owner_id, category, identifying_name, description;
+                INSERT INTO ruleset(owner_id, category, identifying_name, description, "type")
+                     VALUES (?, ?::ruleset_category, ?, ?, ?)
+                  RETURNING id, public_id, owner_id, category, identifying_name, description, "type";
                 """,
-                RowMappers.RULESET,
-                ruleSet.ownerId(), ruleSet.category().fieldName(), ruleSet.identifyingName(), ruleSet.description());
+            RowMappers.RULESET,
+            ruleset.ownerId(), ruleset.category().fieldName(), ruleset.identifyingName(), ruleset.description(), ruleset.type().fieldName());
     }
 
-    public Optional<ValidationRule> findByName(String ruleName) {
+    public Optional<Ruleset> findByName(String rulesetName) {
         try {
-            return Optional.ofNullable(rulesetNameCache.get(ruleName, r -> jdbcTemplate.queryForObject("""
-                    SELECT id, public_id, owner_id, category, identifying_name, description
-                      FROM validation_ruleset
+            return Optional.ofNullable(rulesetNameCache.get(rulesetName, r -> jdbcTemplate.queryForObject("""
+                    SELECT id, public_id, owner_id, category, identifying_name, description, "type"
+                      FROM ruleset
                      WHERE identifying_name = ?
                     """,
                 RowMappers.RULESET,
-                ruleName)));
+                rulesetName)));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }
     }
 
-    public void deleteRuleSet(ImmutableValidationRule rule) {
-        jdbcTemplate.update("DELETE FROM validation_ruleset WHERE public_id = ?", rule.publicId());
+    public void deleteRuleset(ImmutableRuleset rule) {
+        jdbcTemplate.update("DELETE FROM ruleset WHERE public_id = ?", rule.publicId());
     }
 
-    private Cache warmup(Cache<String, ValidationRule> rulesetNameCache) {
-        jdbcTemplate.query("SELECT * FROM validation_ruleset", RowMappers.RULESET).forEach(ruleset -> {
+    private Cache warmup(Cache<String, Ruleset> rulesetNameCache) {
+        jdbcTemplate.query("SELECT * FROM ruleset", RowMappers.RULESET).forEach(ruleset -> {
             rulesetNameCache.put(ruleset.identifyingName(), ruleset);
         });
         return rulesetNameCache;

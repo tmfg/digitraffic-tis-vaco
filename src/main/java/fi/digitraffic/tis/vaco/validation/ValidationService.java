@@ -8,6 +8,8 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.ruleset.RuleSetRepository;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
@@ -17,8 +19,6 @@ import fi.digitraffic.tis.vaco.validation.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.Result;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobResult;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.model.ValidationRule;
-import fi.digitraffic.tis.vaco.validation.repository.RuleSetRepository;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,13 +51,14 @@ public class ValidationService {
     public static final String DOWNLOAD_PHASE = "validation.download";
     public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
     public static final String EXECUTION_PHASE = "validation.execute";
+    public static final String RULESET_TYPE_PREFIX = "validation_";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidationService.class);
     private final VacoProperties vacoProperties;
     private final S3TransferManager s3TransferManager;
     private final QueueHandlerService queueHandlerService;
     private final HttpClient httpClient;
-    private final RuleSetRepository rulesetsRepository;
+    private final RuleSetRepository rulesetRepository;
     private final Map<String, Rule> rules;
     private final ErrorHandlerService errorHandlerService;
 
@@ -65,14 +66,14 @@ public class ValidationService {
                              S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
                              HttpClient httpClient,
-                             RuleSetRepository rulesetsRepository,
+                             RuleSetRepository rulesetRepository,
                              List<Rule> rules,
                              ErrorHandlerService errorHandlerService) {
         this.vacoProperties = vacoProperties;
         this.s3TransferManager = s3TransferManager;
         this.queueHandlerService = queueHandlerService;
         this.httpClient = httpClient;
-        this.rulesetsRepository = rulesetsRepository;
+        this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
         this.errorHandlerService = errorHandlerService;
     }
@@ -80,12 +81,12 @@ public class ValidationService {
     public ValidationJobResult validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
         Result<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());
 
-        Result<Set<ValidationRule>> validationRules = selectRulesets(jobDescription.message(), jobDescription);
+        Result<Set<Ruleset>> validationRulesets = selectRulesets(jobDescription.message(), jobDescription);
 
-        ImmutableResult<List<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRules.result());
+        ImmutableResult<List<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRulesets.result());
 
         return ImmutableValidationJobResult.builder()
-                .addResults(s3path, validationRules, validationReports)
+                .addResults(s3path, validationRulesets, validationReports)
                 .build();
     }
 
@@ -180,25 +181,25 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    Result<Set<ValidationRule>> selectRulesets(QueueEntry queueEntry, ImmutableJobDescription jobDescription) {
-        ImmutablePhaseData<ValidationRule> phaseData = ImmutablePhaseData.of(
+    Result<Set<Ruleset>> selectRulesets(QueueEntry queueEntry, ImmutableJobDescription jobDescription) {
+        ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
-        Set<ValidationRule> validationRules = rulesetsRepository.findRulesets(jobDescription.message().businessId());
+        Set<Ruleset> rulesets = rulesetRepository.findRulesets(jobDescription.message().businessId(), RULESET_TYPE_PREFIX);
 
         phaseData.withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
-        return ImmutableResult.of(RULESET_SELECTION_PHASE, validationRules);
+        return ImmutableResult.of(RULESET_SELECTION_PHASE, rulesets);
     }
 
     @VisibleForTesting
-    ImmutableResult<List<ValidationReport>> executeRules(QueueEntry queueEntry, ImmutableFileReferences fileReferences, Set<ValidationRule> validationRules) {
+    ImmutableResult<List<ValidationReport>> executeRules(QueueEntry queueEntry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
         PhaseData<FileReferences> phaseData = ImmutablePhaseData.<FileReferences>builder()
                 .phase(queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), EXECUTION_PHASE), ProcessingState.START))
                 .payload(fileReferences)
                 .build();
 
-        List<ValidationReport> reports = validationRules.parallelStream()
+        List<ValidationReport> reports = validationRulesets.parallelStream()
                 .map(this::findMatchingRule)
                 .filter(Optional::isPresent)
                 .map(r -> r.get().execute(queueEntry, phaseData))
@@ -209,7 +210,7 @@ public class ValidationService {
         return ImmutableResult.of(EXECUTION_PHASE, reports);
     }
 
-    private Optional<Rule> findMatchingRule(ValidationRule validationRule) {
+    private Optional<Rule> findMatchingRule(Ruleset validationRule) {
         String identifyingName = validationRule.identifyingName();
         Optional<Rule> rule = Optional.ofNullable(rules.get(identifyingName));
         if (rule.isEmpty()) {

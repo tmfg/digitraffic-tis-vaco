@@ -9,14 +9,15 @@ import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
-import fi.digitraffic.tis.vaco.validation.model.Category;
+import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationRule;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.repository.RuleSetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RuleSetRepository;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -73,7 +74,7 @@ class CanonicalGtfsValidatorRuleTest {
     @Mock
     private ErrorHandlerService errorHandlerService;
     @Mock
-    private RuleSetRepository rulesetsRepository;
+    private RuleSetRepository rulesetRepository;
     @Captor
     private ArgumentCaptor<Error> errorCaptor;
     @Captor
@@ -87,7 +88,7 @@ class CanonicalGtfsValidatorRuleTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, s3TransferManager, errorHandlerService, rulesetsRepository);
+        rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, s3TransferManager, errorHandlerService, rulesetRepository);
         queueEntry = ImmutableQueueEntry.builder()
                 .format("gtfs")
                 .publicId("testPublicId")
@@ -98,7 +99,7 @@ class CanonicalGtfsValidatorRuleTest {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(s3TransferManager, errorHandlerService, rulesetsRepository);
+        verifyNoMoreInteractions(s3TransferManager, errorHandlerService, rulesetRepository);
     }
 
     @Test
@@ -112,7 +113,7 @@ class CanonicalGtfsValidatorRuleTest {
 
         assertThat(report.errors().size(), equalTo(51));
 
-        verify(rulesetsRepository, times(51)).findByName(CanonicalGtfsValidatorRule.RULE_NAME);
+        verify(rulesetRepository, times(51)).findByName(CanonicalGtfsValidatorRule.RULE_NAME);
         verify(s3TransferManager).uploadDirectory(uploadDirRequestCaptor.capture());
 
         UploadDirectoryRequest request = uploadDirRequestCaptor.getValue();
@@ -139,7 +140,7 @@ class CanonicalGtfsValidatorRuleTest {
         ImmutableError error = mockError("Wrong format! Expected 'gtfs', was 'vhs'");
         assertThat(report.errors(), equalTo(List.of(error)));
 
-        verify(rulesetsRepository).findByName(CanonicalGtfsValidatorRule.RULE_NAME);
+        verify(rulesetRepository).findByName(CanonicalGtfsValidatorRule.RULE_NAME);
         verify(errorHandlerService).reportError(argThat(equalTo(error)));
     }
 
@@ -149,7 +150,7 @@ class CanonicalGtfsValidatorRuleTest {
     }
 
     private void whenFindValidationRuleByName() {
-        when(rulesetsRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME)).thenReturn(Optional.of(mockValidationRule()));
+        when(rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME)).thenReturn(Optional.of(mockValidationRule()));
     }
 
     private void whenReportError() {
@@ -166,12 +167,13 @@ class CanonicalGtfsValidatorRuleTest {
     }
 
     @NotNull
-    private static ImmutableValidationRule mockValidationRule() {
-        return ImmutableValidationRule.builder()
+    private static ImmutableRuleset mockValidationRule() {
+        return ImmutableRuleset.builder()
                 .id(MOCK_VALIDATION_RULE_ID)
                 .identifyingName(CanonicalGtfsValidatorRule.RULE_NAME)
                 .description("injected mock version of the rule")
                 .category(Category.GENERIC)
+                .type(Type.VALIDATION_SYNTAX)
                 .build();
     }
 
