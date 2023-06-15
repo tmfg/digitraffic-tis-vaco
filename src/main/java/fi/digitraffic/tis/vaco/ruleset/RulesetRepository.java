@@ -18,15 +18,15 @@ import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public class RuleSetRepository {
+public class RulesetRepository {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RuleSetRepository.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RulesetRepository.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final Cache<String, Ruleset> rulesetNameCache;
 
-    public RuleSetRepository(JdbcTemplate jdbcTemplate,
+    public RulesetRepository(JdbcTemplate jdbcTemplate,
                              NamedParameterJdbcTemplate namedParameterJdbcTemplate,
                              @Qualifier("rulesetNameCache") Cache<String, Ruleset> rulesetNameCache) {
         this.jdbcTemplate = jdbcTemplate;

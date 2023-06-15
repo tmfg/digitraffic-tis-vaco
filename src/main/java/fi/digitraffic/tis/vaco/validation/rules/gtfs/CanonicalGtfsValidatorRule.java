@@ -8,7 +8,7 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
-import fi.digitraffic.tis.vaco.ruleset.RuleSetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.PhaseData;
@@ -47,14 +47,14 @@ public class CanonicalGtfsValidatorRule implements Rule {
     private final S3TransferManager s3TransferManager;
     private final VacoProperties vacoProperties;
     private final ErrorHandlerService errorHandlerService;
-    private final RuleSetRepository rulesetRepository;
+    private final RulesetRepository rulesetRepository;
 
     public CanonicalGtfsValidatorRule(
         ObjectMapper objectMapper,
         VacoProperties vacoProperties,
         S3TransferManager s3TransferManager,
         ErrorHandlerService errorHandlerService,
-        RuleSetRepository rulesetRepository) {
+        RulesetRepository rulesetRepository) {
         this.objectMapper = objectMapper;
         this.s3TransferManager = s3TransferManager;
         this.vacoProperties = vacoProperties;

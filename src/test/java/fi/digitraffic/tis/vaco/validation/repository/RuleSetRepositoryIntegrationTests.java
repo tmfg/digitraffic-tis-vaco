@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
-import fi.digitraffic.tis.vaco.ruleset.RuleSetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -34,7 +34,7 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     OrganizationRepository organizationRepository;
 
     @Autowired
-    RuleSetRepository rulesetRepository;
+    RulesetRepository rulesetRepository;
 
     private ImmutableOrganization fintraffic;
     private ImmutableOrganization parentOrg;

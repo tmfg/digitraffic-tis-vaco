@@ -8,7 +8,7 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
-import fi.digitraffic.tis.vaco.ruleset.RuleSetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
@@ -58,7 +58,7 @@ public class ValidationService {
     private final S3TransferManager s3TransferManager;
     private final QueueHandlerService queueHandlerService;
     private final HttpClient httpClient;
-    private final RuleSetRepository rulesetRepository;
+    private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
     private final ErrorHandlerService errorHandlerService;
 
@@ -66,7 +66,7 @@ public class ValidationService {
                              S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
                              HttpClient httpClient,
-                             RuleSetRepository rulesetRepository,
+                             RulesetRepository rulesetRepository,
                              List<Rule> rules,
                              ErrorHandlerService errorHandlerService) {
         this.vacoProperties = vacoProperties;

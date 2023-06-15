@@ -17,7 +17,7 @@ import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.ruleset.RuleSetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -74,7 +74,7 @@ class CanonicalGtfsValidatorRuleTest {
     @Mock
     private ErrorHandlerService errorHandlerService;
     @Mock
-    private RuleSetRepository rulesetRepository;
+    private RulesetRepository rulesetRepository;
     @Captor
     private ArgumentCaptor<Error> errorCaptor;
     @Captor
