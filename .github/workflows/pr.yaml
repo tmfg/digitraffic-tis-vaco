@@ -25,7 +25,7 @@ jobs:
           path: digitraffic-tis-vaco
 
       - name: Checkout database migrations
-        uses: .github/actions/checkout
+        uses: ./digitraffic-tis-vaco/.github/actions/checkout
         with:
           repository: tmfg/digitraffic-tis-dbmigrator
           path: digitraffic-tis-dbmigrator
