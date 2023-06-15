@@ -1,0 +1,82 @@
+# Original from https://github.com/actions/checkout/issues/512#issuecomment-1264735491
+# updated to match current GitHub Actions recommendations and best practices
+
+# This is essentially the same as actions/checkout, but will
+# fallback to the default branch if the ref does not exist.
+# https://github.com/actions/checkout
+
+name: Conditional Checkout
+
+inputs:
+  fetch-depth:
+    default: 1
+    required: false
+    type: number
+  repository:
+    required: true
+    type: string
+  ref:
+    default: ''
+    required: false
+    type: string
+  path:
+    default: ''
+    required: true
+    type: string
+  deploy-key:
+    required: true
+    type: string
+  default-branch:
+    default: 'main'
+    required: false
+    type: string
+
+runs:
+  using: composite
+
+  steps:
+    - id: repo
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        if [[ -z "${{ inputs.ref }}" ]]
+        then
+          if [[ "${{ inputs.repository }}" != "${{ github.repository }}" ]]
+          then
+            USING="${{ inputs.default-branch }}"
+          else
+            USING="$(gh api /repos/${{ inputs.repository }}/commits/${{ github.sha }}/branches-where-head --jq '.[0].name')"
+          fi
+          echo "::notice::Checkout: ${{ inputs.repository }} using ${USING}"
+          echo "ref-exists=true" >> $GITHUB_OUTPUT
+        else
+          if git ls-remote --heads --quiet --exit-code https://${{ inputs.token }}@github.com/${{ inputs.repository }}.git ${{ inputs.ref }}
+          then
+            echo "::notice::Checkout: ${{ inputs.repository }} using ${{ inputs.ref }}"
+            echo "ref-exists=true" >> $GITHUB_OUTPUT
+          else
+            USING="$(gh api /repos/${{ inputs.repository }} --jq '.default_branch')"
+            echo "::notice::Checkout: ${{ inputs.repository }} does not have ref ${{ inputs.ref }} (fallback to ${USING})"
+            echo "ref-exists=false" >> $GITHUB_OUTPUT
+            echo "default-branch=${USING}" >> $GITHUB_OUTPUT
+          fi
+        fi
+
+    - if: steps.repo.outputs.ref-exists == 'true'
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.ref }}
+        path: ${{ inputs.path }}
+        ssh-key: ${{ inputs.deploy-key }}
+        fetch-depth: ${{ inputs.fetch-depth }}
+
+    - if: steps.repo.outputs.ref-exists == 'false'
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ steps.repo.outputs.default-branch }}
+        path: ${{ inputs.path }}
+        ssh-key: ${{ inputs.deploy-key }}
+        fetch-depth: ${{ inputs.fetch-depth }}
