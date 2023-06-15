@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,7 +35,7 @@ public class RulesetRepository {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
-    public Set<Ruleset> findRulesets(String businessId, String typePrefix) {
+    public Set<Ruleset> findRulesets(String businessId, Type type) {
         List<ImmutableRuleset> rulesets = namedParameterJdbcTemplate.query("""
                 WITH current_id AS (
                     SELECT id
@@ -48,24 +49,24 @@ public class RulesetRepository {
                 )
                 SELECT DISTINCT r.*
                   FROM ruleset r, current_id
-                 WHERE r.owner_id = current_id.id AND r.type LIKE :typePrefix || '%'
+                 WHERE r.owner_id = current_id.id AND r.type = :type
                 UNION
                 SELECT DISTINCT r.*
                   FROM ruleset r, parents
                  WHERE r.owner_id IN (parents.id)
-                   AND r.category = 'generic' AND r.type LIKE :typePrefix || '%'
+                   AND r.category = 'generic' AND r.type = :type
                 """,
             new MapSqlParameterSource()
                 .addValue("businessId", businessId)
-                .addValue("typePrefix", typePrefix),
+                .addValue("type", type.fieldName()),
             RowMappers.RULESET);
         LOGGER.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
         return Set.copyOf(rulesets);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, Set<String> rulesetNames, String typePrefix) {
+    public Set<Ruleset> findRulesets(String businessId, Set<String> rulesetNames, Type type) {
         if (rulesetNames.isEmpty()) {
-            return findRulesets(businessId, typePrefix);
+            return findRulesets(businessId, type);
         }
         List<ImmutableRuleset> rulesets = namedParameterJdbcTemplate.query("""
                 WITH current_id AS (
@@ -76,7 +77,7 @@ public class RulesetRepository {
                 specific_rulesets AS (
                     SELECT id
                       FROM ruleset
-                     WHERE identifying_name IN (:rulesetNames) AND "type" LIKE :typePrefix || '%'
+                     WHERE identifying_name IN (:rulesetNames) AND "type" = :type
                 ),
                 parents AS (
                     SELECT partner_a_id AS id
@@ -87,7 +88,7 @@ public class RulesetRepository {
                   FROM ruleset r, current_id, specific_rulesets
                  WHERE r.owner_id = current_id.id
                    AND r.id IN (specific_rulesets.id)
-                   AND r.type LIKE :typePrefix || '%'
+                   AND r.type = :type
                 UNION
                 SELECT DISTINCT r.*
                   FROM ruleset r, parents, specific_rulesets
@@ -97,9 +98,9 @@ public class RulesetRepository {
             new MapSqlParameterSource()
                 .addValue("businessId", businessId)
                 .addValue("rulesetNames", rulesetNames)
-                .addValue("typePrefix", typePrefix),
+                .addValue("type", type.fieldName()),
             RowMappers.RULESET);
-        LOGGER.info("Found {} rulesets of type {} for {}: resolved {}, requested {}", rulesets.size(), typePrefix,
+        LOGGER.info("Found {} rulesets of type {} for {}: resolved {}, requested {}", rulesets.size(), type,
             businessId, rulesets.stream().map(Ruleset::identifyingName).toList(), rulesetNames);
         return Set.copyOf(rulesets);
     }

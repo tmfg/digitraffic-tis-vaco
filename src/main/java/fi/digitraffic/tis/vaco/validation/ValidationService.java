@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
@@ -51,7 +52,6 @@ public class ValidationService {
     public static final String DOWNLOAD_PHASE = "validation.download";
     public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
     public static final String EXECUTION_PHASE = "validation.execute";
-    public static final String RULESET_TYPE_PREFIX = "validation_";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidationService.class);
     private final VacoProperties vacoProperties;
@@ -185,7 +185,7 @@ public class ValidationService {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
-        Set<Ruleset> rulesets = rulesetRepository.findRulesets(jobDescription.message().businessId(), RULESET_TYPE_PREFIX);
+        Set<Ruleset> rulesets = rulesetRepository.findRulesets(jobDescription.message().businessId(), Type.VALIDATION_SYNTAX);
 
         phaseData.withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
