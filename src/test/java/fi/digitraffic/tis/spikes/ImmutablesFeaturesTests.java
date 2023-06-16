@@ -9,8 +9,6 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.immutables.value.Value;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -78,37 +76,4 @@ public class ImmutablesFeaturesTests {
         }
     }
 
-    @Test
-    void inheritanceHierarchiesAndMapstruct() {
-        ImmutableChildB childB = ImmutableChildB.builder().p(1111).cb(3333).build();
-        ImmutableChildA childA = ImmutableChildA.builder().from(childB).ca(2222).build();
-
-        assertThat(childA.p(), equalTo(1111));
-
-        ImmutableChildB mapB = ParentChildMapper.INSTANCE.fromAtoB(childA);
-    }
-
-    @Value.Immutable
-    interface Parent {
-        int p();
-    }
-
-    @Value.Immutable
-    interface ChildA extends Parent {
-        int ca();
-    }
-
-    @Value.Immutable
-    interface ChildB extends Parent {
-        int cb();
-    }
-
-    @Mapper(componentModel = "spring")
-    public interface ParentChildMapper {
-
-        ParentChildMapper INSTANCE = Mappers.getMapper(ParentChildMapper.class);
-
-        ImmutableChildB fromAtoB(ImmutableChildA a);
-        ImmutableChildA fromBtoA(ImmutableChildB b);
-    }
 }
