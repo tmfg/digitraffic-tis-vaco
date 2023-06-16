@@ -25,11 +25,11 @@ jobs:
           path: digitraffic-tis-vaco
 
       - name: Checkout database migrations
-        uses: actions/checkout@v3
+        uses: ./digitraffic-tis-vaco/.github/actions/checkout
         with:
           repository: tmfg/digitraffic-tis-dbmigrator
-          ssh-key: ${{ secrets.DBMIGRATOR_DEPLOY_KEY }}
           path: digitraffic-tis-dbmigrator
+          deploy-key: ${{ secrets.DBMIGRATOR_DEPLOY_KEY }}
 
       - name: Set up JDK
         uses: actions/setup-java@v3
