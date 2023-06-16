@@ -9,6 +9,8 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.immutables.value.Value;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -30,16 +32,16 @@ public class ImmutablesFeaturesTests {
     void typeLevelJakartaAnnotationCloning() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         ImmutableMultiFieldValidation valid = ImmutableMultiFieldValidation.builder()
-                .fieldA("A")
-                .fieldB("B")
-                .build();
+            .fieldA("A")
+            .fieldB("B")
+            .build();
         Set<ConstraintViolation<ImmutableMultiFieldValidation>> validResult = validator.validate(valid);
         assertThat(validResult, empty());
 
         ImmutableMultiFieldValidation invalid = ImmutableMultiFieldValidation.builder()
-                .fieldA("C")
-                .fieldB("C")
-                .build();
+            .fieldA("C")
+            .fieldB("C")
+            .build();
         Set<ConstraintViolation<ImmutableMultiFieldValidation>> invalidResult = validator.validate(invalid);
         assertThat(invalidResult, hasSize(1));
         ConstraintViolation<ImmutableMultiFieldValidation> err = invalidResult.stream().findFirst().get();
@@ -50,12 +52,13 @@ public class ImmutablesFeaturesTests {
     @UniqueFields // <- custom multifield validation annotation, works as is
     interface MultiFieldValidation {
         String fieldA();
+
         String fieldB();
     }
 
     @Target(ElementType.TYPE)
     @Retention(RetentionPolicy.RUNTIME)
-    @Constraint(validatedBy = { UniqueFields.Validator.class }) // <-- see javadoc for explanation of required fields
+    @Constraint(validatedBy = {UniqueFields.Validator.class}) // <-- see javadoc for explanation of required fields
     public @interface UniqueFields {
 
         // message is required by Jakarta Validation, the curly syntax is a property lookup
@@ -73,5 +76,39 @@ public class ImmutablesFeaturesTests {
                 return !value.fieldA().equals(value.fieldB());
             }
         }
+    }
+
+    @Test
+    void inheritanceHierarchiesAndMapstruct() {
+        ImmutableChildB childB = ImmutableChildB.builder().p(1111).cb(3333).build();
+        ImmutableChildA childA = ImmutableChildA.builder().from(childB).ca(2222).build();
+
+        assertThat(childA.p(), equalTo(1111));
+
+        ImmutableChildB mapB = ParentChildMapper.INSTANCE.fromAtoB(childA);
+    }
+
+    @Value.Immutable
+    interface Parent {
+        int p();
+    }
+
+    @Value.Immutable
+    interface ChildA extends Parent {
+        int ca();
+    }
+
+    @Value.Immutable
+    interface ChildB extends Parent {
+        int cb();
+    }
+
+    @Mapper(componentModel = "spring")
+    public interface ParentChildMapper {
+
+        ParentChildMapper INSTANCE = Mappers.getMapper(ParentChildMapper.class);
+
+        ImmutableChildB fromAtoB(ImmutableChildA a);
+        ImmutableChildA fromBtoA(ImmutableChildB b);
     }
 }

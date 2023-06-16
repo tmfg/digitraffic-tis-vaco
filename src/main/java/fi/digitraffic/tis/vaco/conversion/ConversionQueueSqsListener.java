@@ -1,7 +1,8 @@
 package fi.digitraffic.tis.vaco.conversion;
 
+import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
-import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import io.awspring.cloud.sqs.annotation.SqsListener;
@@ -24,11 +25,14 @@ public class ConversionQueueSqsListener {
     }
 
     @SqsListener(QueueNames.VACO_JOBS_CONVERSION)
-    public void listenVacoJobsConversion(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
+    public void listenVacoJobsConversion(ImmutableConversionJobMessage jobDescription, Acknowledgement acknowledgement) {
         LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_CONVERSION + ", convert...");
         try {
-            ImmutableJobDescription updated = conversionService.convert(jobDescription);
-            messagingService.sendMessage(MessageQueue.JOBS, updated.withPrevious("conversion"));
+            ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
+                .entry(jobDescription.message())
+                .previous("conversion")
+                .build();
+            messagingService.submitProcessingJob(job);
         } catch (Exception e) {
             LOGGER.warn("Unhandled exception caught during conversion job processing", e);
         } finally {
