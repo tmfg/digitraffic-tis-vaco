@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.http.HttpClientUtility;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
@@ -32,10 +33,7 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -89,20 +87,24 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private S3TransferManager s3TransferManager;
 
     @MockBean
-    private HttpClient httpClient;
+    private HttpClientUtility httpClientUtility;
 
     @Captor
-    private ArgumentCaptor<HttpRequest> requestCaptor;
+    private ArgumentCaptor<Path> filePath;
 
     @Captor
-    private ArgumentCaptor<HttpResponse.BodyHandler<Path>> bodyHandlerCaptor;
+    private ArgumentCaptor<String> entryUrl;
+
+    @Captor
+    private ArgumentCaptor<String> entryEtag;
 
     @Mock
     HttpResponse<Path> response;
 
     @Test
     void uploadsDownloadedFileToS3() throws URISyntaxException, IOException {
-        when(httpClient.sendAsync(requestCaptor.capture(), bodyHandlerCaptor.capture())).thenReturn(CompletableFuture.supplyAsync(() -> response));
+        when(httpClientUtility.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
+            .thenReturn(CompletableFuture.supplyAsync(() -> response));
         when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
 
         ImmutableQueueEntry entry = createQueueEntryForTesting();
@@ -110,7 +112,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
         validationService.downloadFile(entry);
 
-        assertThat(requestCaptor.getValue().uri(), equalTo(new URI("https://testfile")));
+        assertThat(entryUrl.getValue(), equalTo("https://testfile"));
 
         List<S3Object> uploadedFiles = s3Client.listObjectsV2(ListObjectsV2Request.builder()
                         .bucket(vacoProperties.getS3processingBucket())
