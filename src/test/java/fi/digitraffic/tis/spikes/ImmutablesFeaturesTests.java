@@ -30,16 +30,16 @@ public class ImmutablesFeaturesTests {
     void typeLevelJakartaAnnotationCloning() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         ImmutableMultiFieldValidation valid = ImmutableMultiFieldValidation.builder()
-                .fieldA("A")
-                .fieldB("B")
-                .build();
+            .fieldA("A")
+            .fieldB("B")
+            .build();
         Set<ConstraintViolation<ImmutableMultiFieldValidation>> validResult = validator.validate(valid);
         assertThat(validResult, empty());
 
         ImmutableMultiFieldValidation invalid = ImmutableMultiFieldValidation.builder()
-                .fieldA("C")
-                .fieldB("C")
-                .build();
+            .fieldA("C")
+            .fieldB("C")
+            .build();
         Set<ConstraintViolation<ImmutableMultiFieldValidation>> invalidResult = validator.validate(invalid);
         assertThat(invalidResult, hasSize(1));
         ConstraintViolation<ImmutableMultiFieldValidation> err = invalidResult.stream().findFirst().get();
@@ -50,12 +50,13 @@ public class ImmutablesFeaturesTests {
     @UniqueFields // <- custom multifield validation annotation, works as is
     interface MultiFieldValidation {
         String fieldA();
+
         String fieldB();
     }
 
     @Target(ElementType.TYPE)
     @Retention(RetentionPolicy.RUNTIME)
-    @Constraint(validatedBy = { UniqueFields.Validator.class }) // <-- see javadoc for explanation of required fields
+    @Constraint(validatedBy = {UniqueFields.Validator.class}) // <-- see javadoc for explanation of required fields
     public @interface UniqueFields {
 
         // message is required by Jakarta Validation, the curly syntax is a property lookup
@@ -74,4 +75,5 @@ public class ImmutablesFeaturesTests {
             }
         }
     }
+
 }

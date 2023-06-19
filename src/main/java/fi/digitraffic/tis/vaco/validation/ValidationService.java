@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.validation;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
-import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
@@ -18,6 +17,7 @@ import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobResult;
 import fi.digitraffic.tis.vaco.validation.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.Result;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobResult;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
@@ -78,10 +78,10 @@ public class ValidationService {
         this.errorHandlerService = errorHandlerService;
     }
 
-    public ValidationJobResult validate(ImmutableJobDescription jobDescription) throws ValidationProcessException {
+    public ValidationJobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
         Result<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());
 
-        Result<Set<Ruleset>> validationRulesets = selectRulesets(jobDescription.message(), jobDescription);
+        Result<Set<Ruleset>> validationRulesets = selectRulesets(jobDescription.message());
 
         ImmutableResult<List<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRulesets.result());
 
@@ -181,11 +181,11 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    Result<Set<Ruleset>> selectRulesets(QueueEntry queueEntry, ImmutableJobDescription jobDescription) {
+    Result<Set<Ruleset>> selectRulesets(QueueEntry queueEntry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
-        Set<Ruleset> rulesets = rulesetRepository.findRulesets(jobDescription.message().businessId(), Type.VALIDATION_SYNTAX);
+        Set<Ruleset> rulesets = rulesetRepository.findRulesets(queueEntry.businessId(), Type.VALIDATION_SYNTAX);
 
         phaseData.withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 

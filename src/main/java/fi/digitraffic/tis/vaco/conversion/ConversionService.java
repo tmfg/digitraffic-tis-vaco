@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.conversion;
 
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
-import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
@@ -49,7 +49,7 @@ public class ConversionService {
         this.errorHandlerService = errorHandlerService;
     }
 
-    public ImmutableJobDescription convert(ImmutableJobDescription jobDescription) {
+    public ImmutableConversionJobMessage convert(ImmutableConversionJobMessage jobDescription) {
         LOGGER.info("Convert {}", jobDescription);
 
         //Result<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());

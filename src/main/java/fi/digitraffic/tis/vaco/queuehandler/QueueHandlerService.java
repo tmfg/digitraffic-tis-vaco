@@ -1,8 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
-import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
-import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryCommandMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
@@ -40,8 +39,8 @@ public class QueueHandlerService {
         ImmutableQueueEntry converted = entryCommandMapper.toQueueEntry(entryCommand);
         ImmutableQueueEntry result = queueHandlerRepository.create(converted);
 
-        ImmutableJobDescription job = ImmutableJobDescription.builder().message(result).build();
-        messagingService.sendMessage(MessageQueue.JOBS, job);
+        ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder().entry(result).build();
+        messagingService.submitProcessingJob(job);
 
         return result;
     }
@@ -51,6 +50,7 @@ public class QueueHandlerService {
     }
 
     public ImmutablePhase reportPhase(ImmutablePhase phase, ProcessingState state) {
+        LOGGER.info("Updating phase {} to {}", phase, state, new Exception());
         return switch (state) {
             case START -> queueHandlerRepository.startPhase(phase);
             case UPDATE -> queueHandlerRepository.updatePhase(phase);

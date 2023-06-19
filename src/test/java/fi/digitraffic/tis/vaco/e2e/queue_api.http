@@ -7,7 +7,6 @@ Content-Type: application/json
   "businessId": "2942108-7",
   "etag": "etagg",
   "validation": {},
-  "conversion": {},
   "metadata": {
       "brewingEquipment": "teapot",
       "capacity (ml)": 1500

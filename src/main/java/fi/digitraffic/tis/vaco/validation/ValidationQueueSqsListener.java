@@ -1,10 +1,11 @@
 package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
-import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobResult;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -29,7 +30,7 @@ public class ValidationQueueSqsListener {
     }
 
     @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
-    public void listenVacoJobsValidation(ImmutableJobDescription jobDescription, Acknowledgement acknowledgement) {
+    public void listenVacoJobsValidation(ImmutableValidationJobMessage jobDescription, Acknowledgement acknowledgement) {
         LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_VALIDATION + ", validate...");
         /* TODO: This method needs to be bulletproof for exceptions; each line should be wrapped in try...catch and the
                  final acknowledgment should always happen as well.
@@ -37,7 +38,12 @@ public class ValidationQueueSqsListener {
         try {
             // TODO: We have full results available here, but don't do anything with them - maybe we don't need 'em?
             ValidationJobResult result = validationService.validate(jobDescription);
-            messagingService.sendMessage(MessageQueue.JOBS, jobDescription.withPrevious("validation"));
+
+            ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
+                .entry(jobDescription.message())
+                .previous("validation")
+                .build();
+            messagingService.submitProcessingJob(job);
         } catch (ValidationProcessException vpe) {
             // TODO: update DB phase?
             LOGGER.warn("Unhandled exception caught during validation job processing", vpe);

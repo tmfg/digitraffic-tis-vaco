@@ -1,17 +1,21 @@
 package fi.digitraffic.tis.vaco.aws;
 
+import fi.digitraffic.tis.vaco.conversion.model.ConversionJobMessage;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
-import fi.digitraffic.tis.vaco.messaging.model.ImmutableJobDescription;
-import fi.digitraffic.tis.vaco.messaging.model.JobDescription;
+import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.operations.MessagingOperationFailedException;
 import io.awspring.cloud.sqs.operations.SendResult;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class SqsMessagingService implements MessagingService {
@@ -27,20 +31,35 @@ public class SqsMessagingService implements MessagingService {
         this.queueHandlerRepository = queueHandlerRepository;
     }
 
-    @Override
-    public void sendMessage(MessageQueue messageQueue, JobDescription jobDescription) {
+    private <P> Optional<SendResult<P>> sendMessage(MessageQueue messageQueue, P payload) {
         try {
-            SendResult<JobDescription> result = sqsTemplate.send(messageQueue.getQueueName(), jobDescription);
+            return Optional.ofNullable(sqsTemplate.send(messageQueue.getQueueName(), payload));
         } catch (MessagingOperationFailedException mofe) {
-            LOGGER.warn("Failed to send message %s to queue %s".formatted(jobDescription, messageQueue), mofe);
+            LOGGER.warn("Failed to send message %s to queue %s".formatted(payload, messageQueue), mofe);
         }
+        return Optional.empty();
     }
 
-    public void updateJobProcessingStatus(ImmutableJobDescription jobDescription, ProcessingState state) {
+    @Override
+    public void submitProcessingJob(DelegationJobMessage delegationJobMessage) {
+        Optional<SendResult<DelegationJobMessage>> result = sendMessage(MessageQueue.JOBS, delegationJobMessage);
+    }
+
+    @Override
+    public void submitValidationJob(ValidationJobMessage jobDescription) {
+        Optional<SendResult<ValidationJobMessage>> result = sendMessage(MessageQueue.JOBS_VALIDATION, jobDescription);
+    }
+
+    @Override
+    public void submitConversionJob(ConversionJobMessage jobDescription) {
+        Optional<SendResult<ConversionJobMessage>> result = sendMessage(MessageQueue.JOBS_CONVERSION, jobDescription);
+    }
+
+    public void updateJobProcessingStatus(ImmutableDelegationJobMessage jobDescription, ProcessingState state) {
         switch (state) {
-            case START -> queueHandlerRepository.startEntryProcessing(jobDescription.message());
-            case UPDATE -> queueHandlerRepository.updateEntryProcessing(jobDescription.message());
-            case COMPLETE -> queueHandlerRepository.completeEntryProcessing(jobDescription.message());
+            case START -> queueHandlerRepository.startEntryProcessing(jobDescription.entry());
+            case UPDATE -> queueHandlerRepository.updateEntryProcessing(jobDescription.entry());
+            case COMPLETE -> queueHandlerRepository.completeEntryProcessing(jobDescription.entry());
         }
     }
 }
