@@ -10,6 +10,7 @@ import org.immutables.value.Value;
 @JsonSerialize(as = ImmutableDelegationJobMessage.class)
 @JsonDeserialize(as = ImmutableDelegationJobMessage.class)
 public interface DelegationJobMessage {
+    RetryStatistics retryStatistics();
     QueueEntry entry();
     @Nullable
     String previous();
