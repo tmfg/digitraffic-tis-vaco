@@ -50,7 +50,7 @@ public class QueueHandlerService {
     }
 
     public ImmutablePhase reportPhase(ImmutablePhase phase, ProcessingState state) {
-        LOGGER.info("Updating phase {} to {}", phase, state, new Exception());
+        LOGGER.info("Updating phase {} to {}", phase, state);
         return switch (state) {
             case START -> queueHandlerRepository.startPhase(phase);
             case UPDATE -> queueHandlerRepository.updatePhase(phase);
