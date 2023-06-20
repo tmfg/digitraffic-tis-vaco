@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.conversion;
 
+import fi.digitraffic.tis.http.HttpClientUtility;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
@@ -11,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
-import java.net.http.HttpClient;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,7 +29,7 @@ public class ConversionService {
 
     private final S3TransferManager s3TransferManager;
     private final QueueHandlerService queueHandlerService;
-    private final HttpClient httpClient;
+    private final HttpClientUtility httpClientUtility;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
     private final ErrorHandlerService errorHandlerService;
@@ -37,13 +37,13 @@ public class ConversionService {
     public ConversionService(VacoProperties vacoProperties,
                              S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
-                             HttpClient httpClient,
+                             HttpClientUtility httpClientUtility,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules,
                              ErrorHandlerService errorHandlerService) {
         this.s3TransferManager = s3TransferManager;
         this.queueHandlerService = queueHandlerService;
-        this.httpClient = httpClient;
+        this.httpClientUtility = httpClientUtility;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
         this.errorHandlerService = errorHandlerService;

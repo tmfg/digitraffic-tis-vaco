@@ -1,5 +1,7 @@
 package fi.digitraffic.tis.vaco.validation;
 
+import fi.digitraffic.tis.aws.s3.S3ClientUtility;
+import fi.digitraffic.tis.http.HttpClientUtility;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
@@ -24,19 +26,8 @@ import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.FileUpload;
-import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
-import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -55,24 +46,24 @@ public class ValidationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidationService.class);
     private final VacoProperties vacoProperties;
-    private final S3TransferManager s3TransferManager;
     private final QueueHandlerService queueHandlerService;
-    private final HttpClient httpClient;
+    private final HttpClientUtility httpClientUtility;
+    private final S3ClientUtility s3ClientUtility;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
     private final ErrorHandlerService errorHandlerService;
 
     public ValidationService(VacoProperties vacoProperties,
-                             S3TransferManager s3TransferManager,
                              QueueHandlerService queueHandlerService,
-                             HttpClient httpClient,
+                             HttpClientUtility httpClient,
+                             S3ClientUtility s3ClientUtility,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules,
                              ErrorHandlerService errorHandlerService) {
         this.vacoProperties = vacoProperties;
-        this.s3TransferManager = s3TransferManager;
         this.queueHandlerService = queueHandlerService;
-        this.httpClient = httpClient;
+        this.httpClientUtility = httpClient;
+        this.s3ClientUtility = s3ClientUtility;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
         this.errorHandlerService = errorHandlerService;
@@ -102,12 +93,12 @@ public class ValidationService {
         ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
 
-        Path downloadFile = createDownloadTempFile(queueEntry, phaseData);
-        HttpRequest request = buildRequest(queueEntry);
-        HttpResponse.BodyHandler<Path> bodyHandler = BodyHandlers.ofFile(downloadFile);
+        Path downloadDir = Paths.get(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), phaseData.phase().name());
+        Path filePath = s3ClientUtility.createDownloadTempFile(downloadDir,
+                                                               queueEntry.format());
 
-        return httpClient.sendAsync(request, bodyHandler)
-                .thenApply(wrapHttpResult(phaseData))
+        return httpClientUtility.downloadFile(filePath, queueEntry.url(), queueEntry.etag())
+            .thenApply(wrapHttpResult(phaseData))
             .thenCompose(uploadToS3(queueEntry))
             .thenApply(completeDownloadPhase())
             .join(); // wait for finish - might be temporary
@@ -120,52 +111,14 @@ public class ValidationService {
                 .withPayload(ImmutableFileReferences.builder().localPath(path.body()).build());
     }
 
-    private Path createDownloadTempFile(QueueEntry queueEntry, ImmutablePhaseData<ImmutableFileReferences> phaseData) {
-        Path downloadDir = Paths.get(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), phaseData.phase().name());
-        try {
-            LOGGER.info("Download path for {} is {}", queueEntry.publicId(), downloadDir);
-
-            Files.createDirectories(downloadDir);
-            Path downloadFile = downloadDir.resolve(queueEntry.format() + ".download");
-            if (Files.exists(downloadFile)) {
-                throw new ValidationProcessException("File already exists! Is the process running twice?");
-            }
-            return downloadFile;
-        } catch (IOException e) {
-            throw new ValidationProcessException("Failed to create directories for temporary file, make sure permissions are set correctly for path " + downloadDir, e);
-        }
-    }
-
-    private static HttpRequest buildRequest(QueueEntry queueEntry) {
-        try {
-            var builder = HttpRequest.newBuilder()
-                .GET()
-                .uri(new URI(queueEntry.url()));
-
-            if (queueEntry.etag() != null) {
-                builder = builder.header("ETag", queueEntry.etag());
-            }
-
-            return builder.build();
-        } catch (URISyntaxException e) {
-            throw new ValidationProcessException("URI provided in queue entry is invalid", e);
-        }
-    }
-
     private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(QueueEntry queueEntry) {
         return phaseData -> {
-            String s3Path = "entries/" + queueEntry.publicId() + "/download/" + queueEntry.format() + ".original";
+            String targetPath = "entries/" + queueEntry.publicId() + "/download/" + queueEntry.format() + ".original";
+            String bucketPath = vacoProperties.getS3processingBucket();
+            Path sourcePath = phaseData.payload().localPath();
 
-            UploadFileRequest ufr = UploadFileRequest.builder()
-                .putObjectRequest(req -> req.bucket(vacoProperties.getS3processingBucket()).key(s3Path))
-                .addTransferListener(LoggingTransferListener.create())
-                .source(phaseData.payload().localPath())
-                .build();
-            FileUpload upload = s3TransferManager.uploadFile(ufr);
-
-            return upload.completionFuture()
-                .thenApply(u -> phaseData
-                        // upload done -> update phase
+            return s3ClientUtility.uploadFile(bucketPath, targetPath, sourcePath)
+                    .thenApply(u -> phaseData // upload done -> update phase
                         .withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
         };
     }
