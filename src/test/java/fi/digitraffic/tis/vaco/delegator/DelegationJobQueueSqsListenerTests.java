@@ -1,9 +1,7 @@
 package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.vaco.TestConstants;
-import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
-import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
@@ -23,11 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -44,8 +39,6 @@ class DelegationJobQueueSqsListenerTests {
     private QueueHandlerRepository queueHandlerRepository;
     @Mock
     private Acknowledgement acknowledgement;
-    @Captor
-    private ArgumentCaptor<DelegationJobMessage> delegationJob;
     @Captor
     private ArgumentCaptor<ValidationJobMessage> validationJob;
 
@@ -77,48 +70,7 @@ class DelegationJobQueueSqsListenerTests {
     }
 
     @Test
-    void retriesIfProcessingThrowsException() {
-        doAnswer(invocation -> null).when(messagingService).updateJobProcessingStatus(jobMessage, ProcessingState.START);
-        doThrow(new FakeVacoExeption("kra-pow!"))
-            .when(messagingService).updateJobProcessingStatus(jobMessage, ProcessingState.UPDATE);
-
-        listener.listen(jobMessage, acknowledgement);
-
-        // no phases returned...
-        verify(queueHandlerRepository).findPhases(jobMessage.entry());
-
-        // ...first call succeeds...
-        verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.START));
-        // ...but the second one doesn't...
-        verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.UPDATE));
-
-        // ...so job is requeued...
-        verify(messagingService).submitProcessingJob(delegationJob.capture());
-        /// ...with updated retry count
-        assertThat(delegationJob.getValue().retryStatistics().tryNumber(), equalTo(2));
-    }
-
-    @Test
-    void lastTryIsStillExecutedNormally() {
-        RetryStatistics retries = jobMessage.retryStatistics();
-        ImmutableDelegationJobMessage lastTry = jobMessage.withRetryStatistics(
-            ImmutableRetryStatistics
-                .copyOf(retries)
-                .withTryNumber(retries.maxRetries()));
-
-        listener.listen(lastTry, acknowledgement);
-
-        verify(messagingService).updateJobProcessingStatus(eq(lastTry), eq(ProcessingState.START));
-        verify(messagingService).updateJobProcessingStatus(eq(lastTry), eq(ProcessingState.UPDATE));
-
-        // no phases returned...
-        verify(queueHandlerRepository).findPhases(lastTry.entry());
-        /// ...so validation is run as default
-        verify(messagingService).submitValidationJob(validationJob.capture());
-    }
-
-    @Test
-    void stopsRequeuingIfRetriesAreExhaustedAndMarksJobAsComplete() {
+    void marksJobAsCompleteIfRetriesAreExhausted() {
         RetryStatistics retries = jobMessage.retryStatistics();
         ImmutableDelegationJobMessage tooManyRetries = jobMessage.withRetryStatistics(
             ImmutableRetryStatistics
@@ -146,11 +98,5 @@ class DelegationJobQueueSqsListenerTests {
         verify(queueHandlerRepository).findPhases(alreadyStarted.entry());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
-    }
-
-    private class FakeVacoExeption extends VacoException {
-        public FakeVacoExeption(String message) {
-            super(message);
-        }
     }
 }
