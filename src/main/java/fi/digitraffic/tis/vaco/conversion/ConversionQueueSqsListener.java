@@ -2,40 +2,38 @@ package fi.digitraffic.tis.vaco.conversion;
 
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
-import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ConversionQueueSqsListener {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConversionQueueSqsListener.class);
+public class ConversionQueueSqsListener extends SqsListenerBase<ImmutableConversionJobMessage> {
 
     private final MessagingService messagingService;
 
     private final ConversionService conversionService;
 
     public ConversionQueueSqsListener(MessagingService messagingService, ConversionService conversionService) {
+        super((message, stats) -> messagingService.submitConversionJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
         this.conversionService = conversionService;
     }
 
     @SqsListener(QueueNames.VACO_JOBS_CONVERSION)
-    public void listenVacoJobsConversion(ImmutableConversionJobMessage jobDescription, Acknowledgement acknowledgement) {
-        LOGGER.info("Got message " + jobDescription + " from " + MessageQueue.JOBS_CONVERSION + ", convert...");
-        try {
-            ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
-                .entry(jobDescription.message())
-                .build();
-            messagingService.submitProcessingJob(job);
-        } catch (Exception e) {
-            LOGGER.warn("Unhandled exception caught during conversion job processing", e);
-        } finally {
-            acknowledgement.acknowledge();
-        }
+    public void listen(ImmutableConversionJobMessage message, Acknowledgement acknowledgement) {
+        handle(message, message.message().publicId(), acknowledgement, (ignored) -> {});
+    }
+
+    @Override
+    protected void runTask(ImmutableConversionJobMessage message) {
+        ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
+            .entry(message.message())
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
+        messagingService.submitProcessingJob(job);
     }
 }

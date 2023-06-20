@@ -8,7 +8,6 @@ import org.immutables.value.Value;
 @Value.Immutable
 @JsonSerialize(as = ImmutableDelegationJobMessage.class)
 @JsonDeserialize(as = ImmutableDelegationJobMessage.class)
-public interface DelegationJobMessage {
-    RetryStatistics retryStatistics();
+public interface DelegationJobMessage extends Retryable {
     QueueEntry entry();
 }

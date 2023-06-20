@@ -1,13 +1,12 @@
 package fi.digitraffic.tis.vaco.delegator;
 
-import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
@@ -26,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class DelegationJobQueueSqsListener {
+public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDelegationJobMessage> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DelegationJobQueueSqsListener.class);
     private static final Subtask DEFAULT_SUBTASK = Subtask.VALIDATION;
@@ -36,58 +35,43 @@ public class DelegationJobQueueSqsListener {
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
                                          QueueHandlerRepository queueHandlerRepository) {
+        super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
         this.queueHandlerRepository = queueHandlerRepository;
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
-    public void listenVacoJobs(ImmutableDelegationJobMessage jobDescription, Acknowledgement acknowledgement) {
-        try {
-            Optional<ImmutableDelegationJobMessage> job = shouldTry(jobDescription);
+    public void listen(ImmutableDelegationJobMessage message, Acknowledgement acknowledgement) {
+        handle(message, message.entry().publicId(), acknowledgement, (exhaustedRetries -> {
+            messagingService.updateJobProcessingStatus(exhaustedRetries, ProcessingState.COMPLETE);
+        }));
+    }
 
-            if (job.isPresent()) {
-                jobDescription = job.get();
-                try {
-                    Optional<Subtask> taskToRun = nextSubtaskToRun(job.get());
+    @Override
+    protected void runTask(ImmutableDelegationJobMessage message) {
+        Optional<Subtask> taskToRun = nextSubtaskToRun(message);
 
-                    if (taskToRun.isPresent()) {
-                        runTask(jobDescription, taskToRun);
-                    } else {
-                        messagingService.updateJobProcessingStatus(jobDescription, ProcessingState.COMPLETE);
-                    }
+        if (taskToRun.isPresent()) {
+            LOGGER.info("Job for entry {} next task to run {}", message.entry().publicId(), taskToRun.get());
 
-                } catch (VacoException e) {
-                    LOGGER.warn("Unhandled exception during message processing, requeuing message for retrying", e);
-                    requeueMessage(jobDescription);
+            switch (taskToRun.get()) {
+                case VALIDATION -> {
+                    ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
+                        .message(message.entry())
+                        .retryStatistics(ImmutableRetryStatistics.of(5))
+                        .build();
+                    messagingService.submitValidationJob(validationJob);
                 }
-            } else {
-                messagingService.updateJobProcessingStatus(jobDescription, ProcessingState.COMPLETE);
-                LOGGER.warn("Job for entry {} ran out of retries, skipping processing", jobDescription.entry().publicId());
+                case CONVERSION -> {
+                    ImmutableConversionJobMessage conversionJob = ImmutableConversionJobMessage.builder()
+                        .message(message.entry())
+                        .build();
+                    messagingService.submitConversionJob(conversionJob);
+                }
             }
-        } finally {
-            acknowledgement.acknowledge();
+        } else {
+            messagingService.updateJobProcessingStatus(message, ProcessingState.COMPLETE);
         }
-    }
-
-    private void runTask(ImmutableDelegationJobMessage jobDescription, Optional<Subtask> taskToRun) {
-        LOGGER.info("Job for entry {} next task to run {}", jobDescription.entry().publicId(), taskToRun.get());
-
-        switch (taskToRun.get()) {
-            case VALIDATION -> {
-                ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder().message(jobDescription.entry()).build();
-                messagingService.submitValidationJob(validationJob);
-            }
-            case CONVERSION -> {
-                ImmutableConversionJobMessage conversionJob = ImmutableConversionJobMessage.builder().message(jobDescription.entry()).build();
-                messagingService.submitConversionJob(conversionJob);
-            }
-        }
-    }
-
-    private void requeueMessage(ImmutableDelegationJobMessage jobDescription) {
-        ImmutableRetryStatistics stats = ImmutableRetryStatistics.copyOf(jobDescription.retryStatistics());
-        ImmutableDelegationJobMessage requeueableMessage = jobDescription.withRetryStatistics(stats.withTryNumber(stats.tryNumber() + 1));
-        messagingService.submitProcessingJob(requeueableMessage);
     }
 
     private Optional<Subtask> nextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
@@ -139,17 +123,4 @@ public class DelegationJobQueueSqsListener {
         }
         return s;
     }
-
-    private Optional<ImmutableDelegationJobMessage> shouldTry(ImmutableDelegationJobMessage jobDescription) {
-        RetryStatistics retryStatistics = jobDescription.retryStatistics();
-
-        if (retryStatistics.tryNumber() > retryStatistics.maxRetries()) {
-            LOGGER.warn("Job for entry {} retried too many times! Cancelling processing and marking the job as done...", jobDescription.entry().publicId());
-            return Optional.empty();
-        } else {
-            LOGGER.debug("Job for entry {} at try {} of {}", jobDescription.entry().publicId(), retryStatistics.tryNumber(), retryStatistics.maxRetries());
-            return Optional.of(jobDescription);
-        }
-    }
-
 }

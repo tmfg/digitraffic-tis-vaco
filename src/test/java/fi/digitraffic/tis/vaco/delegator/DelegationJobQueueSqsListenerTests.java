@@ -65,7 +65,7 @@ class DelegationJobQueueSqsListenerTests {
 
     @Test
     void runsValidationByDefault() {
-        listener.listenVacoJobs(jobMessage, acknowledgement);
+        listener.listen(jobMessage, acknowledgement);
 
         verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.START));
         verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.UPDATE));
@@ -82,7 +82,7 @@ class DelegationJobQueueSqsListenerTests {
         doThrow(new FakeVacoExeption("kra-pow!"))
             .when(messagingService).updateJobProcessingStatus(jobMessage, ProcessingState.UPDATE);
 
-        listener.listenVacoJobs(jobMessage, acknowledgement);
+        listener.listen(jobMessage, acknowledgement);
 
         // no phases returned...
         verify(queueHandlerRepository).findPhases(jobMessage.entry());
@@ -106,7 +106,7 @@ class DelegationJobQueueSqsListenerTests {
                 .copyOf(retries)
                 .withTryNumber(retries.maxRetries()));
 
-        listener.listenVacoJobs(lastTry, acknowledgement);
+        listener.listen(lastTry, acknowledgement);
 
         verify(messagingService).updateJobProcessingStatus(eq(lastTry), eq(ProcessingState.START));
         verify(messagingService).updateJobProcessingStatus(eq(lastTry), eq(ProcessingState.UPDATE));
@@ -127,7 +127,7 @@ class DelegationJobQueueSqsListenerTests {
 
         doAnswer(invocation -> null).when(messagingService).updateJobProcessingStatus(tooManyRetries, ProcessingState.COMPLETE);
 
-        listener.listenVacoJobs(tooManyRetries, acknowledgement);
+        listener.listen(tooManyRetries, acknowledgement);
 
         verify(messagingService).updateJobProcessingStatus(eq(tooManyRetries), eq(ProcessingState.COMPLETE));
     }
@@ -137,7 +137,7 @@ class DelegationJobQueueSqsListenerTests {
         ImmutableQueueEntry startedEntry = ImmutableQueueEntry.copyOf(jobMessage.entry())
             .withStarted(LocalDateTime.now());
         ImmutableDelegationJobMessage alreadyStarted = jobMessage.withEntry(startedEntry);
-        listener.listenVacoJobs(alreadyStarted, acknowledgement);
+        listener.listen(alreadyStarted, acknowledgement);
 
         // only UPDATE, no START
         verify(messagingService).updateJobProcessingStatus(eq(alreadyStarted), eq(ProcessingState.UPDATE));
