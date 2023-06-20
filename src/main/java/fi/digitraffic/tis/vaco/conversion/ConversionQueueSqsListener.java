@@ -30,7 +30,6 @@ public class ConversionQueueSqsListener {
         try {
             ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
                 .entry(jobDescription.message())
-                .previous("conversion")
                 .build();
             messagingService.submitProcessingJob(job);
         } catch (Exception e) {

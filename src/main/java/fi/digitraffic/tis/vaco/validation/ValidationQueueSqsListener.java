@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
@@ -41,7 +42,7 @@ public class ValidationQueueSqsListener {
 
             ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
                 .entry(jobDescription.message())
-                .previous("validation")
+                .retryStatistics(ImmutableRetryStatistics.of(5))
                 .build();
             messagingService.submitProcessingJob(job);
         } catch (ValidationProcessException vpe) {

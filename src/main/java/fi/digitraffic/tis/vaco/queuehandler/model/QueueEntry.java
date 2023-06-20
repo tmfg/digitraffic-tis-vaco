@@ -23,10 +23,13 @@ public interface QueueEntry {
     @Nullable
     String publicId();
 
+    @Value.Parameter
     String format();
 
+    @Value.Parameter
     String url();
 
+    @Value.Parameter
     String businessId();
 
     @Nullable
