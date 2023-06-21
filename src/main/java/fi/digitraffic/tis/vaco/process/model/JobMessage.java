@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.validation.model;
+package fi.digitraffic.tis.vaco.process.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.queuehandler.dto.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryCommandMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

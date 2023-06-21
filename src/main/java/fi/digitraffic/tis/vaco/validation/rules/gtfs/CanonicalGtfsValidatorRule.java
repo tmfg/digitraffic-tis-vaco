@@ -11,7 +11,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
-import fi.digitraffic.tis.vaco.validation.model.PhaseData;
+import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.immutables.value.Value;

@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.delegator;
 
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -7,11 +8,10 @@ import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
+import fi.digitraffic.tis.vaco.process.model.ImmutableJobMessage;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
-import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.slf4j.Logger;
