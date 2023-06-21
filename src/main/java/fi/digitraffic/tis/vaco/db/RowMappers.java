@@ -41,6 +41,7 @@ public class RowMappers {
             .id(rs.getLong("id"))
             .entryId(rs.getLong("entry_id"))
             .name(rs.getString("name"))
+            .priority(rs.getInt("priority"))
             .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
             .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
             .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))

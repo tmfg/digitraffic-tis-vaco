@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryCommandMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
@@ -39,7 +40,10 @@ public class QueueHandlerService {
         ImmutableQueueEntry converted = entryCommandMapper.toQueueEntry(entryCommand);
         ImmutableQueueEntry result = queueHandlerRepository.create(converted);
 
-        ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder().entry(result).build();
+        ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
+            .entry(result)
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
         messagingService.submitProcessingJob(job);
 
         return result;

@@ -4,6 +4,7 @@ import fi.digitraffic.tis.aws.s3.S3ClientUtility;
 import fi.digitraffic.tis.http.HttpClientUtility;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
@@ -85,6 +86,7 @@ public class ValidationService {
         return ImmutablePhase.builder()
                 .entryId(entryId)
                 .name(phaseName)
+                .priority(Subtask.VALIDATION.priority)
                 .build();
     }
 

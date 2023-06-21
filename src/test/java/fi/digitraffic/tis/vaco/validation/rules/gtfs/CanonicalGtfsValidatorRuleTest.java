@@ -190,11 +190,15 @@ class CanonicalGtfsValidatorRuleTest {
     @NotNull
     private ImmutablePhaseData<FileReferences> forInput(String testFile) throws URISyntaxException {
         return ImmutablePhaseData.<FileReferences>builder()
-                .phase(ImmutablePhase.builder().id(MOCK_PHASE_ID).name(ValidationService.EXECUTION_PHASE).build())
-                .payload(ImmutableFileReferences.builder()
-                        .localPath(testResource(testFile))
-                        .build())
-                .build();
+            .phase(ImmutablePhase.builder()
+                .id(MOCK_PHASE_ID)
+                .name(ValidationService.EXECUTION_PHASE)
+                .priority(999)
+                .build())
+            .payload(ImmutableFileReferences.builder()
+                .localPath(testResource(testFile))
+                .build())
+            .build();
     }
 
     private Path testResource(String resourceName) throws URISyntaxException {

@@ -23,6 +23,8 @@ public interface Phase {
 
     String name();
 
+    int priority();
+
     @Nullable
     LocalDateTime started();
 

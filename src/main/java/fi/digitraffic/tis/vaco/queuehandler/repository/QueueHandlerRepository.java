@@ -136,12 +136,12 @@ public class QueueHandlerRepository {
     public ImmutablePhase startPhase(ImmutablePhase phase) {
         try {
             return jdbcTemplate.queryForObject("""
-                INSERT INTO queue_phase (entry_id, name, updated)
-                     VALUES (?, ?, NOW())
-                  RETURNING id, entry_id, name, started, updated, completed
+                INSERT INTO queue_phase (entry_id, name, priority, updated)
+                     VALUES (?, ?, ?, NOW())
+                  RETURNING id, entry_id, name, priority, started, updated, completed
                 """,
                 RowMappers.PHASE,
-                phase.entryId(), phase.name());
+                phase.entryId(), phase.name(), phase.priority());
         } catch (DuplicateKeyException dke) {
             throw new ValidationProcessException("Failed to start phase " + phase + ", did you try to START the same phase twice?", dke);
         }
@@ -152,7 +152,7 @@ public class QueueHandlerRepository {
                      UPDATE queue_phase
                         SET updated = NOW()
                       WHERE id = ?
-                  RETURNING id, entry_id, name, started, updated, completed
+                  RETURNING id, entry_id, name, priority, started, updated, completed
                 """,
                 RowMappers.PHASE,
                 phase.id());
@@ -165,10 +165,33 @@ public class QueueHandlerRepository {
                         SET updated = NOW(),
                             completed = NOW()
                       WHERE id = ?
-                  RETURNING id, entry_id, name, started, updated, completed
+                  RETURNING id, entry_id, name, priority, started, updated, completed
                 """,
                 RowMappers.PHASE,
                 phase.id());
+    }
+
+    /**
+     * Finds all phases for given entry, if any, ordered by priority.
+     * <p>
+     * The priority order is somewhat arbitrary and decided during insert.
+     *
+     * @param entry Entry reference for finding the phases.
+     * @return Ordered list of phases or empty list if none found.
+     */
+    public List<ImmutablePhase> findPhases(QueueEntry entry) {
+        try {
+            return jdbcTemplate.query("""
+                SELECT *
+                  FROM queue_phase
+                 WHERE entry_id = ?
+                 ORDER BY priority DESC
+                """,
+                RowMappers.PHASE,
+                entry.id());
+        } catch (EmptyResultDataAccessException e) {
+            return List.of();
+        }
     }
 
     public void startEntryProcessing(QueueEntry entry) {
