@@ -5,14 +5,14 @@ import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
-import fi.digitraffic.tis.vaco.validation.model.ValidationJobResult;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableJobMessage;
+import fi.digitraffic.tis.vaco.validation.model.JobResult;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidationJobMessage> {
+public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableJobMessage> {
 
     private final MessagingService messagingService;
 
@@ -26,14 +26,14 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
     }
 
     @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
-    public void listen(ImmutableValidationJobMessage message, Acknowledgement acknowledgement) {
+    public void listen(ImmutableJobMessage message, Acknowledgement acknowledgement) {
         handle(message, message.message().publicId(), acknowledgement, (ignored) -> {});
     }
 
     @Override
-    protected void runTask(ImmutableValidationJobMessage message) {
+    protected void runTask(ImmutableJobMessage message) {
         // TODO: We have full results available here, but don't do anything with them - maybe we don't need 'em?
-        ValidationJobResult result = validationService.validate(message);
+        JobResult result = validationService.validate(message);
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
             .entry(message.message())

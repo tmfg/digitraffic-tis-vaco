@@ -9,7 +9,7 @@ import org.immutables.value.Value;
  * abstraction is nearly impossible though, which is why this is now in validation subsystem's root package.
  */
 @Value.Immutable
-public interface Result<R> {
+public interface PhaseResult<R> {
     @Value.Parameter
     String phase();
 

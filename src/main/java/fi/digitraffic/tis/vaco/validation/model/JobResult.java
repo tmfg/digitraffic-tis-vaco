@@ -5,6 +5,6 @@ import org.immutables.value.Value;
 import java.util.List;
 
 @Value.Immutable
-public interface ValidationJobResult {
-    List<Result<?>> results();
+public interface JobResult {
+    List<PhaseResult<?>> results();
 }

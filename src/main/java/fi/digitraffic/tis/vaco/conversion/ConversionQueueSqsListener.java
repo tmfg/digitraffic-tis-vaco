@@ -30,6 +30,8 @@ public class ConversionQueueSqsListener extends SqsListenerBase<ImmutableConvers
 
     @Override
     protected void runTask(ImmutableConversionJobMessage message) {
+
+
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
             .entry(message.message())
             .retryStatistics(ImmutableRetryStatistics.of(5))

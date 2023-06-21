@@ -11,7 +11,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
+import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
@@ -147,7 +147,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void executesRulesBasedOnIdentifyingName() {
         ImmutableQueueEntry entry = createQueueEntryForTesting();
-        ImmutableResult<List<ValidationReport>> results = validationService.executeRules(entry, null,
+        ImmutablePhaseResult<List<ValidationReport>> results = validationService.executeRules(entry, null,
                 Set.of(ImmutableRuleset.builder()
                         .identifyingName(TEST_RULE_NAME)
                         .description("running hello rule from tests")
@@ -155,7 +155,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                         .type(Type.VALIDATION_SYNTAX)
                         .build()));
 
-        assertThat(results, equalTo(ImmutableResult.of(
+        assertThat(results, equalTo(ImmutablePhaseResult.of(
                         ValidationService.EXECUTION_PHASE,
                         List.of(ImmutableValidationReport.of(TEST_RULE_RESULT)))));
     }

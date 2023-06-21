@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.validation.model.Result;
+import fi.digitraffic.tis.vaco.validation.model.PhaseResult;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -16,5 +16,5 @@ public interface ValidationInput {
     List<String> rules();
 
     @Nullable
-    List<Result<?>> results();
+    List<PhaseResult<?>> results();
 }
