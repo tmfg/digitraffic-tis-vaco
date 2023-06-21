@@ -219,6 +219,28 @@ public class QueueHandlerRepository {
                 entry.id());
     }
 
+    public List<ImmutableQueueEntry> findAllByBusinessId(String businessId, boolean full) {
+        try {
+            List<ImmutableQueueEntry> entries = jdbcTemplate.query("""
+                    SELECT *
+                      FROM queue_entry
+                     WHERE business_id = ?
+                    """,
+                RowMappers.QUEUE_ENTRY.apply(objectMapper),
+                businessId);
+
+            if (full) {
+                return entries.stream()
+                    .map(this::buildCompleteEntry)
+                    .toList();
+            } else {
+                return entries;
+            }
+        } catch (EmptyResultDataAccessException erdae) {
+            return List.of();
+        }
+    }
+
     /**
      * Call this to complete {@link QueueEntry} object's fields if needed.
      *
