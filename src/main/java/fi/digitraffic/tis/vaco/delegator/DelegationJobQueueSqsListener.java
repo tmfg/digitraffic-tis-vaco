@@ -8,10 +8,10 @@ import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.process.model.ImmutableJobMessage;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
             switch (taskToRun.get()) {
                 case VALIDATION -> {
-                    ImmutableJobMessage validationJob = ImmutableJobMessage.builder()
+                    ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
                         .message(message.entry())
                         .retryStatistics(ImmutableRetryStatistics.of(5))
                         .build();

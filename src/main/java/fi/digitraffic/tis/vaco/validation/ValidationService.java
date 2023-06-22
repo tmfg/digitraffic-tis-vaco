@@ -10,7 +10,7 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
-import fi.digitraffic.tis.vaco.process.model.JobMessage;
+import fi.digitraffic.tis.vaco.validation.model.JobMessage;
 import fi.digitraffic.tis.vaco.process.model.JobResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
@@ -75,7 +75,7 @@ public class ValidationService {
 
         PhaseResult<Set<Ruleset>> validationRulesets = selectRulesets(jobDescription.message());
 
-        ImmutablePhaseResult<List<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRulesets.result());
+        PhaseResult<List<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRulesets.result());
 
         return ImmutableJobResult.builder()
                 .addResults(s3path, validationRulesets, validationReports)
