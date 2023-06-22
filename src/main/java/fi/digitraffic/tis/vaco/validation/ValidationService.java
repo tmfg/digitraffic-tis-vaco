@@ -3,25 +3,25 @@ package fi.digitraffic.tis.vaco.validation;
 import fi.digitraffic.tis.aws.s3.S3ClientUtility;
 import fi.digitraffic.tis.http.HttpClientUtility;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
+import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
+import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
+import fi.digitraffic.tis.vaco.process.model.JobResult;
+import fi.digitraffic.tis.vaco.process.model.PhaseData;
+import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
-import fi.digitraffic.tis.vaco.validation.model.ImmutablePhaseData;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableResult;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobResult;
-import fi.digitraffic.tis.vaco.validation.model.PhaseData;
-import fi.digitraffic.tis.vaco.validation.model.Result;
-import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
-import fi.digitraffic.tis.vaco.validation.model.ValidationJobResult;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.slf4j.Logger;
@@ -70,14 +70,14 @@ public class ValidationService {
         this.errorHandlerService = errorHandlerService;
     }
 
-    public ValidationJobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
-        Result<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());
+    public JobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
+        PhaseResult<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());
 
-        Result<Set<Ruleset>> validationRulesets = selectRulesets(jobDescription.message());
+        PhaseResult<Set<Ruleset>> validationRulesets = selectRulesets(jobDescription.message());
 
-        ImmutableResult<List<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRulesets.result());
+        PhaseResult<List<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRulesets.result());
 
-        return ImmutableValidationJobResult.builder()
+        return ImmutableJobResult.builder()
                 .addResults(s3path, validationRulesets, validationReports)
                 .build();
     }
@@ -91,7 +91,7 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    Result<ImmutableFileReferences> downloadFile(QueueEntry queueEntry) {
+    PhaseResult<ImmutableFileReferences> downloadFile(QueueEntry queueEntry) {
         ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
 
@@ -125,18 +125,18 @@ public class ValidationService {
         };
     }
 
-    private Function<PhaseData<ImmutableFileReferences>, Result<ImmutableFileReferences>> completeDownloadPhase() {
+    private Function<PhaseData<ImmutableFileReferences>, PhaseResult<ImmutableFileReferences>> completeDownloadPhase() {
         return phaseData -> {
             ImmutableFileReferences fileRefs = phaseData.payload();
             LOGGER.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
             // download complete, mark to database as complete and unwrap payload
             queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
-            return ImmutableResult.of(DOWNLOAD_PHASE, fileRefs);
+            return ImmutablePhaseResult.of(DOWNLOAD_PHASE, fileRefs);
         };
     }
 
     @VisibleForTesting
-    Result<Set<Ruleset>> selectRulesets(QueueEntry queueEntry) {
+    PhaseResult<Set<Ruleset>> selectRulesets(QueueEntry queueEntry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
@@ -144,11 +144,11 @@ public class ValidationService {
 
         phaseData.withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
-        return ImmutableResult.of(RULESET_SELECTION_PHASE, rulesets);
+        return ImmutablePhaseResult.of(RULESET_SELECTION_PHASE, rulesets);
     }
 
     @VisibleForTesting
-    ImmutableResult<List<ValidationReport>> executeRules(QueueEntry queueEntry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
+    ImmutablePhaseResult<List<ValidationReport>> executeRules(QueueEntry queueEntry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
         PhaseData<FileReferences> phaseData = ImmutablePhaseData.<FileReferences>builder()
                 .phase(queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), EXECUTION_PHASE), ProcessingState.START))
                 .payload(fileReferences)
@@ -162,7 +162,7 @@ public class ValidationService {
                 .toList();
         // everything's done at this point because of the ::join call, complete phase and return
         queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
-        return ImmutableResult.of(EXECUTION_PHASE, reports);
+        return ImmutablePhaseResult.of(EXECUTION_PHASE, reports);
     }
 
     private Optional<Rule> findMatchingRule(Ruleset validationRule) {

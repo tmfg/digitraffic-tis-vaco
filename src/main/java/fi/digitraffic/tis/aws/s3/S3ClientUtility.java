@@ -1,7 +1,11 @@
 package fi.digitraffic.tis.aws.s3;
 
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryDownload;
+import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
+import software.amazon.awssdk.transfer.s3.model.DownloadDirectoryRequest;
+import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
@@ -40,6 +44,23 @@ public class S3ClientUtility {
             .build();
         return s3TransferManager
             .uploadFile(ufr)
+            .completionFuture();
+    }
+
+    CompletableFuture<CompletedDirectoryDownload> downloadDirectory(Path directoryPath) throws IOException {
+        DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()
+            .destination(directoryPath)
+            .build();
+        return s3TransferManager.downloadDirectory(ddr)
+            .completionFuture();
+    }
+
+    CompletableFuture<CompletedFileDownload> downloadFile(Path filePath) throws IOException {
+        DownloadFileRequest dfr = DownloadFileRequest.builder()
+            .destination(filePath)
+            .build();
+        return s3TransferManager
+            .downloadFile(dfr)
             .completionFuture();
     }
 }

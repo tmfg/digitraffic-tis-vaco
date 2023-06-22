@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.messaging;
 import fi.digitraffic.tis.vaco.conversion.model.ConversionJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
-import fi.digitraffic.tis.vaco.queuehandler.model.ProcessingState;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 
 public interface MessagingService {
