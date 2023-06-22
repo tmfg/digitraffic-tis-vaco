@@ -54,7 +54,7 @@ public class QueueHandlerRepository {
         return jdbcTemplate.queryForObject("""
                 INSERT INTO queue_entry(business_id, format, url, etag, metadata)
                      VALUES (?, ?, ?, ?, ?)
-                  RETURNING id, public_id, business_id, format, url, etag, metadata, started, updated, completed
+                  RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
                 """,
             RowMappers.QUEUE_ENTRY.apply(objectMapper),
             entry.businessId(), entry.format(), entry.url(), entry.etag(), writeJson(entry.metadata()));
@@ -90,17 +90,13 @@ public class QueueHandlerRepository {
 
     @Transactional
     public Optional<ImmutableQueueEntry> findByPublicId(String publicId) {
-        return findEntry(publicId).map(entry ->
-                entry.withPhases(findPhases(entry.id()))
-                        .withValidation(findValidationInput(entry.id()))
-                        .withConversion(findConversionInput(entry.id()).orElse(null))
-                        .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id())));
+        return findEntry(publicId).map(this::buildCompleteEntry);
     }
 
     private Optional<ImmutableQueueEntry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject("""
-                        SELECT id, public_id, business_id, format, url, etag, metadata, started, updated, completed
+                        SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
                           FROM queue_entry qe
                          WHERE qe.public_id = ?
                         """,
@@ -221,6 +217,42 @@ public class QueueHandlerRepository {
                  WHERE id = ?
                 """,
                 entry.id());
+    }
+
+    public List<ImmutableQueueEntry> findAllByBusinessId(String businessId, boolean full) {
+        try {
+            List<ImmutableQueueEntry> entries = jdbcTemplate.query("""
+                    SELECT *
+                      FROM queue_entry
+                     WHERE business_id = ?
+                    """,
+                RowMappers.QUEUE_ENTRY.apply(objectMapper),
+                businessId);
+
+            if (full) {
+                return entries.stream()
+                    .map(this::buildCompleteEntry)
+                    .toList();
+            } else {
+                return entries;
+            }
+        } catch (EmptyResultDataAccessException erdae) {
+            return List.of();
+        }
+    }
+
+    /**
+     * Call this to complete {@link QueueEntry} object's fields if needed.
+     *
+     * @param entry Entry to complete.
+     * @return Fully completed entry.
+     */
+    private ImmutableQueueEntry buildCompleteEntry(ImmutableQueueEntry entry) {
+        return entry
+            .withPhases(findPhases(entry.id()))
+            .withValidation(findValidationInput(entry.id()))
+            .withConversion(findConversionInput(entry.id()).orElse(null))
+            .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));
     }
 
     private PGobject writeJson(JsonNode tree) {

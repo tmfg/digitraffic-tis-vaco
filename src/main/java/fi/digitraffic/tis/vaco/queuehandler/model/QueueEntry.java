@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -15,6 +16,7 @@ import java.util.List;
 @Value.Immutable
 @JsonSerialize(as = ImmutableQueueEntry.class)
 @JsonDeserialize(as = ImmutableQueueEntry.class)
+@JsonInclude(JsonInclude.Include.NON_ABSENT)
 public interface QueueEntry {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
@@ -53,6 +55,9 @@ public interface QueueEntry {
 
     @Nullable
     List<Error> errors();
+
+    @Nullable
+    LocalDateTime created();
 
     @Nullable
     LocalDateTime started();

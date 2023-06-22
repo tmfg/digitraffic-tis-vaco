@@ -89,6 +89,7 @@ public class RowMappers {
                 .url(rs.getString("url"))
                 .etag(rs.getString("etag"))
                 .metadata(readJson(objectMapper, rs, "metadata"))
+                .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
                 .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
                 .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
                 .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
