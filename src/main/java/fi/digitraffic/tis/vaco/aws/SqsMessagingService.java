@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
-import fi.digitraffic.tis.vaco.validation.model.JobMessage;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.operations.MessagingOperationFailedException;
 import io.awspring.cloud.sqs.operations.SendResult;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
@@ -46,8 +46,8 @@ public class SqsMessagingService implements MessagingService {
     }
 
     @Override
-    public void submitValidationJob(JobMessage jobDescription) {
-        Optional<SendResult<JobMessage>> result = sendMessage(MessageQueue.JOBS_VALIDATION, jobDescription);
+    public void submitValidationJob(ValidationJobMessage jobDescription) {
+        Optional<SendResult<ValidationJobMessage>> result = sendMessage(MessageQueue.JOBS_VALIDATION, jobDescription);
     }
 
     @Override

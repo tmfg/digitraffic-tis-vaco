@@ -8,9 +8,9 @@ import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableJobMessage.class)
-@JsonDeserialize(as = ImmutableJobMessage.class)
-public interface JobMessage extends Retryable {
+@JsonSerialize(as = ImmutableValidationJobMessage.class)
+@JsonDeserialize(as = ImmutableValidationJobMessage.class)
+public interface ValidationJobMessage extends Retryable {
     QueueEntry message();
     @Nullable
     String previous();

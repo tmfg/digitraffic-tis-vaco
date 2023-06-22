@@ -10,7 +10,7 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
-import fi.digitraffic.tis.vaco.validation.model.JobMessage;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.process.model.JobResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
@@ -70,7 +70,7 @@ public class ValidationService {
         this.errorHandlerService = errorHandlerService;
     }
 
-    public JobResult validate(JobMessage jobDescription) throws ValidationProcessException {
+    public JobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
         PhaseResult<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());
 
         PhaseResult<Set<Ruleset>> validationRulesets = selectRulesets(jobDescription.message());

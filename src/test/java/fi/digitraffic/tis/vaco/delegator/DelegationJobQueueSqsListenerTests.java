@@ -8,7 +8,7 @@ import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
-import fi.digitraffic.tis.vaco.validation.model.JobMessage;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +40,7 @@ class DelegationJobQueueSqsListenerTests {
     @Mock
     private Acknowledgement acknowledgement;
     @Captor
-    private ArgumentCaptor<JobMessage> validationJob;
+    private ArgumentCaptor<ValidationJobMessage> validationJob;
 
     @BeforeEach
     void setUp() {
