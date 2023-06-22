@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.conversion;
 
 import fi.digitraffic.tis.aws.s3.S3ClientUtility;
-import fi.digitraffic.tis.http.HttpClientUtility;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
@@ -42,28 +41,23 @@ public class ConversionService {
     public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConversionService.class);
-
-    private final HttpClientUtility httpClientUtility;
     private final S3ClientUtility s3ClientUtility;
     private final QueueHandlerService queueHandlerService;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
-
     private final VacoProperties vacoProperties;
+
     private final ErrorHandlerService errorHandlerService;
 
-    public ConversionService(VacoProperties vacoProperties,
-                             S3ClientUtility s3ClientUtility, QueueHandlerService queueHandlerService,
-                             HttpClientUtility httpClientUtility,
+    public ConversionService(S3ClientUtility s3ClientUtility, QueueHandlerService queueHandlerService,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules,
-                             VacoProperties vacoProperties1, ErrorHandlerService errorHandlerService) {
+                             VacoProperties vacoProperties, ErrorHandlerService errorHandlerService) {
         this.s3ClientUtility = s3ClientUtility;
         this.queueHandlerService = queueHandlerService;
-        this.httpClientUtility = httpClientUtility;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
-        this.vacoProperties = vacoProperties1;
+        this.vacoProperties = vacoProperties;
         this.errorHandlerService = errorHandlerService;
     }
 
