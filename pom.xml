@@ -37,7 +37,7 @@
                    avoid conflicts -->
         <junit5.version>5.9.2</junit5.version>
         <testcontainers.version>1.18.3</testcontainers.version>
-        <awssdk.version>2.20.83</awssdk.version>
+        <awssdk.version>2.20.92</awssdk.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <io.awspring.cloud-version>3.0.1</io.awspring.cloud-version>
         <org.immutables-version>2.9.3</org.immutables-version>
