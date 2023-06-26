@@ -39,12 +39,12 @@ public class RulesetRepository {
         List<ImmutableRuleset> rulesets = namedParameterJdbcTemplate.query("""
                 WITH current_id AS (
                     SELECT id
-                      FROM tis_organization
+                      FROM organization
                      WHERE business_id = :businessId
                 ),
                 parents AS (
                     SELECT partner_a_id AS id
-                      FROM tis_cooperation, current_id
+                      FROM cooperation, current_id
                      WHERE partner_b_id = current_id.id
                 )
                 SELECT DISTINCT r.*
@@ -71,7 +71,7 @@ public class RulesetRepository {
         List<ImmutableRuleset> rulesets = namedParameterJdbcTemplate.query("""
                 WITH current_id AS (
                     SELECT id
-                      FROM tis_organization
+                      FROM organization
                      WHERE business_id = :businessId
                 ),
                 specific_rulesets AS (
@@ -81,7 +81,7 @@ public class RulesetRepository {
                 ),
                 parents AS (
                     SELECT partner_a_id AS id
-                      FROM tis_cooperation, current_id
+                      FROM cooperation, current_id
                      WHERE partner_b_id = current_id.id
                 )
                 SELECT DISTINCT r.*

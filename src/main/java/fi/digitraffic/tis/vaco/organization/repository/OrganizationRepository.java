@@ -18,7 +18,7 @@ public class OrganizationRepository {
 
     public ImmutableOrganization create(ImmutableOrganization organization) {
         return jdbcTemplate.queryForObject("""
-                INSERT INTO tis_organization(business_id, name)
+                INSERT INTO organization(business_id, name)
                      VALUES (?, ?)
                   RETURNING id, public_id, business_id, name
                 """,
@@ -29,7 +29,7 @@ public class OrganizationRepository {
     public ImmutableOrganization getByBusinessId(String businessId) {
         return jdbcTemplate.queryForObject("""
                 SELECT *
-                  FROM tis_organization
+                  FROM organization
                  WHERE business_id = ?
                 """,
             RowMappers.ORGANIZATION,
@@ -39,7 +39,7 @@ public class OrganizationRepository {
     public Optional<ImmutableOrganization> findByBusinessId(String businessId) {
         return jdbcTemplate.query("""
                 SELECT *
-                  FROM tis_organization
+                  FROM organization
                  WHERE business_id = ?
                 """,
                 RowMappers.ORGANIZATION,
@@ -47,6 +47,6 @@ public class OrganizationRepository {
     }
 
     public void delete(String businessId) {
-        jdbcTemplate.update("DELETE FROM tis_organization WHERE business_id = ?", businessId);
+        jdbcTemplate.update("DELETE FROM organization WHERE business_id = ?", businessId);
     }
 }

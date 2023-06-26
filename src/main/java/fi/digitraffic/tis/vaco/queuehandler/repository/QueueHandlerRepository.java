@@ -52,7 +52,7 @@ public class QueueHandlerRepository {
 
     private ImmutableQueueEntry createEntry(QueueEntry entry) {
         return jdbcTemplate.queryForObject("""
-                INSERT INTO queue_entry(business_id, format, url, etag, metadata)
+                INSERT INTO entry(business_id, format, url, etag, metadata)
                      VALUES (?, ?, ?, ?, ?)
                   RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
                 """,
@@ -66,7 +66,7 @@ public class QueueHandlerRepository {
         }
         return phases.stream()
                 .map(phase -> jdbcTemplate.queryForObject(
-                        "INSERT INTO queue_phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
+                        "INSERT INTO phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
                         RowMappers.PHASE,
                         entryId))
                 .toList();
@@ -74,7 +74,7 @@ public class QueueHandlerRepository {
 
     private ValidationInput createValidationInput(Long entryId, ValidationInput validation) {
         return jdbcTemplate.queryForObject(
-                "INSERT INTO queue_validation_input (entry_id) VALUES (?) RETURNING id, entry_id",
+                "INSERT INTO validation_input (entry_id) VALUES (?) RETURNING id, entry_id",
                 (rs, rowNum) -> ImmutableValidationInput.builder().build(),
                 entryId);
     }
@@ -82,7 +82,7 @@ public class QueueHandlerRepository {
     private ConversionInput createConversionInput(Long entryId, ConversionInput conversion) {
         return conversion != null
             ? jdbcTemplate.queryForObject(
-                "INSERT INTO queue_conversion_input (entry_id, target_format) VALUES (?, ?) RETURNING id, entry_id, target_format",
+                "INSERT INTO conversion_input (entry_id, target_format) VALUES (?, ?) RETURNING id, entry_id, target_format",
                     (rs, rowNum) -> ImmutableConversionInput.builder().build(),
                     entryId, conversion.targetFormat())
             : null;
@@ -97,7 +97,7 @@ public class QueueHandlerRepository {
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject("""
                         SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
-                          FROM queue_entry qe
+                          FROM entry qe
                          WHERE qe.public_id = ?
                         """,
                         RowMappers.QUEUE_ENTRY.apply(objectMapper),
@@ -108,20 +108,20 @@ public class QueueHandlerRepository {
     }
 
     private List<ImmutablePhase> findPhases(Long entryId) {
-        return jdbcTemplate.query("SELECT * FROM queue_phase qp WHERE qp.entry_id = ?",
+        return jdbcTemplate.query("SELECT * FROM phase qp WHERE qp.entry_id = ?",
                 RowMappers.PHASE,
             entryId);
     }
 
     private ValidationInput findValidationInput(Long entryId) {
-        return jdbcTemplate.queryForObject("SELECT * FROM queue_validation_input qvi WHERE qvi.entry_id = ?",
+        return jdbcTemplate.queryForObject("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
             (rs, row) -> null,
             entryId);
     }
 
     private Optional<ConversionInput> findConversionInput(Long entryId) {
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT * FROM queue_conversion_input qci WHERE qci.entry_id = ?",
+            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
                 (rs, row) -> null,
                 entryId));
         } catch (EmptyResultDataAccessException erdae) {
@@ -132,7 +132,7 @@ public class QueueHandlerRepository {
     public ImmutablePhase startPhase(ImmutablePhase phase) {
         try {
             return jdbcTemplate.queryForObject("""
-                INSERT INTO queue_phase (entry_id, name, priority, updated)
+                INSERT INTO phase (entry_id, name, priority, updated)
                      VALUES (?, ?, ?, NOW())
                   RETURNING id, entry_id, name, priority, started, updated, completed
                 """,
@@ -145,7 +145,7 @@ public class QueueHandlerRepository {
 
     public ImmutablePhase updatePhase(ImmutablePhase phase) {
         return jdbcTemplate.queryForObject("""
-                     UPDATE queue_phase
+                     UPDATE phase
                         SET updated = NOW()
                       WHERE id = ?
                   RETURNING id, entry_id, name, priority, started, updated, completed
@@ -157,7 +157,7 @@ public class QueueHandlerRepository {
 
     public ImmutablePhase completePhase(ImmutablePhase phase) {
         return jdbcTemplate.queryForObject("""
-                     UPDATE queue_phase
+                     UPDATE phase
                         SET updated = NOW(),
                             completed = NOW()
                       WHERE id = ?
@@ -179,7 +179,7 @@ public class QueueHandlerRepository {
         try {
             return jdbcTemplate.query("""
                 SELECT *
-                  FROM queue_phase
+                  FROM phase
                  WHERE entry_id = ?
                  ORDER BY priority DESC
                 """,
@@ -192,7 +192,7 @@ public class QueueHandlerRepository {
 
     public void startEntryProcessing(QueueEntry entry) {
         jdbcTemplate.update("""
-                UPDATE queue_entry
+                UPDATE entry
                    SET started=NOW(),
                        updated=NOW()
                  WHERE id = ?
@@ -202,7 +202,7 @@ public class QueueHandlerRepository {
 
     public void updateEntryProcessing(QueueEntry entry) {
         jdbcTemplate.update("""
-                UPDATE queue_entry
+                UPDATE entry
                    SET updated=NOW()
                  WHERE id = ?
                 """,
@@ -211,7 +211,7 @@ public class QueueHandlerRepository {
 
     public void completeEntryProcessing(QueueEntry entry) {
         jdbcTemplate.update("""
-                UPDATE queue_entry
+                UPDATE entry
                    SET updated=NOW(),
                        completed=NOW()
                  WHERE id = ?
@@ -223,7 +223,7 @@ public class QueueHandlerRepository {
         try {
             List<ImmutableQueueEntry> entries = jdbcTemplate.query("""
                     SELECT *
-                      FROM queue_entry
+                      FROM entry
                      WHERE business_id = ?
                     """,
                 RowMappers.QUEUE_ENTRY.apply(objectMapper),

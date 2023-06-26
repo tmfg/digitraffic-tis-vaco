@@ -19,8 +19,8 @@ public class CooperationRepository {
 
     public ImmutableCooperation create(ImmutableCooperation cooperation) {
         return jdbcTemplate.queryForObject("""
-                INSERT INTO tis_cooperation(type, partner_a_id, partner_b_id)
-                     VALUES (?::tis_cooperation_type, ?, ?)
+                INSERT INTO cooperation(type, partner_a_id, partner_b_id)
+                     VALUES (?::cooperation_type, ?, ?)
                   RETURNING type, partner_a_id, partner_b_id
                 """,
             RowMappers.COOPERATION,
@@ -31,8 +31,8 @@ public class CooperationRepository {
                                                     Long partnerAId,
                                                     Long partnerBId) {
         return jdbcTemplate.query("""
-                SELECT * FROM tis_cooperation
-                    WHERE type = ?::tis_cooperation_type AND partner_a_id = ? AND partner_b_id = ?
+                SELECT * FROM cooperation
+                    WHERE type = ?::cooperation_type AND partner_a_id = ? AND partner_b_id = ?
                 """,
             RowMappers.COOPERATION,
             type.fieldName(), partnerAId, partnerBId).stream().findFirst();

@@ -25,7 +25,7 @@ public class ErrorHandlerRepository {
     public ImmutableError create(Error error) {
         try {
             return jdbcTemplate.queryForObject("""
-                INSERT INTO error_message (entry_id, phase_id, ruleset_id, message, raw)
+                INSERT INTO error (entry_id, phase_id, ruleset_id, message, raw)
                      VALUES (?, ?, ?, ?, ?)
                   RETURNING id, public_id, entry_id, phase_id, ruleset_id, message, raw
                 """,
@@ -41,7 +41,7 @@ public class ErrorHandlerRepository {
             return jdbcTemplate.query(
                     """
                     SELECT id, public_id, entry_id, phase_id, ruleset_id, message, raw
-                      FROM error_message em
+                      FROM error em
                      WHERE em.entry_id = ?
                     """,
                     RowMappers.ERROR.apply(objectMapper),
