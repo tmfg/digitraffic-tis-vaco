@@ -20,7 +20,7 @@ import java.util.Optional;
 @Service
 public class QueueHandlerService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(QueueHandlerService.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
 
@@ -55,7 +55,7 @@ public class QueueHandlerService {
     }
 
     public ImmutablePhase reportPhase(ImmutablePhase phase, ProcessingState state) {
-        LOGGER.info("Updating phase {} to {}", phase, state);
+        logger.info("Updating phase {} to {}", phase, state);
         return switch (state) {
             case START -> queueHandlerRepository.startPhase(phase);
             case UPDATE -> queueHandlerRepository.updatePhase(phase);

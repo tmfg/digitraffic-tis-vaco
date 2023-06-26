@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class CanonicalGtfsValidatorRule implements Rule {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CanonicalGtfsValidatorRule.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public static final String RULE_NAME = "gtfs.canonical.v4_0_0";
 
@@ -141,7 +141,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
 
             return errors;
         } catch (IOException e) {
-            LOGGER.warn("Failed to process {}/{}/{} output file", queueEntry.publicId(), phaseData.phase().name(), RULE_NAME, e);
+            logger.warn("Failed to process {}/{}/{} output file", queueEntry.publicId(), phaseData.phase().name(), RULE_NAME, e);
             return List.of();
         }
     }

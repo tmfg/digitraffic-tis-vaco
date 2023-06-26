@@ -29,7 +29,7 @@ import java.util.Optional;
 
 @Repository
 public class QueueHandlerRepository {
-    private static final Logger LOGGER = LoggerFactory.getLogger(QueueHandlerRepository.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
@@ -264,7 +264,7 @@ public class QueueHandlerRepository {
                 return pgo;
             }
         } catch (SQLException | JsonProcessingException e) {
-            LOGGER.error("Failed Jdbc conversion from PGobject to JsonNode", e);
+            logger.error("Failed Jdbc conversion from PGobject to JsonNode", e);
         }
         // TODO: This is potentially fatal, we could re-throw instead
         return null;
