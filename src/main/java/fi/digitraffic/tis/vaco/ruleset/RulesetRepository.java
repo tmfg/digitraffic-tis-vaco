@@ -21,7 +21,7 @@ import java.util.Set;
 @Repository
 public class RulesetRepository {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RulesetRepository.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -60,7 +60,7 @@ public class RulesetRepository {
                 .addValue("businessId", businessId)
                 .addValue("type", type.fieldName()),
             RowMappers.RULESET);
-        LOGGER.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
+        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
         return Set.copyOf(rulesets);
     }
 
@@ -100,7 +100,7 @@ public class RulesetRepository {
                 .addValue("rulesetNames", rulesetNames)
                 .addValue("type", type.fieldName()),
             RowMappers.RULESET);
-        LOGGER.info("Found {} rulesets of type {} for {}: resolved {}, requested {}", rulesets.size(), type,
+        logger.info("Found {} rulesets of type {} for {}: resolved {}, requested {}", rulesets.size(), type,
             businessId, rulesets.stream().map(Ruleset::identifyingName).toList(), rulesetNames);
         return Set.copyOf(rulesets);
     }

@@ -40,7 +40,7 @@ public class ConversionService {
     public static final String EXECUTION_PHASE = "conversion.execute";
     public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConversionService.class);
+    Logger logger = LoggerFactory.getLogger(getClass());
     private final S3ClientUtility s3ClientUtility;
     private final QueueHandlerService queueHandlerService;
     private final RulesetRepository rulesetRepository;
@@ -116,7 +116,7 @@ public class ConversionService {
         String identifyingName = ruleset.identifyingName();
         Optional<Rule> ruleOptional = Optional.ofNullable(rules.get(identifyingName));
         if (ruleOptional.isEmpty()) {
-            LOGGER.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
+            logger.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
         }
         return ruleOptional;
     }

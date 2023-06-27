@@ -45,7 +45,7 @@ public class ValidationService {
     public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
     public static final String EXECUTION_PHASE = "validation.execute";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ValidationService.class);
+    Logger logger = LoggerFactory.getLogger(getClass());
     private final VacoProperties vacoProperties;
     private final QueueHandlerService queueHandlerService;
     private final HttpClientUtility httpClientUtility;
@@ -128,7 +128,7 @@ public class ValidationService {
     private Function<PhaseData<ImmutableFileReferences>, PhaseResult<ImmutableFileReferences>> completeDownloadPhase() {
         return phaseData -> {
             ImmutableFileReferences fileRefs = phaseData.payload();
-            LOGGER.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
+            logger.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
             // download complete, mark to database as complete and unwrap payload
             queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
             return ImmutablePhaseResult.of(DOWNLOAD_PHASE, fileRefs);
@@ -169,7 +169,7 @@ public class ValidationService {
         String identifyingName = validationRule.identifyingName();
         Optional<Rule> rule = Optional.ofNullable(rules.get(identifyingName));
         if (rule.isEmpty()) {
-            LOGGER.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
+            logger.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
         }
         return rule;
     }

@@ -20,7 +20,7 @@ import java.util.Optional;
 @Service
 public class SqsMessagingService implements MessagingService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqsMessagingService.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final SqsTemplate sqsTemplate;
     private final QueueHandlerRepository queueHandlerRepository;
@@ -35,7 +35,7 @@ public class SqsMessagingService implements MessagingService {
         try {
             return Optional.ofNullable(sqsTemplate.send(messageQueue.getQueueName(), payload));
         } catch (MessagingOperationFailedException mofe) {
-            LOGGER.warn("Failed to send message %s to queue %s".formatted(payload, messageQueue), mofe);
+            logger.warn("Failed to send message %s to queue %s".formatted(payload, messageQueue), mofe);
         }
         return Optional.empty();
     }
