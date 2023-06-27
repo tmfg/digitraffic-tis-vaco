@@ -10,14 +10,14 @@ import java.util.Optional;
 @Repository
 public class OrganizationRepository {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbc;
 
-    public OrganizationRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public OrganizationRepository(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
     public ImmutableOrganization create(ImmutableOrganization organization) {
-        return jdbcTemplate.queryForObject("""
+        return jdbc.queryForObject("""
                 INSERT INTO organization(business_id, name)
                      VALUES (?, ?)
                   RETURNING id, public_id, business_id, name
@@ -27,7 +27,7 @@ public class OrganizationRepository {
     }
 
     public ImmutableOrganization getByBusinessId(String businessId) {
-        return jdbcTemplate.queryForObject("""
+        return jdbc.queryForObject("""
                 SELECT *
                   FROM organization
                  WHERE business_id = ?
@@ -37,7 +37,7 @@ public class OrganizationRepository {
     }
 
     public Optional<ImmutableOrganization> findByBusinessId(String businessId) {
-        return jdbcTemplate.query("""
+        return jdbc.query("""
                 SELECT *
                   FROM organization
                  WHERE business_id = ?
@@ -47,6 +47,6 @@ public class OrganizationRepository {
     }
 
     public void delete(String businessId) {
-        jdbcTemplate.update("DELETE FROM organization WHERE business_id = ?", businessId);
+        jdbc.update("DELETE FROM organization WHERE business_id = ?", businessId);
     }
 }

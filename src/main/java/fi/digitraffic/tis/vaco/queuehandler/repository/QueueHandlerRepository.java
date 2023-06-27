@@ -30,14 +30,14 @@ import java.util.Optional;
 @Repository
 public class QueueHandlerRepository {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
 
-    public QueueHandlerRepository(JdbcTemplate jdbcTemplate,
+    public QueueHandlerRepository(JdbcTemplate jdbc,
                                   ObjectMapper objectMapper,
                                   ErrorHandlerRepository errorHandlerRepository) {
-        this.jdbcTemplate = jdbcTemplate;
+        this.jdbc = jdbc;
         this.objectMapper = objectMapper;
         this.errorHandlerRepository = errorHandlerRepository;
     }
@@ -51,7 +51,7 @@ public class QueueHandlerRepository {
     }
 
     private ImmutableQueueEntry createEntry(QueueEntry entry) {
-        return jdbcTemplate.queryForObject("""
+        return jdbc.queryForObject("""
                 INSERT INTO entry(business_id, format, url, etag, metadata)
                      VALUES (?, ?, ?, ?, ?)
                   RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
@@ -65,7 +65,7 @@ public class QueueHandlerRepository {
             return List.of();
         }
         return phases.stream()
-                .map(phase -> jdbcTemplate.queryForObject(
+                .map(phase -> jdbc.queryForObject(
                         "INSERT INTO phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
                         RowMappers.PHASE,
                         entryId))
@@ -73,7 +73,7 @@ public class QueueHandlerRepository {
     }
 
     private ValidationInput createValidationInput(Long entryId, ValidationInput validation) {
-        return jdbcTemplate.queryForObject(
+        return jdbc.queryForObject(
                 "INSERT INTO validation_input (entry_id) VALUES (?) RETURNING id, entry_id",
                 (rs, rowNum) -> ImmutableValidationInput.builder().build(),
                 entryId);
@@ -81,7 +81,7 @@ public class QueueHandlerRepository {
 
     private ConversionInput createConversionInput(Long entryId, ConversionInput conversion) {
         return conversion != null
-            ? jdbcTemplate.queryForObject(
+            ? jdbc.queryForObject(
                 "INSERT INTO conversion_input (entry_id, target_format) VALUES (?, ?) RETURNING id, entry_id, target_format",
                     (rs, rowNum) -> ImmutableConversionInput.builder().build(),
                     entryId, conversion.targetFormat())
@@ -95,7 +95,7 @@ public class QueueHandlerRepository {
 
     private Optional<ImmutableQueueEntry> findEntry(String publicId) {
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject("""
+            return Optional.ofNullable(jdbc.queryForObject("""
                         SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
                           FROM entry qe
                          WHERE qe.public_id = ?
@@ -108,20 +108,20 @@ public class QueueHandlerRepository {
     }
 
     private List<ImmutablePhase> findPhases(Long entryId) {
-        return jdbcTemplate.query("SELECT * FROM phase qp WHERE qp.entry_id = ?",
+        return jdbc.query("SELECT * FROM phase qp WHERE qp.entry_id = ?",
                 RowMappers.PHASE,
             entryId);
     }
 
     private ValidationInput findValidationInput(Long entryId) {
-        return jdbcTemplate.queryForObject("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
+        return jdbc.queryForObject("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
             (rs, row) -> null,
             entryId);
     }
 
     private Optional<ConversionInput> findConversionInput(Long entryId) {
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
+            return Optional.ofNullable(jdbc.queryForObject("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
                 (rs, row) -> null,
                 entryId));
         } catch (EmptyResultDataAccessException erdae) {
@@ -131,7 +131,7 @@ public class QueueHandlerRepository {
 
     public ImmutablePhase startPhase(ImmutablePhase phase) {
         try {
-            return jdbcTemplate.queryForObject("""
+            return jdbc.queryForObject("""
                 INSERT INTO phase (entry_id, name, priority, updated)
                      VALUES (?, ?, ?, NOW())
                   RETURNING id, entry_id, name, priority, started, updated, completed
@@ -144,7 +144,7 @@ public class QueueHandlerRepository {
     }
 
     public ImmutablePhase updatePhase(ImmutablePhase phase) {
-        return jdbcTemplate.queryForObject("""
+        return jdbc.queryForObject("""
                      UPDATE phase
                         SET updated = NOW()
                       WHERE id = ?
@@ -156,7 +156,7 @@ public class QueueHandlerRepository {
     }
 
     public ImmutablePhase completePhase(ImmutablePhase phase) {
-        return jdbcTemplate.queryForObject("""
+        return jdbc.queryForObject("""
                      UPDATE phase
                         SET updated = NOW(),
                             completed = NOW()
@@ -177,7 +177,7 @@ public class QueueHandlerRepository {
      */
     public List<ImmutablePhase> findPhases(QueueEntry entry) {
         try {
-            return jdbcTemplate.query("""
+            return jdbc.query("""
                 SELECT *
                   FROM phase
                  WHERE entry_id = ?
@@ -191,7 +191,7 @@ public class QueueHandlerRepository {
     }
 
     public void startEntryProcessing(QueueEntry entry) {
-        jdbcTemplate.update("""
+        jdbc.update("""
                 UPDATE entry
                    SET started=NOW(),
                        updated=NOW()
@@ -201,7 +201,7 @@ public class QueueHandlerRepository {
     }
 
     public void updateEntryProcessing(QueueEntry entry) {
-        jdbcTemplate.update("""
+        jdbc.update("""
                 UPDATE entry
                    SET updated=NOW()
                  WHERE id = ?
@@ -210,7 +210,7 @@ public class QueueHandlerRepository {
     }
 
     public void completeEntryProcessing(QueueEntry entry) {
-        jdbcTemplate.update("""
+        jdbc.update("""
                 UPDATE entry
                    SET updated=NOW(),
                        completed=NOW()
@@ -221,7 +221,7 @@ public class QueueHandlerRepository {
 
     public List<ImmutableQueueEntry> findAllByBusinessId(String businessId, boolean full) {
         try {
-            List<ImmutableQueueEntry> entries = jdbcTemplate.query("""
+            List<ImmutableQueueEntry> entries = jdbc.query("""
                     SELECT *
                       FROM entry
                      WHERE business_id = ?

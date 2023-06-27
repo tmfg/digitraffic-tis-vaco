@@ -11,14 +11,14 @@ import java.util.Optional;
 @Repository
 public class CooperationRepository {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbc;
 
-    public CooperationRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public CooperationRepository(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
     public ImmutableCooperation create(ImmutableCooperation cooperation) {
-        return jdbcTemplate.queryForObject("""
+        return jdbc.queryForObject("""
                 INSERT INTO cooperation(type, partner_a_id, partner_b_id)
                      VALUES (?::cooperation_type, ?, ?)
                   RETURNING type, partner_a_id, partner_b_id
@@ -30,7 +30,7 @@ public class CooperationRepository {
     public Optional<ImmutableCooperation> findByIds(CooperationType type,
                                                     Long partnerAId,
                                                     Long partnerBId) {
-        return jdbcTemplate.query("""
+        return jdbc.query("""
                 SELECT * FROM cooperation
                     WHERE type = ?::cooperation_type AND partner_a_id = ? AND partner_b_id = ?
                 """,

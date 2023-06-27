@@ -23,20 +23,20 @@ public class RulesetRepository {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final JdbcTemplate jdbcTemplate;
-    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcTemplate namedJdbc;
     private final Cache<String, Ruleset> rulesetNameCache;
 
-    public RulesetRepository(JdbcTemplate jdbcTemplate,
-                             NamedParameterJdbcTemplate namedParameterJdbcTemplate,
+    public RulesetRepository(JdbcTemplate jdbc,
+                             NamedParameterJdbcTemplate namedJdbc,
                              @Qualifier("rulesetNameCache") Cache<String, Ruleset> rulesetNameCache) {
-        this.jdbcTemplate = jdbcTemplate;
+        this.jdbc = jdbc;
         this.rulesetNameCache = warmup(rulesetNameCache);
-        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+        this.namedJdbc = namedJdbc;
     }
 
     public Set<Ruleset> findRulesets(String businessId, Type type) {
-        List<ImmutableRuleset> rulesets = namedParameterJdbcTemplate.query("""
+        List<ImmutableRuleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM organization
@@ -68,7 +68,7 @@ public class RulesetRepository {
         if (rulesetNames.isEmpty()) {
             return findRulesets(businessId, type);
         }
-        List<ImmutableRuleset> rulesets = namedParameterJdbcTemplate.query("""
+        List<ImmutableRuleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM organization
@@ -106,7 +106,7 @@ public class RulesetRepository {
     }
 
     public ImmutableRuleset createRuleset(ImmutableRuleset ruleset) {
-        return jdbcTemplate.queryForObject("""
+        return jdbc.queryForObject("""
                 INSERT INTO ruleset(owner_id, category, identifying_name, description, "type")
                      VALUES (?, ?::ruleset_category, ?, ?, ?)
                   RETURNING id, public_id, owner_id, category, identifying_name, description, "type";
@@ -117,7 +117,7 @@ public class RulesetRepository {
 
     public Optional<Ruleset> findByName(String rulesetName) {
         try {
-            return Optional.ofNullable(rulesetNameCache.get(rulesetName, r -> jdbcTemplate.queryForObject("""
+            return Optional.ofNullable(rulesetNameCache.get(rulesetName, r -> jdbc.queryForObject("""
                     SELECT id, public_id, owner_id, category, identifying_name, description, "type"
                       FROM ruleset
                      WHERE identifying_name = ?
@@ -130,11 +130,11 @@ public class RulesetRepository {
     }
 
     public void deleteRuleset(ImmutableRuleset rule) {
-        jdbcTemplate.update("DELETE FROM ruleset WHERE public_id = ?", rule.publicId());
+        jdbc.update("DELETE FROM ruleset WHERE public_id = ?", rule.publicId());
     }
 
     private Cache warmup(Cache<String, Ruleset> rulesetNameCache) {
-        jdbcTemplate.query("SELECT * FROM ruleset", RowMappers.RULESET).forEach(ruleset -> {
+        jdbc.query("SELECT * FROM ruleset", RowMappers.RULESET).forEach(ruleset -> {
             rulesetNameCache.put(ruleset.identifyingName(), ruleset);
         });
         return rulesetNameCache;

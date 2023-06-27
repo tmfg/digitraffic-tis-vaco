@@ -14,17 +14,17 @@ import java.util.List;
 public class ErrorHandlerRepository {
 
     private final ObjectMapper objectMapper;
-    private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbc;
 
     public ErrorHandlerRepository(ObjectMapper objectMapper,
-                                  JdbcTemplate jdbcTemplate) {
+                                  JdbcTemplate jdbc) {
         this.objectMapper = objectMapper;
-        this.jdbcTemplate = jdbcTemplate;
+        this.jdbc = jdbc;
     }
 
     public ImmutableError create(Error error) {
         try {
-            return jdbcTemplate.queryForObject("""
+            return jdbc.queryForObject("""
                 INSERT INTO error (entry_id, phase_id, ruleset_id, message, raw)
                      VALUES (?, ?, ?, ?, ?)
                   RETURNING id, public_id, entry_id, phase_id, ruleset_id, message, raw
@@ -38,7 +38,7 @@ public class ErrorHandlerRepository {
 
     public List<ImmutableError> findErrorsByEntryId(Long entryId) {
         try {
-            return jdbcTemplate.query(
+            return jdbc.query(
                     """
                     SELECT id, public_id, entry_id, phase_id, ruleset_id, message, raw
                       FROM error em
