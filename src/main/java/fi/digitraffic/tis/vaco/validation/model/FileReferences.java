@@ -13,6 +13,7 @@ import java.nio.file.Path;
 @Value.Immutable
 public interface FileReferences {
     @Nullable
+    @Value.Parameter
     Path localPath();
 
     @Nullable

@@ -4,12 +4,24 @@ import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
+import fi.digitraffic.tis.vaco.ruleset.model.Category;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 
+import java.util.Random;
 import java.util.UUID;
 
 public class TestObjects {
 
-    // TODO: if this approach is good, move objects from older tests in here
+    public static ImmutableQueueEntry.Builder anEntry() {
+        return ImmutableQueueEntry.builder()
+            .format("gtfs")
+            .url("https://testfile")
+            .publicId("testPublicId")
+            .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
+    }
 
     public static ImmutableOrganization.Builder anOrganization() {
         return ImmutableOrganization.builder()
@@ -25,5 +37,20 @@ public class TestObjects {
     public static ImmutableCooperationCommand.Builder aCooperationCommand() {
         return ImmutableCooperationCommand.builder()
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
+    }
+
+    public static ImmutablePhase.Builder aPhase() {
+        return ImmutablePhase.builder()
+            .id(new Random().nextLong())
+            .name(UUID.randomUUID().toString())
+            .priority(new Random().nextInt());
+    }
+
+    public static ImmutableRuleset.Builder aRuleset() {
+        return ImmutableRuleset.builder()
+            .identifyingName(UUID.randomUUID().toString())
+            .description("running hello rule from tests")
+            .category(Category.GENERIC)
+            .type(Type.VALIDATION_SYNTAX);
     }
 }

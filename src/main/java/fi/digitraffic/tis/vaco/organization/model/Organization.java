@@ -18,9 +18,12 @@ public interface Organization {
 
     // TODO: think about removing publicId
     @Nullable
+    @Value.Parameter
     String publicId();
 
+    @Value.Parameter
     String businessId();
 
+    @Value.Parameter
     String name();
 }

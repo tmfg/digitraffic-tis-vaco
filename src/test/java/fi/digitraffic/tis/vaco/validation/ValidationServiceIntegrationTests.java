@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.http.HttpClientUtility;
-import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
@@ -10,8 +10,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
-import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
@@ -136,27 +134,21 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     private ImmutableQueueEntry createQueueEntryForTesting() {
-        return queueHandlerRepository.create(
-                ImmutableQueueEntry.builder()
-                        .format("huuhaa")
-                        .url("https://testfile")
-                        .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
-                        .build());
+        return queueHandlerRepository.create(TestObjects.anEntry().build());
     }
 
     @Test
     void executesRulesBasedOnIdentifyingName() {
         ImmutableQueueEntry entry = createQueueEntryForTesting();
         ImmutablePhaseResult<List<ValidationReport>> results = validationService.executeRules(entry, null,
-                Set.of(ImmutableRuleset.builder()
+                Set.of(TestObjects.aRuleset()
                         .identifyingName(TEST_RULE_NAME)
                         .description("running hello rule from tests")
                         .category(Category.SPECIFIC)
-                        .type(Type.VALIDATION_SYNTAX)
                         .build()));
 
         assertThat(results, equalTo(ImmutablePhaseResult.of(
-                        ValidationService.EXECUTION_PHASE,
-                        List.of(ImmutableValidationReport.of(TEST_RULE_RESULT)))));
+                                    ValidationService.EXECUTION_PHASE,
+                                    List.of(ImmutableValidationReport.of(TEST_RULE_RESULT)))));
     }
 }

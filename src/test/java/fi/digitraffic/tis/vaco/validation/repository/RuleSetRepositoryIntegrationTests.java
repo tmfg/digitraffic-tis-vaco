@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.validation.repository;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
-import fi.digitraffic.tis.vaco.organization.model.CooperationType;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
@@ -48,21 +48,9 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @BeforeEach
     void setUp() {
         fintraffic = organizationRepository.findByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID).get();
-        parentOrg = organizationRepository.create(
-                ImmutableOrganization.builder()
-                        .name("test parent")
-                        .businessId("4433221-1")
-                        .build());
-        currentOrg = organizationRepository.create(
-                ImmutableOrganization.builder()
-                        .name("Esko testaa")
-                        .businessId("1234567-8")
-                        .build());
-        otherOrg = organizationRepository.create(
-                ImmutableOrganization.builder()
-                        .name("tesmaava Esko")
-                        .businessId("8765432-1")
-                        .build());
+        parentOrg = organizationRepository.create(TestObjects.anOrganization().build());
+        currentOrg = organizationRepository.create(TestObjects.anOrganization().build());
+        otherOrg = organizationRepository.create(TestObjects.anOrganization().build());
         cooperationRepository.create(partnership(parentOrg, currentOrg));
         cooperationRepository.create(partnership(parentOrg, otherOrg));
 
@@ -132,8 +120,7 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @NotNull
     private ImmutableCooperation partnership(ImmutableOrganization partnerA, ImmutableOrganization partnerB) {
-        return ImmutableCooperation.builder()
-                .cooperationType(CooperationType.AUTHORITY_PROVIDER)
+        return TestObjects.aCooperation()
                 .partnerA(partnerA.id())
                 .partnerB(partnerB.id())
                 .build();
