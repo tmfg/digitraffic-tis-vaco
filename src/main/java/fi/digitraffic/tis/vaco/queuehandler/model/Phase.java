@@ -19,10 +19,13 @@ public interface Phase {
 
     @Nullable  // needs to be here for the Mapstruct automated mapping to work
     @JsonView(DataVisibility.Internal.class)
+    @Value.Parameter
     Long entryId();
 
+    @Value.Parameter
     String name();
 
+    @Value.Parameter
     int priority();
 
     @Nullable

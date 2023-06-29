@@ -6,5 +6,6 @@ import java.util.List;
 
 @Value.Immutable
 public interface JobResult {
+    @Value.Parameter
     List<PhaseResult<?>> results();
 }

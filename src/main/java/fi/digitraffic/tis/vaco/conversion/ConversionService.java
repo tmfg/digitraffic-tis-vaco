@@ -67,19 +67,13 @@ public class ConversionService {
 
         PhaseResult<List<ConversionReport>> conversionReports = executeRules(jobDescription.message(), conversionRulesets.result());
 
-
-
         return ImmutableJobResult.builder()
             .addResults(conversionRulesets, conversionReports)
             .build();
     }
 
     private static ImmutablePhase uninitializedPhase(Long entryId, String phaseName) {
-        return ImmutablePhase.builder()
-            .entryId(entryId)
-            .name(phaseName)
-            .priority(Subtask.CONVERSION.priority)
-            .build();
+        return ImmutablePhase.of(entryId,phaseName, Subtask.CONVERSION.priority);
     }
 
     private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(QueueEntry queueEntry) {

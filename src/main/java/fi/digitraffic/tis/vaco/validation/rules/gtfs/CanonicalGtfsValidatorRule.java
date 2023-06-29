@@ -118,6 +118,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
                     .addAllErrors(validationErrors)
                     .build();
         } else {
+            // TODO: maybe a more descriptive message here?
             return ImmutableValidationReport.of("wh0t");
         }
     }

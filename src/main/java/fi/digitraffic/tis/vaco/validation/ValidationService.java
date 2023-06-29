@@ -83,11 +83,7 @@ public class ValidationService {
     }
 
     private static ImmutablePhase uninitializedPhase(Long entryId, String phaseName) {
-        return ImmutablePhase.builder()
-                .entryId(entryId)
-                .name(phaseName)
-                .priority(Subtask.VALIDATION.priority)
-                .build();
+        return ImmutablePhase.of(entryId,phaseName, Subtask.VALIDATION.priority);
     }
 
     @VisibleForTesting
@@ -110,7 +106,7 @@ public class ValidationService {
         return path -> phaseData
                 // download done -> update phase
                 .withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.UPDATE))
-                .withPayload(ImmutableFileReferences.builder().localPath(path.body()).build());
+                .withPayload(ImmutableFileReferences.of(path.body()));
     }
 
     private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(QueueEntry queueEntry) {

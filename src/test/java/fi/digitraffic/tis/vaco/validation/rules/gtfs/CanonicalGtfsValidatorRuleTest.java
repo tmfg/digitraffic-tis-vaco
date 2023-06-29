@@ -1,19 +1,16 @@
 package fi.digitraffic.tis.vaco.validation.rules.gtfs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
@@ -89,12 +86,7 @@ class CanonicalGtfsValidatorRuleTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, s3TransferManager, errorHandlerService, rulesetRepository);
-        queueEntry = ImmutableQueueEntry.builder()
-                .format("gtfs")
-                .publicId("testPublicId")
-                .url("http://nonexistent.url")
-                .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
-                .build();
+        queueEntry = TestObjects.anEntry().build();
     }
 
     @AfterEach
@@ -168,12 +160,10 @@ class CanonicalGtfsValidatorRuleTest {
 
     @NotNull
     private static ImmutableRuleset mockValidationRule() {
-        return ImmutableRuleset.builder()
+        return TestObjects.aRuleset()
                 .id(MOCK_VALIDATION_RULE_ID)
                 .identifyingName(CanonicalGtfsValidatorRule.RULE_NAME)
                 .description("injected mock version of the rule")
-                .category(Category.GENERIC)
-                .type(Type.VALIDATION_SYNTAX)
                 .build();
     }
 
@@ -190,14 +180,11 @@ class CanonicalGtfsValidatorRuleTest {
     @NotNull
     private ImmutablePhaseData<FileReferences> forInput(String testFile) throws URISyntaxException {
         return ImmutablePhaseData.<FileReferences>builder()
-            .phase(ImmutablePhase.builder()
+            .phase(TestObjects.aPhase()
                 .id(MOCK_PHASE_ID)
                 .name(ValidationService.EXECUTION_PHASE)
-                .priority(999)
                 .build())
-            .payload(ImmutableFileReferences.builder()
-                .localPath(testResource(testFile))
-                .build())
+            .payload(ImmutableFileReferences.of(testResource(testFile)))
             .build();
     }
 

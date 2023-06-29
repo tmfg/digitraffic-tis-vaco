@@ -9,9 +9,12 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableCooperation.class)
 public interface Cooperation {
 
+    @Value.Parameter
     CooperationType cooperationType();
 
+    @Value.Parameter
     Long partnerA();
 
+    @Value.Parameter
     Long partnerB();
 }
