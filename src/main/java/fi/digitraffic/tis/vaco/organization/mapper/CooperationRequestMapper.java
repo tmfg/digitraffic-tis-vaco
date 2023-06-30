@@ -5,7 +5,7 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
-public interface CooperationCommandMapper {
+public interface CooperationRequestMapper {
 
     ImmutableCooperation toCooperation(CooperationType cooperationType,
                                        Long partnerA,

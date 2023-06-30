@@ -7,9 +7,9 @@ import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableEntryCommand.class)
-@JsonDeserialize(as = ImmutableEntryCommand.class)
-public interface EntryCommand {
+@JsonSerialize(as = ImmutableEntryRequest.class)
+@JsonDeserialize(as = ImmutableEntryRequest.class)
+public interface EntryRequest {
     String getFormat();
 
     String getUrl();

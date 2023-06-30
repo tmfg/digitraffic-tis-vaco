@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryCommand;
+import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.dto.Link;
 import fi.digitraffic.tis.vaco.queuehandler.dto.QueueHandlerResource;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -34,7 +34,7 @@ public class QueueHandlerController {
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<QueueHandlerResource<ImmutableEntry>> createQueueEntry(@Valid @RequestBody ImmutableEntryCommand entryCommand) {
+    public ResponseEntity<QueueHandlerResource<ImmutableEntry>> createQueueEntry(@Valid @RequestBody ImmutableEntryRequest entryCommand) {
         ImmutableEntry entry = queueHandlerService.processQueueEntry(entryCommand);
 
         return ResponseEntity.ok(asQueueHandlerResource(entry));

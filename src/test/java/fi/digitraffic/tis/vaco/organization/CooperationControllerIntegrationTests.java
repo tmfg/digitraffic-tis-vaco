@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.organization;
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
+import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBase {
-    TypeReference<ImmutableCooperationCommand> cooperationCommandType = new TypeReference<>() {};
+    TypeReference<ImmutableCooperationRequest> cooperationCommandType = new TypeReference<>() {};
     ImmutableOrganization organizationA = TestObjects.anOrganization().build();
     ImmutableOrganization organizationB = TestObjects.anOrganization().build();
 
@@ -34,7 +34,7 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
 
     @Test
     void canCreateCooperation() throws Exception {
-        ImmutableCooperationCommand cooperationCommand = TestObjects.aCooperationCommand()
+        ImmutableCooperationRequest cooperationCommand = TestObjects.aCooperationCommand()
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(organizationB.businessId())
             .build();
@@ -42,7 +42,7 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
             .andExpect(status().isOk())
             .andReturn();
 
-        ImmutableCooperationCommand createdcooperationCommand = apiResponse(response, cooperationCommandType);
+        ImmutableCooperationRequest createdcooperationCommand = apiResponse(response, cooperationCommandType);
 
         assertAll("Base fields are stored properly",
             () -> assertThat(createdcooperationCommand.cooperationType(), equalTo(cooperationCommand.cooperationType())),
@@ -52,7 +52,7 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
 
     @Test
     void duplicateCooperationCreationFails() throws Exception {
-        ImmutableCooperationCommand cooperationCommand = TestObjects.aCooperationCommand()
+        ImmutableCooperationRequest cooperationCommand = TestObjects.aCooperationCommand()
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(organizationB.businessId())
             .build();
@@ -66,7 +66,7 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
 
     @Test
     void cooperationCreationBetweenSamePartnersFails() throws Exception {
-        ImmutableCooperationCommand cooperationCommand = TestObjects.aCooperationCommand()
+        ImmutableCooperationRequest cooperationCommand = TestObjects.aCooperationCommand()
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(organizationA.businessId())
             .build();
@@ -77,7 +77,7 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
 
     @Test
     void cooperationCreationBetweenNonExistingPartnersFails() throws Exception {
-        ImmutableCooperationCommand cooperationCommand = TestObjects.aCooperationCommand()
+        ImmutableCooperationRequest cooperationCommand = TestObjects.aCooperationCommand()
             .partnerABusinessId(UUID.randomUUID().toString())
             .partnerBBusinessId(organizationB.businessId())
             .build();
@@ -85,7 +85,7 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
             .andExpect(status().isBadRequest())
             .andReturn();
 
-        ImmutableCooperationCommand cooperationCommand2 = TestObjects.aCooperationCommand()
+        ImmutableCooperationRequest cooperationCommand2 = TestObjects.aCooperationCommand()
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(UUID.randomUUID().toString())
             .build();
