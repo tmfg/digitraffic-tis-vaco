@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
-import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.QueueHandlerResource;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
@@ -24,7 +24,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
     @Test
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
-        EntryCommand command = new EntryCommand("format", "https://example.fi", "etag", TestConstants.FINTRAFFIC_BUSINESS_ID, null, new EntryCommand.Validation(), null);
+        EntryCommand command = TestObjects.aValidationEntryRequest().build();
         MvcResult response = apiCall(post("/queue").content(toJson(command)))
             .andExpect(status().isOk())
             .andReturn();
@@ -38,9 +38,9 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
 
         // assert provided data has stayed the same
         assertAll("Base fields are stored properly",
-            () -> assertThat(fetchResult.data().url(), equalTo(command.url())),
-            () -> assertThat(fetchResult.data().etag(), equalTo(command.etag())),
-            () -> assertThat(fetchResult.data().format(), equalTo(command.format())));
+            () -> assertThat(fetchResult.data().url(), equalTo(command.getUrl())),
+            () -> assertThat(fetchResult.data().etag(), equalTo(command.getEtag())),
+            () -> assertThat(fetchResult.data().format(), equalTo(command.getFormat())));
 
         assertThat("API endpoints should not expose internal IDs.", fetchResult.data().id(), is(nullValue()));
     }

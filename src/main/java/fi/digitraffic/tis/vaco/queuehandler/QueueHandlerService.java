@@ -1,13 +1,13 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
-import fi.digitraffic.tis.vaco.queuehandler.dto.EntryCommand;
+import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryCommandMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
-import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ public class QueueHandlerService {
     }
 
     @Transactional
-    public ImmutableQueueEntry processQueueEntry(EntryCommand entryCommand) {
+    public ImmutableQueueEntry processQueueEntry(ImmutableEntryCommand entryCommand) {
         ImmutableQueueEntry converted = entryCommandMapper.toQueueEntry(entryCommand);
         ImmutableQueueEntry result = queueHandlerRepository.create(converted);
 

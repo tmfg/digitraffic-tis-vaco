@@ -4,6 +4,8 @@ import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryCommand;
+import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableValidation;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
@@ -21,6 +23,15 @@ public class TestObjects {
             .url("https://testfile")
             .publicId("testPublicId")
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
+    }
+
+    public static ImmutableEntryCommand.Builder aValidationEntryRequest() {
+        return ImmutableEntryCommand.builder()
+            .format("gtfs")
+            .url("https://example.fi")
+            .etag("etag")
+            .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
+            .validation(ImmutableValidation.builder().build());
     }
 
     public static ImmutableOrganization.Builder anOrganization() {
