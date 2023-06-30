@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface CooperationCommandMapper {
 
-    ImmutableCooperation toCooperationCommand(CooperationType cooperationType,
-                                              Long partnerA,
-                                              Long partnerB);
+    ImmutableCooperation toCooperation(CooperationType cooperationType,
+                                       Long partnerA,
+                                       Long partnerB);
 }

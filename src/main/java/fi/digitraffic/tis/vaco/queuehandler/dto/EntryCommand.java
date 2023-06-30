@@ -1,29 +1,43 @@
 package fi.digitraffic.tis.vaco.queuehandler.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import jakarta.annotation.Nullable;
+import org.immutables.value.Value;
 
-public record EntryCommand(
-    @NotBlank
-    String format,
+@Value.Immutable
+@JsonSerialize(as = ImmutableEntryCommand.class)
+@JsonDeserialize(as = ImmutableEntryCommand.class)
+public interface EntryCommand {
+    String getFormat();
 
-    @NotBlank
-    String url,
+    String getUrl();
 
-    String etag,
+    @Nullable
+    String getEtag();
 
-    @NotBlank
-    String businessId,
+    String getBusinessId();
 
-    JsonNode metadata,
+    @Nullable
+    JsonNode getMetadata();
 
-    Validation validation,
+    Validation getValidation();
 
-    Conversion conversion
-) {
-    public record Validation() {
+    @Nullable
+    Conversion getConversion();
+
+    @Value.Immutable
+    @JsonSerialize(as = ImmutableValidation.class)
+    @JsonDeserialize(as = ImmutableValidation.class)
+    interface Validation {
     }
 
-    public record Conversion(String targetFormat) {
+    @Value.Immutable
+    @JsonSerialize(as = ImmutableConversion.class)
+    @JsonDeserialize(as = ImmutableConversion.class)
+    interface Conversion {
+        @Value.Parameter
+        String targetFormat();
     }
 }

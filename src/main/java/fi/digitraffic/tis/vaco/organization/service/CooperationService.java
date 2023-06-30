@@ -31,7 +31,7 @@ public class CooperationService {
             return Optional.empty();
         }
 
-        cooperationRepository.create(cooperationCommandMapper.toCooperationCommand(
+        cooperationRepository.create(cooperationCommandMapper.toCooperation(
             cooperationCommand.cooperationType(),
             partnerA.id(),
             partnerB.id()));
