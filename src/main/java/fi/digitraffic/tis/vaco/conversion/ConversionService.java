@@ -13,8 +13,8 @@ import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -76,7 +76,7 @@ public class ConversionService {
         return ImmutablePhase.of(entryId,phaseName, Subtask.CONVERSION.priority);
     }
 
-    private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(QueueEntry queueEntry) {
+    private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
         return phaseData -> {
             String targetPath = "entries/" + queueEntry.publicId() + "/phases/conversion/" + queueEntry.conversion().targetFormat();
             String bucketPath = vacoProperties.getS3processingBucket();
@@ -89,7 +89,7 @@ public class ConversionService {
     }
 
     @VisibleForTesting
-    PhaseResult<Set<Ruleset>> selectRulesets(QueueEntry queueEntry) {
+    PhaseResult<Set<Ruleset>> selectRulesets(Entry queueEntry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
             queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
@@ -101,7 +101,7 @@ public class ConversionService {
     }
 
     @VisibleForTesting
-    ImmutablePhaseResult<List<ConversionReport>> executeRules(QueueEntry queueEntry, Set<Ruleset> conversionRulesets) {
+    ImmutablePhaseResult<List<ConversionReport>> executeRules(Entry queueEntry, Set<Ruleset> conversionRulesets) {
         // TODO: when exact conversion implementations will be made, they will be executed here
         return ImmutablePhaseResult.of(EXECUTION_PHASE, null);
     }

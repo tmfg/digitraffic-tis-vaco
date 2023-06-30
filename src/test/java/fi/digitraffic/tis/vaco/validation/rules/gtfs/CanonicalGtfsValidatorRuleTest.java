@@ -7,8 +7,8 @@ import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
@@ -61,7 +61,7 @@ class CanonicalGtfsValidatorRuleTest {
     private static final String testBucket = "vaco-test-canonical-gtfs-validator";
 
     private CanonicalGtfsValidatorRule rule;
-    private ImmutableQueueEntry queueEntry;
+    private ImmutableEntry queueEntry;
 
     private ObjectMapper objectMapper;
     private static VacoProperties vacoProperties;
@@ -126,7 +126,7 @@ class CanonicalGtfsValidatorRuleTest {
         whenFindValidationRuleByName();
         whenReportError();
 
-        QueueEntry invalidFormat = ImmutableQueueEntry.copyOf(queueEntry).withFormat("vhs");
+        Entry invalidFormat = ImmutableEntry.copyOf(queueEntry).withFormat("vhs");
         ValidationReport report = rule.execute(invalidFormat, forInput("public/testfiles/padasjoen_kunta.zip")).join();
 
         ImmutableError error = mockError("Wrong format! Expected 'gtfs', was 'vhs'");

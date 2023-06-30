@@ -10,13 +10,13 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.process.model.JobResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -87,7 +87,7 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    PhaseResult<ImmutableFileReferences> downloadFile(QueueEntry queueEntry) {
+    PhaseResult<ImmutableFileReferences> downloadFile(Entry queueEntry) {
         ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
 
@@ -109,7 +109,7 @@ public class ValidationService {
                 .withPayload(ImmutableFileReferences.of(path.body()));
     }
 
-    private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(QueueEntry queueEntry) {
+    private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
         return phaseData -> {
             String targetPath = "entries/" + queueEntry.publicId() + "/download/" + queueEntry.format() + ".original";
             String bucketPath = vacoProperties.getS3processingBucket();
@@ -132,7 +132,7 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    PhaseResult<Set<Ruleset>> selectRulesets(QueueEntry queueEntry) {
+    PhaseResult<Set<Ruleset>> selectRulesets(Entry queueEntry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
                 queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
@@ -144,7 +144,7 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    ImmutablePhaseResult<List<ValidationReport>> executeRules(QueueEntry queueEntry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
+    ImmutablePhaseResult<List<ValidationReport>> executeRules(Entry queueEntry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
         PhaseData<FileReferences> phaseData = ImmutablePhaseData.<FileReferences>builder()
                 .phase(queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), EXECUTION_PHASE), ProcessingState.START))
                 .payload(fileReferences)

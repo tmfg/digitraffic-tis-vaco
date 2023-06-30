@@ -7,8 +7,8 @@ import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -60,7 +60,7 @@ public class RowMappers {
             .partnerB(rs.getLong("partner_b_id"))
             .build();
 
-    public static final Function<ObjectMapper, RowMapper<ImmutableQueueEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
+    public static final Function<ObjectMapper, RowMapper<ImmutableEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
     public static final Function<ObjectMapper, RowMapper<ImmutableError>> ERROR = RowMappers::mapError;
 
     private static RowMapper<ImmutableError> mapError(ObjectMapper objectMapper) {
@@ -80,8 +80,8 @@ public class RowMappers {
         };
     }
 
-    private static RowMapper<ImmutableQueueEntry> mapQueueEntry(ObjectMapper objectMapper) {
-        return (rs, rowNum) -> ImmutableQueueEntry.builder()
+    private static RowMapper<ImmutableEntry> mapQueueEntry(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutableEntry.builder()
                 .id(rs.getLong("id"))
                 .publicId(rs.getString("public_id"))
                 .businessId(rs.getString("business_id"))

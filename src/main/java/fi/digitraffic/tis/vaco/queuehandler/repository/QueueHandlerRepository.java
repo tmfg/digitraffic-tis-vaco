@@ -6,12 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
-import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.validation.ValidationProcessException;
 import org.postgresql.util.PGobject;
@@ -43,14 +43,14 @@ public class QueueHandlerRepository {
     }
 
     @Transactional
-    public ImmutableQueueEntry create(QueueEntry entry) {
-        ImmutableQueueEntry created = createEntry(entry);
+    public ImmutableEntry create(Entry entry) {
+        ImmutableEntry created = createEntry(entry);
         return created.withPhases(createPhases(created.id(), entry.phases()))
                 .withValidation(createValidationInput(created.id(), entry.validation()))
                 .withConversion(createConversionInput(created.id(), entry.conversion()));
     }
 
-    private ImmutableQueueEntry createEntry(QueueEntry entry) {
+    private ImmutableEntry createEntry(Entry entry) {
         return jdbc.queryForObject("""
                 INSERT INTO entry(business_id, format, url, etag, metadata)
                      VALUES (?, ?, ?, ?, ?)
@@ -89,11 +89,11 @@ public class QueueHandlerRepository {
     }
 
     @Transactional
-    public Optional<ImmutableQueueEntry> findByPublicId(String publicId) {
+    public Optional<ImmutableEntry> findByPublicId(String publicId) {
         return findEntry(publicId).map(this::buildCompleteEntry);
     }
 
-    private Optional<ImmutableQueueEntry> findEntry(String publicId) {
+    private Optional<ImmutableEntry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                         SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
@@ -175,7 +175,7 @@ public class QueueHandlerRepository {
      * @param entry Entry reference for finding the phases.
      * @return Ordered list of phases or empty list if none found.
      */
-    public List<ImmutablePhase> findPhases(QueueEntry entry) {
+    public List<ImmutablePhase> findPhases(Entry entry) {
         try {
             return jdbc.query("""
                 SELECT *
@@ -190,7 +190,7 @@ public class QueueHandlerRepository {
         }
     }
 
-    public void startEntryProcessing(QueueEntry entry) {
+    public void startEntryProcessing(Entry entry) {
         jdbc.update("""
                 UPDATE entry
                    SET started=NOW(),
@@ -200,7 +200,7 @@ public class QueueHandlerRepository {
                 entry.id());
     }
 
-    public void updateEntryProcessing(QueueEntry entry) {
+    public void updateEntryProcessing(Entry entry) {
         jdbc.update("""
                 UPDATE entry
                    SET updated=NOW()
@@ -209,7 +209,7 @@ public class QueueHandlerRepository {
                 entry.id());
     }
 
-    public void completeEntryProcessing(QueueEntry entry) {
+    public void completeEntryProcessing(Entry entry) {
         jdbc.update("""
                 UPDATE entry
                    SET updated=NOW(),
@@ -219,9 +219,9 @@ public class QueueHandlerRepository {
                 entry.id());
     }
 
-    public List<ImmutableQueueEntry> findAllByBusinessId(String businessId, boolean full) {
+    public List<ImmutableEntry> findAllByBusinessId(String businessId, boolean full) {
         try {
-            List<ImmutableQueueEntry> entries = jdbc.query("""
+            List<ImmutableEntry> entries = jdbc.query("""
                     SELECT *
                       FROM entry
                      WHERE business_id = ?
@@ -242,12 +242,12 @@ public class QueueHandlerRepository {
     }
 
     /**
-     * Call this to complete {@link QueueEntry} object's fields if needed.
+     * Call this to complete {@link Entry} object's fields if needed.
      *
      * @param entry Entry to complete.
      * @return Fully completed entry.
      */
-    private ImmutableQueueEntry buildCompleteEntry(ImmutableQueueEntry entry) {
+    private ImmutableEntry buildCompleteEntry(ImmutableEntry entry) {
         return entry
             .withPhases(findPhases(entry.id()))
             .withValidation(findValidationInput(entry.id()))
