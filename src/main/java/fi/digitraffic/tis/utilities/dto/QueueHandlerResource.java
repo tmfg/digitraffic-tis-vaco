@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.queuehandler.dto;
+package fi.digitraffic.tis.utilities.dto;
 
 import jakarta.annotation.Nullable;
 

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
-import fi.digitraffic.tis.vaco.queuehandler.dto.QueueHandlerResource;
+import fi.digitraffic.tis.utilities.dto.QueueHandlerResource;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
