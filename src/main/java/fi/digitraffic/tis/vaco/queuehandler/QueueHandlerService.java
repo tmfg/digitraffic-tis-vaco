@@ -6,8 +6,8 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryCommandMapper;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +37,9 @@ public class QueueHandlerService {
     }
 
     @Transactional
-    public ImmutableQueueEntry processQueueEntry(ImmutableEntryCommand entryCommand) {
-        ImmutableQueueEntry converted = entryCommandMapper.toQueueEntry(entryCommand);
-        ImmutableQueueEntry result = queueHandlerRepository.create(converted);
+    public ImmutableEntry processQueueEntry(ImmutableEntryCommand entryCommand) {
+        ImmutableEntry converted = entryCommandMapper.toQueueEntry(entryCommand);
+        ImmutableEntry result = queueHandlerRepository.create(converted);
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
             .entry(result)
@@ -50,7 +50,7 @@ public class QueueHandlerService {
         return result;
     }
 
-    public Optional<ImmutableQueueEntry> getQueueEntryView(String publicId) {
+    public Optional<ImmutableEntry> getQueueEntryView(String publicId) {
         return queueHandlerRepository.findByPublicId(publicId);
     }
 
@@ -63,7 +63,7 @@ public class QueueHandlerService {
         };
     }
 
-    public List<ImmutableQueueEntry> getAllQueueEntriesFor(String businessId, boolean full) {
+    public List<ImmutableEntry> getAllQueueEntriesFor(String businessId, boolean full) {
         return queueHandlerRepository.findAllByBusinessId(businessId, full);
     }
 }

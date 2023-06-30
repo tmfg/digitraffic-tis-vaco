@@ -5,7 +5,7 @@ import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
@@ -46,7 +46,7 @@ class DelegationJobQueueSqsListenerTests {
     void setUp() {
         listener = new DelegationJobQueueSqsListener(messagingService, queueHandlerRepository);
         jobMessage = ImmutableDelegationJobMessage.builder()
-            .entry(ImmutableQueueEntry.of("floppy disk", "https://example.solita", TestConstants.FINTRAFFIC_BUSINESS_ID))
+            .entry(ImmutableEntry.of("floppy disk", "https://example.solita", TestConstants.FINTRAFFIC_BUSINESS_ID))
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
     }
@@ -86,7 +86,7 @@ class DelegationJobQueueSqsListenerTests {
 
     @Test
     void willNotStartAlreadyStartedProcessingJob() {
-        ImmutableQueueEntry startedEntry = ImmutableQueueEntry.copyOf(jobMessage.entry())
+        ImmutableEntry startedEntry = ImmutableEntry.copyOf(jobMessage.entry())
             .withStarted(LocalDateTime.now());
         ImmutableDelegationJobMessage alreadyStarted = jobMessage.withEntry(startedEntry);
         listener.listen(alreadyStarted, acknowledgement);

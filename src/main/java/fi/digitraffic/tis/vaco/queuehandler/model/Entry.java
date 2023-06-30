@@ -14,10 +14,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableQueueEntry.class)
-@JsonDeserialize(as = ImmutableQueueEntry.class)
+@JsonSerialize(as = ImmutableEntry.class)
+@JsonDeserialize(as = ImmutableEntry.class)
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
-public interface QueueEntry {
+public interface Entry {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
     Long id();

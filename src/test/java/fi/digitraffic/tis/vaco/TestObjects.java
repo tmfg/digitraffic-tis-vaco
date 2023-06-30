@@ -6,8 +6,8 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryCommand;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableValidation;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -17,8 +17,8 @@ import java.util.UUID;
 
 public class TestObjects {
 
-    public static ImmutableQueueEntry.Builder anEntry() {
-        return ImmutableQueueEntry.builder()
+    public static ImmutableEntry.Builder anEntry() {
+        return ImmutableEntry.builder()
             .format("gtfs")
             .url("https://testfile")
             .publicId("testPublicId")

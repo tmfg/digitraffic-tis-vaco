@@ -6,8 +6,8 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableQueueEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
@@ -62,7 +62,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 }
 
                 @Override
-                public CompletableFuture<ValidationReport> execute(QueueEntry queueEntry, PhaseData<FileReferences> phaseData) {
+                public CompletableFuture<ValidationReport> execute(Entry queueEntry, PhaseData<FileReferences> phaseData) {
                     return CompletableFuture.completedFuture(ImmutableValidationReport.of(TEST_RULE_RESULT));
                 }
             };
@@ -105,7 +105,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
             .thenReturn(CompletableFuture.supplyAsync(() -> response));
         when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
 
-        ImmutableQueueEntry entry = createQueueEntryForTesting();
+        ImmutableEntry entry = createQueueEntryForTesting();
         s3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3processingBucket()).build());
 
         validationService.downloadFile(entry);
@@ -133,13 +133,13 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Files.delete(redownload);
     }
 
-    private ImmutableQueueEntry createQueueEntryForTesting() {
+    private ImmutableEntry createQueueEntryForTesting() {
         return queueHandlerRepository.create(TestObjects.anEntry().build());
     }
 
     @Test
     void executesRulesBasedOnIdentifyingName() {
-        ImmutableQueueEntry entry = createQueueEntryForTesting();
+        ImmutableEntry entry = createQueueEntryForTesting();
         ImmutablePhaseResult<List<ValidationReport>> results = validationService.executeRules(entry, null,
                 Set.of(TestObjects.aRuleset()
                         .identifyingName(TEST_RULE_NAME)

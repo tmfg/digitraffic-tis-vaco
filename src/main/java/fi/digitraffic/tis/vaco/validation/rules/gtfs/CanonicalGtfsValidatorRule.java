@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.queuehandler.model.QueueEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
@@ -69,7 +69,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
 
     @Override
     public CompletableFuture<ValidationReport> execute(
-        QueueEntry queueEntry,
+        Entry queueEntry,
         PhaseData<FileReferences> phaseData) {
 
         return CompletableFuture.supplyAsync(() -> {
@@ -88,7 +88,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
     }
 
     private ValidationReport runCanonicalValidator(
-        QueueEntry queueEntry,
+        Entry queueEntry,
         PhaseData<FileReferences> phaseData) {
 
         Path ruleRoot = Path.of(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), phaseData.phase().name(), "rules", RULE_NAME);
@@ -123,7 +123,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
         }
     }
 
-    private List<ImmutableError> scanErrors(QueueEntry queueEntry, PhaseData<FileReferences> phaseData, Path reportFile) {
+    private List<ImmutableError> scanErrors(Entry queueEntry, PhaseData<FileReferences> phaseData, Path reportFile) {
         try {
             Report report = objectMapper.readValue(reportFile.toFile(), Report.class);
             List<ImmutableError> errors = report.notices()
@@ -147,7 +147,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
         }
     }
 
-    private List<ImmutableError> copyOutputToS3(QueueEntry queueEntry, PhaseData<FileReferences> phaseData, Path outputDirectory) {
+    private List<ImmutableError> copyOutputToS3(Entry queueEntry, PhaseData<FileReferences> phaseData, Path outputDirectory) {
         // TODO: some utility for generating these paths so that they stay consistent across entire app
         String s3Path = "entries/" + queueEntry.publicId() + "/phases/" + phaseData.phase().name() + "/" + RULE_NAME + "/output";
 
@@ -174,7 +174,7 @@ public class CanonicalGtfsValidatorRule implements Rule {
         }).toList();
     }
 
-    private static CountryCode resolveCountryCode(QueueEntry queueEntry) {
+    private static CountryCode resolveCountryCode(Entry queueEntry) {
         if (queueEntry.metadata() != null && queueEntry.metadata().get("gtfs.countryCode") != null) {
             // TODO: document the gtfs.countryCode property somewhere
             return CountryCode.forStringOrUnknown(queueEntry.metadata().get("gtfs.countryCode").asText());
