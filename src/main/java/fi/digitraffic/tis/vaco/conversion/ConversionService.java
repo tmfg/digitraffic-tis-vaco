@@ -8,11 +8,11 @@ import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
-import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
@@ -42,19 +42,19 @@ public class ConversionService {
 
     Logger logger = LoggerFactory.getLogger(getClass());
     private final S3ClientUtility s3ClientUtility;
-    private final QueueHandlerService queueHandlerService;
+    private final PhaseService phaseService;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
     private final VacoProperties vacoProperties;
 
     private final ErrorHandlerService errorHandlerService;
 
-    public ConversionService(S3ClientUtility s3ClientUtility, QueueHandlerService queueHandlerService,
-                             RulesetRepository rulesetRepository,
+    public ConversionService(S3ClientUtility s3ClientUtility,
+                             PhaseService phaseService, RulesetRepository rulesetRepository,
                              List<Rule> rules,
                              VacoProperties vacoProperties, ErrorHandlerService errorHandlerService) {
         this.s3ClientUtility = s3ClientUtility;
-        this.queueHandlerService = queueHandlerService;
+        this.phaseService = phaseService;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
         this.vacoProperties = vacoProperties;
@@ -84,18 +84,18 @@ public class ConversionService {
 
             return s3ClientUtility.uploadFile(bucketPath, targetPath, sourcePath)
                 .thenApply(u -> phaseData // upload done -> update phase
-                    .withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
+                    .withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
         };
     }
 
     @VisibleForTesting
     PhaseResult<Set<Ruleset>> selectRulesets(Entry queueEntry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
-            queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
+            phaseService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
         Set<Ruleset> rulesets = rulesetRepository.findRulesets(queueEntry.businessId(), Type.CONVERSION_SYNTAX);
 
-        phaseData.withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
+        phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
         return ImmutablePhaseResult.of(RULESET_SELECTION_PHASE, rulesets);
     }

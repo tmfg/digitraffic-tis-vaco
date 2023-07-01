@@ -1,13 +1,11 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
-import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,15 +50,6 @@ public class QueueHandlerService {
 
     public Optional<ImmutableEntry> getQueueEntryView(String publicId) {
         return queueHandlerRepository.findByPublicId(publicId);
-    }
-
-    public ImmutablePhase reportPhase(ImmutablePhase phase, ProcessingState state) {
-        logger.info("Updating phase {} to {}", phase, state);
-        return switch (state) {
-            case START -> queueHandlerRepository.startPhase(phase);
-            case UPDATE -> queueHandlerRepository.updatePhase(phase);
-            case COMPLETE -> queueHandlerRepository.completePhase(phase);
-        };
     }
 
     public List<ImmutableEntry> getAllQueueEntriesFor(String businessId, boolean full) {
