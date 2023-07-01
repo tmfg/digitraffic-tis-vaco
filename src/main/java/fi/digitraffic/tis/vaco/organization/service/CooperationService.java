@@ -15,26 +15,26 @@ public class CooperationService {
     private final OrganizationRepository organizationRepository;
     private final CooperationRepository cooperationRepository;
 
-    private final CooperationRequestMapper cooperationCommandMapper;
+    private final CooperationRequestMapper cooperationRequestMapper;
 
-    public CooperationService(OrganizationRepository organizationRepository, CooperationRepository cooperationRepository, CooperationRequestMapper cooperationCommandMapper) {
+    public CooperationService(OrganizationRepository organizationRepository, CooperationRepository cooperationRepository, CooperationRequestMapper cooperationRequestMapper) {
         this.organizationRepository = organizationRepository;
         this.cooperationRepository = cooperationRepository;
-        this.cooperationCommandMapper = cooperationCommandMapper;
+        this.cooperationRequestMapper = cooperationRequestMapper;
     }
 
-    public Optional<ImmutableCooperationRequest> create(ImmutableCooperationRequest cooperationCommand) {
-        ImmutableOrganization partnerA = organizationRepository.getByBusinessId(cooperationCommand.partnerABusinessId());
-        ImmutableOrganization partnerB = organizationRepository.getByBusinessId(cooperationCommand.partnerBBusinessId());
-        if(cooperationRepository.findByIds(cooperationCommand.cooperationType(),
+    public Optional<ImmutableCooperationRequest> create(ImmutableCooperationRequest cooperationRequest) {
+        ImmutableOrganization partnerA = organizationRepository.getByBusinessId(cooperationRequest.partnerABusinessId());
+        ImmutableOrganization partnerB = organizationRepository.getByBusinessId(cooperationRequest.partnerBBusinessId());
+        if(cooperationRepository.findByIds(cooperationRequest.cooperationType(),
             partnerA.id(), partnerB.id()).isPresent()) {
             return Optional.empty();
         }
 
-        cooperationRepository.create(cooperationCommandMapper.toCooperation(
-            cooperationCommand.cooperationType(),
+        cooperationRepository.create(cooperationRequestMapper.toCooperation(
+            cooperationRequest.cooperationType(),
             partnerA.id(),
             partnerB.id()));
-        return Optional.of(cooperationCommand);
+        return Optional.of(cooperationRequest);
     }
 }

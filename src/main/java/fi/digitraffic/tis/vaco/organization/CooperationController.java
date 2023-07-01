@@ -30,9 +30,9 @@ public class CooperationController {
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<ImmutableCooperationRequest> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationCommand) {
+    public ResponseEntity<ImmutableCooperationRequest> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
         try {
-            Optional<ImmutableCooperationRequest> cooperation = cooperationService.create(cooperationCommand);
+            Optional<ImmutableCooperationRequest> cooperation = cooperationService.create(cooperationRequest);
             return cooperation
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,

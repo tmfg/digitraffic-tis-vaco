@@ -26,19 +26,19 @@ public class QueueHandlerService {
 
     private final QueueHandlerRepository queueHandlerRepository;
 
-    private final EntryRequestMapper entryCommandMapper;
+    private final EntryRequestMapper entryRequestMapper;
 
-    public QueueHandlerService(EntryRequestMapper entryCommandMapper,
+    public QueueHandlerService(EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
                                QueueHandlerRepository queueHandlerRepository) {
-        this.entryCommandMapper = entryCommandMapper;
+        this.entryRequestMapper = entryRequestMapper;
         this.messagingService = messagingService;
         this.queueHandlerRepository = queueHandlerRepository;
     }
 
     @Transactional
-    public ImmutableEntry processQueueEntry(ImmutableEntryRequest entryCommand) {
-        ImmutableEntry converted = entryCommandMapper.toEntry(entryCommand);
+    public ImmutableEntry processQueueEntry(ImmutableEntryRequest entryRequest) {
+        ImmutableEntry converted = entryRequestMapper.toEntry(entryRequest);
         ImmutableEntry result = queueHandlerRepository.create(converted);
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()

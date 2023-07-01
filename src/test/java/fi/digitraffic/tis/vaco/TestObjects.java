@@ -45,7 +45,7 @@ public class TestObjects {
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }
 
-    public static ImmutableCooperationRequest.Builder aCooperationCommand() {
+    public static ImmutableCooperationRequest.Builder aCooperationRequest() {
         return ImmutableCooperationRequest.builder()
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }

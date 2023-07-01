@@ -34,8 +34,8 @@ public class QueueHandlerController {
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<ImmutableEntry>> createQueueEntry(@Valid @RequestBody ImmutableEntryRequest entryCommand) {
-        ImmutableEntry entry = queueHandlerService.processQueueEntry(entryCommand);
+    public ResponseEntity<Resource<ImmutableEntry>> createQueueEntry(@Valid @RequestBody ImmutableEntryRequest entryRequest) {
+        ImmutableEntry entry = queueHandlerService.processQueueEntry(entryRequest);
 
         return ResponseEntity.ok(asQueueHandlerResource(entry));
     }
