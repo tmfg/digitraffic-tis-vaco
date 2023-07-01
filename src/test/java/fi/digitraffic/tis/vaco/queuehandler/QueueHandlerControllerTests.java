@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
-import fi.digitraffic.tis.utilities.dto.QueueHandlerResource;
+import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
 
-    private final TypeReference<QueueHandlerResource<ImmutableEntry>> queueHandlerResource = new TypeReference<>() {};
+    private final TypeReference<Resource<ImmutableEntry>> queueHandlerResource = new TypeReference<>() {};
 
     @Test
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
@@ -28,7 +28,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
         MvcResult response = apiCall(post("/queue").content(toJson(request)))
             .andExpect(status().isOk())
             .andReturn();
-        QueueHandlerResource<ImmutableEntry> createResult = apiResponse(response, queueHandlerResource);
+        Resource<ImmutableEntry> createResult = apiResponse(response, queueHandlerResource);
 
         // follow the self-reference link from previous response
         MvcResult fetchResponse = apiCall(createResult.links().get("self"))
