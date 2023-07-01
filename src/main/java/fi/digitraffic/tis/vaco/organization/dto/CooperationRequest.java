@@ -6,10 +6,10 @@ import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableCooperationCommand.class)
-@JsonDeserialize(as = ImmutableCooperationCommand.class)
+@JsonSerialize(as = ImmutableCooperationRequest.class)
+@JsonDeserialize(as = ImmutableCooperationRequest.class)
 @UniquePartners
-public interface CooperationCommand {
+public interface CooperationRequest {
     CooperationType cooperationType();
 
     String partnerABusinessId();

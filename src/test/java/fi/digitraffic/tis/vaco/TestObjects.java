@@ -1,10 +1,10 @@
 package fi.digitraffic.tis.vaco;
 
-import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
+import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryCommand;
+import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableValidation;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
@@ -25,8 +25,8 @@ public class TestObjects {
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
     }
 
-    public static ImmutableEntryCommand.Builder aValidationEntryRequest() {
-        return ImmutableEntryCommand.builder()
+    public static ImmutableEntryRequest.Builder aValidationEntryRequest() {
+        return ImmutableEntryRequest.builder()
             .format("gtfs")
             .url("https://example.fi")
             .etag("etag")
@@ -45,8 +45,8 @@ public class TestObjects {
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }
 
-    public static ImmutableCooperationCommand.Builder aCooperationCommand() {
-        return ImmutableCooperationCommand.builder()
+    public static ImmutableCooperationRequest.Builder aCooperationRequest() {
+        return ImmutableCooperationRequest.builder()
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }
 

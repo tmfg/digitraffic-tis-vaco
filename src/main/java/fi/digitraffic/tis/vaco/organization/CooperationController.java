@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.organization;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
+import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.service.CooperationService;
 import jakarta.validation.Valid;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -30,14 +30,9 @@ public class CooperationController {
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<ImmutableCooperationCommand> createCooperation(@Valid @RequestBody ImmutableCooperationCommand cooperationCommand) {
-        // TODO: Here is an example of "Command" suffix not working well
-        // If it was something like "Dto", same call can be used both in request and response,
-        // while being an "external representation" of some model entity.
-        // Or we can opt out of returning anything at the time of creation
-        // but that doesn't guarantee this issue won't ever come up
+    public ResponseEntity<ImmutableCooperationRequest> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
         try {
-            Optional<ImmutableCooperationCommand> cooperation = cooperationService.create(cooperationCommand);
+            Optional<ImmutableCooperationRequest> cooperation = cooperationService.create(cooperationRequest);
             return cooperation
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
@@ -45,7 +40,7 @@ public class CooperationController {
         } catch (EmptyResultDataAccessException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Either of the provided organizations' business ID does not exist", ex);
-            // Temporarily leaving this exception handling;
+            // TODO: Temporarily leaving this exception handling;
             // This needs to shift some special class creation that would hold several possible "cases" of outcome;
             // (organizations not found or cooperation already exists)
         }

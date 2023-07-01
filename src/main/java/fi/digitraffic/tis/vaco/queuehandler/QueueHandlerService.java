@@ -4,8 +4,8 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryCommand;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryCommandMapper;
+import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
@@ -26,19 +26,19 @@ public class QueueHandlerService {
 
     private final QueueHandlerRepository queueHandlerRepository;
 
-    private final EntryCommandMapper entryCommandMapper;
+    private final EntryRequestMapper entryRequestMapper;
 
-    public QueueHandlerService(EntryCommandMapper entryCommandMapper,
+    public QueueHandlerService(EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
                                QueueHandlerRepository queueHandlerRepository) {
-        this.entryCommandMapper = entryCommandMapper;
+        this.entryRequestMapper = entryRequestMapper;
         this.messagingService = messagingService;
         this.queueHandlerRepository = queueHandlerRepository;
     }
 
     @Transactional
-    public ImmutableEntry processQueueEntry(ImmutableEntryCommand entryCommand) {
-        ImmutableEntry converted = entryCommandMapper.toQueueEntry(entryCommand);
+    public ImmutableEntry processQueueEntry(ImmutableEntryRequest entryRequest) {
+        ImmutableEntry converted = entryRequestMapper.toEntry(entryRequest);
         ImmutableEntry result = queueHandlerRepository.create(converted);
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()

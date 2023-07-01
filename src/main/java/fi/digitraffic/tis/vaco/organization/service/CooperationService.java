@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.organization.service;
 
-import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationCommand;
-import fi.digitraffic.tis.vaco.organization.mapper.CooperationCommandMapper;
+import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
+import fi.digitraffic.tis.vaco.organization.mapper.CooperationRequestMapper;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
@@ -15,26 +15,26 @@ public class CooperationService {
     private final OrganizationRepository organizationRepository;
     private final CooperationRepository cooperationRepository;
 
-    private final CooperationCommandMapper cooperationCommandMapper;
+    private final CooperationRequestMapper cooperationRequestMapper;
 
-    public CooperationService(OrganizationRepository organizationRepository, CooperationRepository cooperationRepository, CooperationCommandMapper cooperationCommandMapper) {
+    public CooperationService(OrganizationRepository organizationRepository, CooperationRepository cooperationRepository, CooperationRequestMapper cooperationRequestMapper) {
         this.organizationRepository = organizationRepository;
         this.cooperationRepository = cooperationRepository;
-        this.cooperationCommandMapper = cooperationCommandMapper;
+        this.cooperationRequestMapper = cooperationRequestMapper;
     }
 
-    public Optional<ImmutableCooperationCommand> create(ImmutableCooperationCommand cooperationCommand) {
-        ImmutableOrganization partnerA = organizationRepository.getByBusinessId(cooperationCommand.partnerABusinessId());
-        ImmutableOrganization partnerB = organizationRepository.getByBusinessId(cooperationCommand.partnerBBusinessId());
-        if(cooperationRepository.findByIds(cooperationCommand.cooperationType(),
+    public Optional<ImmutableCooperationRequest> create(ImmutableCooperationRequest cooperationRequest) {
+        ImmutableOrganization partnerA = organizationRepository.getByBusinessId(cooperationRequest.partnerABusinessId());
+        ImmutableOrganization partnerB = organizationRepository.getByBusinessId(cooperationRequest.partnerBBusinessId());
+        if(cooperationRepository.findByIds(cooperationRequest.cooperationType(),
             partnerA.id(), partnerB.id()).isPresent()) {
             return Optional.empty();
         }
 
-        cooperationRepository.create(cooperationCommandMapper.toCooperation(
-            cooperationCommand.cooperationType(),
+        cooperationRepository.create(cooperationRequestMapper.toCooperation(
+            cooperationRequest.cooperationType(),
             partnerA.id(),
             partnerB.id()));
-        return Optional.of(cooperationCommand);
+        return Optional.of(cooperationRequest);
     }
 }
