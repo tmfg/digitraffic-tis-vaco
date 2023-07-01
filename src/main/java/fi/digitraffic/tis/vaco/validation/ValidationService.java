@@ -7,21 +7,21 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.process.model.JobResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
-import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
+import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public class ValidationService {
 
     Logger logger = LoggerFactory.getLogger(getClass());
     private final VacoProperties vacoProperties;
-    private final QueueHandlerService queueHandlerService;
+    private final PhaseService phaseService;
     private final HttpClientUtility httpClientUtility;
     private final S3ClientUtility s3ClientUtility;
     private final RulesetRepository rulesetRepository;
@@ -55,14 +55,13 @@ public class ValidationService {
     private final ErrorHandlerService errorHandlerService;
 
     public ValidationService(VacoProperties vacoProperties,
-                             QueueHandlerService queueHandlerService,
-                             HttpClientUtility httpClient,
+                             PhaseService phaseService, HttpClientUtility httpClient,
                              S3ClientUtility s3ClientUtility,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules,
                              ErrorHandlerService errorHandlerService) {
         this.vacoProperties = vacoProperties;
-        this.queueHandlerService = queueHandlerService;
+        this.phaseService = phaseService;
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
         this.rulesetRepository = rulesetRepository;
@@ -89,7 +88,7 @@ public class ValidationService {
     @VisibleForTesting
     PhaseResult<ImmutableFileReferences> downloadFile(Entry queueEntry) {
         ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
-                queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
+                phaseService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
 
         Path downloadDir = Paths.get(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), phaseData.phase().name());
         Path filePath = s3ClientUtility.createDownloadTempFile(downloadDir,
@@ -105,7 +104,7 @@ public class ValidationService {
     private Function<HttpResponse<Path>, ImmutablePhaseData<ImmutableFileReferences>> wrapHttpResult(ImmutablePhaseData<ImmutableFileReferences> phaseData) {
         return path -> phaseData
                 // download done -> update phase
-                .withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.UPDATE))
+                .withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.UPDATE))
                 .withPayload(ImmutableFileReferences.of(path.body()));
     }
 
@@ -117,7 +116,7 @@ public class ValidationService {
 
             return s3ClientUtility.uploadFile(bucketPath, targetPath, sourcePath)
                     .thenApply(u -> phaseData // upload done -> update phase
-                        .withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
+                        .withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
         };
     }
 
@@ -126,7 +125,7 @@ public class ValidationService {
             ImmutableFileReferences fileRefs = phaseData.payload();
             logger.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
             // download complete, mark to database as complete and unwrap payload
-            queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
+            phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
             return ImmutablePhaseResult.of(DOWNLOAD_PHASE, fileRefs);
         };
     }
@@ -134,11 +133,11 @@ public class ValidationService {
     @VisibleForTesting
     PhaseResult<Set<Ruleset>> selectRulesets(Entry queueEntry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
-                queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
+                phaseService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
         Set<Ruleset> rulesets = rulesetRepository.findRulesets(queueEntry.businessId(), Type.VALIDATION_SYNTAX);
 
-        phaseData.withPhase(queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
+        phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
         return ImmutablePhaseResult.of(RULESET_SELECTION_PHASE, rulesets);
     }
@@ -146,7 +145,7 @@ public class ValidationService {
     @VisibleForTesting
     ImmutablePhaseResult<List<ValidationReport>> executeRules(Entry queueEntry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
         PhaseData<FileReferences> phaseData = ImmutablePhaseData.<FileReferences>builder()
-                .phase(queueHandlerService.reportPhase(uninitializedPhase(queueEntry.id(), EXECUTION_PHASE), ProcessingState.START))
+                .phase(phaseService.reportPhase(uninitializedPhase(queueEntry.id(), EXECUTION_PHASE), ProcessingState.START))
                 .payload(fileReferences)
                 .build();
 
@@ -157,7 +156,7 @@ public class ValidationService {
                 .map(CompletableFuture::join)
                 .toList();
         // everything's done at this point because of the ::join call, complete phase and return
-        queueHandlerService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
+        phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
         return ImmutablePhaseResult.of(EXECUTION_PHASE, reports);
     }
 

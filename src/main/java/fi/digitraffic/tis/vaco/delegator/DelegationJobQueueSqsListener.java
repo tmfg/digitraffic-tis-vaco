@@ -8,9 +8,9 @@ import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
+import fi.digitraffic.tis.vaco.process.PhaseRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.Phase;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -31,13 +31,13 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     private static final Subtask DEFAULT_SUBTASK = Subtask.VALIDATION;
 
     private final MessagingService messagingService;
-    private final QueueHandlerRepository queueHandlerRepository;
+    private final PhaseRepository phaseRepository;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
-                                         QueueHandlerRepository queueHandlerRepository) {
+                                         PhaseRepository phaseRepository) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
-        this.queueHandlerRepository = queueHandlerRepository;
+        this.phaseRepository = phaseRepository;
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -88,7 +88,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     }
 
     private Optional<Subtask> getNextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
-        List<ImmutablePhase> allPhases = queueHandlerRepository.findPhases(jobDescription.entry());
+        List<ImmutablePhase> allPhases = phaseRepository.findPhases(jobDescription.entry());
 
         Set<Subtask> completedSubtasks = allPhases.stream()
             .filter(phase -> phase.completed() != null)
