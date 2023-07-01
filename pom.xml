@@ -38,21 +38,21 @@
         <junit5.version>5.9.2</junit5.version>
         <testcontainers.version>1.18.3</testcontainers.version>
         <awssdk.version>2.20.92</awssdk.version>
-        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <io.awspring.cloud-version>3.0.1</io.awspring.cloud-version>
-        <org.immutables-version>2.9.3</org.immutables-version>
-        <com.fasterxml.jackson-version>2.15.2</com.fasterxml.jackson-version>
-        <org.mockito-version>5.4.0</org.mockito-version>
-        <com.github.ben-manes.caffeine-version>3.1.6</com.github.ben-manes.caffeine-version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <awspringcloud.version>3.0.1</awspringcloud.version>
+        <immutables.version>2.9.3</immutables.version>
+        <jackson.version>2.15.2</jackson.version>
+        <mockito.version>5.4.0</mockito.version>
+        <caffeine.version>3.1.6</caffeine.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <org.apache.maven.plugins.maven-compiler-plugin.version>3.11.0</org.apache.maven.plugins.maven-compiler-plugin.version>
-        <org.apache.maven.plugins.maven-surefire-plugin.version>3.1.0</org.apache.maven.plugins.maven-surefire-plugin.version>
-        <org.apache.maven.plugins.maven-jar-plugin.version>3.3.0</org.apache.maven.plugins.maven-jar-plugin.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.1.0</maven-surefire-plugin.version>
+        <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <jib-maven-plugin.version>3.3.2</jib-maven-plugin.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
-        <org.springframework.boot-version>3.1.1</org.springframework.boot-version>
+        <springframework.boot-version>${project.parent.version}</springframework.boot-version>
         <jib-maven-plugin.configuration.to.image>${env.CONTAINER_REGISTRY_URI}/${project.groupId}.${project.name}:${project.version}</jib-maven-plugin.configuration.to.image>
     </properties>
 
@@ -84,21 +84,21 @@
             <dependency>
                 <groupId>io.awspring.cloud</groupId>
                 <artifactId>spring-cloud-aws-dependencies</artifactId>
-                <version>${io.awspring.cloud-version}</version>
+                <version>${awspringcloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.immutables</groupId>
                 <artifactId>bom</artifactId>
-                <version>${org.immutables-version}</version>
+                <version>${immutables.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>${com.fasterxml.jackson-version}</version>
+                <version>${jackson.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -137,7 +137,7 @@
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>${org.mapstruct.version}</version>
+            <version>${mapstruct.version}</version>
         </dependency>
         <dependency>
             <groupId>org.immutables</groupId>
@@ -216,7 +216,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>${org.mockito-version}</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -257,7 +257,7 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>${com.github.ben-manes.caffeine-version}</version>
+            <version>${caffeine.version}</version>
         </dependency>
     </dependencies>
 
@@ -278,13 +278,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${org.apache.maven.plugins.maven-surefire-plugin.version}</version>
+                <version>${maven-surefire-plugin.version}</version>
             </plugin>
             <!-- The mapstruct-processor is used to generate the mapper implementation during the build -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${org.apache.maven.plugins.maven-compiler-plugin.version}</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -292,17 +292,17 @@
                         <path>
                             <groupId>org.immutables</groupId>
                             <artifactId>value</artifactId>
-                            <version>${org.immutables-version}</version>
+                            <version>${immutables.version}</version>
                         </path>
                         <path>
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
-                            <version>${org.mapstruct.version}</version>
+                            <version>${mapstruct.version}</version>
                         </path>
                         <path>
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-configuration-processor</artifactId>
-                            <version>${org.springframework.boot-version}</version>
+                            <version>${springframework.boot-version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
@@ -315,7 +315,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>${org.apache.maven.plugins.maven-jar-plugin.version}</version>
+                <version>${maven-jar-plugin.version}</version>
                 <configuration>
                     <excludes>
                         <exclude>application-*</exclude>
