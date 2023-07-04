@@ -114,7 +114,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
         List<S3Object> uploadedFiles = s3Client.listObjectsV2(ListObjectsV2Request.builder()
                         .bucket(vacoProperties.getS3processingBucket())
-                        .prefix("entries/" + entry.publicId())
+                        .prefix("/entries/" + entry.publicId())
                         .build())
                 .contents();
 

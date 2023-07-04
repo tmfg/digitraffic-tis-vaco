@@ -21,6 +21,9 @@ public class VacoConfiguration {
     @Autowired
     private S3TransferManager s3TransferManager;
 
+    @Autowired
+    private VacoProperties vacoProperties;
+
     @Bean
     public HttpClientUtility httpClient() {
         return new HttpClientUtility();
@@ -28,7 +31,7 @@ public class VacoConfiguration {
 
     @Bean
     public S3ClientUtility s3ClientUtility() {
-        return new S3ClientUtility(s3TransferManager);
+        return new S3ClientUtility(s3TransferManager, vacoProperties);
     }
 
     @Bean(name = "rulesetNameCache")

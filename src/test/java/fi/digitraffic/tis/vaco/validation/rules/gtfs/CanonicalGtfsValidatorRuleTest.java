@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.validation.rules.gtfs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
@@ -117,7 +118,7 @@ class CanonicalGtfsValidatorRuleTest {
                                  request.bucket(), equalTo(vacoProperties.getS3processingBucket())),
                 () -> assertThat("S3 prefix contains all important ids so that the outputs get categorized correctly",
                                  request.s3Prefix().get(),
-                                 equalTo("entries/testPublicId/phases/" + ValidationService.EXECUTION_PHASE + "/" + CanonicalGtfsValidatorRule.RULE_NAME + "/output"))
+                                 equalTo(S3Artifact.getValidationPhasePath("testPublicId", ValidationService.EXECUTION_PHASE, CanonicalGtfsValidatorRule.RULE_NAME)))
         );
     }
 

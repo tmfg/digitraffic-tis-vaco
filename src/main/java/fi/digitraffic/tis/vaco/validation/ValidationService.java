@@ -4,7 +4,7 @@ import fi.digitraffic.tis.aws.s3.S3ClientUtility;
 import fi.digitraffic.tis.http.HttpClientUtility;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.process.PhaseService;
@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,7 +45,6 @@ public class ValidationService {
     public static final String EXECUTION_PHASE = "validation.execute";
 
     Logger logger = LoggerFactory.getLogger(getClass());
-    private final VacoProperties vacoProperties;
     private final PhaseService phaseService;
     private final HttpClientUtility httpClientUtility;
     private final S3ClientUtility s3ClientUtility;
@@ -54,13 +52,12 @@ public class ValidationService {
     private final Map<String, Rule> rules;
     private final ErrorHandlerService errorHandlerService;
 
-    public ValidationService(VacoProperties vacoProperties,
-                             PhaseService phaseService, HttpClientUtility httpClient,
+    public ValidationService(PhaseService phaseService,
+                             HttpClientUtility httpClient,
                              S3ClientUtility s3ClientUtility,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules,
                              ErrorHandlerService errorHandlerService) {
-        this.vacoProperties = vacoProperties;
         this.phaseService = phaseService;
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
@@ -89,12 +86,10 @@ public class ValidationService {
     PhaseResult<ImmutableFileReferences> downloadFile(Entry queueEntry) {
         ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
                 phaseService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
+        Path tempFilePath = s3ClientUtility.createVacoDownloadTempFile(queueEntry.publicId(),
+            queueEntry.format(), phaseData.phase().name());
 
-        Path downloadDir = Paths.get(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), phaseData.phase().name());
-        Path filePath = s3ClientUtility.createDownloadTempFile(downloadDir,
-                                                               queueEntry.format());
-
-        return httpClientUtility.downloadFile(filePath, queueEntry.url(), queueEntry.etag())
+        return httpClientUtility.downloadFile(tempFilePath, queueEntry.url(), queueEntry.etag())
             .thenApply(wrapHttpResult(phaseData))
             .thenCompose(uploadToS3(queueEntry))
             .thenApply(completeDownloadPhase())
@@ -110,11 +105,10 @@ public class ValidationService {
 
     private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
         return phaseData -> {
-            String targetPath = "entries/" + queueEntry.publicId() + "/download/" + queueEntry.format() + ".original";
-            String bucketPath = vacoProperties.getS3processingBucket();
+            String targetPath = S3Artifact.getDownloadPhasePath(queueEntry.publicId(), queueEntry.format() + ".original");
             Path sourcePath = phaseData.payload().localPath();
 
-            return s3ClientUtility.uploadFile(bucketPath, targetPath, sourcePath)
+            return s3ClientUtility.uploadFile(targetPath, sourcePath)
                     .thenApply(u -> phaseData // upload done -> update phase
                         .withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
         };
