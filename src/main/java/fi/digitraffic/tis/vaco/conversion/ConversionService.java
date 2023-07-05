@@ -4,6 +4,7 @@ import fi.digitraffic.tis.aws.s3.S3ClientUtility;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
@@ -78,11 +79,12 @@ public class ConversionService {
 
     private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
         return phaseData -> {
-            String targetPath = "entries/" + queueEntry.publicId() + "/phases/conversion/" + queueEntry.conversion().targetFormat();
-            String bucketPath = vacoProperties.getS3processingBucket();
+            String targetPath = S3Artifact.getConversionPhasePath(queueEntry.publicId(),
+                                                         "output",
+                                                                  queueEntry.conversion().targetFormat());
             Path sourcePath = phaseData.payload().localPath();
 
-            return s3ClientUtility.uploadFile(bucketPath, targetPath, sourcePath)
+            return s3ClientUtility.uploadFile(targetPath, sourcePath)
                 .thenApply(u -> phaseData // upload done -> update phase
                     .withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
         };

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -148,8 +149,9 @@ public class CanonicalGtfsValidatorRule implements Rule {
     }
 
     private List<ImmutableError> copyOutputToS3(Entry queueEntry, PhaseData<FileReferences> phaseData, Path outputDirectory) {
-        // TODO: some utility for generating these paths so that they stay consistent across entire app
-        String s3Path = "entries/" + queueEntry.publicId() + "/phases/" + phaseData.phase().name() + "/" + RULE_NAME + "/output";
+        String s3Path = S3Artifact.getValidationPhasePath(queueEntry.publicId(),
+                                                          phaseData.phase().name(),
+                                                          RULE_NAME);
 
         CompletedDirectoryUpload ud = s3TransferManager.uploadDirectory(UploadDirectoryRequest.builder()
                         .bucket(vacoProperties.getS3processingBucket())

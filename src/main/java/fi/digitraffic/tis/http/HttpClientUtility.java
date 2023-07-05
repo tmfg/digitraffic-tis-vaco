@@ -16,7 +16,9 @@ public class HttpClientUtility {
         this.httpClient = HttpClient.newBuilder().build();
     }
 
-    public CompletableFuture<HttpResponse<Path>> downloadFile(Path filePath, String url, String etag) {
+    public CompletableFuture<HttpResponse<Path>> downloadFile(Path filePath,
+                                                              String url,
+                                                              String etag) {
         HttpRequest request = buildGetRequest(url, etag);
         HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(filePath);
         return httpClient.sendAsync(request, bodyHandler);
