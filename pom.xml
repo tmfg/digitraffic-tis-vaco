@@ -43,7 +43,7 @@
         <immutables.version>2.9.3</immutables.version>
         <jackson.version>2.15.2</jackson.version>
         <mockito.version>5.4.0</mockito.version>
-        <caffeine.version>3.1.6</caffeine.version>
+        <caffeine.version>v3.1.7</caffeine.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
