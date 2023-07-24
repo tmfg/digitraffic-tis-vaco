@@ -52,7 +52,7 @@
         <jib-maven-plugin.version>3.3.2</jib-maven-plugin.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
-        <springframework.boot-version>${project.parent.version}</springframework.boot-version>
+        <springframework.boot-version>3.1.2</springframework.boot-version>
         <jib-maven-plugin.configuration.to.image>${env.CONTAINER_REGISTRY_URI}/${project.groupId}.${project.name}:${project.version}</jib-maven-plugin.configuration.to.image>
     </properties>
 
