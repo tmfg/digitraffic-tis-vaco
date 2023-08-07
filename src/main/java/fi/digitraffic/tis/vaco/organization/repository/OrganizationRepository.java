@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.organization.repository;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -26,14 +27,18 @@ public class OrganizationRepository {
                 organization.businessId(), organization.name());
     }
 
-    public ImmutableOrganization getByBusinessId(String businessId) {
-        return jdbc.queryForObject("""
-                SELECT *
-                  FROM organization
-                 WHERE business_id = ?
-                """,
-            RowMappers.ORGANIZATION,
-            businessId);
+    public Optional<ImmutableOrganization> getByBusinessId(String businessId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                    SELECT *
+                      FROM organization
+                     WHERE business_id = ?
+                    """,
+                RowMappers.ORGANIZATION,
+                businessId));
+        } catch (EmptyResultDataAccessException erdae) {
+            return Optional.empty();
+        }
     }
 
     public Optional<ImmutableOrganization> findByBusinessId(String businessId) {

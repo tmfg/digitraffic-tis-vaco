@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.organization;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
@@ -18,7 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBase {
-    TypeReference<ImmutableCooperationRequest> cooperationRequestType = new TypeReference<>() {};
+    TypeReference<Resource<ImmutableCooperationRequest>> cooperationRequestType = new TypeReference<>() {};
     ImmutableOrganization organizationA = TestObjects.anOrganization().build();
     ImmutableOrganization organizationB = TestObjects.anOrganization().build();
 
@@ -42,7 +43,7 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
             .andExpect(status().isOk())
             .andReturn();
 
-        ImmutableCooperationRequest createdCooperationRequest = apiResponse(response, cooperationRequestType);
+        ImmutableCooperationRequest createdCooperationRequest = apiResponse(response, cooperationRequestType).data();
 
         assertAll("Base fields are stored properly",
             () -> assertThat(createdCooperationRequest.cooperationType(), equalTo(cooperationRequest.cooperationType())),
