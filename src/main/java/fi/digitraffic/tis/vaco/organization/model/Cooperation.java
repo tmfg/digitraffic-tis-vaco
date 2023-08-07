@@ -13,8 +13,8 @@ public interface Cooperation {
     CooperationType cooperationType();
 
     @Value.Parameter
-    Long partnerA();
+    Organization partnerA();
 
     @Value.Parameter
-    Long partnerB();
+    Organization partnerB();
 }

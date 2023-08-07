@@ -36,7 +36,7 @@ public class CooperationController {
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<ImmutableCooperationRequest>> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
+    public ResponseEntity<Resource<Cooperation>> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
         Optional<ImmutableOrganization> partnerA = organizationService.findByBusinessId(cooperationRequest.partnerABusinessId());
         Optional<ImmutableOrganization> partnerB = organizationService.findByBusinessId(cooperationRequest.partnerBBusinessId());
 
@@ -48,7 +48,7 @@ public class CooperationController {
         Optional<Cooperation> cooperation = cooperationService.create(cooperationRequest.cooperationType(), partnerA.get(), partnerB.get());
 
         if (cooperation.isPresent()) {
-            return ResponseEntity.ok(new Resource<>(cooperationRequest, Map.of()));
+            return ResponseEntity.ok(new Resource<>(cooperation.get(), Map.of()));
         } else {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A cooperation between given business ID-s already exists");
         }

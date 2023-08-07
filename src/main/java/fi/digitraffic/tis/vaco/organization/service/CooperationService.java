@@ -26,7 +26,7 @@ public class CooperationService {
         return Optional.of(cooperationRepository.create(
             ImmutableCooperation.of(
                 cooperationType,
-                partnerA.id(),
-                partnerB.id())));
+                partnerA,
+                partnerB)));
     }
 }

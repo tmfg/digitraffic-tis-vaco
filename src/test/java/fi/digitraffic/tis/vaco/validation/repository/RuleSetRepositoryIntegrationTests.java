@@ -121,8 +121,8 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @NotNull
     private ImmutableCooperation partnership(ImmutableOrganization partnerA, ImmutableOrganization partnerB) {
         return TestObjects.aCooperation()
-                .partnerA(partnerA.id())
-                .partnerB(partnerB.id())
+                .partnerA(partnerA)
+                .partnerB(partnerB)
                 .build();
     }
 }
