@@ -7,8 +7,6 @@ import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +15,6 @@ import java.util.Optional;
 
 @Service
 public class QueueHandlerService {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
 

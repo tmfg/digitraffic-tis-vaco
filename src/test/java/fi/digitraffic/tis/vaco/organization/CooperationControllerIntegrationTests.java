@@ -90,7 +90,7 @@ public class CooperationControllerIntegrationTests extends SpringBootIntegration
             .partnerABusinessId(organizationA.businessId())
             .partnerBBusinessId(UUID.randomUUID().toString())
             .build();
-        apiCall(post("/cooperation").content(toJson(cooperationRequest)))
+        apiCall(post("/cooperation").content(toJson(cooperationRequest2)))
             .andExpect(status().isBadRequest())
             .andReturn();
     }

@@ -27,7 +27,7 @@ public class OrganizationRepository {
                 organization.businessId(), organization.name());
     }
 
-    public Optional<ImmutableOrganization> getByBusinessId(String businessId) {
+    public Optional<ImmutableOrganization> findByBusinessId(String businessId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                     SELECT *
@@ -39,16 +39,6 @@ public class OrganizationRepository {
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }
-    }
-
-    public Optional<ImmutableOrganization> findByBusinessId(String businessId) {
-        return jdbc.query("""
-                SELECT *
-                  FROM organization
-                 WHERE business_id = ?
-                """,
-                RowMappers.ORGANIZATION,
-                businessId).stream().findFirst();
     }
 
     public void delete(String businessId) {

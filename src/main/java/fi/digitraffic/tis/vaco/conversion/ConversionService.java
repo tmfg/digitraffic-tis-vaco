@@ -3,12 +3,10 @@ package fi.digitraffic.tis.vaco.conversion;
 import fi.digitraffic.tis.aws.s3.S3ClientUtility;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
@@ -46,20 +44,15 @@ public class ConversionService {
     private final PhaseService phaseService;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
-    private final VacoProperties vacoProperties;
-
-    private final ErrorHandlerService errorHandlerService;
 
     public ConversionService(S3ClientUtility s3ClientUtility,
-                             PhaseService phaseService, RulesetRepository rulesetRepository,
-                             List<Rule> rules,
-                             VacoProperties vacoProperties, ErrorHandlerService errorHandlerService) {
+                             PhaseService phaseService,
+                             RulesetRepository rulesetRepository,
+                             List<Rule> rules) {
         this.s3ClientUtility = s3ClientUtility;
         this.phaseService = phaseService;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
-        this.vacoProperties = vacoProperties;
-        this.errorHandlerService = errorHandlerService;
     }
 
     public ImmutableJobResult convert(ImmutableConversionJobMessage jobDescription) {

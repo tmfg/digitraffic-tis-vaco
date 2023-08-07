@@ -6,7 +6,6 @@ import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
@@ -50,20 +49,17 @@ public class ValidationService {
     private final S3ClientUtility s3ClientUtility;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
-    private final ErrorHandlerService errorHandlerService;
 
     public ValidationService(PhaseService phaseService,
                              HttpClientUtility httpClient,
                              S3ClientUtility s3ClientUtility,
                              RulesetRepository rulesetRepository,
-                             List<Rule> rules,
-                             ErrorHandlerService errorHandlerService) {
+                             List<Rule> rules) {
         this.phaseService = phaseService;
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
-        this.errorHandlerService = errorHandlerService;
     }
 
     public JobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
