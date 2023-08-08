@@ -47,17 +47,20 @@ public class RowMappers {
             .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
             .build();
 
-    public static final RowMapper<ImmutableOrganization> ORGANIZATION = (rs, rowNum) -> ImmutableOrganization.builder()
-            .id(rs.getLong("id"))
-            .publicId(rs.getString("public_id"))
-            .businessId(rs.getString("business_id"))
-            .name(rs.getString("name"))
+    public static final Function<String, RowMapper<ImmutableOrganization>> ALIASED_ORGANIZATION = (alias) ->
+        (rs, rowNum) -> ImmutableOrganization.builder()
+            .id(rs.getLong(alias + "id"))
+            .publicId(rs.getString(alias + "public_id"))
+            .businessId(rs.getString(alias + "business_id"))
+            .name(rs.getString(alias + "name"))
             .build();
+
+    public static final RowMapper<ImmutableOrganization> ORGANIZATION = ALIASED_ORGANIZATION.apply("");
 
     public static final RowMapper<ImmutableCooperation> COOPERATION = (rs, rowNum) -> ImmutableCooperation.builder()
             .cooperationType(CooperationType.forField(rs.getString("type")))
-            .partnerA(rs.getLong("partner_a_id"))
-            .partnerB(rs.getLong("partner_b_id"))
+            .partnerA(ALIASED_ORGANIZATION.apply("partner_a_").mapRow(rs, rowNum))
+            .partnerB(ALIASED_ORGANIZATION.apply("partner_b_").mapRow(rs, rowNum))
             .build();
 
     public static final Function<ObjectMapper, RowMapper<ImmutableEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
@@ -112,5 +115,4 @@ public class RowMappers {
         // TODO: This is potentially fatal, we could re-throw instead
         return null;
     }
-
 }

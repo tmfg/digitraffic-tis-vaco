@@ -11,7 +11,7 @@ public interface RetryStatistics {
     @Value.Default
     default int tryNumber() {
         return 1;
-    };
+    }
 
     @Value.Parameter
     int maxRetries();

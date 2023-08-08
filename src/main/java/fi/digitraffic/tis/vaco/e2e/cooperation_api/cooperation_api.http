@@ -1,8 +1,0 @@
-POST localhost:8080/cooperation
-Content-Type: application/json
-
-{
-  "cooperationType": "AUTHORITY_PROVIDER",
-  "partnerABusinessId": "test",
-  "partnerBBusinessId": "test"
-}

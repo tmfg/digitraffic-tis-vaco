@@ -1,0 +1,28 @@
+POST localhost:8080/organization
+Content-Type: application/json
+
+{
+    "businessId": "1111111-1",
+    "name": "Firsty Firstings Ltd"
+}
+
+###
+
+POST localhost:8080/organization
+Content-Type: application/json
+
+{
+    "businessId": "2222222-2",
+    "name": "Seccu Secundings Ltd"
+}
+
+###
+
+POST localhost:8080/cooperation
+Content-Type: application/json
+
+{
+  "cooperationType": "AUTHORITY_PROVIDER",
+  "partnerABusinessId": "1111111-1",
+  "partnerBBusinessId": "2222222-2"
+}

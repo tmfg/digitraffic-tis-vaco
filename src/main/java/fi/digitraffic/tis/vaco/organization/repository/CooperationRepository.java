@@ -18,21 +18,33 @@ public class CooperationRepository {
     }
 
     public ImmutableCooperation create(ImmutableCooperation cooperation) {
-        return jdbc.queryForObject("""
+        int success = jdbc.update("""
                 INSERT INTO cooperation(type, partner_a_id, partner_b_id)
                      VALUES (?::cooperation_type, ?, ?)
-                  RETURNING type, partner_a_id, partner_b_id
                 """,
-            RowMappers.COOPERATION,
-            cooperation.cooperationType().fieldName(), cooperation.partnerA(), cooperation.partnerB());
+            cooperation.cooperationType().fieldName(), cooperation.partnerA().id(), cooperation.partnerB().id());
+        // There's no easy way to do this with just one query so the fetch query is delegated to #findByIds to avoid
+        // code duplication. The blind call to Optional#get is on purpose.
+        return findByIds(cooperation.cooperationType(), cooperation.partnerA().id(), cooperation.partnerB().id()).get();
     }
 
     public Optional<ImmutableCooperation> findByIds(CooperationType type,
                                                     Long partnerAId,
                                                     Long partnerBId) {
         return jdbc.query("""
-                SELECT * FROM cooperation
-                    WHERE type = ?::cooperation_type AND partner_a_id = ? AND partner_b_id = ?
+                SELECT c.type AS type,
+                       o_a.id as partner_a_id,
+                       o_a.public_id as partner_a_public_id,
+                       o_a.business_id as partner_a_business_id,
+                       o_a.name as partner_a_name,
+                       o_b.id as partner_b_id,
+                       o_b.public_id as partner_b_public_id,
+                       o_b.business_id as partner_b_business_id,
+                       o_b.name as partner_b_name
+                  FROM cooperation c
+                  JOIN organization o_a ON c.partner_a_id = o_a.id
+                  JOIN organization o_b ON c.partner_b_id = o_b.id
+                 WHERE c.type = ?::cooperation_type AND c.partner_a_id = ? AND c.partner_b_id = ?
                 """,
             RowMappers.COOPERATION,
             type.fieldName(), partnerAId, partnerBId).stream().findFirst();

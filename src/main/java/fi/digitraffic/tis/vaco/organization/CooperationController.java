@@ -1,11 +1,14 @@
 package fi.digitraffic.tis.vaco.organization;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
+import fi.digitraffic.tis.vaco.organization.model.Cooperation;
+import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.service.CooperationService;
+import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
 import jakarta.validation.Valid;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -23,27 +27,30 @@ import java.util.Optional;
 public class CooperationController {
 
     private final CooperationService cooperationService;
+    private final OrganizationService organizationService;
 
-    public CooperationController(CooperationService cooperationService) {
+    public CooperationController(CooperationService cooperationService, OrganizationService organizationService) {
         this.cooperationService = cooperationService;
+        this.organizationService = organizationService;
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<ImmutableCooperationRequest> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
-        try {
-            Optional<ImmutableCooperationRequest> cooperation = cooperationService.create(cooperationRequest);
-            return cooperation
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
-                    "A cooperation between given business ID-s already exists"));
-        } catch (EmptyResultDataAccessException ex) {
+    public ResponseEntity<Resource<Cooperation>> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
+        Optional<ImmutableOrganization> partnerA = organizationService.findByBusinessId(cooperationRequest.partnerABusinessId());
+        Optional<ImmutableOrganization> partnerB = organizationService.findByBusinessId(cooperationRequest.partnerBBusinessId());
+
+        if (partnerA.isEmpty() || partnerB.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Either of the provided organizations' business ID does not exist", ex);
-            // TODO: Temporarily leaving this exception handling;
-            // This needs to shift some special class creation that would hold several possible "cases" of outcome;
-            // (organizations not found or cooperation already exists)
+                "Either of the provided organizations' business ID does not exist");
         }
 
+        Optional<Cooperation> cooperation = cooperationService.create(cooperationRequest.cooperationType(), partnerA.get(), partnerB.get());
+
+        if (cooperation.isPresent()) {
+            return ResponseEntity.ok(new Resource<>(cooperation.get(), Map.of()));
+        } else {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A cooperation between given business ID-s already exists");
+        }
     }
 }

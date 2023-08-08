@@ -4,8 +4,6 @@ import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.validation.ValidationProcessException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,7 +14,6 @@ import java.util.List;
 @Repository
 public class PhaseRepository {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final JdbcTemplate jdbc;
 
     public PhaseRepository(JdbcTemplate jdbc) {
