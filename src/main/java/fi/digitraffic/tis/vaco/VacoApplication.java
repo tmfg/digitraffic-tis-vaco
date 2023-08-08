@@ -20,7 +20,7 @@ public class VacoApplication {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/queue").allowedOrigins("http://localhost:5173");
+                registry.addMapping("/**").allowedOrigins("http://localhost:5173");
             }
         };
     }
