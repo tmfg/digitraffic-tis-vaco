@@ -15,7 +15,7 @@ public class VacoProperties {
 
     private final String s3processingBucket;
 
-    public VacoProperties(@DefaultValue("dev") String environment,
+    public VacoProperties(@DefaultValue("local") String environment,
                           @NotBlank String temporaryDirectory,
                           @NotBlank String s3processingBucket) {
         this.environment = environment;

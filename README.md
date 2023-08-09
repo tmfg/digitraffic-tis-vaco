@@ -19,7 +19,7 @@ each VACO task is processed asynchronously and the results are fetched using the
 
 ### Local Development / Quick Start
 
-_Profile: `src/main/resources/application-dev.properties`_
+_Profile: `src/main/resources/application-local.properties`_
 
  1. Start up dev environment with 
     ```shell
