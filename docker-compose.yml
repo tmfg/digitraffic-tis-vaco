@@ -58,10 +58,8 @@ services:
   vaco:
     profiles: ["containerized"]
     image: vaco:latest
-    command:
-      - --spring.profiles.active=compose
     environment:
-      VACO_ENVIRONMENT: compose
+      TIS_ENVIRONMENT: compose
     ports:
       - "8080:8080"
     networks:
