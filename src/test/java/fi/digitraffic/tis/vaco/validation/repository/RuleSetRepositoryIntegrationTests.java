@@ -100,21 +100,21 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void currentsSpecificRulesCanBeFiltered() {
         // parent's generic is always returned even when not requested, self specific is returned on request
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("GENERIC_A", "SPECIFIC_C"), Type.VALIDATION_SYNTAX),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Type.VALIDATION_SYNTAX, Set.of("GENERIC_A", "SPECIFIC_C")),
                 equalTo(Set.of(parentRuleA, currentRuleC)));
     }
 
     @Test
     void parentsGenericRuleIsAlwaysReturned() {
         // parent's generic is always returned even when not requested
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_C"), Type.VALIDATION_SYNTAX),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Type.VALIDATION_SYNTAX, Set.of("SPECIFIC_C")),
                 equalTo(Set.of(parentRuleA, currentRuleC)));
     }
 
     @Test
     void parentsSpecificRulesCannotBeSelected() {
         // parent's generic is always returned even when not requested, can't request parent's specific rules
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_B"), Type.VALIDATION_SYNTAX),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Type.VALIDATION_SYNTAX, Set.of("SPECIFIC_B")),
                 equalTo(Set.of(parentRuleA)));
     }
 

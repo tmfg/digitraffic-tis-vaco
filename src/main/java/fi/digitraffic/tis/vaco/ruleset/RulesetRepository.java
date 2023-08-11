@@ -64,7 +64,7 @@ public class RulesetRepository {
         return Set.copyOf(rulesets);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, Set<String> rulesetNames, Type type) {
+    public Set<Ruleset> findRulesets(String businessId, Type type, Set<String> rulesetNames) {
         if (rulesetNames.isEmpty()) {
             return findRulesets(businessId, type);
         }
