@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.queuehandler.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -62,12 +63,11 @@ public class QueueHandlerRepository {
         if (phases == null) {
             return List.of();
         }
-        return phases.stream()
-                .map(phase -> jdbc.queryForObject(
-                        "INSERT INTO phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
-                        RowMappers.PHASE,
-                        entryId))
-                .toList();
+        return Streams.map(phases, phase -> jdbc.queryForObject(
+                "INSERT INTO phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
+                RowMappers.PHASE,
+                entryId))
+            .toList();
     }
 
     private ValidationInput createValidationInput(Long entryId, ValidationInput validation) {
@@ -167,9 +167,7 @@ public class QueueHandlerRepository {
                 businessId);
 
             if (full) {
-                return entries.stream()
-                    .map(this::buildCompleteEntry)
-                    .toList();
+                return Streams.map(entries, this::buildCompleteEntry).toList();
             } else {
                 return entries;
             }
