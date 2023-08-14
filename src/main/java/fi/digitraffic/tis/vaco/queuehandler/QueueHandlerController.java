@@ -7,6 +7,7 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.util.List;
@@ -58,7 +60,10 @@ public class QueueHandlerController {
     public ResponseEntity<Resource<ImmutableEntry>> getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
         Optional<ImmutableEntry> entry = queueHandlerService.getQueueEntryView(publicId);
 
-        return ResponseEntity.ok(new Resource<>(entry.orElse(null), Map.of()));
+        return entry
+            .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                String.format("A ticket with public ID %s does not exist", publicId)));
     }
 
     private static Resource<ImmutableEntry> asQueueHandlerResource(ImmutableEntry entry) {
