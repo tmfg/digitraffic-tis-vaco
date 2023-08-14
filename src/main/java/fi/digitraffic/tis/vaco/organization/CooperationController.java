@@ -42,7 +42,8 @@ public class CooperationController {
 
         if (partnerA.isEmpty() || partnerB.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Either of the provided organizations' business ID does not exist");
+                String.format("Either of the provided organizations' business ID (%s, %s) does not exist",
+                    cooperationRequest.partnerABusinessId(), cooperationRequest.partnerBBusinessId()));
         }
 
         Optional<Cooperation> cooperation = cooperationService.create(cooperationRequest.cooperationType(), partnerA.get(), partnerB.get());
@@ -50,7 +51,9 @@ public class CooperationController {
         if (cooperation.isPresent()) {
             return ResponseEntity.ok(new Resource<>(cooperation.get(), Map.of()));
         } else {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "A cooperation between given business ID-s already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                String.format("A cooperation between provided business ID (%s, %s) already exists",
+                    cooperationRequest.partnerABusinessId(), cooperationRequest.partnerBBusinessId()));
         }
     }
 }
