@@ -2,18 +2,17 @@ package fi.digitraffic.tis.http;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-public class HttpClientUtility {
+public class HttpClient {
 
-    public final HttpClient httpClient;
+    public final java.net.http.HttpClient javaHttpClient;
 
-    public HttpClientUtility() {
-        this.httpClient = HttpClient.newBuilder().build();
+    public HttpClient() {
+        this.javaHttpClient = java.net.http.HttpClient.newBuilder().build();
     }
 
     public CompletableFuture<HttpResponse<Path>> downloadFile(Path filePath,
@@ -21,7 +20,7 @@ public class HttpClientUtility {
                                                               String etag) {
         HttpRequest request = buildGetRequest(url, etag);
         HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(filePath);
-        return httpClient.sendAsync(request, bodyHandler);
+        return javaHttpClient.sendAsync(request, bodyHandler);
     }
 
     private HttpRequest buildGetRequest(String url, String etag) {

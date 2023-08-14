@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.conversion;
 
-import fi.digitraffic.tis.aws.s3.S3ClientUtility;
+import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
@@ -40,12 +40,12 @@ public class ConversionService {
     public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
 
     Logger logger = LoggerFactory.getLogger(getClass());
-    private final S3ClientUtility s3ClientUtility;
+    private final S3Client s3ClientUtility;
     private final PhaseService phaseService;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
 
-    public ConversionService(S3ClientUtility s3ClientUtility,
+    public ConversionService(S3Client s3ClientUtility,
                              PhaseService phaseService,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules) {

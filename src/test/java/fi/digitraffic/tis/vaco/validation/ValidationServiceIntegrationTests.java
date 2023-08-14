@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
-import fi.digitraffic.tis.http.HttpClientUtility;
+import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
@@ -85,7 +85,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private S3TransferManager s3TransferManager;
 
     @MockBean
-    private HttpClientUtility httpClientUtility;
+    private HttpClient httpClientUtility;
 
     @Captor
     private ArgumentCaptor<Path> filePath;
