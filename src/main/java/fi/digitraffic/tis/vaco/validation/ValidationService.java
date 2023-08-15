@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.validation;
 
-import fi.digitraffic.tis.aws.s3.S3ClientUtility;
-import fi.digitraffic.tis.http.HttpClientUtility;
+import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
@@ -14,7 +14,7 @@ import fi.digitraffic.tis.vaco.process.model.JobResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -45,14 +45,14 @@ public class ValidationService {
 
     Logger logger = LoggerFactory.getLogger(getClass());
     private final PhaseService phaseService;
-    private final HttpClientUtility httpClientUtility;
-    private final S3ClientUtility s3ClientUtility;
+    private final HttpClient httpClientUtility;
+    private final S3Client s3ClientUtility;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
 
     public ValidationService(PhaseService phaseService,
-                             HttpClientUtility httpClient,
-                             S3ClientUtility s3ClientUtility,
+                             HttpClient httpClient,
+                             S3Client s3ClientUtility,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules) {
         this.phaseService = phaseService;
@@ -75,7 +75,7 @@ public class ValidationService {
     }
 
     private static ImmutablePhase uninitializedPhase(Long entryId, String phaseName) {
-        return ImmutablePhase.of(entryId,phaseName, Subtask.VALIDATION.priority);
+        return ImmutablePhase.of(entryId, phaseName, Subtask.VALIDATION.priority);
     }
 
     @VisibleForTesting

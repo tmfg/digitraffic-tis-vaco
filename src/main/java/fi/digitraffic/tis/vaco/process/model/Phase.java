@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.queuehandler.model;
+package fi.digitraffic.tis.vaco.process.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

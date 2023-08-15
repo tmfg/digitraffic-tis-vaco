@@ -39,7 +39,7 @@ public class OrganizationController {
         return createdOrganization
             .map(o -> ResponseEntity.ok(asOrganizationResource(o)))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
-                "An organization with given business ID already exists"));
+                String.format("An organization with business ID %s already exists", organization.businessId())));
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/{businessId}")
@@ -49,7 +49,7 @@ public class OrganizationController {
         return organization
             .map(o -> ResponseEntity.ok(asOrganizationResource(o)))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "An organization with given business ID does not exist"));
+                String.format("An organization with business ID %s does not exist", businessId)));
     }
 
     private static Resource<ImmutableOrganization> asOrganizationResource(ImmutableOrganization organization) {

@@ -16,13 +16,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 
-public class S3ClientUtility {
+public class S3Client {
 
     private final S3TransferManager s3TransferManager;
 
     private final VacoProperties vacoProperties;
 
-    public S3ClientUtility(S3TransferManager s3TransferManager, VacoProperties vacoProperties) {
+    public S3Client(S3TransferManager s3TransferManager, VacoProperties vacoProperties) {
         this.s3TransferManager = s3TransferManager;
         this.vacoProperties = vacoProperties;
     }
@@ -32,11 +32,11 @@ public class S3ClientUtility {
             Files.createDirectories(downloadDir);
             Path downloadFile = downloadDir.resolve(fileName + extension);
             if (Files.exists(downloadFile)) {
-                throw new S3ClientUtilityException("File already exists! Is the process running twice?");
+                throw new S3ClientException("File already exists! Is the process running twice?");
             }
             return downloadFile;
         } catch (IOException e) {
-            throw new S3ClientUtilityException("Failed to create directories for temporary file, make sure permissions are set correctly for path " + downloadDir, e);
+            throw new S3ClientException("Failed to create directories for temporary file, make sure permissions are set correctly for path " + downloadDir, e);
         }
     }
 
@@ -79,12 +79,12 @@ public class S3ClientUtility {
     }
 }
 
-class S3ClientUtilityException extends RuntimeException {
-    public S3ClientUtilityException(String message) {
+class S3ClientException extends RuntimeException {
+    public S3ClientException(String message) {
         super(message);
     }
 
-    public S3ClientUtilityException(String message, Throwable cause) {
+    public S3ClientException(String message, Throwable cause) {
         super(message, cause);
     }
 }

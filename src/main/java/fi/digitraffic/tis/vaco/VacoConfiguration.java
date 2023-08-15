@@ -2,8 +2,8 @@ package fi.digitraffic.tis.vaco;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import fi.digitraffic.tis.aws.s3.S3ClientUtility;
-import fi.digitraffic.tis.http.HttpClientUtility;
+import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -25,13 +25,13 @@ public class VacoConfiguration {
     private VacoProperties vacoProperties;
 
     @Bean
-    public HttpClientUtility httpClient() {
-        return new HttpClientUtility();
+    public HttpClient httpClient() {
+        return new HttpClient();
     }
 
     @Bean
-    public S3ClientUtility s3ClientUtility() {
-        return new S3ClientUtility(s3TransferManager, vacoProperties);
+    public S3Client s3ClientUtility() {
+        return new S3Client(s3TransferManager, vacoProperties);
     }
 
     @Bean(name = "rulesetNameCache")

@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.conversion;
 
-import fi.digitraffic.tis.aws.s3.S3ClientUtility;
+import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -40,12 +40,12 @@ public class ConversionService {
     public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
 
     Logger logger = LoggerFactory.getLogger(getClass());
-    private final S3ClientUtility s3ClientUtility;
+    private final S3Client s3ClientUtility;
     private final PhaseService phaseService;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
 
-    public ConversionService(S3ClientUtility s3ClientUtility,
+    public ConversionService(S3Client s3ClientUtility,
                              PhaseService phaseService,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules) {
@@ -67,7 +67,7 @@ public class ConversionService {
     }
 
     private static ImmutablePhase uninitializedPhase(Long entryId, String phaseName) {
-        return ImmutablePhase.of(entryId,phaseName, Subtask.CONVERSION.priority);
+        return ImmutablePhase.of(entryId, phaseName, Subtask.CONVERSION.priority);
     }
 
     private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
