@@ -49,7 +49,7 @@ public interface Entry {
     //      https://github.com/mapstruct/mapstruct/issues/674
 
     @Nullable
-    ValidationInput validation();
+    List<ValidationInput> validations();
 
     @Nullable
     ConversionInput conversion();

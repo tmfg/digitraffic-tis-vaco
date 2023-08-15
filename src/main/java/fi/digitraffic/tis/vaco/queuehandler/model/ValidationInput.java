@@ -1,20 +1,24 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.process.model.PhaseResult;
+import fi.digitraffic.tis.vaco.DataVisibility;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
-
-import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableValidationInput.class)
 @JsonDeserialize(as = ImmutableValidationInput.class)
 public interface ValidationInput {
     @Nullable
-    List<String> rules();
+    @JsonView(DataVisibility.Internal.class)
+    Long id();
+
+    @Value.Parameter
+    String name();
 
     @Nullable
-    List<PhaseResult<?>> results();
+    JsonNode config();
 }
