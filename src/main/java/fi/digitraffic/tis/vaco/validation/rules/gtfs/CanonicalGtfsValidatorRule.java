@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
@@ -55,9 +56,9 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule implements Rule {
         ErrorHandlerService errorHandlerService,
         RulesetRepository rulesetRepository) {
         super("gtfs", rulesetRepository, errorHandlerService);
-        this.objectMapper = objectMapper;
-        this.s3TransferManager = s3TransferManager;
-        this.vacoProperties = vacoProperties;
+        this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.s3TransferManager = Objects.requireNonNull(s3TransferManager);
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
 
     @Override
@@ -66,7 +67,11 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule implements Rule {
     }
 
     @Override
-    protected ValidationReport runValidator(Entry queueEntry, PhaseData<FileReferences> phaseData) {
+    protected ValidationReport runValidator(
+        Entry queueEntry,
+        Optional<ValidationInput> configuration,
+        PhaseData<FileReferences> phaseData) {
+
         Path ruleRoot = Path.of(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), phaseData.phase().name(), "rules", RULE_NAME);
         URI gtfsSource = phaseData.payload().localPath().toUri();
         Path storageDirectory = ruleRoot.resolve("storage");

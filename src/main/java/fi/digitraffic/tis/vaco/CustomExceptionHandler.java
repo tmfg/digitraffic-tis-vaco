@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco;
 
+import fi.digitraffic.tis.utilities.Streams;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

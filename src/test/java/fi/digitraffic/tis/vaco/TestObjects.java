@@ -12,14 +12,15 @@ import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 public class TestObjects {
 
-    public static ImmutableEntry.Builder anEntry() {
+    public static ImmutableEntry.Builder anEntry(String format) {
         return ImmutableEntry.builder()
-            .format("gtfs")
+            .format(format)
             .url("https://testfile")
             .publicId("testPublicId")
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
@@ -31,7 +32,7 @@ public class TestObjects {
             .url("https://example.fi")
             .etag("etag")
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
-            .validation(ImmutableValidation.builder().build());
+            .validations(List.of(ImmutableValidation.builder().build()));
     }
 
     public static ImmutableOrganization.Builder anOrganization() {

@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
@@ -37,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -62,7 +64,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 }
 
                 @Override
-                public CompletableFuture<ValidationReport> execute(Entry queueEntry, PhaseData<FileReferences> phaseData) {
+                public CompletableFuture<ValidationReport> execute(Entry queueEntry, Optional<ValidationInput> configuration, PhaseData<FileReferences> phaseData) {
                     return CompletableFuture.completedFuture(ImmutableValidationReport.of(TEST_RULE_RESULT));
                 }
             };
@@ -134,7 +136,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     private ImmutableEntry createQueueEntryForTesting() {
-        return queueHandlerRepository.create(TestObjects.anEntry().build());
+        return queueHandlerRepository.create(TestObjects.anEntry("gtfs").build());
     }
 
     @Test

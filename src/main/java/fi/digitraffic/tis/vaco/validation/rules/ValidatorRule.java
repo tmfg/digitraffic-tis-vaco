@@ -4,11 +4,14 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class ValidatorRule implements Rule {
@@ -21,19 +24,20 @@ public abstract class ValidatorRule implements Rule {
         String ruleFormat,
         RulesetRepository rulesetRepository,
         ErrorHandlerService errorHandlerService) {
-        this.ruleFormat = ruleFormat;
-        this.rulesetRepository = rulesetRepository;
-        this.errorHandlerService = errorHandlerService;
+        this.ruleFormat = Objects.requireNonNull(ruleFormat);
+        this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
+        this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
     }
 
     @Override
     public CompletableFuture<ValidationReport> execute(
         Entry queueEntry,
+        Optional<ValidationInput> configuration,
         PhaseData<FileReferences> phaseData) {
 
         return CompletableFuture.supplyAsync(() -> {
             if (ruleFormat.equalsIgnoreCase(queueEntry.format())) {
-                return runValidator(queueEntry, phaseData);
+                return runValidator(queueEntry, configuration, phaseData);
             } else {
                 ImmutableError error = ImmutableError.of(
                     queueEntry.id(),
@@ -47,5 +51,8 @@ public abstract class ValidatorRule implements Rule {
         });
     }
 
-    protected abstract ValidationReport runValidator(Entry queueEntry, PhaseData<FileReferences> phaseData);
+    protected abstract ValidationReport runValidator(
+        Entry queueEntry,
+        Optional<ValidationInput> configuration,
+        PhaseData<FileReferences> phaseData);
 }
