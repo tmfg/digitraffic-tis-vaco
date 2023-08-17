@@ -13,6 +13,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.rules.gtfs.CanonicalGtfsValidatorRule;
+import fi.digitraffic.tis.vaco.validation.rules.netex.EnturNetexValidatorRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,7 +85,8 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void hasDefaultRulesAlwaysAvailable() {
         Ruleset canonicalGtfsValidator = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
-        assertThat(rulesetRepository.findRulesets(fintraffic.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(canonicalGtfsValidator)));
+        Ruleset enturNetexValidator = rulesetRepository.findByName(EnturNetexValidatorRule.RULE_NAME).get();
+        assertThat(rulesetRepository.findRulesets(fintraffic.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(canonicalGtfsValidator, enturNetexValidator)));
     }
 
     @Test
