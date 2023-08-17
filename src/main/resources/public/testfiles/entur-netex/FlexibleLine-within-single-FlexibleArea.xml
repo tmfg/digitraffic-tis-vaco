@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Example-implementation for simple flexible line with unrestricted transport within an area.
+-->
+
+<PublicationDelivery
+        xmlns="http://www.netex.org.uk/netex"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:gml="http://www.opengis.net/gml/3.2"
+        version="1.10:NO-NeTEx-networktimetable:1.4">
+
+    <PublicationTimestamp>2018-09-01T16:00:00Z</PublicationTimestamp>
+    <ParticipantRef>RUT</ParticipantRef>
+    <Description>On-demand Line example</Description>
+    <dataObjects>
+        <!-- =========================================== -->
+        <CompositeFrame version="1" created="2018-09-01T16:00:00Z" id="RUT:CompositeFrame:01">
+            <validityConditions>
+                <AvailabilityCondition version="1" id="RUT:AvailabilityCondition:1">
+                    <FromDate>2018-09-01T00:00:00</FromDate>
+                </AvailabilityCondition>
+            </validityConditions>
+            <codespaces>
+                <Codespace id="rut">
+                    <Xmlns>RUT</Xmlns>
+                    <XmlnsUrl>http://www.rutebanken.org/ns/rut</XmlnsUrl>
+                </Codespace>
+            </codespaces>
+            <frames>
+                <!-- =========================================== -->
+                <ResourceFrame version="1" id="RUT:ResourceFrame:1">
+                    <organisations>
+                        <!-- This structure can be more complex when for example adding lost & found information -->
+                        <Authority version="1" id="RUT:Authority:Ruter">
+                            <CompanyNumber>991609407</CompanyNumber>
+                            <!-- Organisasjonsnummer -->
+                            <Name>Ruter#</Name>
+                            <LegalName>RUTER AS</LegalName>
+                            <OrganisationType>authority</OrganisationType>
+                        </Authority>
+                        <!-- Presumed operator is Unibus -->
+                        <Operator version="1" id="RUT:Operator:Unibuss">
+                            <CompanyNumber>985615616</CompanyNumber>
+                            <Name>Unibuss</Name>
+                            <LegalName>UNIBUSS AS</LegalName>
+                            <CustomerServiceContactDetails>
+                                <Phone>0047 177</Phone>
+                                <Url>http://www.ruter.no</Url>
+                            </CustomerServiceContactDetails>
+                        </Operator>
+
+                    </organisations>
+                </ResourceFrame>
+
+
+                <SiteFrame version="1" id="RUT:SiteFrame:1">
+                    <flexibleStopPlaces>
+                        <FlexibleStopPlace version="1" id="RUT:FlexibleStopPlace:ID-HANABORG-NORD">
+                            <Name>Flexi-zone for Line 1</Name>
+                            <Description>
+                                On-demand servcie running in the area between Øvre Grønlia and Hanaborglia (Hanaborg nord),
+                                no fixed journey pattern.
+                            </Description>
+                            <TransportMode>bus</TransportMode>
+                            <areas>
+                                <FlexibleArea version="1" id="RUT:FlexibleArea:ID-HANABORG-NORD-AREA">
+                                    <Polygon srsName="wgs84" gml:id="hanaborg" xmlns="http://www.opengis.net/gml/3.2">
+                                        <exterior>
+                                            <LinearRing>
+                                                <pos>59.938831 10.966611</pos>
+                                                <pos>59.943369 10.952606</pos>
+                                                <pos>59.944642 10.962742</pos>
+                                                <pos>59.950631 10.984097</pos>
+                                                <pos>59.945957 10.989036</pos>
+                                                <pos>59.940764 10.981718</pos>
+                                            </LinearRing>
+                                        </exterior>
+                                    </Polygon>
+                                </FlexibleArea>
+                            </areas>
+                        </FlexibleStopPlace>
+                    </flexibleStopPlaces>
+                </SiteFrame>
+
+
+                <ServiceFrame version="1" id="RUT:ServiceFrame:1">
+                    <Network version="1" id="RUT:Network:RuterBestillingslinjer">
+                        <Name>Ruter# on-demand services</Name>
+                        <AuthorityRef version="1" ref="RUT:Authority:Ruter"/>
+                    </Network>
+
+                    <routePoints>
+                        <!-- Flexible zone "Hanaborg Nord" -->
+                        <RoutePoint version="1" id="RUT:RoutePoint:ID-HANABORG-NORD">
+                            <projections>
+                                <PointProjection version="1" id="RUT:PointProjection:ID-HANABORG_ST-NORD">
+                                    <ProjectToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD"/>
+                                </PointProjection>
+                            </projections>
+                        </RoutePoint>
+
+                    </routePoints>
+
+
+                    <routes>
+                        <Route version="1" id="RUT:Route:1-HanaborgNord">
+                            <Name>Hanaborg nord</Name>
+                            <FlexibleLineRef ref="RUT:FlexibleLine:1" version="1"/>
+                            <DirectionType>inbound</DirectionType>
+                            <pointsInSequence>
+                                <PointOnRoute version="1" id="RUT:PointOnRoute:ID-HANABORG-NORD-fra" order="1">
+                                    <RoutePointRef version="1" ref="RUT:RoutePoint:ID-HANABORG-NORD"/>
+                                </PointOnRoute>
+                                <PointOnRoute version="1" id="RUT:PointOnRoute:ID-HANABORG-NORD-til" order="2">
+                                    <RoutePointRef version="1" ref="RUT:RoutePoint:ID-HANABORG-NORD"/>
+                                </PointOnRoute>
+                            </pointsInSequence>
+                        </Route>
+
+                    </routes>
+
+                    <lines>
+                        <FlexibleLine version="1" id="RUT:FlexibleLine:1">
+                            <Name>Bestillingslinje 1: Øvre Grønlia</Name>
+                            <TransportMode>bus</TransportMode>
+                            <TransportSubmode>
+                                <BusSubmode>shuttleBus</BusSubmode>
+                            </TransportSubmode>
+                            <PublicCode>1</PublicCode>
+                            <OperatorRef version="1" ref="RUT:Operator:Unibuss"/>
+                            <RepresentedByGroupRef version="1" ref="RUT:Network:RuterBestillingslinjer"/>
+                            <FlexibleLineType>flexibleAreasOnly</FlexibleLineType>
+                            <BookingContact>
+                                <Phone>04144</Phone>
+                            </BookingContact>
+                            <BookingMethods>callOffice</BookingMethods>
+                            <BookWhen>untilPreviousDay</BookWhen>
+                            <LatestBookingTime>12:00:00</LatestBookingTime>
+                            <BookingNote> <!-- (booking information copied from service description, therefore in Norwegian) -->
+                                Slik bestiller du transport med linje 1:
+                                Bestill transport på tlf. 04144 innen kl. 12 hverdagen i forveien.
+                                Prisene er som på vanlig rutebuss, og Ruters kort og billetter gjelder.
+                                Har du tilgang til internett, kan du lese mer om bestillingslinjene på ruter.no.
+                            </BookingNote>
+                        </FlexibleLine>
+                    </lines>
+
+                    <destinationDisplays>
+                        <DestinationDisplay version="1" id="RUT:DestinationDisplay:Hanaborg">
+                            <FrontText>Hanaborg</FrontText>
+                        </DestinationDisplay>
+                    </destinationDisplays>
+
+                    <scheduledStopPoints>
+                        <ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD">
+                            <Name>Flexi-zone Hanaborg nord</Name>
+                        </ScheduledStopPoint>
+                    </scheduledStopPoints>
+
+                    <stopAssignments>
+                        <FlexibleStopAssignment version="1" id="RUT:FlexibleStopAssignment:ID-HANABORG">
+                            <ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD"/>
+                            <FlexibleStopPlaceRef version="1" ref="RUT:FlexibleStopPlace:ID-HANABORG-NORD"/>
+                        </FlexibleStopAssignment>
+                    </stopAssignments>
+
+                    <journeyPatterns>
+                        <JourneyPattern version="1" id="RUT:JourneyPattern:1-HanaborgNord">
+                            <Name>Hanaborg nord</Name>
+                            <RouteRef version="1" ref="RUT:Route:1-HanaborgNord"/>
+                            <pointsInSequence>
+                                <StopPointInJourneyPattern version="1" id="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-fra" order="1">
+                                    <ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD"/>
+                                    <ForAlighting>false</ForAlighting>
+                                    <DestinationDisplayRef version="1" ref="RUT:DestinationDisplay:Hanaborg"/>
+                                </StopPointInJourneyPattern>
+                                <StopPointInJourneyPattern version="1" id="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-til" order="2">
+                                    <ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD"/>
+                                    <ForBoarding>false</ForBoarding>
+                                </StopPointInJourneyPattern>
+                            </pointsInSequence>
+                        </JourneyPattern>
+
+                    </journeyPatterns>
+
+                    <notices>
+                        <!-- (notices copied from service description, therefore in Norwegian) -->
+                        <!-- Notice applied to the entire Line -->
+                        <Notice version="1" id="RUT:Notice:1">
+                            <Text>
+                                Denne bestillingslinjen kjører i området
+                                Øvre Grønlia og Hanaborglia (Hanaborg nord),
+                                uten fast trasé.
+                                (Dør-til-dør transport.)
+
+                                Ruters kort og billetter gjelder.
+                                TT-kort gjelder ikke.
+                            </Text>
+                        </Notice>
+                        <Notice version="1" id="RUT:Notice:1-Henting">
+                            <Text>Eksakt hentested og -tidspunkt avtales ved bestilling</Text>
+                        </Notice>
+                    </notices>
+                    <noticeAssignments>
+                        <NoticeAssignment version="1" id="RUT:NoticeAssignment:1-Henting" order="0">
+                            <NoticeRef version="1" ref="RUT:Notice:1-Henting"/>
+                            <NoticedObjectRef version="1" ref="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-fra"/>
+                        </NoticeAssignment>
+                        <NoticeAssignment version="1" id="RUT:NoticeAssignment:1" order="1">
+                            <NoticeRef version="1" ref="RUT:Notice:1"/>
+                            <NoticedObjectRef version="1" ref="RUT:FlexibleLine:1"/>
+                        </NoticeAssignment>
+                    </noticeAssignments>
+                </ServiceFrame>
+
+
+                <ServiceCalendarFrame id="RUT:ServiceCalendarFrame:1" version="1">
+                    <dayTypes>
+                        <DayType id="RUT:DayType:weekdays" version="1">
+                            <Name>Weekdays</Name>
+                            <properties>
+                                <PropertyOfDay>
+                                    <DaysOfWeek>Monday Tuesday Wednesday Thursday Friday</DaysOfWeek>
+                                </PropertyOfDay>
+                            </properties>
+                        </DayType>
+                    </dayTypes>
+                    <operatingPeriods>
+                        <OperatingPeriod id="RUT:OperatingPeriod:2018" version="1">
+                            <FromDate>2018-09-01T00:00:00</FromDate>
+                            <ToDate>2018-12-31T23:59:59</ToDate>
+                        </OperatingPeriod>
+                    </operatingPeriods>
+                    <dayTypeAssignments>
+                        <DayTypeAssignment id="RUT:DayTypeAssignment:1" version="1" order="1">
+                            <OperatingPeriodRef  version="1" ref="RUT:OperatingPeriod:2018"/>
+                            <DayTypeRef  version="1" ref="RUT:DayType:weekdays"/>
+                        </DayTypeAssignment>
+                    </dayTypeAssignments>
+                </ServiceCalendarFrame>
+
+
+                <TimetableFrame version="1" id="RUT:TimetableFrame:1-HanaborgNord">
+                    <vehicleJourneys>
+                        <ServiceJourney version="1" id="RUT:ServiceJourney:01-HanaborgNord">
+                            <dayTypes>
+                                <DayTypeRef version="1" ref="RUT:DayType:weekdays"/>
+                            </dayTypes>
+                            <JourneyPatternRef version="1" ref="RUT:JourneyPattern:1-HanaborgNord"/>
+                            <FlexibleLineRef version="1" ref="RUT:FlexibleLine:1"/>
+                            <passingTimes>
+                                <TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1000">
+                                    <!-- Flexi-sone (sted og tid avtales ved bestilling) -->
+                                    <StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-fra" version="1"/>
+                                    <EarliestDepartureTime>08:00:00</EarliestDepartureTime>
+                                </TimetabledPassingTime>
+                                <TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1001">
+                                    <!-- Flexi-sone (sted og tid avtales ved bestilling) -->
+                                    <StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-til" version="1"/>
+                                    <LatestArrivalTime>16:00:00</LatestArrivalTime>
+                                </TimetabledPassingTime>
+                            </passingTimes>
+                        </ServiceJourney>
+
+                    </vehicleJourneys>
+                </TimetableFrame>
+
+            </frames>
+        </CompositeFrame>
+    </dataObjects>
+</PublicationDelivery>

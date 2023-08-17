@@ -26,13 +26,13 @@ public class TestObjects {
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
     }
 
-    public static ImmutableEntryRequest.Builder aValidationEntryRequest() {
+    public static ImmutableEntryRequest.Builder aValidationEntryRequest(List<ImmutableValidation> immutableValidations) {
         return ImmutableEntryRequest.builder()
             .format("gtfs")
             .url("https://example.fi")
             .etag("etag")
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
-            .validations(List.of(ImmutableValidation.builder().build()));
+            .validations(immutableValidations);
     }
 
     public static ImmutableOrganization.Builder anOrganization() {
@@ -64,5 +64,9 @@ public class TestObjects {
             .description("running hello rule from tests")
             .category(Category.GENERIC)
             .type(Type.VALIDATION_SYNTAX);
+    }
+
+    public static ImmutableValidation aValidation() {
+        return ImmutableValidation.of("mock validation");
     }
 }

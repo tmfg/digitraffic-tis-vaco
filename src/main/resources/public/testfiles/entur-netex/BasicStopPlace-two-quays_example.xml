@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- ==== Simple Stop Example ====== 
+
+This example shows a STOP PLACE with two roadside QUAYs with a bus sign (traffic sign "512"), atimetable poster, a line/network plan and a fare table 
+     The object consists of
+       (i)   STOP PLACE      NSR:StopPlace:12345678       Bryn skole (Ole Deviks vei)
+       (ii)  QUAY            NSR:Quay:12345679            Bryn skole southbound (to city center)
+       (iii) QUAY            NSR:Quay:12345670            Bryn skole northbound (from city center)
+     as well as related FACILITIES / EQUIPMENT and SUITABILITIES
+
+NeTEx frames:
+	The COMPOSITE FRAME is used for specifying validity as well as grouping of the example objects
+	STOP PLACE and QUAY objects are defined in the SITE FRAME
+-->
+
+<PublicationDelivery 
+  version="1.0" 
+  xmlns="http://www.netex.org.uk/netex"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:gml="http://www.opengis.net/gml/3.2"
+  xmlns:siri="http://www.siri.org.uk/siri">
+	
+	<PublicationTimestamp>2016-04-29T12:30:00.0Z</PublicationTimestamp>
+	<ParticipantRef>NSR</ParticipantRef>
+	<dataObjects>
+		<CompositeFrame version="1" id="NSR:CompositeFrame:1">
+			<validityConditions>
+				<AvailabilityCondition version="1" id="NSR:AvailabilityCondition:1">
+					<FromDate>2017-03-08T12:12:00.0Z</FromDate>
+				</AvailabilityCondition>
+			</validityConditions>
+			<codespaces>
+				<Codespace id="NRS">
+					<Xmlns>NSR</Xmlns>
+					<XmlnsUrl>http://www.rutebanken.org/ns/nsr</XmlnsUrl>
+				</Codespace>
+			</codespaces>
+			
+			<frames>
+				<SiteFrame version="1" id="NSR:SiteFrame:1">
+					
+					<!-- Remark: StopPlace ID from the National Stop Registry (NSR) in Norway -->
+					<stopPlaces>
+						<StopPlace version="1" id="NSR:StopPlace:12345678">
+							<Name>Bryn Skole (Ole Deviks vei)</Name>
+							
+							<Centroid>
+								<Location srsName="WGS84" id="NSR:Location:1">
+									<Longitude>59.913915</Longitude>
+									<Latitude>10.824609</Latitude>
+								</Location>
+							</Centroid>
+							
+							<AccessibilityAssessment version="1" id="NSR:AccessibilityAssessment:1">
+								<MobilityImpairedAccess>unknown</MobilityImpairedAccess>
+								<limitations>
+									<AccessibilityLimitation>
+										<WheelchairAccess>true</WheelchairAccess>
+										<StepFreeAccess>true</StepFreeAccess>
+										<LiftFreeAccess>false</LiftFreeAccess>
+									</AccessibilityLimitation>
+								</limitations>
+								<suitabilities>
+									<Suitability version="1" id="suitability">
+										<MobilityNeed>assistedWheelchair</MobilityNeed>
+										<Suitable>suitable</Suitable>
+									</Suitability>
+								</suitabilities>
+							</AccessibilityAssessment>
+							
+							<placeEquipments>
+								<GeneralSign id="NSR:GeneralSign:1" version="1">
+									<PrivateCode>512</PrivateCode>
+									<SignContentType>transportMode</SignContentType>
+								</GeneralSign>
+							</placeEquipments>
+							
+							<TransportMode>bus</TransportMode>
+							<StopPlaceType>onstreetBus</StopPlaceType>
+
+							<quays>
+								<Quay version="1" id="NSR:Quay:12345679">
+									<Centroid>
+										<Location>
+											<Longitude>59.9139819</Longitude>
+											<Latitude>10.8247039</Latitude>
+										</Location>
+									</Centroid>
+									<Lighting>poorlyLit</Lighting>
+									<facilities>
+										<SiteFacilitySetRef ref="NSR:SiteFacilitySet:timetablePoster"/>
+										<SiteFacilitySetRef ref="NSR:SiteFacilitySet:fareInformation"/>
+									</facilities>
+									<PublicCode>Southbound</PublicCode>
+									<CompassBearing>200</CompassBearing>
+								</Quay>
+								<Quay version="1" id="NSR:Quay:12345670">
+									<Centroid>
+										<Location>
+											<Longitude>59.9138612</Longitude>
+											<Latitude>10.8244793</Latitude>
+										</Location>
+									</Centroid>
+									<Lighting>wellLit</Lighting>
+									<facilities>
+										<SiteFacilitySetRef ref="NSR:SiteFacilitySet:timetablePoster"/>
+									</facilities>
+									<PublicCode>Northbound</PublicCode>
+									<CompassBearing>020</CompassBearing>
+								</Quay>
+							</quays>
+						</StopPlace>
+					</stopPlaces>
+					
+					
+					<siteFacilitySets>
+						<SiteFacilitySet id="NSR:SiteFacilitySet:timetablePoster" version="1">
+							<PassengerInformationEquipmentList>timetablePoster</PassengerInformationEquipmentList>
+						</SiteFacilitySet>
+						<SiteFacilitySet id="NSR:SiteFacilitySet:lineNetworkPlan" version="1">
+							<PassengerInformationEquipmentList>lineNetworkPlan</PassengerInformationEquipmentList>
+						</SiteFacilitySet>
+						<SiteFacilitySet id="NSR:SiteFacilitySet:fareInformation" version="1">
+							<PassengerInformationEquipmentList>fareInformation</PassengerInformationEquipmentList>
+						</SiteFacilitySet>
+					</siteFacilitySets>
+				</SiteFrame>
+			</frames>
+		</CompositeFrame>
+	</dataObjects>
+</PublicationDelivery>

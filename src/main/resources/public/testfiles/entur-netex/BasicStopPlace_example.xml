@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+ <!-- 
+==== Minimumseksempel for et stoppested med ett stopp ====== 
+Eksempelet tar utgangspunkt i offisielle NeTEx-XML eksempler og viser et enkleste type stoppested for buss, uten fasiliteter, i en enveiskjørt gate-sløyfe.
+    Denne består av:
+    - STOP PLACE	NSR:StopPlace:10000000			Blystalia
+	- QUAY			NSR:Quay:11111111		Plattform 2
+	Frames / gruppering:
+	- SITE FRAME inneholder STOP PLACE og QUAY
+-->
+<PublicationDelivery
+  version="1.0" 
+  xmlns="http://www.netex.org.uk/netex"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<PublicationTimestamp>2017-02-13T15:00:00.0Z</PublicationTimestamp>
+	<ParticipantRef>NSR</ParticipantRef>
+	<dataObjects>
+		<SiteFrame version="1" id="NSR:SiteFrame:1" >
+			<stopPlaces>
+				<!-- ===Stop=== -->
+				<!-- Alle objekter skal ha nasjonal ID fra stoppestedsregisteret -->
+				<StopPlace version="1" id="NSR:StopPlace:10000000">
+					<Name>Blystadlia</Name>
+					
+					<!-- Generelt tilgjengelig med rullestol -->
+					<AccessibilityAssessment version="1" id="NSR:AccessibilityAssessment:1">
+						<MobilityImpairedAccess>true</MobilityImpairedAccess>
+						<limitations>
+							<!-- Minimumskrav til UU-informasjon -->
+							<AccessibilityLimitation>
+								<WheelchairAccess>true</WheelchairAccess>
+								<StepFreeAccess>true</StepFreeAccess>
+							</AccessibilityLimitation>
+						</limitations>
+					</AccessibilityAssessment>
+					
+					<Covered>outdoors</Covered>
+					
+					<placeEquipments>
+						<PassengerInformationEquipment id="NSR:PassengerInformationEquipment" version="1">
+							<PassengerInformationFacilityList>passengerInformationDisplay</PassengerInformationFacilityList>
+						</PassengerInformationEquipment>
+
+						<GeneralSign id="NSR:GeneralSign:1" version="1">
+							<PrivateCode>512</PrivateCode>
+							<SignContentType>transportMode</SignContentType>
+						</GeneralSign>
+					</placeEquipments>
+
+					<TransportMode>bus</TransportMode>
+					
+					<StopPlaceType>onstreetBus</StopPlaceType>
+					<quays>
+						<Quay version="1" id="NSR:Quay:11111111">
+							<Centroid>
+								<!-- Alltid WGS84 -->
+								<Location srsName="WGS84">
+									<Longitude>11.034508</Longitude>
+									<Latitude>59.931081</Latitude>
+								</Location>
+							</Centroid>
+							<AccessibilityAssessment version="1" id="NSR:AccessibilityAssessment:2">
+								<MobilityImpairedAccess>true</MobilityImpairedAccess>
+								<limitations>
+									<!-- Minimumskrav til UU-informasjon -->
+									<AccessibilityLimitation>
+										<WheelchairAccess>true</WheelchairAccess>
+										<StepFreeAccess>true</StepFreeAccess>
+									</AccessibilityLimitation>
+								</limitations>
+							</AccessibilityAssessment>
+
+							<Lighting>wellLit</Lighting>
+							<PublicCode>2</PublicCode>
+						</Quay>
+					</quays>
+					
+				</StopPlace>
+			</stopPlaces>
+		</SiteFrame>
+	</dataObjects>
+</PublicationDelivery>

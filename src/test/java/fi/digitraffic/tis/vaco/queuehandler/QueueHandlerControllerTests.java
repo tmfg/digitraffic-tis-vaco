@@ -9,6 +9,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -24,7 +26,9 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
     @Test
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
-        EntryRequest request = TestObjects.aValidationEntryRequest().build();
+        EntryRequest request = TestObjects.aValidationEntryRequest(
+            List.of(TestObjects.aValidation())
+        ).build();
         MvcResult response = apiCall(post("/queue").content(toJson(request)))
             .andExpect(status().isOk())
             .andReturn();

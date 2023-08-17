@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Example-implementation of a simple flexible (on-demand) journey.
+
+[TODO - the URL's may be changed, see https://enturas.atlassian.net/wiki/spaces/PUBLIC]
+https://enturas.atlassian.net/wiki/display/PUBLIC/Bestillingstransport
+https://enturas.atlassian.net/wiki/display/PUBLIC/Multimodal+overgang
+
+Modelled as a flexible zone without any fixed stops.
+The service is defined by one or several zones (in sequence).
+Stops for boardin/alighting are possible anywhere in each Zone. 
+Where the vehicle will stop is defined by the prior booking arrangements made with the operator. 
+Passing times may be defined for each zone (entry and exit time), or for each stop."
+
+Also see this NeTEx-eksample:
+https://github.com/NeTEx-CEN/NeTEx/blob/master/examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml
+-->
+
+<PublicationDelivery 
+	version="1.08:NO-NeTEx-networktimetable:1.3"
+	xmlns="http://www.netex.org.uk/netex" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:gml="http://www.opengis.net/gml/3.2">
+	
+	<PublicationTimestamp>2016-07-07T16:07:07Z</PublicationTimestamp>
+	<ParticipantRef>RUT</ParticipantRef>
+	<Description>On-demand Line ("Bestillingslinje") 316</Description>
+	<dataObjects>
+		<!-- =========================================== -->
+		<CompositeFrame id="RUT:CompositeFrame:0316" version="1" created="2016-07-07T16:07:00">
+			<validityConditions>
+				<AvailabilityCondition id="NSR:AvailabilityCondition:1" version="1">
+					<FromDate>2013-04-07T00:00:00</FromDate>
+				</AvailabilityCondition>
+			</validityConditions>
+			<codespaces>
+				<!-- Codespace for Ruter -->
+				<Codespace id="rut">
+					<Xmlns>RUT</Xmlns>
+					<XmlnsUrl>http://www.rutebanken.org/ns/rut</XmlnsUrl>
+				</Codespace>
+				<!-- Codespace for national stop place registry-->
+				<Codespace id="nrs">
+					<Xmlns>NSR</Xmlns>
+					<XmlnsUrl>http://www.rutebanken.org/ns/nsr</XmlnsUrl>
+				</Codespace>
+			</codespaces>
+			<frames>
+				<!-- TODO: Test model for individually defined Zone - NB: Not compliant with Nordic NeTEx Profile -->
+				<GeneralFrame id="NSR:GeneralFrame:1" version="1">
+					<members>
+						<Zone id="NSR:Zone:1" version="1">
+							<!-- Please note that GML is an externally defined datatype -->
+							<gml:Polygon gml:id="NSR-Polygon-1">
+								<gml:exterior>
+									<gml:LinearRing>
+										<gml:pos srsDimension="2">3.14159265358971 3.14159265358972</gml:pos>
+										<gml:pos srsDimension="2">3.14159265358973 3.14159265358974</gml:pos>
+										<gml:pos srsDimension="2">3.14159265358975 3.14159265358976</gml:pos>
+										<gml:pos srsDimension="2">3.14159265358977 3.14159265358978</gml:pos>
+									</gml:LinearRing>
+								</gml:exterior>
+							</gml:Polygon>
+						</Zone>
+					</members>
+				</GeneralFrame>
+				<!-- =========================================== -->
+				<ResourceFrame id="RUT:ResourceFrame:1" version="1">
+					<organisations>
+						<!-- This structure can be more complex when for example adding lost & found information -->
+						<Authority id="RUT:Authority:Ruter" version="1">
+							<CompanyNumber>991609407</CompanyNumber>
+							<!-- Organisasjonsnummer -->
+							<Name>Ruter#</Name>
+							<LegalName>RUTER AS</LegalName>
+							<OrganisationType>authority</OrganisationType>
+						</Authority>
+						<!-- Presumed operator is Unibuss -->
+						<Operator id="RUT:Operator:Unibuss" version="1">
+							<CompanyNumber>985615616</CompanyNumber>
+							<Name>Unibuss</Name>
+							<LegalName>UNIBUSS AS</LegalName>
+							<CustomerServiceContactDetails>
+								<Phone>0047 177</Phone>
+								<Url>http://www.ruter.no</Url>
+							</CustomerServiceContactDetails>
+						</Operator>
+						<Operator id="RUT:Operator:NSB" version="1">
+							<CompanyNumber>0000000</CompanyNumber>
+							<Name>Norges Statsbaner</Name>
+							<LegalName>NSB AS</LegalName>
+							<PrivateContactDetails>
+								<Email/>
+								<Phone>0047 177</Phone>
+								<Url>http://www.nsb.no</Url>
+								<FurtherDetails>Kontaktskjema på websider</FurtherDetails>								
+							</PrivateContactDetails>
+							<CustomerServiceContactDetails>
+								<Phone>815 00 888</Phone>
+								<Url>http://www.nsb.no</Url>
+							</CustomerServiceContactDetails>
+						</Operator>
+					</organisations>
+				</ResourceFrame>
+
+
+				<!-- References to the national stop place registry (only included in order to illustrate the structure of SiteFrame) -->
+				<SiteFrame id="RUT:SiteFrame:1" version="1">
+					<stopPlaces>
+						<!-- Stops use the codespace NSR since they are "owned" by the national stop place registry -->
+						<StopPlace id="NSR:StopPlace:ID-LORENSKOGSENTRUM" version="1">
+							<!-- Lørenskog sentrum (59.927963, 10.954812) -->
+							<Name>Lørenskog sentrum</Name>
+							<quays>
+								<Quay id="NSR:Quay:ID-LORENSKOGSENTRUM-QUAY" version="1"/>
+							</quays>
+						</StopPlace>
+						<StopPlace id="NSR:StopPlace:ID-TRIADEN-ENTRANCE" version="1">
+							<Name>Triaden</Name>
+							<!-- Gamleveien 88C, 1476 Rasta (outside the main entrance of "Triaden": 59.919880, 10.953399) -->
+							<quays>
+								<Quay id="NSR:Quay:ID-TRIADEN-ENTRANCE-QUAY" version="1"/>
+							</quays>
+						</StopPlace>
+						<StopPlace id="NSR:StopPlace:ID-HANABORG_ST" version="1">
+							<!-- Hanaborg stasjon (59.938586, 10.966605) -->
+							<Name>Hanaborg stasjon</Name>
+							<quays>
+								<Quay id="NSR:Quay:ID-HANABORG_ST-QUAY" version="1"/>
+							</quays>
+						</StopPlace>
+					</stopPlaces>				
+					
+					<!-- Definition of the area where flexible transport can be ordered. -->
+					<flexibleStopPlaces>
+						<FlexibleStopPlace version="1" id="NSR:FlexibleStopPlace:ID-HANABORG-NORD">
+							<Name>Fleksisone for linje 316</Name>
+							<Description>
+								Bestillingslinjen kjøres i områdene nord for toglinjen i Lørenskog; 
+								Øvre Grønlia, Hanaborglia, Fridjof Nansens vei og Steinbekkveien 
+								men har ikke fast trasé.
+							</Description>
+							<TransportMode>bus</TransportMode>
+							<areas>
+								<FlexibleArea id="NSR:FlexibleArea:ID-HANABORG-NORD-AREA" version="1">
+									<Polygon srsName="wgs84" gml:id="hanaborg" xmlns="http://www.opengis.net/gml/3.2">
+										<exterior>
+											<LinearRing>
+												<pos>59.938831 10.966611</pos>
+												<pos>59.943369 10.952606</pos>
+												<pos>59.944642 10.962742</pos>
+												<pos>59.950631 10.984097</pos>
+												<pos>59.945957 10.989036</pos>
+												<pos>59.940764 10.981718</pos>
+											</LinearRing>
+										</exterior>
+									</Polygon>
+								</FlexibleArea>
+							</areas>
+						</FlexibleStopPlace>
+					</flexibleStopPlaces>
+				</SiteFrame>
+
+
+				<ServiceFrame version="1" id="RUT:ServiceFrame:316">
+					<Network version="1" id="RUT:Network:RuterBestillingslinjer">
+						<Name>Ruter# on-demand-lines</Name>
+						<AuthorityRef version="1" ref="RUT:Authority:Ruter"/>
+					</Network>
+
+					<routePoints>
+						<!-- Flexible zone "Hanaborg Nord" -->
+						<RoutePoint version="1" id="RUT:RoutePoint:ID-HANABORG-NORD">
+							<projections>
+								<PointProjection version="1" id="RUT:PointProjection:ID-HANABORG_ST-NORD">
+									<ProjectToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD"/>
+								</PointProjection>
+							</projections>
+						</RoutePoint>
+						<!-- Hanaborg stasjon -->
+						<RoutePoint version="1" id="RUT:RoutePoint:ID-HANABORG">
+							<projections>
+								<PointProjection version="1" id="RUT:PointProjection:ID-HANABORG">
+									<ProjectToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST"/>
+								</PointProjection>
+							</projections>
+						</RoutePoint>
+						<!-- Lørenskog sentrum -->
+						<RoutePoint version="1" id="RUT:RoutePoint:ID-LORENSKOGSENTRUM">
+							<projections>
+								<PointProjection version="1" id="RUT:PointProjection:ID-LORENSKOGSENTRUM">
+									<ProjectToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-LORENSKOG"/>
+								</PointProjection>
+							</projections>
+						</RoutePoint>
+						<!-- Triaden -->
+						<RoutePoint version="1" id="RUT:RoutePoint:ID-TRIADEN">
+							<projections>
+								<PointProjection version="1" id="RUT:PointProjection:ID-TRIADEN">
+									<ProjectToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-TRIADEN"/>
+								</PointProjection>
+							</projections>
+						</RoutePoint>
+					</routePoints>
+
+					<routes>
+						<Route version="1" id="RUT:Route:316-TilLorenskog">
+							<Name>316 to Lørenskog centre</Name>
+							<FlexibleLineRef ref="RUT:FlexibleLine:316" version="1"/>
+							<DirectionType>inbound</DirectionType>
+							<pointsInSequence>
+								<PointOnRoute version="1" id="RUT:PointOnRoute:ID-HANABORG-NORD-HENTING" order="1">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:ID-HANABORG-NORD"/>
+								</PointOnRoute>
+								<PointOnRoute version="1" id="RUT:PointOnRoute:ID-HANABORG-TIL" order="2">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:ID-HANABORG"/>
+								</PointOnRoute>
+								<PointOnRoute version="1"
+									id="RUT:PointOnRoute:ID-LORENSKOGSENTRUM-TIL" order="3">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:ID-LORENSKOGSENTRUM"/>
+								</PointOnRoute>
+								<PointOnRoute version="1" id="RUT:PointOnRoute:ID-TRIADEN-TIL"
+									order="4">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:ID-TRIADEN"/>
+								</PointOnRoute>
+							</pointsInSequence>
+							<InverseRouteRef ref="RUT:Route:316-FraLorenskog" version="1"/>
+						</Route>
+
+						<Route version="1" id="RUT:Route:316-FraLorenskog">
+							<Name>316 from Lørenskog centre</Name>
+							<FlexibleLineRef ref="RUT:FlexibleLine:316" version="1"/>
+							<DirectionType>outbound</DirectionType>
+							<pointsInSequence>
+								<PointOnRoute version="1" id="RUT:PointOnRoute:ID-TRIADEN-FRA"
+									order="1">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:ID-TRIADEN"/>
+								</PointOnRoute>
+								<PointOnRoute version="1"
+									id="RUT:PointOnRoute:ID-LORENSKOGSENTRUM-FRA" order="2">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:ID-LORENSKOGSENTRUM"/>
+								</PointOnRoute>
+								<PointOnRoute version="1" id="RUT:PointOnRoute:ID-HANABORG-FRA"
+									order="3">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:ID-HANABORG"/>
+								</PointOnRoute>
+								<PointOnRoute version="1"
+									id="RUT:PointOnRoute:ID-HANABORG-NORD-LEVERING" order="4">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:ID-HANABORG-NORD"/>
+								</PointOnRoute>
+							</pointsInSequence>
+							<InverseRouteRef version="1" ref="RUT:Route:316-TilLorenskog"/>
+						</Route>
+					</routes>
+
+					<lines>
+						<FlexibleLine version="1" id="RUT:FlexibleLine:316">
+							<Name>Bestillingslinje 316: Øvre Grønlia - Hanaborg - Lørenskog sentrum</Name>
+							<TransportMode>bus</TransportMode>
+							<TransportSubmode>
+								<BusSubmode>shuttleBus</BusSubmode>
+							</TransportSubmode>
+							<PublicCode>316</PublicCode>
+							<OperatorRef version="1" ref="RUT:Operator:Unibuss"/>
+							<RepresentedByGroupRef version="1" ref="RUT:Network:RuterBestillingslinjer"/>
+							<FlexibleLineType>mixedFlexibleAndFixed</FlexibleLineType>
+							<BookingContact>
+								<Phone>04144</Phone>
+							</BookingContact>
+							<BookingMethods>callOffice</BookingMethods>
+							<BookWhen>untilPreviousDay</BookWhen>
+							<LatestBookingTime>12:00:00</LatestBookingTime>
+							<BookingNote>
+								Slik bestiller du transport med linje 316:
+								Bestill transport på tlf. 04144 innen kl. 12 hverdagen i forveien.
+								Prisene er som på vanlig rutebuss, og Ruters kort og billetter gjelder.
+								Har du tilgang til internett, kan du lese mer om bestillingslinjene på ruter.no.
+							</BookingNote>
+						</FlexibleLine>
+					</lines>
+
+					<destinationDisplays>
+						<DestinationDisplay version="1" id="RUT:DestinationDisplay:Triaden">
+							<FrontText>Triaden</FrontText>
+						</DestinationDisplay>
+						<DestinationDisplay version="1" id="RUT:DestinationDisplay:HanaborgSt">
+							<FrontText>Hanaborg stasjon</FrontText>
+						</DestinationDisplay>
+					</destinationDisplays>
+
+					<scheduledStopPoints>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:ID-HANABORG_ST">
+							<Name>Hanaborg stasjon</Name>
+						</ScheduledStopPoint>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD">
+							<Name>Fleksi-sone Hanaborg nord</Name>
+						</ScheduledStopPoint>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:ID-LORENSKOG">
+							<Name>Lørenskog sentrum</Name>
+						</ScheduledStopPoint>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:ID-TRIADEN">
+							<Name>Triaden</Name>
+						</ScheduledStopPoint>
+					</scheduledStopPoints>
+
+					<stopAssignments>
+						<FlexibleStopAssignment id="RUT:FlexibleStopAssignment:ID-HANABORG" version="1"> <!-- order not required -->
+							<ScheduledStopPointRef ref="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD" version="1"/>
+							<FlexibleStopPlaceRef ref="NSR:FlexibleStopPlace:ID-HANABORG-NORD" version="1"/>
+						</FlexibleStopAssignment>
+						<PassengerStopAssignment id="RUT:FlexibleStopAssignment:ID-HANABORG" version="1" order="0">
+							<ScheduledStopPointRef ref="RUT:ScheduledStopPoint:ID-HANABORG_ST" version="1"/>
+							<StopPlaceRef ref="NSR:StopPlace:ID-HANABORG_ST" version="1"/>
+							<QuayRef ref="NSR:Quay:ID-HANABORG_ST-QUAY" version="1"/>
+						</PassengerStopAssignment>
+						<PassengerStopAssignment id="RUT:PassengerStopAssignment:ID-LORENSKOG" version="1" order="0">
+							<ScheduledStopPointRef ref="RUT:ScheduledStopPoint:ID-LORENSKOG" version="1"/>
+							<StopPlaceRef ref="NSR:StopPlace:ID-LORENSKOGSENTRUM" version="1"/>
+							<QuayRef ref="NSR:Quay:ID-LORENSKOGSENTRUM-QUAY" version="1"/>
+						</PassengerStopAssignment>
+						<PassengerStopAssignment id="RUT:PassengerStopAssignment:ID-TRIADEN" version="1" order="0">
+							<ScheduledStopPointRef ref="RUT:ScheduledStopPoint:ID-TRIADEN" version="1"/>
+							<StopPlaceRef ref="NSR:StopPlace:ID-TRIADEN-ENTRANCE" version="1"/>
+							<QuayRef ref="NSR:Quay:ID-TRIADEN-ENTRANCE-QUAY" version="1"/>
+						</PassengerStopAssignment>
+					</stopAssignments>
+
+					<journeyPatterns>
+						<JourneyPattern id="RUT:JourneyPattern:316-TilLorenskog" version="1">
+							<Name>316 to Lørenskog</Name>
+							<RouteRef ref="RUT:Route:316-TilLorenskog" version="1"/>
+							<pointsInSequence>
+								<!-- Flexible zone -->
+								<StopPointInJourneyPattern id="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-tilLorenskog" version="1" order="1">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD"/>
+									<ForAlighting>false</ForAlighting>
+									<DestinationDisplayRef version="1" ref="RUT:DestinationDisplay:Triaden"/>
+								</StopPointInJourneyPattern>
+								<!-- (flexi-sone slutt) -->
+								<StopPointInJourneyPattern id="RUT:StopPointInJourneyPattern:ID-HANABORG_ST-tilLorenskog" version="1" order="2">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern id="RUT:StopPointInJourneyPattern:ID-LORENSKOG-tilLorenskog" version="1" order="3">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:ID-LORENSKOG"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern id="RUT:StopPointInJourneyPattern:ID-TRIADEN-tilLorenskog" version="1" order="4">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:ID-TRIADEN"/>
+									<ForBoarding>false</ForBoarding>
+								</StopPointInJourneyPattern>
+							</pointsInSequence>
+						</JourneyPattern>
+						<JourneyPattern id="RUT:JourneyPattern:316-FraLorenskog" version="1">
+							<Name>316 from Lørenskog</Name>
+							<RouteRef ref="RUT:Route:316-FraLorenskog" version="1"/>
+							<pointsInSequence>
+								<StopPointInJourneyPattern id="RUT:StopPointInJourneyPattern:ID-TRIADEN-fraLorenskog" version="1" order="1">
+									<ScheduledStopPointRef ref="RUT:ScheduledStopPoint:ID-TRIADEN" version="1"/>
+									<ForAlighting>false</ForAlighting>
+									<DestinationDisplayRef ref="RUT:DestinationDisplay:HanaborgSt" version="1"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern id="RUT:StopPointInJourneyPattern:ID-LORENSKOG-fraLorenskog" version="1" order="2">
+									<ScheduledStopPointRef ref="RUT:ScheduledStopPoint:ID-LORENSKOG" version="1"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern id="RUT:StopPointInJourneyPattern:ID-HANABORG_ST-fraLorenskog" version="1" order="3">
+									<ScheduledStopPointRef ref="RUT:ScheduledStopPoint:ID-HANABORG_ST" version="1"/>
+								</StopPointInJourneyPattern>
+								<!-- Flexi-sone -->
+								<StopPointInJourneyPattern id="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-fraLorenskog" version="1" order="4">
+									<ScheduledStopPointRef ref="RUT:ScheduledStopPoint:ID-HANABORG_ST-NORD" version="1"/>
+									<ForBoarding>false</ForBoarding>
+								</StopPointInJourneyPattern>
+								<!-- End of flexible zone. -->
+							</pointsInSequence>
+						</JourneyPattern>
+					</journeyPatterns>
+
+					<notices>
+						<!-- Notice in regard to the entire Line (snippets from Ruter service presentation; in Norwegian) -->
+						<Notice version="1" id="RUT:Notice:316">
+							<Text>
+								Denne bestillingslinjen kjører i området 
+								nord for toglinjen i Lørenskog; Øvre Grøn-
+								lia, Hanaborglia, Fridjof Nansens vei, og 
+								Steinbekkveien, og henter/leverer på øn-
+								sket sted innenfor kjøreområdet. Bussen 
+								korresponderer med tog på Hanaborg st, 
+								og busslinje 100 ved Lørenskog stasjon.
+								
+								Ruters kort og billetter gjelder. 
+								TT-kort gjelder ikke.
+							</Text>
+						</Notice>
+						<Notice version="1" id="RUT:Notice:316-Henting">
+							<alternativeTexts>
+								<AlternativeText>
+									<Text lang="eng">
+										Exact place and time of pick-up will be assigned at booking
+									</Text>
+								</AlternativeText>
+							</alternativeTexts>
+							<Text>Eksakt hentested og -tidspunkt avtales ved bestilling</Text>
+						</Notice>
+						<Notice version="1" id="RUT:Notice:316-Levering">
+							<alternativeTexts>
+								<AlternativeText>
+									<Text lang="eng">
+										Exact place for drop-off will be assigned at booking
+									</Text>
+								</AlternativeText>
+							</alternativeTexts>
+							<Text>Eksakt leveringssted avtales ved bestilling</Text>
+						</Notice>
+					</notices>
+					<noticeAssignments>
+						<NoticeAssignment id="RUT:NoticeAssignment:316" version="1" order="0">
+							<NoticeRef version="1" ref="RUT:Notice:316"/>
+							<NoticedObjectRef version="1" ref="RUT:StopPointInJourneyPattern:ID-TRIADEN-fraLorenskog"/>
+							<!--NoticedObjectRef ref="RUT:FlexibleLine:316"/-->
+						</NoticeAssignment>
+						<NoticeAssignment id="RUT:NoticeAssignment:316-TilLorenskog" version="1" order="0">
+							<NoticeRef ref="RUT:Notice:316-Henting" version="1"/>
+							<NoticedObjectRef ref="RUT:ServiceJourney:0316-TilLorenskog" version="1"/>
+						</NoticeAssignment>
+						<NoticeAssignment id="RUT:NoticeAssignment:316-FraLorenskog" version="1" order="0">
+							<NoticeRef ref="RUT:Notice:316-Levering" version="1"/>
+							<NoticedObjectRef ref="RUT:ServiceJourney:0316-FraLorenskog" version="1"/>
+						</NoticeAssignment>
+					</noticeAssignments>
+				</ServiceFrame>
+
+
+				<ServiceCalendarFrame id="RUT:ServiceCalendarFrame:1" version="1">
+					<dayTypes>
+						<DayType id="RUT:DayType:weekdays" version="1">
+							<Name>Weekdays</Name>
+							<properties>
+								<PropertyOfDay>
+									<DaysOfWeek>Monday Tuesday Wednesday Thursday Friday</DaysOfWeek>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+					</dayTypes>
+					<operatingPeriods>
+						<OperatingPeriod id="RUT:OperatingPeriod:2017" version="1">
+							<FromDate>2017-01-01T01:02:03</FromDate>
+							<ToDate>2017-12-31T23:22:21</ToDate>
+						</OperatingPeriod>
+					</operatingPeriods>
+					<dayTypeAssignments>
+						<DayTypeAssignment id="RUT:DayTypeAssignment:1" version="1" order="1">
+							<OperatingPeriodRef version="1" ref="RUT:OperatingPeriod:2017"/>
+							<DayTypeRef ref="RUT:DayType:weekdays" version="1"/>
+						</DayTypeAssignment>
+					</dayTypeAssignments>
+				</ServiceCalendarFrame>
+
+
+				<TimetableFrame version="1" id="RUT:TimetableFrame:316-TilLorenskog">
+					<Name>Timetable anno 2016</Name>
+					<DefaultMode>bus</DefaultMode>
+					<bookingTimes>
+						<AvailabilityCondition id="RUT:AvailabilityCondition:bookingTimes" version="1">
+							<Description>Opening hours of booking service</Description>
+							<FromDate>2013-04-07T00:00:00</FromDate>
+							<IsAvailable>true</IsAvailable>
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:weekdays"/>
+							</dayTypes>
+						</AvailabilityCondition>
+					</bookingTimes>
+					<vehicleJourneys>
+						<ServiceJourney version="1" id="RUT:ServiceJourney:0316-TilLorenskog">
+							<dayTypes>
+								<DayTypeRef ref="RUT:DayType:weekdays" version="1"/>
+							</dayTypes>
+							<JourneyPatternRef ref="RUT:JourneyPattern:316-TilLorenskog" version="1"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1000">
+									<!-- Flexi-zone (specific location and specific passing time to be confirmed after booking) -->
+									<StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-tilLorenskog" version="1"/>
+									<EarliestDepartureTime>10:10:00</EarliestDepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1015">
+									<StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-HANABORG_ST-tilLorenskog" version="1"/>
+									<ArrivalTime>10:15:00</ArrivalTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1020">
+									<StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-LORENSKOG-tilLorenskog" version="1"/>
+									<ArrivalTime>10:20:00</ArrivalTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1025">
+									<StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-TRIADEN-tilLorenskog" version="1"/>
+									<ArrivalTime>10:25:00</ArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</ServiceJourney>
+						<ServiceJourney version="1" id="RUT:ServiceJourney:0316-FraLorenskog">
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:weekdays"/>
+							</dayTypes>
+							<JourneyPatternRef version="1" ref="RUT:JourneyPattern:316-FraLorenskog"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1225">
+									<StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-TRIADEN-fraLorenskog" version="1"/>
+									<DepartureTime>12:25:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1230">
+									<StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-LORENSKOG-fraLorenskog" version="1"/>
+									<DepartureTime>12:30:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:1235">
+									<StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-HANABORG_ST-fraLorenskog" version="1"/>
+									<DepartureTime>12:35:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime>
+									<!-- Flexi-sone (leveringssted avtales ved bestilling) -->
+									<StopPointInJourneyPatternRef ref="RUT:StopPointInJourneyPattern:ID-HANABORG-NORD-fraLorenskog" version="1"/>
+									<LatestArrivalTime>12:45:00</LatestArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</ServiceJourney>
+					</vehicleJourneys>
+
+					<journeyInterchanges>
+						
+					  <!-- JourneyPatternInterchanges are currently NOT IN USE per Nordic profile -->
+						
+						<!--ServiceJourneyPatternInterchange>
+							<FromPointRef ref=""/>
+							<ToPointRef ref=""/>
+							<FromJourneyPatternRef ref=""/>
+							<ToJourneyPatternRef ref=""/>
+						</ServiceJourneyPatternInterchange-->
+            
+						<!-- Interchanges, train -->
+						<ServiceJourneyInterchange version="1" id="RUT:ServiceJourneyInterchange:ID-HANABORG_ST-316-to-L1-C">
+							<Description>2Ø train from Oslo at 12:19</Description>
+							<Priority>0</Priority>
+							<StaySeated>false</StaySeated>
+							<Guaranteed>false</Guaranteed>
+							<MaximumWaitTime>PT0M</MaximumWaitTime>
+							<FromPointRef ref="NSB:ScheduledStopPoint:HANABORG-JERNBANESTASJON"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST"/>
+							<FromJourneyRef ref="NSB:ServiceJourney:L1-Lillestrom-2-ExtenalRef"/>
+							<ToJourneyRef version="1" ref="RUT:ServiceJourney:0316-FraLorenskog"/>
+						</ServiceJourneyInterchange>
+						<ServiceJourneyInterchange version="1" id="RUT:ServiceJourneyInterchange:ID-HANABORG_ST-316-to-L1-D">
+							<Description>2Ø train from Lillestrøm at 12:31</Description>
+							<Priority>1</Priority>
+							<StaySeated>false</StaySeated>
+							<Guaranteed>false</Guaranteed>
+							<MaximumWaitTime>PT0M</MaximumWaitTime>
+							<FromPointRef ref="NSB:ScheduledStopPoint:HANABORG-JERNBANESTASJON"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-HANABORG_ST"/>
+							<FromJourneyRef ref="NSB:ServiceJourney:L1-Spikkestad-2-ExtenalRef"/>
+							<ToJourneyRef version="1" ref="RUT:ServiceJourney:0316-FraLorenskog"/>
+						</ServiceJourneyInterchange>
+						<!-- Overganger Buss -->
+						<ServiceJourneyInterchange version="1" id="RUT:ServiceJourneyInterchange:ID-LORENSKOG-316-to-100-C">
+							<Description>2Ø bus 100 from Oslo at 12:24</Description>
+							<Priority>1</Priority>
+							<StaySeated>false</StaySeated>
+							<Guaranteed>false</Guaranteed>
+							<MaximumWaitTime>PT0M</MaximumWaitTime>
+							<FromPointRef version="1" ref="RUT:ScheduledStopPoint:ID-LORENSKOG"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-LORENSKOG"/>
+							<FromJourneyRef ref="RUT:ServiceJourney:100-Lillestrom-1-ExtenalRef"/>
+							<ToJourneyRef version="1" ref="RUT:ServiceJourney:0316-TilLorenskog"/>
+						</ServiceJourneyInterchange>
+						<ServiceJourneyInterchange version="1" id="RUT:ServiceJourneyInterchange:ID-LORENSKOG-316-to-100-D">
+							<Description>2Ø bus 100 from Lillestrøm at 12:22</Description>
+							<Priority>1</Priority>
+							<StaySeated>false</StaySeated>
+							<Guaranteed>false</Guaranteed>
+							<MaximumWaitTime>PT0M</MaximumWaitTime>
+							<FromPointRef version="1" ref="RUT:ScheduledStopPoint:ID-LORENSKOG"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:ID-LORENSKOG"/>
+							<FromJourneyRef ref="RUT:ServiceJourney:100-Oslo-2-ExtenalRef"/>
+							<ToJourneyRef version="1" ref="RUT:ServiceJourney:0316-TilLorenskog"/>
+						</ServiceJourneyInterchange>
+					</journeyInterchanges>
+				</TimetableFrame>
+
+			</frames>
+		</CompositeFrame>
+	</dataObjects>
+</PublicationDelivery>
