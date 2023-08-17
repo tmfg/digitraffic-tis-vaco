@@ -19,6 +19,7 @@ public interface ValidationInput {
     @Value.Parameter
     String name();
 
+    // TODO: This needs to be redefined as Jackson (de)serializable type hierarchy
     @Nullable
     JsonNode config();
 }
