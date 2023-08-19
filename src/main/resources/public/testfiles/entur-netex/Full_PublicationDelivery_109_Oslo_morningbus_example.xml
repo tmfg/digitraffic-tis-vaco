@@ -1,0 +1,947 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ===Simple Timetable  Example=== -->
+<!-- This example show the timetable for route 109 morning express in Oslo. -->
+<PublicationDelivery version="1.08:NO-NeTEx-networktimetable:1.3"
+  xmlns="http://www.netex.org.uk/netex" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:gml="http://www.opengis.net/gml/3.2" 
+  xmlns:siri="http://www.siri.org.uk/siri">
+
+	<PublicationTimestamp>2016-05-23T12:00:00.0Z</PublicationTimestamp>
+	<ParticipantRef>NSR</ParticipantRef>
+
+	<dataObjects>
+		<CompositeFrame version="1" created="2016-08-22T00:00:00Z" id="RUT:CompositeFrame:1">
+			<validityConditions>
+				<AvailabilityCondition version="1" id="RUT:AvailabilityCondition:cf01">
+					<FromDate>2016-03-04T00:00:00.0Z</FromDate>
+				</AvailabilityCondition>
+			</validityConditions>
+
+			<!-- ===CODESPACE=== -->
+			<codespaces>
+				<Codespace id="nsr">
+					<Xmlns>NSR</Xmlns>
+					<XmlnsUrl>http://www.rutebanken.org/ns/nsr</XmlnsUrl>
+					<Description>Nasjonalt StoppestedRegister</Description>
+				</Codespace>
+				<Codespace id="rut">
+					<Xmlns>RUT</Xmlns>
+					<XmlnsUrl>http://www.rutebanken.org/ns/rut</XmlnsUrl>
+					<Description>Ruter#</Description>
+				</Codespace>
+				<Codespace id="uni">
+					<Xmlns>UNI</Xmlns>
+					<XmlnsUrl>http://www.rutebanken.org/ns/uni</XmlnsUrl>
+					<Description>Unibuss</Description>
+				</Codespace>
+			</codespaces>
+
+			<!-- ===FRAME DEFAULTS=== -->
+			<FrameDefaults>
+				<!-- Alle elementer med id-attributt blir prefixet med dette codespacet (dvs "unibuss") -->
+				<DefaultCodespaceRef ref="uni"/>
+				<DefaultLocale>
+					<DefaultLanguage>no</DefaultLanguage>
+				</DefaultLocale>
+				<!-- Alle koordinater leveres i henhold til WGS84 -->
+				<DefaultLocationSystem>WGS84</DefaultLocationSystem>
+			</FrameDefaults>
+
+			<frames>
+				
+				<ResourceFrame version="1" id="RUT:ResourceFrame:1">
+					<!-- Optional, konseptet tas ikke i bruk i initiell versjon av Rutebanken -->
+					<!--
+					<responsibilitySets>
+						<ResponsibilitySet version="1" id="RUT:ResponsibilitySet:Planning">
+							<roles>
+								<ResponsibilityRoleAssignment version="1" id="RUT:ResponsibilityRoleAssignment:Planning">
+									<StakeholderRoleType>Operation</StakeholderRoleType>
+									<ResponsibleOrganisationRef version="1" ref="RUT:Authority:Ruter"/>
+								</ResponsibilityRoleAssignment>
+							</roles>
+						</ResponsibilitySet>
+						<ResponsibilitySet version="1" id="RUT:ResponsibilitySet:Operation">
+							<roles>
+								<ResponsibilityRoleAssignment version="1" id="RUT:ResponsibilityRoleAssignment:Operation">
+									<StakeholderRoleType>Operation</StakeholderRoleType>
+									<ResponsibleOrganisationRef version="1" ref="RUT:Operator:Unibuss"/>
+								</ResponsibilityRoleAssignment>
+							</roles>
+						</ResponsibilitySet>
+					</responsibilitySets>
+					-->
+					
+					<organisations>
+						<Authority version="1" id="RUT:Authority:Ruter">
+							<PublicCode>RUT</PublicCode>
+							<!-- Organisasjonsnummer -->
+							<CompanyNumber>991609407</CompanyNumber>
+							<Name>Ruter#</Name>
+							<LegalName>RUTER AS</LegalName>
+							<ContactDetails>
+								<Email>post@ruter.no</Email>
+								<Phone>22 08 43 00</Phone>
+								<Url>www.ruter.no</Url>
+							</ContactDetails>
+							<PrivateContactDetails>
+								<Email>post@unibuss.no</Email>
+								<Phone>400 06 700</Phone>
+								<Url>intern.ruter.no</Url>
+							</PrivateContactDetails>
+							<Address>
+								<AddressLine1>Dronningens gate 40, 4.etg.</AddressLine1>
+								<Town>Oslo</Town>
+								<PostCode>0154</PostCode>
+							</Address>
+						</Authority>
+						
+						<!-- Unibuss kjører ruten på vegne av Ruter# -->
+						<Operator version="1" id="RUT:Operator:Unibuss">
+							<CompanyNumber>985615616</CompanyNumber>
+							<Name>Unibuss</Name>
+							<LegalName>UNIBUSS AS</LegalName>
+							<ContactDetails>
+								<Email>post@unibuss.no </Email>
+								<Phone>22 08 43 00</Phone>
+								<Url>www.unibuss.no</Url>
+							</ContactDetails>
+							<PrimaryMode>air</PrimaryMode>
+							<OperatorActivities>passenger</OperatorActivities>
+							<CustomerServiceContactDetails>
+								<Phone>0047 177</Phone>
+								<Url>www.ruter.no</Url>
+							</CustomerServiceContactDetails>
+						</Operator>
+					</organisations>
+				</ResourceFrame>
+				
+
+				<!-- ===SITE FRAME=== -->
+				<SiteFrame version="1" id="RUT:SiteFrame:1">
+					
+					<topographicPlaces>
+						<TopographicPlace version="1" id="RUT:TopographicPlace:1">
+							<ValidBetween>
+								<FromDate>1984-01-01T00:00:00</FromDate>
+							</ValidBetween>
+							<gml:Polygon gml:id="GEN-PolygonType">
+								<gml:exterior>
+									<!-- invalid example polygon -->
+									<gml:LinearRing>
+										<gml:posList>70.16841666827621 17.8052486576626 70.21574446559536 17.901877649791594 70.21690598488841 17.904274043451604 70.34045040485829 18.163047310031583</gml:posList>
+									</gml:LinearRing>
+								</gml:exterior>
+								<gml:interior>
+									<gml:LinearRing>
+										<gml:posList>68.70923645412397 15.785790740295104 68.70923645412397 15.785790740295104 68.70869280442156 15.78766771754421 68.70869280442156 15.79755761753423</gml:posList>
+									</gml:LinearRing>
+								</gml:interior>
+							</gml:Polygon>
+							<IsoCode>NO-01</IsoCode>
+							<Descriptor>
+								<Name lang="no">Oslo</Name>
+							</Descriptor>
+							<TopographicPlaceType>county</TopographicPlaceType>
+							<CountryRef ref="no">Norge</CountryRef>
+						</TopographicPlace>
+					</topographicPlaces>
+					
+					
+					
+					<!-- MERKNAD: 
+						Stoppestedsobjekter er tatt med i eksempelet for å illustrere alle elementer i en PublicationDelivery, 
+						leveranser ihht. norsk profil skal skje ved at stoppestedsobjekter utveksles separat.
+						  (Innsendt i egen fil etter stops-profil, version="1.07:NO-NeTEx-stops:1.0")
+						  
+						Rutedata (networktimetable-profil, version="1.07:NO-NeTEx-networktimetable:1.0") skal alltid referere 
+						til (eksterne) stoppestedsobjekter ved bruk av nasjonal ID (da _uten_ versjonsattributt p.g.a. intern skjema-validering).
+					-->
+					<!--
+						Optional, konseptet tas ikke i bruk i initiell versjon av Rutebanken
+					-->
+					<!--
+					<FrameDefaults>
+						<DefaultResponsibilitySetRef ref="RUT:ResponsibilitySet:Planning"/>
+					</FrameDefaults>
+					-->
+					
+					<stopPlaces>
+						<!-- MERK: Kun definert quays i faktisk bruk for å forenkle eksempelet -->
+						<!-- TODO: Implement correct stop place and quay IDs -->
+						<StopPlace version="1" responsibilitySetRef="RUT:ResponsibilitySet:Planning" id="NSR:StopPlace:helsfyr_t">
+							<Name>Helsfyr T</Name>
+							<TransportMode>bus</TransportMode>
+							<StopPlaceType>busStation</StopPlaceType>
+							<quays>
+								<Quay version="1" id="NSR:Quay:helsfyr_t-QUAYID">
+									<Centroid>
+										<Location srsName="WGS84">
+											<Longitude>10.800792</Longitude>
+											<Latitude>59.912494</Latitude>
+										</Location>
+									</Centroid>
+								</Quay>
+							</quays>
+						</StopPlace>
+						<StopPlace version="1" responsibilitySetRef="RUT:ResponsibilitySet:Planning" id="NSR:StopPlace:brynseng_t">
+							<Name>Brynseng T</Name>
+							<TransportMode>bus</TransportMode>
+							<StopPlaceType>onstreetBus</StopPlaceType>
+							<quays>
+								<Quay version="1" id="NSR:Quay:brynseng_t-QUAYID">
+									<Centroid>
+										<Location srsName="WGS84">
+											<Longitude>10.814013</Longitude>
+											<Latitude>59.909351</Latitude>
+										</Location>
+									</Centroid>
+								</Quay>
+							</quays>
+						</StopPlace>
+						<StopPlace version="1" responsibilitySetRef="RUT:ResponsibilitySet:Planning" id="NSR:StopPlace:hoyenhall_t">
+							<Name>Høyenhall T</Name>
+							<TransportMode>bus</TransportMode>
+							<StopPlaceType>onstreetBus</StopPlaceType>
+							<quays>
+								<Quay version="1" id="NSR:Quay:hoyenhall_t-QUAYID">
+									<Centroid>
+										<Location srsName="WGS84">
+											<Longitude>10.819156</Longitude>
+											<Latitude>59.907023</Latitude>
+										</Location>
+									</Centroid>
+								</Quay>
+							</quays>
+						</StopPlace>
+						<StopPlace version="1" responsibilitySetRef="RUT:ResponsibilitySet:Planning" id="NSR:StopPlace:manglerud_t">
+							<Name>Manglerud T</Name>
+							<TransportMode>bus</TransportMode>
+							<StopPlaceType>onstreetBus</StopPlaceType>
+							<quays>
+								<Quay version="1" id="NSR:Quay:manglerud_t-QUAYID">
+									<Centroid>
+										<Location srsName="WGS84">
+											<Longitude>10.813655</Longitude>
+											<Latitude>59.898316</Latitude>
+										</Location>
+									</Centroid>
+								</Quay>
+							</quays>
+						</StopPlace>
+						<StopPlace version="1" responsibilitySetRef="RUT:ResponsibilitySet:Planning" id="NSR:StopPlace:ryen_t">
+							<Name>Ryen T</Name>
+							<TransportMode>bus</TransportMode>
+							<StopPlaceType>onstreetBus</StopPlaceType>
+							<quays>
+								<Quay version="1" id="NSR:Quay:ryen_t-QUAYID">
+									<Centroid>
+										<Location srsName="WGS84">
+											<Longitude>10.805572</Longitude>
+											<Latitude>59.895407</Latitude>
+										</Location>
+									</Centroid>
+								</Quay>
+							</quays>
+						</StopPlace>
+						<StopPlace version="1" responsibilitySetRef="RUT:ResponsibilitySet:Planning" id="NSR:StopPlace:holtet">
+							<Name>Holtet stasjon</Name>
+							<TransportMode>bus</TransportMode>
+							<StopPlaceType>onstreetBus</StopPlaceType>
+							<quays>
+								<Quay version="1" id="NSR:Quay:holtet-QUAYID">
+									<Centroid>
+										<Location srsName="WGS84">
+											<Longitude>10.782948</Longitude>
+											<Latitude>59.882075</Latitude>
+										</Location>
+									</Centroid>
+								</Quay>
+							</quays>
+						</StopPlace>
+					</stopPlaces>
+				</SiteFrame>
+				
+				
+				<!-- ===SERVICE FRAME=== -->
+				<ServiceFrame version="1" id="RUT:SiteFrame:1">
+					<Network version="1" id="RUT:Network:RuterBuss">
+						<Name>Ruter# buss</Name>
+						<AuthorityRef version="1" ref="RUT:Authority:Ruter"/>
+						<!-- Ikke obligatorisk med groupsOfLines (Network er implisitt en gruppering), implementeres kun hvis relevant -->
+						<groupsOfLines>
+							<GroupOfLines version="1" id="RUT:GroupOfLines:Ruter-Buss-Oslo">
+								<Name>Ruter# buss Oslo</Name>
+							</GroupOfLines>
+							<GroupOfLines version="1" id="RUT:GroupOfLines:Ruter-Buss-Akershus">
+								<Name>Ruter# buss Akershus</Name>
+							</GroupOfLines>
+						</groupsOfLines>
+					</Network>
+					
+					<routePoints>
+						<!-- Helsfyr -->
+						<RoutePoint version="1" id="RUT:RoutePoint:helsfyr">
+							<projections>
+								<PointProjection version="1" id="RUT:pointprojection:departure">
+									<ProjectToPointRef version="1" ref="RUT:ScheduledStopPoint:helfyr_t"/>
+								</PointProjection>
+							</projections>
+						</RoutePoint>
+						<!-- Holtet -->
+						<RoutePoint version="1" id="RUT:RoutePoint:holtet">
+							<projections>
+								<PointProjection version="1" id="RUT:PointProjection:arrival">
+									<ProjectToPointRef version="1" ref="RUT:ScheduledStopPoint:holtet"/>
+								</PointProjection>
+							</projections>
+						</RoutePoint>
+					</routePoints>
+
+					<!-- ===ROUTE=== -->
+					<routes>
+						<Route version="1" id="RUT:Route:109">
+							<Name>Morgenbuss Helsfyr - Holtet</Name>
+							<LineRef version="1" ref="RUT:Line:109"/>
+							<DirectionType>outbound</DirectionType>
+							<pointsInSequence>
+								<PointOnRoute version="1" id="RUT:PointOnRoute:109-start" order="1">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:helsfyr"/>
+								</PointOnRoute>
+								<PointOnRoute version="1" id="RUT:PointOnRoute:109-end" order="2">
+									<RoutePointRef version="1" ref="RUT:RoutePoint:holtet"/>
+								</PointOnRoute>
+							</pointsInSequence>
+						</Route>
+					</routes>
+
+					<!-- ===LINEs=== -->
+					<lines>
+						<Line version="1" id="RUT:Line:109">
+							<Name>Morgenbuss Helsfyr - Holtet</Name>
+							<TransportMode>bus</TransportMode>
+							<TransportSubmode>
+								<BusSubmode>localBus</BusSubmode>
+							</TransportSubmode>
+							<PublicCode>109</PublicCode>
+							<OperatorRef version="1" ref="RUT:Operator:Unibuss"/>
+							<!-- Optional: -->
+							<routes>
+								<RouteRef version="1" ref="RUT:Route:109"/>
+							</routes>
+							<RepresentedByGroupRef version="1" ref="RUT:Network:RuterBuss"/> <!-- alternativt kan dette settes mer presist 'RepresentedByGroupRef ref="RUT:GroupOfLines:Ruter-Buss-Oslo' dersom implementert -->
+							<Presentation>
+								<Colour>FF0000</Colour>
+							</Presentation>
+						</Line>
+					</lines>
+					
+					<!-- ===DESTINATION DISPLAYs=== -->
+					<destinationDisplays>
+						<DestinationDisplay version="1" id="RUT:DestinationDisplay:holtet">
+							<SideText>Holtet</SideText>
+							<FrontText>Holtet</FrontText>
+						</DestinationDisplay>
+					</destinationDisplays>
+
+					<!--- =========STOP POINTs============ -->
+					<scheduledStopPoints>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:helfyr_t">
+							<Name>Helsfyr T</Name>
+						</ScheduledStopPoint>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:brynseng_t">
+							<Name>Brynseng T</Name>
+						</ScheduledStopPoint>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:hoyenhall_t">
+							<Name>H&#216;yenhall</Name>
+						</ScheduledStopPoint>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:manglerud_t">
+							<Name>Manglerud T</Name>
+						</ScheduledStopPoint>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:ryen_t">
+							<Name>Ryen T</Name>
+						</ScheduledStopPoint>
+						<ScheduledStopPoint version="1" id="RUT:ScheduledStopPoint:holtet">
+							<Name>Holtet</Name>
+						</ScheduledStopPoint>
+					</scheduledStopPoints>
+					
+					<!--- =========SERVICE LINKs============ -->
+					<serviceLinks>
+						<ServiceLink version="1" id="RUT:ServiceLink:helsfyr_to_brynseng">
+							<Distance>150</Distance>
+							<projections>
+								<LinkSequenceProjection version="1" id="RUT:LinkSequenceProjection:109-helsfyr_to_brynseng">
+									<gml:LineString srsName="WGS84" gml:id="helsfyr_to_brynseng">
+										<gml:pos>59.911925 10.807198</gml:pos>
+										<gml:pos>59.910395 10.813012</gml:pos>
+									</gml:LineString>
+								</LinkSequenceProjection>
+							</projections>
+							<FromPointRef version="1" ref="RUT:ScheduledStopPoint:helfyr_t"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:brynseng_t"/>
+						</ServiceLink>
+						<ServiceLink version="1" id="RUT:ServiceLink:brynseng_to_hoyenhall">
+							<Distance>275</Distance>
+							<projections>
+								<LinkSequenceProjection version="1" id="RUT:LinkSequenceProjection:109-brynseng_to_hoyenhall">
+									<gml:LineString srsName="WGS84" gml:id="brynseng_to_hoyenhall">
+										<gml:pos>59.908251 10.816363</gml:pos>
+										<gml:pos>59.907908 10.816819</gml:pos>
+									</gml:LineString>
+								</LinkSequenceProjection>
+							</projections>
+							<FromPointRef version="1" ref="RUT:ScheduledStopPoint:brynseng_t"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:hoyenhall_t"/>
+						</ServiceLink>
+						<ServiceLink version="1" id="RUT:ServiceLink:hoyenhall_to_manglerud">
+							<Distance>100</Distance>
+							<projections>
+								<LinkSequenceProjection version="1" id="RUT:LinkSequenceProjection:109-hoyenhall_to_manglerud">
+									<gml:LineString srsName="WGS84" gml:id="hoyenhall_to_manglerud">
+										<gml:pos>59.904645 10.820626</gml:pos>
+										<gml:pos>59.899678 10.815965</gml:pos>
+									</gml:LineString>
+								</LinkSequenceProjection>
+							</projections>
+							<FromPointRef version="1" ref="RUT:ScheduledStopPoint:hoyenhall_t"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:manglerud_t"/>
+						</ServiceLink>
+						<ServiceLink version="1" id="RUT:ServiceLink:manglerud_to_ryen">
+							<Distance>150</Distance>
+							<projections>
+								<LinkSequenceProjection version="1" id="RUT:LinkSequenceProjection:109-manglerud_to_ryen">
+									<gml:LineString srsName="WGS84" gml:id="manglerud_to_ryen">
+										<gml:pos>59.896709 10.810350</gml:pos>
+										<gml:pos>59.895940 10.807332</gml:pos>
+									</gml:LineString>
+								</LinkSequenceProjection>
+							</projections>
+							<FromPointRef version="1" ref="RUT:ScheduledStopPoint:manglerud_t"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:ryen_t"/>
+						</ServiceLink>
+						<ServiceLink version="1" id="RUT:ServiceLink:ryen_to_holtet">
+							<Distance>300</Distance>
+							<projections>
+								<LinkSequenceProjection version="1" id="RUT:LinkSequenceProjection:109-ryen_to_holtet">
+									<gml:LineString srsName="WGS84" gml:id="ryen_to_holtet">
+										<gml:pos>59.894780 10.804309</gml:pos>
+										<gml:pos>59.892531 10.804000</gml:pos>
+										<gml:pos>59.888996 10.805961</gml:pos>
+										<gml:pos>59.887608 10.806368</gml:pos>
+										<gml:pos>59.886410 10.800586</gml:pos>
+										<gml:pos>59.885832 10.792943</gml:pos>
+										<gml:pos>59.885392 10.788938</gml:pos>
+										<gml:pos>59.885630 10.784435</gml:pos>
+										<gml:pos>59.883864 10.783759</gml:pos>
+										<gml:pos>59.881872 10.783770</gml:pos>
+									</gml:LineString>
+								</LinkSequenceProjection>
+							</projections>
+							<FromPointRef version="1" ref="RUT:ScheduledStopPoint:ryen_t"/>
+							<ToPointRef version="1" ref="RUT:ScheduledStopPoint:holtet"/>
+						</ServiceLink>
+					</serviceLinks>
+
+					<!-- ===STOP ASSIGNMENTs=== -->
+					<!-- Must be defined in order to assign Journey/Service Pattern stop point to actual StopPlace -->
+					<stopAssignments>
+						<PassengerStopAssignment version="1" id="RUT:PassengerStopAssignment:helsfyr_t" order="1">
+							<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:helfyr_t"/>
+							<QuayRef ref="NSR:Quay:helsfyr_t-QUAYID"/>
+						</PassengerStopAssignment>
+						<PassengerStopAssignment version="1" id="RUT:PassengerStopAssignment:brynseng_t" order="2">
+							<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:brynseng_t"/>
+							<QuayRef ref="NSR:Quay:brynseng_t-QUAYID"/>
+						</PassengerStopAssignment>
+						<PassengerStopAssignment version="1" id="RUT:PassengerStopAssignment:hoyenhall_t" order="3">
+							<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:hoyenhall_t"/>
+							<QuayRef ref="NSR:Quay:hoyenhall_t-QUAYID"/>
+						</PassengerStopAssignment>
+						<PassengerStopAssignment version="1" id="RUT:PassengerStopAssignment:manglerud_t" order="4">
+							<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:manglerud_t"/>
+							<QuayRef ref="NSR:Quay:manglerud_t-QUAYID"/>
+						</PassengerStopAssignment>
+						<PassengerStopAssignment version="1" id="RUT:PassengerStopAssignment:ryen_t" order="5">
+							<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:hoyenhall_t"/>
+							<QuayRef ref="NSR:Quay:ryen_t-QUAYID"/>
+						</PassengerStopAssignment>
+						<PassengerStopAssignment version="1" id="RUT:PassengerStopAssignment:holtet" order="6">
+							<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:holtet"/>
+							<QuayRef ref="NSR:Quay:holtet-QUAYID"/>
+						</PassengerStopAssignment>
+					</stopAssignments>
+					
+					
+					<!-- ===JOURNEY PATTERNs=== -->
+					<journeyPatterns>
+						<JourneyPattern version="1" id="RUT:JourneyPattern:109">
+							<RouteRef version="1" ref="RUT:Route:109"/>
+							<pointsInSequence>
+							    <!-- TODO: Legg inn korrekte holdeplasskoder -->
+								<StopPointInJourneyPattern version="1" id="RUT:StopPointInJourneyPattern:helfyr_t" order="1">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:helfyr_t"/>
+									<ForAlighting>false</ForAlighting>
+									<DestinationDisplayRef version="1" ref="RUT:DestinationDisplay:holtet"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern version="1" id="RUT:StopPointInJourneyPattern:brynseng_t" order="2">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:brynseng_t"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern version="1" id="RUT:StopPointInJourneyPattern:hoyenhall_t" order="3">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:hoyenhall_t"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern version="1" id="RUT:StopPointInJourneyPattern:manglerud_t" order="4">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:manglerud_t"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern version="1" id="RUT:StopPointInJourneyPattern:ryen_t" order="5">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:ryen_t"/>
+								</StopPointInJourneyPattern>
+								<StopPointInJourneyPattern version="1" id="RUT:StopPointInJourneyPattern:holtet" order="6">
+									<ScheduledStopPointRef version="1" ref="RUT:ScheduledStopPoint:holtet"/>
+									<ForBoarding>false</ForBoarding>
+								</StopPointInJourneyPattern>
+							</pointsInSequence>
+							<linksInSequence>
+								<ServiceLinkInJourneyPattern version="1" id="RUT:ServiceLinkInJourneyPattern:helsfyr_to_brynseng" order="1">
+									<ServiceLinkRef version="1" ref="RUT:ServiceLink:helsfyr_to_brynseng"/>
+								</ServiceLinkInJourneyPattern>
+								<ServiceLinkInJourneyPattern version="1" id="RUT:ServiceLinkInJourneyPattern:brynseng_to_hoyenhall" order="2">
+									<ServiceLinkRef version="1" ref="RUT:ServiceLink:brynseng_to_hoyenhall"/>
+								</ServiceLinkInJourneyPattern>
+								<ServiceLinkInJourneyPattern version="1" id="RUT:ServiceLinkInJourneyPattern:hoyenhall_to_manglerud" order="3">
+									<ServiceLinkRef version="1" ref="RUT:ServiceLink:hoyenhall_to_manglerud"/>
+								</ServiceLinkInJourneyPattern>
+								<ServiceLinkInJourneyPattern version="1" id="RUT:ServiceLinkInJourneyPattern:manglerud_to_ryen" order="4">
+									<ServiceLinkRef version="1" ref="RUT:ServiceLink:manglerud_to_ryen"/>
+								</ServiceLinkInJourneyPattern>
+								<ServiceLinkInJourneyPattern version="1" id="RUT:ServiceLinkInJourneyPattern:ryen_to_holtet" order="5">
+									<ServiceLinkRef version="1" ref="RUT:ServiceLink:ryen_to_holtet"/>
+								</ServiceLinkInJourneyPattern>
+							</linksInSequence>
+						</JourneyPattern>
+					</journeyPatterns>
+				</ServiceFrame>
+				
+				
+				<!-- ===TIMETABLE FRAME=== -->
+				<!-- Definert som et sett av avganger med referanse til dager (dagtyper) avgangen kjøres -->
+				<TimetableFrame version="1" id="RUT:TimetableFrame:1">
+					<vehicleJourneys>
+						<ServiceJourney version="1" id="RUT:ServiceJourney:109-CODE-0430">
+							<DepartureTime>04:30:00</DepartureTime> <!-- Optional -->
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:weekday"/>
+							</dayTypes>
+							<JourneyPatternRef version="1" ref="RUT:JourneyPattern:109"/>
+							<OperatorRef version="1" ref="RUT:Operator:Unibuss"/>
+							<!-- Optional: -->
+							<LineRef version="1" ref="RUT:Line:109"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<!-- Helsfyr T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:helfyr_t"/>
+									<DepartureTime>04:30:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<!-- Brynseng T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:brynseng_t"/>
+									<DepartureTime>04:32:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<!-- Høyenhall T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:hoyenhall_t"/>
+									<DepartureTime>04:33:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<!-- Manglerud T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:manglerud_t"/>
+									<DepartureTime>04:34:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<!-- Ryen T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:ryen_t"/>
+									<DepartureTime>04:35:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<!-- Holtet -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:holtet"/>
+									<ArrivalTime>04:40:00</ArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</ServiceJourney>
+
+						<ServiceJourney version="1" id="RUT:ServiceJourney:109-CODE-0500">
+							<TransportMode>bus</TransportMode>
+							<TransportSubmode>
+								<BusSubmode>localBus</BusSubmode>
+							</TransportSubmode>
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:weekday"/>
+							</dayTypes>
+							<JourneyPatternRef version="1" ref="RUT:JourneyPattern:109"/>
+							<!-- Optional: -->
+							<LineRef version="1" ref="RUT:Line:109"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0500-1">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:helfyr_t"/>
+									<DepartureTime>05:00:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0500-2">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:brynseng_t"/>
+									<DepartureTime>05:02:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0500-3">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:hoyenhall_t"/>
+									<DepartureTime>05:03:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0500-4">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:manglerud_t"/>
+									<DepartureTime>05:04:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0500-5">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:ryen_t"/>
+									<DepartureTime>05:05:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0500-6">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:holtet"/>
+									<ArrivalTime>05:10:00</ArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</ServiceJourney>
+
+						<ServiceJourney version="1" id="RUT:ServiceJourney:109-CODE-0530">
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:weekday"/>
+								<DayTypeRef version="1" ref="RUT:DayType:saturday"/>
+							</dayTypes>
+							<JourneyPatternRef version="1" ref="RUT:JourneyPattern:109"/>
+							<!-- Optional: -->
+							<LineRef version="1" ref="RUT:Line:109"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0530-1">
+									<!-- Helsfyr T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:helfyr_t"/>
+									<DepartureTime>05:30:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0530-2">
+									<!-- Brynseng T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:brynseng_t"/>
+									<DepartureTime>05:32:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0530-3">
+									<!-- Høyenhall T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:hoyenhall_t"/>
+									<DepartureTime>05:33:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0530-4">
+									<!-- Manglerud T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:manglerud_t"/>
+									<DepartureTime>05:34:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0530-5">
+									<!-- Ryen T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:ryen_t"/>
+									<DepartureTime>05:35:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0530-6">
+									<!-- Holtet -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:holtet"/>
+									<ArrivalTime>05:40:00</ArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</ServiceJourney>
+
+						<ServiceJourney version="1" id="RUT:ServiceJourney:109-CODE-0600">
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:saturday"/>
+								<DayTypeRef version="1" ref="RUT:DayType:sunday"/>
+							</dayTypes>
+							<JourneyPatternRef version="1" ref="RUT:JourneyPattern:109"/>
+							<!-- Optional: -->
+							<LineRef version="1" ref="RUT:Line:109"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0600-1">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:helfyr_t"/>
+									<DepartureTime>06:00:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0600-2">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:brynseng_t"/>
+									<DepartureTime>06:02:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0600-3">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:hoyenhall_t"/>
+									<DepartureTime>06:03:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0600-4">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:manglerud_t"/>
+									<DepartureTime>06:04:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0600-5">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:ryen_t"/>
+									<DepartureTime>06:06:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0600-6">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:holtet"/>
+									<ArrivalTime>06:10:00</ArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</ServiceJourney>
+
+						<ServiceJourney version="1" id="RUT:ServiceJourney:109-CODE-0630">
+							<DepartureTime>06:30:00</DepartureTime>
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:saturday"/>
+								<DayTypeRef version="1" ref="RUT:DayType:sunday"/>
+							</dayTypes>
+							<JourneyPatternRef version="1" ref="RUT:JourneyPattern:109"/>
+							<!-- Optional: -->
+							<LineRef version="1" ref="RUT:Line:109"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0630-1">
+									<!-- Helsfyr T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:helfyr_t"/>
+									<DepartureTime>06:30:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0630-2">
+									<!-- Brynseng T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:brynseng_t"/>
+									<DepartureTime>06:32:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0630-3">
+									<!-- Høyenhall T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:hoyenhall_t"/>
+									<DepartureTime>06:33:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0630-4">
+									<!-- Manglerud T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:manglerud_t"/>
+									<DepartureTime>06:34:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0630-5">
+									<!-- Ryen T -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:ryen_t"/>
+									<DepartureTime>06:35:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0630-6">
+									<!-- Holtet -->
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:holtet"/>
+									<ArrivalTime>06:40:00</ArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</ServiceJourney>
+
+						<ServiceJourney version="1" id="RUT:ServiceJourney:109-CODE-0700">
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:sunday"/>
+							</dayTypes>
+							<JourneyPatternRef version="1" ref="RUT:JourneyPattern:109"/>
+							<!-- Optional: -->
+							<LineRef version="1" ref="RUT:Line:109"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0700-1">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:helfyr_t"/>
+									<DepartureTime>07:00:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0700-2">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:brynseng_t"/>
+									<DepartureTime>07:02:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0700-3">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:hoyenhall_t"/>
+									<DepartureTime>07:03:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0700-4">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:manglerud_t"/>
+									<DepartureTime>07:04:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0700-5">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:ryen_t"/>
+									<DepartureTime>07:07:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:0700-6">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:holtet"/>
+									<ArrivalTime>07:10:00</ArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</ServiceJourney>
+						
+						
+						<!-- ########################### -->
+						<!-- ALTERNATE DESCRIPTION pt. 1 -->
+						<!-- ########################### -->
+						<TemplateServiceJourney version="1" id="RUT:TemplateServiceJourney:109-weekdays">
+							<dayTypes>
+								<DayTypeRef version="1" ref="RUT:DayType:weekday"/>
+							</dayTypes>
+							<JourneyPatternRef version="1" ref="RUT:JourneyPattern:109"/>
+							<RhythmicalJourneyGroupRef version="1" ref="RUT:RhythmicalJourneyGroup:weekdays"/>
+							<!-- Optional: -->
+							<LineRef version="1" ref="RUT:Line:109"/>
+							<passingTimes>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:helfyr_t"/>
+									<DepartureTime>00:30:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:brynseng_t"/>
+									<DepartureTime>00:32:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:hoyenhall_t"/>
+									<DepartureTime>00:33:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:manglerud_t"/>
+									<DepartureTime>00:34:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:ryen_t"/>
+									<DepartureTime>00:37:00</DepartureTime>
+								</TimetabledPassingTime>
+								<TimetabledPassingTime version="1" id="RUT:TimetabledPassingTime:10001">
+									<StopPointInJourneyPatternRef version="1" ref="RUT:StopPointInJourneyPattern:holtet"/>
+									<ArrivalTime>00:40:00</ArrivalTime>
+								</TimetabledPassingTime>
+							</passingTimes>
+						</TemplateServiceJourney>
+						<!-- ########################### -->
+						<!-- Etc. (similarly for other departures) -->
+						<!--  * 05:00 (weekdays) -->
+						<!--  * 05:30 (incl. Saturday) -->
+						<!--  * 06:00 (Sat./Sun.) -->
+						<!--  * 06:30 (Sat./Sun.) -->
+						<!--  * 07:00 (Sundays) -->
+						<!-- ########################### -->
+					</vehicleJourneys>
+
+					<!-- ########################### -->
+					<!-- ALTERNATE DESCRIPTION pt. 2 -->
+					<!-- ########################### -->
+					<frequencyGroups>
+						<RhythmicalJourneyGroup version="1" id="RUT:RhythmicalJourneyGroup:weekdays">
+							<FirstDepartureTime>04:30:00</FirstDepartureTime>
+							<LastDepartureTime>05:30:00</LastDepartureTime>
+							<timebands>
+								<TimebandRef version="1" ref="RUT:Timeband:halfhour"/>
+								<TimebandRef version="1" ref="RUT:Timeband:fullhour"/>
+							</timebands>
+						</RhythmicalJourneyGroup>
+						<RhythmicalJourneyGroup version="1" id="RUT:RhythmicalJourneyGroup:saturday">
+							<FirstDepartureTime>05:30:00</FirstDepartureTime>
+							<LastDepartureTime>06:30:00</LastDepartureTime>
+							<timebands>
+								<TimebandRef version="1" ref="RUT:Timeband:halfhour"/>
+								<TimebandRef version="1" ref="RUT:Timeband:fullhour"/>
+							</timebands>
+						</RhythmicalJourneyGroup>
+						<RhythmicalJourneyGroup version="1" id="RUT:RhythmicalJourneyGroup:sunday">
+							<FirstDepartureTime>06:00:00</FirstDepartureTime>
+							<LastDepartureTime>07:00:00</LastDepartureTime>
+							<timebands>
+								<TimebandRef version="1" ref="RUT:Timeband:halfhour"/>
+								<TimebandRef version="1" ref="RUT:Timeband:fullhour"/>
+							</timebands>
+						</RhythmicalJourneyGroup>
+					</frequencyGroups>
+				</TimetableFrame>
+				
+				
+				<!-- ===SERVICE CALENDAR FRAME=== -->
+				<ServiceCalendarFrame version="1" id="RUT:ServiceCalendarFrame:01">
+					<ServiceCalendar version="1" id="RUT:ServiceCalendar:01">
+						
+						<!-- ############################# -->
+						<!-- (for alternative description) -->
+						<!-- ############################# -->
+						<timebands>
+							<Timeband version="1" id="RUT:Timeband:fullhour">
+								<StartTime>00:00:00</StartTime>
+								<EndTime>00:00:00</EndTime>
+							</Timeband>
+							<Timeband version="1" id="RUT:Timeband:halfhour">
+								<StartTime>00:30:00</StartTime>
+								<EndTime>00:30:00</EndTime>
+							</Timeband>
+						</timebands>
+					</ServiceCalendar>
+
+					<dayTypes>
+						<DayType version="1" id="RUT:DayType:month">
+							<Name>sommer</Name>
+							<properties>
+								<PropertyOfDay>
+									<MonthOfYear>--04</MonthOfYear>
+								</PropertyOfDay>
+								<PropertyOfDay>
+									<MonthOfYear>--04</MonthOfYear>
+								</PropertyOfDay>
+								<PropertyOfDay>
+									<MonthOfYear>--05</MonthOfYear>
+								</PropertyOfDay>
+								<PropertyOfDay>
+									<MonthOfYear>--06</MonthOfYear>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+						
+						<DayType version="1" id="RUT:DayType:weekday">
+							<Name>Ukedager (mandag til fredag)</Name>
+							<properties>
+								<PropertyOfDay>
+									<DaysOfWeek>Monday Tuesday Wednesday Thursday Friday</DaysOfWeek>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+						<DayType version="1" id="RUT:DayType:saturday">
+							<Name>L&#216;rdag</Name>
+							<properties>
+								<PropertyOfDay>
+									<DaysOfWeek>Saturday</DaysOfWeek>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+						<DayType version="1" id="RUT:DayType:sunday">
+							<Name>S&#216;ndag</Name>
+							<properties>
+								<PropertyOfDay>
+									<DaysOfWeek>Sunday</DaysOfWeek>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+					</dayTypes>
+					
+					<operatingPeriods>
+						<OperatingPeriod id="RUT:OperatingPeriod:2017" version="1">
+							<FromDate>2017-01-01T04:00:00</FromDate>
+							<ToDate>2017-12-31T23:30:00</ToDate>
+						</OperatingPeriod>
+					</operatingPeriods>
+					
+					<dayTypeAssignments>
+						<DayTypeAssignment id="RUT:DayTypeAssignment:1" version="1" order="1">
+							<OperatingPeriodRef ref="RUT:OperatingPeriod:2017"/>
+							<DayTypeRef ref="RUT:DayType:weekday"/>
+						</DayTypeAssignment>
+						<DayTypeAssignment id="RUT:DayTypeAssignment:2" version="1" order="2">
+							<OperatingPeriodRef ref="RUT:OperatingPeriod:2017"/>
+							<DayTypeRef ref="RUT:DayType:saturday"/>
+						</DayTypeAssignment>
+						<DayTypeAssignment id="RUT:DayTypeAssignment:3" version="1" order="3">
+							<OperatingPeriodRef ref="RUT:OperatingPeriod:2017"/>
+							<DayTypeRef ref="RUT:DayType:sunday"/>
+						</DayTypeAssignment>
+						<!-- override for day without service -->
+						<DayTypeAssignment id="RUT:DayTypeAssignment:X" version="1" order="3">
+							<Date>2017-05-17</Date>
+							<DayTypeRef ref="RUT:DayType:weekday"/>
+							<isAvailable>false</isAvailable>
+						</DayTypeAssignment>
+					</dayTypeAssignments>
+				</ServiceCalendarFrame>
+				
+			</frames>
+			
+		</CompositeFrame>
+	</dataObjects>
+</PublicationDelivery>

@@ -2,19 +2,21 @@ package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.http.HttpClient;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
+import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.JobResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -63,11 +65,12 @@ public class ValidationService {
     }
 
     public JobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
-        PhaseResult<ImmutableFileReferences> s3path = downloadFile(jobDescription.message());
+        Entry entry = jobDescription.message();
+        PhaseResult<ImmutableFileReferences> s3path = downloadFile(entry);
 
-        PhaseResult<Set<Ruleset>> validationRulesets = selectRulesets(jobDescription.message());
+        PhaseResult<Set<Ruleset>> validationRulesets = selectRulesets(entry);
 
-        PhaseResult<List<ValidationReport>> validationReports = executeRules(jobDescription.message(), s3path.result(), validationRulesets.result());
+        PhaseResult<List<ValidationReport>> validationReports = executeRules(entry, s3path.result(), validationRulesets.result());
 
         return ImmutableJobResult.builder()
                 .addResults(s3path, validationRulesets, validationReports)
@@ -121,11 +124,16 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    PhaseResult<Set<Ruleset>> selectRulesets(Entry queueEntry) {
+    PhaseResult<Set<Ruleset>> selectRulesets(Entry entry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
-                phaseService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
+                phaseService.reportPhase(uninitializedPhase(entry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
-        Set<Ruleset> rulesets = rulesetRepository.findRulesets(queueEntry.businessId(), Type.VALIDATION_SYNTAX);
+        Set<Ruleset> rulesets;
+        if (entry.validations().isEmpty()) {
+            rulesets = rulesetRepository.findRulesets(entry.businessId(), Type.VALIDATION_SYNTAX);
+        } else {
+            rulesets = rulesetRepository.findRulesets(entry.businessId(), Type.VALIDATION_SYNTAX, Streams.map(entry.validations(), ValidationInput::name).toSet());
+        }
 
         phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
@@ -133,16 +141,18 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    ImmutablePhaseResult<List<ValidationReport>> executeRules(Entry queueEntry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
+    ImmutablePhaseResult<List<ValidationReport>> executeRules(Entry entry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
         PhaseData<FileReferences> phaseData = ImmutablePhaseData.<FileReferences>builder()
-                .phase(phaseService.reportPhase(uninitializedPhase(queueEntry.id(), EXECUTION_PHASE), ProcessingState.START))
+                .phase(phaseService.reportPhase(uninitializedPhase(entry.id(), EXECUTION_PHASE), ProcessingState.START))
                 .payload(fileReferences)
                 .build();
+
+        Map<String, ValidationInput> configs = Streams.collect(entry.validations(), ValidationInput::name, Function.identity());
 
         List<ValidationReport> reports = validationRulesets.parallelStream()
                 .map(this::findMatchingRule)
                 .filter(Optional::isPresent)
-                .map(r -> r.get().execute(queueEntry, phaseData))
+                .map(r -> r.get().execute(entry, r.map(x ->configs.get(x.getIdentifyingName())), phaseData))
                 .map(CompletableFuture::join)
                 .toList();
         // everything's done at this point because of the ::join call, complete phase and return

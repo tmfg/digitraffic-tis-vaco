@@ -12,26 +12,27 @@ import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 public class TestObjects {
 
-    public static ImmutableEntry.Builder anEntry() {
+    public static ImmutableEntry.Builder anEntry(String format) {
         return ImmutableEntry.builder()
-            .format("gtfs")
+            .format(format)
             .url("https://testfile")
             .publicId("testPublicId")
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
     }
 
-    public static ImmutableEntryRequest.Builder aValidationEntryRequest() {
+    public static ImmutableEntryRequest.Builder aValidationEntryRequest(List<ImmutableValidation> immutableValidations) {
         return ImmutableEntryRequest.builder()
             .format("gtfs")
             .url("https://example.fi")
             .etag("etag")
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
-            .validation(ImmutableValidation.builder().build());
+            .validations(immutableValidations);
     }
 
     public static ImmutableOrganization.Builder anOrganization() {
@@ -63,5 +64,9 @@ public class TestObjects {
             .description("running hello rule from tests")
             .category(Category.GENERIC)
             .type(Type.VALIDATION_SYNTAX);
+    }
+
+    public static ImmutableValidation aValidation() {
+        return ImmutableValidation.of("mock validation");
     }
 }

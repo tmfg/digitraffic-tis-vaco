@@ -253,6 +253,13 @@
             <version>v4.0.0</version>
         </dependency>
 
+        <!-- Entur NeTEx Validator -->
+        <dependency>
+            <groupId>org.entur</groupId>
+            <artifactId>netex-validator-java</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
         <!-- Near-optimal caching library -->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>

@@ -6,10 +6,14 @@ Content-Type: application/json
   "format": "gtfs",
   "businessId": "2942108-7",
   "etag": "etagg",
-  "validation": {},
+  "validations": [{
+      "name": "gtfs.canonical.v4_0_0",
+      "config": {"lol":  "apua"}
+  }],
   "metadata": {
       "brewingEquipment": "teapot",
-      "capacity (ml)": 1500
+      "capacity (ml)": 1500,
+      "tea": "Yorkshire Tea"
   }
 }
 

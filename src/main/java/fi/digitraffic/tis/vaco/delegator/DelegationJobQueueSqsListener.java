@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.delegator;
 
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDelegationJobMessage> {
@@ -90,16 +90,16 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     private Optional<Subtask> getNextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
         List<ImmutablePhase> allPhases = phaseRepository.findPhases(jobDescription.entry());
 
-        Set<Subtask> completedSubtasks = allPhases.stream()
-            .filter(phase -> phase.completed() != null)
+        Set<Subtask> completedSubtasks =
+            Streams.filter(allPhases, (phase -> phase.completed() != null))
             .map(DelegationJobQueueSqsListener::asSubtask)
             .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+            .toSet();
 
-        List<Subtask> potentialSubtasksToRun = allPhases.stream()
-            .map(DelegationJobQueueSqsListener::asSubtask)
+        List<Subtask> potentialSubtasksToRun =
+            Streams.map(allPhases, DelegationJobQueueSqsListener::asSubtask)
             .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+            .toList();
 
         potentialSubtasksToRun.add(Subtask.VALIDATION);  // default subtask if nothing else is detected
         potentialSubtasksToRun.removeAll(completedSubtasks);

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- === Basic Service Calendar datatype example === -->
+<PublicationDelivery
+  version="1.0"
+  xmlns="http://www.netex.org.uk/netex"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:gml="http://www.opengis.net/gml/3.2"
+  xmlns:siri="http://www.siri.org.uk/siri">
+	
+	<PublicationTimestamp>2016-06-28T12:00:00.0Z</PublicationTimestamp>
+	<ParticipantRef>NHR</ParticipantRef>
+	<dataObjects>
+		<CompositeFrame version="1" id="NSR:CompositeFrame:1">
+			<frames>
+
+				<ServiceCalendarFrame version="1" id="NSR:ServiceCalendarFrame:1">
+					<ServiceCalendar version="1" id="NSR:ServiceCalendar">
+						<Name>Ukedager</Name>
+						<FromDate>2016-04-01</FromDate>
+						<ToDate>2016-08-31</ToDate>
+					</ServiceCalendar>
+					<dayTypes>
+						<DayType version="1" id="NSR:DayType:weekdays">
+							<Name>Ukedager</Name>
+							<properties>
+								<PropertyOfDay>
+									<DaysOfWeek>Monday Tuesday Wednesday Thursday Friday</DaysOfWeek>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+						<DayType version="1" id="NSR:DayType:Saturday">
+							<Name>Lordag</Name>
+							<properties>
+								<PropertyOfDay>
+									<DaysOfWeek>Saturday</DaysOfWeek>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+						<DayType version="1" id="NSR:DayType:Sunday">
+							<Name>Sondag</Name>
+							<properties>
+								<PropertyOfDay>
+									<DaysOfWeek>Sunday</DaysOfWeek>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+						<!-- Irregular examples: -->
+						<DayType version="1" id="NSR:DayType:SpringMarketDay">
+							<Name>Market day</Name>
+							<properties>
+								<PropertyOfDay>
+									<DaysOfWeek>Sunday</DaysOfWeek>
+									<WeeksOfMonth>3 4</WeeksOfMonth>
+									<MonthOfYear>--04</MonthOfYear>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+						<DayType version="1" id="NSR:DayType:ConstitutionDay">
+							<Name>National constitution day 17. may</Name>
+							<properties>
+								<PropertyOfDay>
+									<DayOfYear>--05-17</DayOfYear>
+								</PropertyOfDay>
+							</properties>
+						</DayType>
+					</dayTypes>
+					<timebands>
+						<Timeband version="1" id="NSR:Timeband:TM15">
+							<!--Name>15 minutes past the hour</Name-->
+							<StartTime>00:15:00</StartTime>
+							<EndTime>00:15:00</EndTime>
+						</Timeband>
+					</timebands>
+					<operatingDays>
+						<OperatingDay version="1" id="NSR:OperatingDay:default:1">
+							<CalendarDate>2016-05-01</CalendarDate>
+							<EarliestTime>10:10:00</EarliestTime>
+						</OperatingDay>
+						<OperatingDay version="1" id="NSR:od:default:2">
+							<CalendarDate>2016-07-07</CalendarDate>
+							<EarliestTime>11:11:00</EarliestTime>
+							<DayLength>PT5H10M</DayLength>
+						</OperatingDay>
+					</operatingDays>
+					<operatingPeriods>
+						<OperatingPeriod version="1" id="NSR:OperatingPeriod:default">
+							<FromOperatingDayRef ref="NSR:OperatingDay:default:1"/>
+							<ToOperatingDayRef ref="NSR:od:default:2"/>
+						</OperatingPeriod>
+						<OperatingPeriod version="1" id="NSR:OperatingPeriod:additional">
+							<FromDate>2016-07-07T00:15:00</FromDate>
+							<ToDate>2016-07-07T00:15:00</ToDate>
+						</OperatingPeriod>
+					</operatingPeriods>
+					<dayTypeAssignments>
+						<!-- enkeltdato -->
+						<DayTypeAssignment version="1" order="1" id="NSR:DayTypeAssignment:date">
+							<Date>2016-05-17</Date>
+							<!-- nasjonaldag, annet ruteplan -->
+							<DayTypeRef version="1" ref="NSR:DayType:Sunday"/>
+						</DayTypeAssignment>
+						<!-- enkeltdag -->
+						<DayTypeAssignment version="1" order="1" id="NSR:DayTypeAssignment:day">
+							<OperatingDayRef ref="NSR:OperatingDay:default:1"/>
+							<DayTypeRef version="1" ref="NSR:DayType:Sunday"/>
+						</DayTypeAssignment>
+						<!-- periode -->
+						<DayTypeAssignment version="1" order="1" id="NSR:DayTypeAssignment:period">
+							<OperatingPeriodRef ref="NSR:OperatingPeriod:default"/>
+							<DayTypeRef version="1" ref="NSR:DayType:weekdays"/>
+						</DayTypeAssignment>
+					</dayTypeAssignments>
+				</ServiceCalendarFrame>
+
+				<!-- Dummy Service and Timetable frames (for reference) -->
+				<ServiceFrame version="1" id="NSR:ServiceFrame:1">
+					<routes>
+						<Route version="1" id="NSR:Route:default"/>
+					</routes>
+					<lines>
+						<Line version="1" id="NSR:Line:default">
+							<Name>default</Name>
+							<routes>
+								<RouteRef ref="NSR:Route:default"/>
+							</routes>
+						</Line>
+					</lines>
+					<journeyPatterns>
+						<JourneyPattern version="1" id="NSR:JourneyPattern:default"/>
+					</journeyPatterns>
+				</ServiceFrame>
+
+				<TimetableFrame version="1" id="NSR:TimetableFrame:1">
+					<vehicleJourneys>
+						<ServiceJourney version="1" id="NSR:ServiceJourney:default">
+							<DepartureTime>02:22:00</DepartureTime>
+							<DepartureDayOffset>1</DepartureDayOffset>
+							<dayTypes>
+								<DayTypeRef ref="NSR:DayType:weekdays"/>
+								<DayTypeRef ref="NSR:DayType:Saturday"/>
+								<DayTypeRef ref="NSR:DayType:Sunday"/>
+							</dayTypes>
+							<JourneyPatternRef ref="NSR:JourneyPattern:default"/>
+							<passingTimes>
+								<TimetabledPassingTime id="test" version="test">
+									<DepartureTime>00:22:33</DepartureTime>
+									<DepartureDayOffset></DepartureDayOffset>
+								</TimetabledPassingTime>
+							</passingTimes>
+							<!-- ...(stops etc)... -->
+						</ServiceJourney>
+					</vehicleJourneys>
+				</TimetableFrame>
+			</frames>
+		</CompositeFrame>
+	</dataObjects>
+</PublicationDelivery>

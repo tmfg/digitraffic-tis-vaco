@@ -87,7 +87,7 @@ class CanonicalGtfsValidatorRuleTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, s3TransferManager, errorHandlerService, rulesetRepository);
-        queueEntry = TestObjects.anEntry().build();
+        queueEntry = TestObjects.anEntry("gtfs").build();
     }
 
     @AfterEach
@@ -102,7 +102,7 @@ class CanonicalGtfsValidatorRuleTest {
         whenDirectoryUpload();
 
         String testFile = "public/testfiles/padasjoen_kunta.zip";
-        ValidationReport report = rule.execute(queueEntry, forInput(testFile)).join();
+        ValidationReport report = rule.execute(queueEntry, Optional.empty(), forInput(testFile)).join();
 
         assertThat(report.errors().size(), equalTo(51));
 
@@ -128,7 +128,7 @@ class CanonicalGtfsValidatorRuleTest {
         whenReportError();
 
         Entry invalidFormat = ImmutableEntry.copyOf(queueEntry).withFormat("vhs");
-        ValidationReport report = rule.execute(invalidFormat, forInput("public/testfiles/padasjoen_kunta.zip")).join();
+        ValidationReport report = rule.execute(invalidFormat, Optional.empty(), forInput("public/testfiles/padasjoen_kunta.zip")).join();
 
         ImmutableError error = mockError("Wrong format! Expected 'gtfs', was 'vhs'");
         assertThat(report.errors(), equalTo(List.of(error)));

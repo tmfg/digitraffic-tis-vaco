@@ -1,8 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -13,7 +12,6 @@ import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.process.model.Phase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -21,7 +19,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,7 +41,7 @@ public class QueueHandlerRepository {
     public ImmutableEntry create(Entry entry) {
         ImmutableEntry created = createEntry(entry);
         return created.withPhases(createPhases(created.id(), entry.phases()))
-                .withValidation(createValidationInput(created.id(), entry.validation()))
+            .withValidations(createValidationInputs(created.id(), entry.validations()))
                 .withConversion(createConversionInput(created.id(), entry.conversion()));
     }
 
@@ -55,26 +52,29 @@ public class QueueHandlerRepository {
                   RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
                 """,
             RowMappers.QUEUE_ENTRY.apply(objectMapper),
-            entry.businessId(), entry.format(), entry.url(), entry.etag(), writeJson(entry.metadata()));
+            entry.businessId(), entry.format(), entry.url(), entry.etag(), RowMappers.writeJson(objectMapper, entry.metadata()));
     }
 
     private List<ImmutablePhase> createPhases(Long entryId, List<Phase> phases) {
         if (phases == null) {
             return List.of();
         }
-        return phases.stream()
-                .map(phase -> jdbc.queryForObject(
-                        "INSERT INTO phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
-                        RowMappers.PHASE,
-                        entryId))
-                .toList();
+        return Streams.map(phases, phase -> jdbc.queryForObject(
+                "INSERT INTO phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
+                RowMappers.PHASE,
+                entryId))
+            .toList();
     }
 
-    private ValidationInput createValidationInput(Long entryId, ValidationInput validation) {
-        return jdbc.queryForObject(
-                "INSERT INTO validation_input (entry_id) VALUES (?) RETURNING id, entry_id",
-                (rs, rowNum) -> ImmutableValidationInput.builder().build(),
-                entryId);
+    private List<ImmutableValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {
+        if (validations == null) {
+            return List.of();
+        }
+        return Streams.map(validations, validation -> jdbc.queryForObject(
+                "INSERT INTO validation_input (entry_id, name, config) VALUES (?, ?, ?) RETURNING id, entry_id, name, config",
+                RowMappers.VALIDATION_INPUT.apply(objectMapper),
+                entryId, validation.name(), RowMappers.writeJson(objectMapper, validation.config())))
+            .toList();
     }
 
     private ConversionInput createConversionInput(Long entryId, ConversionInput conversion) {
@@ -111,9 +111,9 @@ public class QueueHandlerRepository {
             entryId);
     }
 
-    private ValidationInput findValidationInput(Long entryId) {
-        return jdbc.queryForObject("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
-            (rs, row) -> null,
+    private List<ImmutableValidationInput> findValidationInputs(Long entryId) {
+        return jdbc.query("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
+            RowMappers.VALIDATION_INPUT.apply(objectMapper),
             entryId);
     }
 
@@ -167,9 +167,7 @@ public class QueueHandlerRepository {
                 businessId);
 
             if (full) {
-                return entries.stream()
-                    .map(this::buildCompleteEntry)
-                    .toList();
+                return Streams.map(entries, this::buildCompleteEntry).toList();
             } else {
                 return entries;
             }
@@ -187,23 +185,9 @@ public class QueueHandlerRepository {
     private ImmutableEntry buildCompleteEntry(ImmutableEntry entry) {
         return entry
             .withPhases(findPhases(entry.id()))
-            .withValidation(findValidationInput(entry.id()))
+            .withValidations(findValidationInputs(entry.id()))
             .withConversion(findConversionInput(entry.id()).orElse(null))
             .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));
     }
 
-    private PGobject writeJson(JsonNode tree) {
-        try {
-            if (tree != null) {
-                PGobject pgo = new PGobject();
-                pgo.setType("jsonb");
-                pgo.setValue(objectMapper.writeValueAsString(tree));
-                return pgo;
-            }
-        } catch (SQLException | JsonProcessingException e) {
-            logger.error("Failed Jdbc conversion from PGobject to JsonNode", e);
-        }
-        // TODO: This is potentially fatal, we could re-throw instead
-        return null;
-    }
 }

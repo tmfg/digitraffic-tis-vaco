@@ -13,6 +13,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.rules.gtfs.CanonicalGtfsValidatorRule;
+import fi.digitraffic.tis.vaco.validation.rules.netex.EnturNetexValidatorRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,7 +85,8 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void hasDefaultRulesAlwaysAvailable() {
         Ruleset canonicalGtfsValidator = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
-        assertThat(rulesetRepository.findRulesets(fintraffic.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(canonicalGtfsValidator)));
+        Ruleset enturNetexValidator = rulesetRepository.findByName(EnturNetexValidatorRule.RULE_NAME).get();
+        assertThat(rulesetRepository.findRulesets(fintraffic.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(canonicalGtfsValidator, enturNetexValidator)));
     }
 
     @Test
@@ -100,21 +102,21 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void currentsSpecificRulesCanBeFiltered() {
         // parent's generic is always returned even when not requested, self specific is returned on request
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("GENERIC_A", "SPECIFIC_C"), Type.VALIDATION_SYNTAX),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Type.VALIDATION_SYNTAX, Set.of("GENERIC_A", "SPECIFIC_C")),
                 equalTo(Set.of(parentRuleA, currentRuleC)));
     }
 
     @Test
     void parentsGenericRuleIsAlwaysReturned() {
         // parent's generic is always returned even when not requested
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_C"), Type.VALIDATION_SYNTAX),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Type.VALIDATION_SYNTAX, Set.of("SPECIFIC_C")),
                 equalTo(Set.of(parentRuleA, currentRuleC)));
     }
 
     @Test
     void parentsSpecificRulesCannotBeSelected() {
         // parent's generic is always returned even when not requested, can't request parent's specific rules
-        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Set.of("SPECIFIC_B"), Type.VALIDATION_SYNTAX),
+        assertThat(rulesetRepository.findRulesets(currentOrg.businessId(), Type.VALIDATION_SYNTAX, Set.of("SPECIFIC_B")),
                 equalTo(Set.of(parentRuleA)));
     }
 

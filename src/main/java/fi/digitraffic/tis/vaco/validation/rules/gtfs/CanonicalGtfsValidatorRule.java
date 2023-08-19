@@ -8,13 +8,15 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
-import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
+import fi.digitraffic.tis.vaco.validation.rules.ValidatorRule;
 import org.immutables.value.Value;
 import org.mobilitydata.gtfsvalidator.input.CountryCode;
 import org.mobilitydata.gtfsvalidator.runner.ValidationRunner;
@@ -36,9 +38,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
-public class CanonicalGtfsValidatorRule implements Rule {
+public class CanonicalGtfsValidatorRule extends ValidatorRule implements Rule {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -47,8 +48,6 @@ public class CanonicalGtfsValidatorRule implements Rule {
     private final ObjectMapper objectMapper;
     private final S3TransferManager s3TransferManager;
     private final VacoProperties vacoProperties;
-    private final ErrorHandlerService errorHandlerService;
-    private final RulesetRepository rulesetRepository;
 
     public CanonicalGtfsValidatorRule(
         ObjectMapper objectMapper,
@@ -56,11 +55,10 @@ public class CanonicalGtfsValidatorRule implements Rule {
         S3TransferManager s3TransferManager,
         ErrorHandlerService errorHandlerService,
         RulesetRepository rulesetRepository) {
-        this.objectMapper = objectMapper;
-        this.s3TransferManager = s3TransferManager;
-        this.vacoProperties = vacoProperties;
-        this.errorHandlerService = errorHandlerService;
-        this.rulesetRepository = rulesetRepository;
+        super("gtfs", rulesetRepository, errorHandlerService);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.s3TransferManager = Objects.requireNonNull(s3TransferManager);
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
 
     @Override
@@ -69,27 +67,9 @@ public class CanonicalGtfsValidatorRule implements Rule {
     }
 
     @Override
-    public CompletableFuture<ValidationReport> execute(
+    protected ValidationReport runValidator(
         Entry queueEntry,
-        PhaseData<FileReferences> phaseData) {
-
-        return CompletableFuture.supplyAsync(() -> {
-            if ("gtfs".equalsIgnoreCase(queueEntry.format())) {
-                return runCanonicalValidator(queueEntry, phaseData);
-            } else {
-                ImmutableError error = ImmutableError.of(
-                    queueEntry.id(),
-                    phaseData.phase().id(),
-                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
-                    "Wrong format! Expected 'gtfs', was '%s'".formatted(queueEntry.format()));
-                errorHandlerService.reportError(error);
-                return ImmutableValidationReport.of("what").withErrors(error);
-            }
-        });
-    }
-
-    private ValidationReport runCanonicalValidator(
-        Entry queueEntry,
+        Optional<ValidationInput> configuration,
         PhaseData<FileReferences> phaseData) {
 
         Path ruleRoot = Path.of(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), phaseData.phase().name(), "rules", RULE_NAME);

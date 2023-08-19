@@ -5,6 +5,7 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class QueueHandlerService {
 
     @Transactional
     public ImmutableEntry processQueueEntry(ImmutableEntryRequest entryRequest) {
-        ImmutableEntry converted = entryRequestMapper.toEntry(entryRequest);
+        Entry converted = entryRequestMapper.toEntry(entryRequest);
         ImmutableEntry result = queueHandlerRepository.create(converted);
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()

@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
+import java.util.List;
+
 @Value.Immutable
 @JsonSerialize(as = ImmutableEntryRequest.class)
 @JsonDeserialize(as = ImmutableEntryRequest.class)
@@ -22,16 +24,10 @@ public interface EntryRequest {
     @Nullable
     JsonNode getMetadata();
 
-    Validation getValidation();
+    List<Validation> getValidations();
 
     @Nullable
     Conversion getConversion();
-
-    @Value.Immutable
-    @JsonSerialize(as = ImmutableValidation.class)
-    @JsonDeserialize(as = ImmutableValidation.class)
-    interface Validation {
-    }
 
     @Value.Immutable
     @JsonSerialize(as = ImmutableConversion.class)
@@ -39,5 +35,16 @@ public interface EntryRequest {
     interface Conversion {
         @Value.Parameter
         String targetFormat();
+    }
+
+    @Value.Immutable
+    @JsonSerialize(as = ImmutableValidation.class)
+    @JsonDeserialize(as = ImmutableValidation.class)
+    interface Validation {
+        @Value.Parameter
+        String getName();
+
+        @Nullable
+        JsonNode getConfig();
     }
 }

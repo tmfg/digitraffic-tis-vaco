@@ -1,10 +1,11 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -49,9 +50,8 @@ public class QueueHandlerController {
         @RequestParam(required = false) boolean full) {
         // TODO: Once we have authentication there needs to be an authentication check that the calling user has access
         //       to the businessId. No authentication yet though, so no such check either.
-        return ResponseEntity.ok(queueHandlerService.getAllQueueEntriesFor(businessId, full)
-            .stream()
-            .map(QueueHandlerController::asQueueHandlerResource)
+        return ResponseEntity.ok(
+            Streams.map(queueHandlerService.getAllQueueEntriesFor(businessId, full), QueueHandlerController::asQueueHandlerResource)
             .toList());
     }
 

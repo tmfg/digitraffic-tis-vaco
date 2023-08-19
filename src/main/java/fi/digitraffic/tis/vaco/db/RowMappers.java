@@ -7,8 +7,9 @@ import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public class RowMappers {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RowMappers.class);
 
     public static final RowMapper<ImmutableRuleset> RULESET = (rs, rowNum) -> ImmutableRuleset.builder()
@@ -64,6 +66,7 @@ public class RowMappers {
             .build();
 
     public static final Function<ObjectMapper, RowMapper<ImmutableEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
+    public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
     public static final Function<ObjectMapper, RowMapper<ImmutableError>> ERROR = RowMappers::mapError;
 
     private static RowMapper<ImmutableError> mapError(ObjectMapper objectMapper) {
@@ -99,6 +102,14 @@ public class RowMappers {
                 .build();
     }
 
+    private static RowMapper<ImmutableValidationInput> mapValidationInput(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutableValidationInput.builder()
+            .id(rs.getLong("id"))
+            .name(rs.getString("name"))
+            .config(readJson(objectMapper, rs, "config"))
+            .build();
+    }
+
     private static <I,O> O nullable(I input, Function<I, O> i2o) {
         return Optional.ofNullable(input).map(i2o).orElse(null);
     }
@@ -111,6 +122,21 @@ public class RowMappers {
             }
         } catch (SQLException | JsonProcessingException e) {
             LOGGER.error("Failed Jdbc conversion from PGobject to JsonNode", e);
+        }
+        // TODO: This is potentially fatal, we could re-throw instead
+        return null;
+    }
+
+    public static PGobject writeJson(ObjectMapper objectMapper, JsonNode tree) {
+        try {
+            if (tree != null) {
+                PGobject pgo = new PGobject();
+                pgo.setType("jsonb");
+                pgo.setValue(objectMapper.writeValueAsString(tree));
+                return pgo;
+            }
+        } catch (SQLException | JsonProcessingException e) {
+            LOGGER.error("Failed Jdbc conversion from JsonNode to PGobject", e);
         }
         // TODO: This is potentially fatal, we could re-throw instead
         return null;
