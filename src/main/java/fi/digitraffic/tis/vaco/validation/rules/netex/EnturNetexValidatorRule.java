@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.validation.rules.netex;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
@@ -68,12 +67,7 @@ public class EnturNetexValidatorRule extends ValidatorRule implements Rule {
         Optional<ValidationInput> configuration) {
         return configuration.map(input -> {
             if (input.config() != null) {
-                try {
-                    return objectMapper.treeToValue(input.config(), EnturNetexValidatorConfiguration.class);
-                } catch (JsonProcessingException e) {
-                    logger.warn("Failed to deserialize provided configuration", e);
-                    return EnturNetexValidatorConfiguration.DEFAULTS;
-                }
+                return (EnturNetexValidatorConfiguration) input.config();
             } else {
                 return EnturNetexValidatorConfiguration.DEFAULTS;
             }
@@ -150,13 +144,13 @@ public class EnturNetexValidatorRule extends ValidatorRule implements Rule {
     private org.entur.netex.validation.validator.ValidationReport validateNetexEntry(EnturNetexValidatorConfiguration configuration, ZipEntry zipEntry, byte[] bytes) {
         logger.debug("Validating ZIP entry {}...", zipEntry);
         // TODO: accumulate max errors
-        NetexXMLParser netexXMLParser = new NetexXMLParser(configuration.getIgnorableNetexElements());
-        NetexSchemaValidator netexSchemaValidator = new NetexSchemaValidator(configuration.getMaximumErrors());
+        NetexXMLParser netexXMLParser = new NetexXMLParser(configuration.ignorableNetexElements());
+        NetexSchemaValidator netexSchemaValidator = new NetexSchemaValidator(configuration.maximumErrors());
         NetexValidatorsRunner netexValidatorsRunner = new NetexValidatorsRunner(netexXMLParser, netexSchemaValidator, List.of());
 
         return netexValidatorsRunner.validate(
-            configuration.getCodespace(),
-            configuration.getReportId(),
+            configuration.codespace(),
+            configuration.reportId(),
             zipEntry.getName(),
             bytes);
     }

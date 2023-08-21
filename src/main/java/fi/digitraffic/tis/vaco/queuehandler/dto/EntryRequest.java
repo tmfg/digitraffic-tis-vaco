@@ -24,7 +24,7 @@ public interface EntryRequest {
     @Nullable
     JsonNode getMetadata();
 
-    List<Validation> getValidations();
+    List<JsonNode> getValidations();
 
     @Nullable
     Conversion getConversion();
@@ -35,16 +35,5 @@ public interface EntryRequest {
     interface Conversion {
         @Value.Parameter
         String targetFormat();
-    }
-
-    @Value.Immutable
-    @JsonSerialize(as = ImmutableValidation.class)
-    @JsonDeserialize(as = ImmutableValidation.class)
-    interface Validation {
-        @Value.Parameter
-        String getName();
-
-        @Nullable
-        JsonNode getConfig();
     }
 }

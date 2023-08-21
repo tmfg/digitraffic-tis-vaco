@@ -1,8 +1,10 @@
 package fi.digitraffic.tis.vaco.db;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
@@ -13,6 +15,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.validation.rules.Configuration;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,31 +106,84 @@ public class RowMappers {
     }
 
     private static RowMapper<ImmutableValidationInput> mapValidationInput(ObjectMapper objectMapper) {
-        return (rs, rowNum) -> ImmutableValidationInput.builder()
-            .id(rs.getLong("id"))
-            .name(rs.getString("name"))
-            .config(readJson(objectMapper, rs, "config"))
-            .build();
+        return (rs, rowNum) -> {
+            String name = rs.getString("name");
+
+            Class<? extends Configuration> cc = findSubtypeFromAnnotation(name);
+
+            return ImmutableValidationInput.builder()
+                    .id(rs.getLong("id"))
+                    .name(rs.getString("name"))
+                    .config(readValue(objectMapper, rs, "config", cc))
+                    .build();
+        };
+    }
+
+    /**
+     * Tries to find matching configuration class reference from Jackson's annotations defined in the class based on
+     * name of the rule.
+     *
+     * This method exists to avoid duplicating the type mapping code.
+     * @param name Name of the rule
+     * @return Matching configuration class reference or null if one couldn't be found.
+     */
+    @SuppressWarnings("unchecked")
+    private static Class<Configuration> findSubtypeFromAnnotation(String name) {
+        JsonSubTypes definedSubTypes = Configuration.class.getDeclaredAnnotation(JsonSubTypes.class);
+
+        Class<?> cc = Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
+            .map(JsonSubTypes.Type::value)
+            .findFirst()
+            .orElse(null);
+
+        return (Class<Configuration>) cc;
     }
 
     private static <I,O> O nullable(I input, Function<I, O> i2o) {
         return Optional.ofNullable(input).map(i2o).orElse(null);
     }
 
+    private static <O> O readValue(ObjectMapper objectMapper, ResultSet rs, String field, Class<O> type) {
+        if (type == null) {
+            return null;
+        }
+        return fromJsonb(rs, field, v -> {
+            try {
+                return objectMapper.readValue(v, type);
+            } catch (JsonProcessingException e) {
+                LOGGER.error("Failed to read JSONB as valid " + type, e);
+            }
+            // TODO: This is potentially fatal, we could re-throw instead
+            return null;
+        });
+    }
+
     private static JsonNode readJson(ObjectMapper objectMapper, ResultSet rs, String field) {
+        return fromJsonb(rs, field, v -> {
+            try {
+                return objectMapper.readTree(v);
+            } catch (JsonProcessingException e) {
+                LOGGER.error("Failed to read JSONB as valid JsonNode", e);
+            }
+            // TODO: This is potentially fatal, we could re-throw instead
+            return null;
+        });
+    }
+
+    private static <R> R fromJsonb(ResultSet rs, String field, Function<String, R> mapper) {
         try {
             PGobject source = (PGobject) rs.getObject(field);
             if (source != null) {
-                return objectMapper.readTree(source.getValue());
+                return mapper.apply(source.getValue());
             }
-        } catch (SQLException | JsonProcessingException e) {
-            LOGGER.error("Failed Jdbc conversion from PGobject to JsonNode", e);
+        } catch (SQLException e) {
+            LOGGER.error("Failed to load PGobject", e);
         }
         // TODO: This is potentially fatal, we could re-throw instead
         return null;
     }
 
-    public static PGobject writeJson(ObjectMapper objectMapper, JsonNode tree) {
+    public static <T> PGobject writeJson(ObjectMapper objectMapper, T tree) {
         try {
             if (tree != null) {
                 PGobject pgo = new PGobject();

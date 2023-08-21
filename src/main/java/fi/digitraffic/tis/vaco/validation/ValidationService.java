@@ -152,7 +152,7 @@ public class ValidationService {
         List<ValidationReport> reports = validationRulesets.parallelStream()
                 .map(this::findMatchingRule)
                 .filter(Optional::isPresent)
-                .map(r -> r.get().execute(entry, r.map(x ->configs.get(x.getIdentifyingName())), phaseData))
+                .map(r -> r.get().execute(entry, r.map(x -> configs.get(x.getIdentifyingName())), phaseData))
                 .map(CompletableFuture::join)
                 .toList();
         // everything's done at this point because of the ::join call, complete phase and return
