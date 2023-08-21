@@ -39,7 +39,7 @@
         <testcontainers.version>1.18.3</testcontainers.version>
         <awssdk.version>2.20.130</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
-        <awspringcloud.version>3.0.1</awspringcloud.version>
+        <awspringcloud.version>3.0.2</awspringcloud.version>
         <immutables.version>2.9.3</immutables.version>
         <jackson.version>2.15.2</jackson.version>
         <mockito.version>5.4.0</mockito.version>
