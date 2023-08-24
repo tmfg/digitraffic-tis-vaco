@@ -24,16 +24,10 @@ public interface EntryRequest {
     @Nullable
     JsonNode getMetadata();
 
+    @Nullable
     List<JsonNode> getValidations();
 
     @Nullable
-    Conversion getConversion();
+    List<JsonNode> getConversions();
 
-    @Value.Immutable
-    @JsonSerialize(as = ImmutableConversion.class)
-    @JsonDeserialize(as = ImmutableConversion.class)
-    interface Conversion {
-        @Value.Parameter
-        String targetFormat();
-    }
 }

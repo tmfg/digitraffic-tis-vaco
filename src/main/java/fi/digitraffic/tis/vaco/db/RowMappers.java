@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
@@ -70,6 +71,7 @@ public class RowMappers {
 
     public static final Function<ObjectMapper, RowMapper<ImmutableEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
     public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
+    public static final Function<ObjectMapper, RowMapper<ImmutableConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
     public static final Function<ObjectMapper, RowMapper<ImmutableError>> ERROR = RowMappers::mapError;
 
     private static RowMapper<ImmutableError> mapError(ObjectMapper objectMapper) {
@@ -112,6 +114,20 @@ public class RowMappers {
             Class<? extends Configuration> cc = findSubtypeFromAnnotation(name);
 
             return ImmutableValidationInput.builder()
+                    .id(rs.getLong("id"))
+                    .name(rs.getString("name"))
+                    .config(readValue(objectMapper, rs, "config", cc))
+                    .build();
+        };
+    }
+
+    private static RowMapper<ImmutableConversionInput> mapConversionInput(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> {
+            String name = rs.getString("name");
+
+            Class<? extends Configuration> cc = findSubtypeFromAnnotation(name);
+
+            return ImmutableConversionInput.builder()
                     .id(rs.getLong("id"))
                     .name(rs.getString("name"))
                     .config(readValue(objectMapper, rs, "config", cc))

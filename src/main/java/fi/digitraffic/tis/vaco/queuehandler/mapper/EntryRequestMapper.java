@@ -4,10 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.validation.model.InvalidMappingException;
@@ -37,33 +35,31 @@ public class EntryRequestMapper {
             .etag(entryRequest.getEtag())
             .metadata(entryRequest.getMetadata())
             .validations(mapValidations(entryRequest.getValidations()))
-            .conversion(conversionToConversionInput(entryRequest.getConversion()))
+            .conversions(mapConversions(entryRequest.getConversions()))
             .build();
     }
 
-    protected Iterable<ValidationInput> mapValidations(List<JsonNode> validations) {
+    private Iterable<ValidationInput> mapValidations(List<JsonNode> validations) {
         if (validations == null) {
             return List.of();
         }
 
-        return Streams.map(validations, this::validationToValidationInput).toList();
+        return Streams.map(validations, validation -> fromJson(validation, ValidationInput.class)).toList();
     }
 
-    protected ValidationInput validationToValidationInput(JsonNode validation) {
+    private Iterable<ConversionInput> mapConversions(List<JsonNode> conversions) {
+        if (conversions == null) {
+            return List.of();
+        }
+
+        return Streams.map(conversions, validation -> fromJson(validation, ConversionInput.class)).toList();
+    }
+
+    protected <T> T fromJson(JsonNode data, Class<T> type) {
         try {
-            return objectMapper.treeToValue(validation, ValidationInput.class);
+            return objectMapper.treeToValue(data, type);
         } catch (JsonProcessingException e) {
             throw new InvalidMappingException("Could not map JsonNode to ValidationInput", e);
         }
-    }
-
-    protected ConversionInput conversionToConversionInput(EntryRequest.Conversion conversion) {
-        if (conversion == null) {
-            return null;
-        }
-
-        ImmutableConversionInput.Builder conversionInput = ImmutableConversionInput.builder();
-
-        return conversionInput.build();
     }
 }

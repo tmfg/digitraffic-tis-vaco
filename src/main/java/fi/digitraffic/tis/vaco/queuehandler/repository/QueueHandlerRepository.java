@@ -40,9 +40,10 @@ public class QueueHandlerRepository {
     @Transactional
     public ImmutableEntry create(Entry entry) {
         ImmutableEntry created = createEntry(entry);
-        return created.withPhases(createPhases(created.id(), entry.phases()))
+        return created
+            .withPhases(createPhases(created.id(), entry.phases()))
             .withValidations(createValidationInputs(created.id(), entry.validations()))
-                .withConversion(createConversionInput(created.id(), entry.conversion()));
+            .withConversions(createConversionInputs(created.id(), entry.conversions()));
     }
 
     private ImmutableEntry createEntry(Entry entry) {
@@ -77,13 +78,15 @@ public class QueueHandlerRepository {
             .toList();
     }
 
-    private ConversionInput createConversionInput(Long entryId, ConversionInput conversion) {
-        return conversion != null
-            ? jdbc.queryForObject(
-                "INSERT INTO conversion_input (entry_id, target_format) VALUES (?, ?) RETURNING id, entry_id, target_format",
-                    (rs, rowNum) -> ImmutableConversionInput.builder().build(),
-                    entryId, conversion.targetFormat())
-            : null;
+    private List<ImmutableConversionInput> createConversionInputs(Long entryId, List<ConversionInput> conversions) {
+        if (conversions == null) {
+            return List.of();
+        }
+        return Streams.map(conversions, conversion -> jdbc.queryForObject(
+            "SELECT 1",
+            RowMappers.CONVERSION_INPUT.apply(objectMapper),
+            entryId, conversion.name(), RowMappers.writeJson(objectMapper, conversion.config())
+        )).toList();
     }
 
     @Transactional
@@ -117,14 +120,10 @@ public class QueueHandlerRepository {
             entryId);
     }
 
-    private Optional<ConversionInput> findConversionInput(Long entryId) {
-        try {
-            return Optional.ofNullable(jdbc.queryForObject("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
-                (rs, row) -> null,
-                entryId));
-        } catch (EmptyResultDataAccessException erdae) {
-            return Optional.empty();
-        }
+    private List<ImmutableConversionInput> findConversionInputs(Long entryId) {
+        return jdbc.query("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
+            RowMappers.CONVERSION_INPUT.apply(objectMapper),
+            entryId);
     }
 
     public void startEntryProcessing(Entry entry) {
@@ -186,7 +185,7 @@ public class QueueHandlerRepository {
         return entry
             .withPhases(findPhases(entry.id()))
             .withValidations(findValidationInputs(entry.id()))
-            .withConversion(findConversionInput(entry.id()).orElse(null))
+            .withConversions(findConversionInputs(entry.id()))
             .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));
     }
 
