@@ -1,7 +1,11 @@
 package fi.digitraffic.tis.aws.s3;
 
 import fi.digitraffic.tis.vaco.VacoProperties;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.transfer.s3.config.DownloadFilter;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
@@ -14,17 +18,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class S3Client {
 
     private final S3TransferManager s3TransferManager;
 
+    private final software.amazon.awssdk.services.s3.S3Client awsS3Client;
+
     private final VacoProperties vacoProperties;
 
-    public S3Client(S3TransferManager s3TransferManager, VacoProperties vacoProperties) {
+    public S3Client(S3TransferManager s3TransferManager,
+                    VacoProperties vacoProperties,
+                    software.amazon.awssdk.services.s3.S3Client awsS3Client) {
         this.s3TransferManager = s3TransferManager;
         this.vacoProperties = vacoProperties;
+        this.awsS3Client = awsS3Client;
     }
 
     public Path createTempFile(Path downloadDir, String fileName, String extension) {
@@ -61,21 +72,42 @@ public class S3Client {
             .completionFuture();
     }
 
-    CompletableFuture<CompletedDirectoryDownload> downloadDirectory(Path directoryPath) throws IOException {
-        DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()
-            .destination(directoryPath)
-            .build();
-        return s3TransferManager.downloadDirectory(ddr)
-            .completionFuture();
-    }
-
-    CompletableFuture<CompletedFileDownload> downloadFile(Path filePath) throws IOException {
+    CompletableFuture<CompletedFileDownload> downloadFile(Path filePath) {
         DownloadFileRequest dfr = DownloadFileRequest.builder()
             .destination(filePath)
             .build();
         return s3TransferManager
             .downloadFile(dfr)
             .completionFuture();
+    }
+
+    public CompletableFuture<CompletedDirectoryDownload> downloadDirectory(String sourcePath,
+                                                                           String targetPath,
+                                                                           String[] filterKeys) {
+        DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()
+            .bucket(getUploadBucketName())
+            .listObjectsV2RequestTransformer(l -> l.prefix(sourcePath))
+            .filter(filterKeys != null && filterKeys.length > 0
+                ? s3Object -> Arrays.stream(filterKeys).noneMatch(filterKey -> s3Object.key().contains(filterKey))
+                : DownloadFilter.allObjects())
+            .destination(Path.of(targetPath))
+            .build();
+
+        return s3TransferManager
+            .downloadDirectory(ddr)
+            .completionFuture();
+    }
+
+    // For local debug/test purposes:
+    public void listObjectsInBucket(String root) {
+        ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+            .bucket(vacoProperties.getS3processingBucket())
+            .prefix(root)
+            .build();
+        ListObjectsV2Response listObjectsV2Response = awsS3Client.listObjectsV2(listObjectsV2Request);
+        List<S3Object> contents = listObjectsV2Response.contents();
+        System.out.println("Number of objects in the bucket: " + contents.size());
+        contents.forEach(System.out::println);
     }
 }
 

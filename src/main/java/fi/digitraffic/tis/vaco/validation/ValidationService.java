@@ -104,7 +104,7 @@ public class ValidationService {
 
     private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
         return phaseData -> {
-            String targetPath = S3Artifact.getDownloadPhasePath(queueEntry.publicId(), queueEntry.format() + ".original");
+            String targetPath = S3Artifact.getValidationPhasePath(queueEntry.publicId(), DOWNLOAD_PHASE, queueEntry.format() + ".original");
             Path sourcePath = phaseData.payload().localPath();
 
             return s3ClientUtility.uploadFile(targetPath, sourcePath)

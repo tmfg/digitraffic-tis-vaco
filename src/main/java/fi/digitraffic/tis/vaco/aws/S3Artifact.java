@@ -2,11 +2,13 @@ package fi.digitraffic.tis.vaco.aws;
 
 public class S3Artifact {
 
+    static final String ENTRY_FOLDER = "entries/%s";
+
     public static final String ORIGINAL_ENTRY = "/entries/%s/entry.json";
 
     public static final String METADATA = "/entries/%s/metadata.json";
 
-    static final String DOWNLOAD_PHASE = "/entries/%s/phases/download/%s";
+    static final String PHASE_FOLDER = "entries/%s/phases/%s";
 
     static final String VALIDATION_PHASE = "/entries/%s/phases/validation/%s/%s";
 
@@ -15,6 +17,10 @@ public class S3Artifact {
     static final String PACKAGE = "/entries/%s/package/%s.zip";
 
     static final String ERROR_LOGS = "/entries/%s/logs/errors/%s";
+
+    public static String getEntryFolderPath(String entryPublicId) {
+        return String.format(ENTRY_FOLDER, entryPublicId);
+    }
 
     /**
      * @param entryPublicId
@@ -33,14 +39,14 @@ public class S3Artifact {
     }
 
     /**
-     * Pattern: /entries/{entryPublicId}/phases/download/{fileName}.{extension}
+     * Pattern: entries/{entryPublicId}/phases/validation
      * @param entryPublicId
-     * @param artifact: a file name
+     * @param phase
      * @return
      */
-    public static String getDownloadPhasePath(String entryPublicId,
-                                              String artifact) {
-        return String.format(DOWNLOAD_PHASE, entryPublicId, artifact);
+    public static String getPhasePath(String entryPublicId,
+                                      String phase) {
+        return String.format(PHASE_FOLDER, entryPublicId, phase);
     }
 
     /**
