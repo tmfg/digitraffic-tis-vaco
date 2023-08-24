@@ -133,7 +133,7 @@ public class RulesetRepository {
         jdbc.update("DELETE FROM ruleset WHERE public_id = ?", rule.publicId());
     }
 
-    private Cache warmup(Cache<String, Ruleset> rulesetNameCache) {
+    private Cache<String, Ruleset> warmup(Cache<String, Ruleset> rulesetNameCache) {
         jdbc.query("SELECT * FROM ruleset", RowMappers.RULESET).forEach(ruleset -> {
             rulesetNameCache.put(ruleset.identifyingName(), ruleset);
         });

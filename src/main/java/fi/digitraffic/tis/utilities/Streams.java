@@ -37,7 +37,7 @@ public class Streams {
      * @param mapper
      * @return
      * @param <O>
-     * @param <R>
+     * @param <I>
      */
     public static <I, O> Chain<O> map(Collection<I> objects, Function<? super I, ? extends O> mapper) {
         return new Chain<>(objects.stream().map(mapper));
@@ -95,7 +95,6 @@ public class Streams {
      * for those cases where the needed operation isn't exposed in this wrapper and/or the extra calls doesn't make
      * client side code uglier.
      *
-     * @param stream
      * @param <R>
      */
     public static final class Chain<R> {
@@ -124,7 +123,7 @@ public class Streams {
         }
 
         public <O> Chain<O> map(Function<? super R, ? extends O> mapper) {
-            return new Chain<O>(stream.map(mapper));
+            return new Chain<>(stream.map(mapper));
         }
 
         public Optional<R> findFirst() {

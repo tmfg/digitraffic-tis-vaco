@@ -106,7 +106,7 @@ public class EnturNetexValidatorRule extends ValidatorRule implements Rule {
         }
     }
 
-    private ZipFile toZipFile(PhaseData phaseData, Path netexSource) {
+    private ZipFile toZipFile(PhaseData<FileReferences> phaseData, Path netexSource) {
         ZipFile zipFile;
         try {
             logger.debug("Processing {} as ZIP file", netexSource);
@@ -124,7 +124,7 @@ public class EnturNetexValidatorRule extends ValidatorRule implements Rule {
         return zipFile;
     }
 
-    private byte[] getEntryContents(PhaseData phaseData, ZipFile zipFile, ZipEntry zipEntry) {
+    private byte[] getEntryContents(PhaseData<FileReferences> phaseData, ZipFile zipFile, ZipEntry zipEntry) {
         byte[] bytes;
         try {
             bytes = zipFile.getInputStream(zipEntry).readAllBytes();

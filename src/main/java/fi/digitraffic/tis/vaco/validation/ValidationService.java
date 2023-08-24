@@ -45,7 +45,8 @@ public class ValidationService {
     public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
     public static final String EXECUTION_PHASE = "validation.execute";
 
-    Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final PhaseService phaseService;
     private final HttpClient httpClientUtility;
     private final S3Client s3ClientUtility;
