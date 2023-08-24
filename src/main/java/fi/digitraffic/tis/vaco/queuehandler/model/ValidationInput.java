@@ -1,10 +1,11 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.validation.rules.Configuration;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -19,7 +20,7 @@ public interface ValidationInput {
     @Value.Parameter
     String name();
 
-    // TODO: This needs to be redefined as Jackson (de)serializable type hierarchy
     @Nullable
-    JsonNode config();
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "name")
+    Configuration config();
 }

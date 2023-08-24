@@ -2,14 +2,12 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
-import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
-
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -27,7 +25,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
         EntryRequest request = TestObjects.aValidationEntryRequest(
-            List.of(TestObjects.aValidation())
+
         ).build();
         MvcResult response = apiCall(post("/queue").content(toJson(request)))
             .andExpect(status().isOk())

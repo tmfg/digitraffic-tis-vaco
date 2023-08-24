@@ -5,7 +5,6 @@ import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableValidation;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
@@ -26,13 +25,13 @@ public class TestObjects {
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
     }
 
-    public static ImmutableEntryRequest.Builder aValidationEntryRequest(List<ImmutableValidation> immutableValidations) {
+    public static ImmutableEntryRequest.Builder aValidationEntryRequest() {
         return ImmutableEntryRequest.builder()
             .format("gtfs")
             .url("https://example.fi")
             .etag("etag")
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
-            .validations(immutableValidations);
+            .validations(List.of());
     }
 
     public static ImmutableOrganization.Builder anOrganization() {
@@ -66,7 +65,4 @@ public class TestObjects {
             .type(Type.VALIDATION_SYNTAX);
     }
 
-    public static ImmutableValidation aValidation() {
-        return ImmutableValidation.of("mock validation");
-    }
 }

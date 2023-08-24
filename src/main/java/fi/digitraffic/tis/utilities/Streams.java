@@ -1,8 +1,10 @@
 package fi.digitraffic.tis.utilities;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -53,6 +55,20 @@ public class Streams {
      */
     public static <O> Chain<O> filter(Collection<O> objects, Predicate<? super O> predicate) {
         return new Chain<>(objects.stream().filter(predicate));
+    }
+
+    /**
+     * Functionally equivalent to {@link Stream#filter(Predicate)}. Shorthand for
+     * <pre>
+     *     Arrays.stream(objects).filter(predicate)
+     * </pre>
+     * @param objects
+     * @param predicate
+     * @return
+     * @param <O>
+     */
+    public static <O> Chain<O> filter(O[] objects, Predicate<? super O> predicate) {
+        return new Chain<>(Arrays.stream(objects).filter(predicate));
     }
 
     /**
@@ -109,6 +125,10 @@ public class Streams {
 
         public <O> Chain<O> map(Function<? super R, ? extends O> mapper) {
             return new Chain<O>(stream.map(mapper));
+        }
+
+        public Optional<R> findFirst() {
+            return stream().findFirst();
         }
     }
 }
