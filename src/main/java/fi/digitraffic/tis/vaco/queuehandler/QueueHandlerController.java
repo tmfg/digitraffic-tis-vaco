@@ -10,7 +10,9 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -35,7 +37,7 @@ public class QueueHandlerController {
         this.queueHandlerService = queueHandlerService;
     }
 
-    @RequestMapping(method = RequestMethod.POST, path = "")
+    @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<ImmutableEntry>> createQueueEntry(@Valid @RequestBody ImmutableEntryRequest entryRequest) {
         ImmutableEntry entry = queueHandlerService.processQueueEntry(entryRequest);
@@ -43,7 +45,7 @@ public class QueueHandlerController {
         return ResponseEntity.ok(asQueueHandlerResource(entry));
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "")
+    @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<List<Resource<ImmutableEntry>>> listEntries(
         @RequestParam String businessId,
@@ -55,7 +57,7 @@ public class QueueHandlerController {
             .toList());
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "/{publicId}")
+    @GetMapping(path = "/{publicId}")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<ImmutableEntry>> getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
         Optional<ImmutableEntry> entry = queueHandlerService.getQueueEntryView(publicId);
