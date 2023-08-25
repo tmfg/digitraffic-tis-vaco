@@ -46,6 +46,21 @@ public class Streams {
     /**
      * Functionally equivalent to {@link Stream#filter(Predicate)}. Shorthand for
      * <pre>
+     *     Arrays.stream(objects).filter(predicate)
+     * </pre>
+     * @param objects
+     * @param mapper
+     * @return
+     * @param <I>
+     * @param <O>
+     */
+    public static <I, O> Chain<O> map(I[] objects, Function<? super I, ? extends O> mapper) {
+        return new Chain<>(Arrays.stream(objects).map(mapper));
+    }
+
+    /**
+     * Functionally equivalent to {@link Stream#filter(Predicate)}. Shorthand for
+     * <pre>
      *     objects.stream().filter(predicate)
      * </pre>
      * @param objects
@@ -87,6 +102,16 @@ public class Streams {
         Function<? super I, K> keyMapper,
         Function<? super I, ? extends V> valueMapper) {
         return objects.stream().collect(Collectors.toMap(keyMapper, valueMapper));
+    }
+
+    public static <T> Chain<? extends T> concat(Collection<? extends T> first, Collection<? extends T>... more) {
+        Stream<? extends T> merged = first.stream();
+
+        for (Collection<? extends T> extra : more) {
+            merged = Stream.concat(merged, extra.stream());
+        }
+
+        return new Chain<>(merged);
     }
 
     /**

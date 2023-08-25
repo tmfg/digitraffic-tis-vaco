@@ -23,4 +23,8 @@ public class PhaseService {
             case COMPLETE -> phaseRepository.completePhase(phase);
         };
     }
+
+    public ImmutablePhase findPhase(Long entryId, String phaseName) {
+        return phaseRepository.findPhase(entryId, phaseName);
+    }
 }

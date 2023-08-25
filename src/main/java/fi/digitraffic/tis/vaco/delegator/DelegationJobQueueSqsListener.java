@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
+import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -12,6 +13,7 @@ import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.process.PhaseRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.process.model.Phase;
+import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -32,12 +34,18 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
     private final MessagingService messagingService;
     private final PhaseRepository phaseRepository;
+    private final ValidationService validationService;
+    private final ConversionService conversionService;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
-                                         PhaseRepository phaseRepository) {
+                                         PhaseRepository phaseRepository,
+                                         ValidationService validationService,
+                                         ConversionService conversionService) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
         this.phaseRepository = phaseRepository;
+        this.validationService = validationService;
+        this.conversionService = conversionService;
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -88,7 +96,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     }
 
     private Optional<Subtask> getNextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
-        List<ImmutablePhase> allPhases = phaseRepository.findPhases(jobDescription.entry());
+        List<ImmutablePhase> allPhases = phaseRepository.findPhases(jobDescription.entry().id());
 
         Set<Subtask> completedSubtasks =
             Streams.filter(allPhases, (phase -> phase.completed() != null))

@@ -2,16 +2,19 @@ package fi.digitraffic.tis.vaco.queuehandler.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
+import fi.digitraffic.tis.vaco.process.PhaseRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.process.model.Phase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.validation.ValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -19,8 +22,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 @Repository
 public class QueueHandlerRepository {
@@ -28,20 +34,29 @@ public class QueueHandlerRepository {
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
+    private final PhaseRepository phaseRepository;
+    private final ValidationService validationService;
+    private final ConversionService conversionService;
 
     public QueueHandlerRepository(JdbcTemplate jdbc,
                                   ObjectMapper objectMapper,
-                                  ErrorHandlerRepository errorHandlerRepository) {
-        this.jdbc = jdbc;
-        this.objectMapper = objectMapper;
-        this.errorHandlerRepository = errorHandlerRepository;
+                                  ErrorHandlerRepository errorHandlerRepository,
+                                  PhaseRepository phaseRepository,
+                                  ValidationService validationService,
+                                  ConversionService conversionService) {
+        this.jdbc = Objects.requireNonNull(jdbc);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
+        this.phaseRepository = Objects.requireNonNull(phaseRepository);
+        this.validationService = Objects.requireNonNull(validationService);
+        this.conversionService = Objects.requireNonNull(conversionService);
     }
 
     @Transactional
     public ImmutableEntry create(Entry entry) {
         ImmutableEntry created = createEntry(entry);
         return created
-            .withPhases(createPhases(created.id(), entry.phases()))
+            .withPhases(createPhases(created))
             .withValidations(createValidationInputs(created.id(), entry.validations()))
             .withConversions(createConversionInputs(created.id(), entry.conversions()));
     }
@@ -56,15 +71,33 @@ public class QueueHandlerRepository {
             entry.businessId(), entry.format(), entry.url(), entry.etag(), RowMappers.writeJson(objectMapper, entry.metadata()));
     }
 
-    private List<ImmutablePhase> createPhases(Long entryId, List<Phase> phases) {
-        if (phases == null) {
-            return List.of();
+    /**
+     * Resolves which phases should be executed for given entry based on requested validations and configurations.
+     * @param entry
+     * @return
+     */
+    private List<ImmutablePhase> createPhases(ImmutableEntry entry) {
+        List<ImmutablePhase> allPhases = new ArrayList<>();
+
+        if (entry.conversions() != null && !entry.conversions().isEmpty()) {
+            List<String> conversionPhases = conversionService.listSubPhases();
+            allPhases.addAll(
+                IntStream.range(0, conversionPhases.size())
+                    .mapToObj(i -> ImmutablePhase.of(entry.id(), conversionPhases.get(i), Subtask.CONVERSION.priority * 100 + i))
+                    .toList());
         }
-        return Streams.map(phases, phase -> jdbc.queryForObject(
-                "INSERT INTO phase(entry_id, name) VALUES (?, ?) RETURNING id, name, started",
-                RowMappers.PHASE,
-                entryId))
-            .toList();
+
+        // validation phases are always included
+        List<String> validationPhases = validationService.listSubPhases();
+        allPhases.addAll(
+            IntStream.range(0, validationPhases.size())
+                .mapToObj(i -> ImmutablePhase.of(entry.id(), validationPhases.get(i), Subtask.VALIDATION.priority * 100 + i))
+                .toList());
+
+        // TODO: check return value
+        phaseRepository.createPhases(allPhases);
+
+        return phaseRepository.findPhases(entry.id());
     }
 
     private List<ImmutableValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {
