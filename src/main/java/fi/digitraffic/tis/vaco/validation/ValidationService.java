@@ -18,6 +18,7 @@ import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
@@ -48,17 +49,19 @@ public class ValidationService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final PhaseService phaseService;
+    private final RulesetService rulesetService;
     private final HttpClient httpClientUtility;
     private final S3Client s3ClientUtility;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
 
     public ValidationService(PhaseService phaseService,
-                             HttpClient httpClient,
+                             RulesetService rulesetService, HttpClient httpClient,
                              S3Client s3ClientUtility,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules) {
         this.phaseService = phaseService;
+        this.rulesetService = rulesetService;
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
         this.rulesetRepository = rulesetRepository;
@@ -129,12 +132,10 @@ public class ValidationService {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
                 phaseService.reportPhase(uninitializedPhase(entry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
-        Set<Ruleset> rulesets;
-        if (entry.validations().isEmpty()) {
-            rulesets = rulesetRepository.findRulesets(entry.businessId(), Type.VALIDATION_SYNTAX);
-        } else {
-            rulesets = rulesetRepository.findRulesets(entry.businessId(), Type.VALIDATION_SYNTAX, Streams.map(entry.validations(), ValidationInput::name).toSet());
-        }
+        Set<Ruleset> rulesets = rulesetService.selectRulesets(
+                entry.businessId(),
+                Type.VALIDATION_SYNTAX,
+                Streams.map(entry.validations(), ValidationInput::name).toSet());
 
         phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 

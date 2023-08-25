@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.conversion;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
@@ -13,7 +14,8 @@ import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,16 +40,16 @@ public class ConversionService {
     Logger logger = LoggerFactory.getLogger(getClass());
     private final S3Client s3ClientUtility;
     private final PhaseService phaseService;
-    private final RulesetRepository rulesetRepository;
+    private final RulesetService rulesetService;
     private final Map<String, Rule> rules;
 
     public ConversionService(S3Client s3ClientUtility,
                              PhaseService phaseService,
-                             RulesetRepository rulesetRepository,
-                             List<Rule> rules) {
-        this.s3ClientUtility = s3ClientUtility;
-        this.phaseService = phaseService;
-        this.rulesetRepository = rulesetRepository;
+                             List<Rule> rules,
+                             RulesetService rulesetService) {
+        this.s3ClientUtility = Objects.requireNonNull(s3ClientUtility);
+        this.phaseService = Objects.requireNonNull(phaseService);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
     }
 
@@ -66,11 +69,14 @@ public class ConversionService {
     }
 
     @VisibleForTesting
-    PhaseResult<Set<Ruleset>> selectRulesets(Entry queueEntry) {
+    PhaseResult<Set<Ruleset>> selectRulesets(Entry entry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
-            phaseService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
+            phaseService.reportPhase(uninitializedPhase(entry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
-        Set<Ruleset> rulesets = rulesetRepository.findRulesets(queueEntry.businessId(), Type.CONVERSION_SYNTAX);
+        Set<Ruleset> rulesets = rulesetService.selectRulesets(
+            entry.businessId(),
+            Type.CONVERSION_SYNTAX,
+            Streams.map(entry.validations(), ValidationInput::name).toSet());
 
         phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
