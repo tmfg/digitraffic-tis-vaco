@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
-import fi.digitraffic.tis.vaco.process.PhaseRepository;
+import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -34,20 +34,20 @@ public class QueueHandlerRepository {
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
-    private final PhaseRepository phaseRepository;
+    private final PhaseService phaseService;
     private final ValidationService validationService;
     private final ConversionService conversionService;
 
     public QueueHandlerRepository(JdbcTemplate jdbc,
                                   ObjectMapper objectMapper,
                                   ErrorHandlerRepository errorHandlerRepository,
-                                  PhaseRepository phaseRepository,
+                                  PhaseService phaseService,
                                   ValidationService validationService,
                                   ConversionService conversionService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
-        this.phaseRepository = Objects.requireNonNull(phaseRepository);
+        this.phaseService = Objects.requireNonNull(phaseService);
         this.validationService = Objects.requireNonNull(validationService);
         this.conversionService = Objects.requireNonNull(conversionService);
     }
@@ -55,10 +55,11 @@ public class QueueHandlerRepository {
     @Transactional
     public ImmutableEntry create(Entry entry) {
         ImmutableEntry created = createEntry(entry);
-        return created
-            .withPhases(createPhases(created))
+        created = created
             .withValidations(createValidationInputs(created.id(), entry.validations()))
             .withConversions(createConversionInputs(created.id(), entry.conversions()));
+        // createPhases requires validations and conversions to exist at this point
+        return created.withPhases(createPhases(created));
     }
 
     private ImmutableEntry createEntry(Entry entry) {
@@ -95,9 +96,9 @@ public class QueueHandlerRepository {
                 .toList());
 
         // TODO: check return value
-        phaseRepository.createPhases(allPhases);
+        phaseService.createPhases(allPhases);
 
-        return phaseRepository.findPhases(entry.id());
+        return phaseService.findPhases(entry);
     }
 
     private List<ImmutableValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {
