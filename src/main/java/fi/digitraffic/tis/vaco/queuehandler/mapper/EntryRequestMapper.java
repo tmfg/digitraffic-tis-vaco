@@ -10,7 +10,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
-import fi.digitraffic.tis.vaco.validation.model.InvalidMappingException;
+import fi.digitraffic.tis.vaco.InvalidMappingException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

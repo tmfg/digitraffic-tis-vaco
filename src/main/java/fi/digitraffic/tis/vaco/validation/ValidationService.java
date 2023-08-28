@@ -69,7 +69,7 @@ public class ValidationService {
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
     }
 
-    public JobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
+    public JobResult validate(ValidationJobMessage jobDescription) throws RuleExecutionException {
         Entry entry = jobDescription.message();
         PhaseResult<ImmutableFileReferences> s3path = downloadFile(entry);
 
