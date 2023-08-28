@@ -42,7 +42,7 @@
         <awspringcloud.version>3.0.2</awspringcloud.version>
         <immutables.version>2.9.3</immutables.version>
         <jackson.version>2.15.2</jackson.version>
-        <mockito.version>5.4.0</mockito.version>
+        <mockito.version>5.5.0</mockito.version>
         <caffeine.version>3.1.8</caffeine.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
