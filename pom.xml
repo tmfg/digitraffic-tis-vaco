@@ -36,7 +36,7 @@
         <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
                    avoid conflicts -->
         <junit5.version>5.9.2</junit5.version>
-        <testcontainers.version>1.18.3</testcontainers.version>
+        <testcontainers.version>1.19.0</testcontainers.version>
         <awssdk.version>2.20.130</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>3.0.2</awspringcloud.version>
