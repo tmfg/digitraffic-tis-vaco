@@ -45,7 +45,7 @@ public class QueueHandlerService {
         return result;
     }
 
-    public Optional<ImmutableEntry> getQueueEntryView(String publicId) {
+    public Optional<ImmutableEntry> getEntry(String publicId) {
         return queueHandlerRepository.findByPublicId(publicId);
     }
 

@@ -116,11 +116,11 @@ public class QueueHandlerRepository {
         if (conversions == null) {
             return List.of();
         }
-        return Streams.map(conversions, conversion -> jdbc.queryForObject(
-            "SELECT 1",
-            RowMappers.CONVERSION_INPUT.apply(objectMapper),
-            entryId, conversion.name(), RowMappers.writeJson(objectMapper, conversion.config())
-        )).toList();
+        return Streams.map(conversions, validation -> jdbc.queryForObject(
+                "INSERT INTO conversion_input (entry_id, name, config) VALUES (?, ?, ?) RETURNING id, entry_id, name, config",
+                RowMappers.CONVERSION_INPUT.apply(objectMapper),
+                entryId, validation.name(), RowMappers.writeJson(objectMapper, validation.config())))
+            .toList();
     }
 
     @Transactional
@@ -140,12 +140,6 @@ public class QueueHandlerRepository {
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }
-    }
-
-    private List<ImmutablePhase> findPhases(Long entryId) {
-        return jdbc.query("SELECT * FROM phase qp WHERE qp.entry_id = ?",
-                RowMappers.PHASE,
-            entryId);
     }
 
     private List<ImmutableValidationInput> findValidationInputs(Long entryId) {
@@ -217,7 +211,7 @@ public class QueueHandlerRepository {
      */
     private ImmutableEntry buildCompleteEntry(ImmutableEntry entry) {
         return entry
-            .withPhases(findPhases(entry.id()))
+            .withPhases(phaseService.findPhases(entry))
             .withValidations(findValidationInputs(entry.id()))
             .withConversions(findConversionInputs(entry.id()))
             .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.validation.rules.Configuration;
+import fi.digitraffic.tis.vaco.conversion.rules.Configuration;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 

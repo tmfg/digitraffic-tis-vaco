@@ -35,7 +35,7 @@ public class ConversionService {
     public static final String EXECUTION_PHASE = "conversion.execute";
     public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
 
-    private static final List<String> allSubPhases = List.of(
+    public static final List<String> ALL_SUBPHASES = List.of(
         RULESET_SELECTION_PHASE,
         EXECUTION_PHASE,
         OUTPUT_VALIDATION_PHASE);
@@ -89,6 +89,6 @@ public class ConversionService {
     }
 
     public List<String> listSubPhases() {
-        return allSubPhases;
+        return ALL_SUBPHASES;
     }
 }

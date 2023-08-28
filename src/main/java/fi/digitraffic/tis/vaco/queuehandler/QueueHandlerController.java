@@ -59,8 +59,8 @@ public class QueueHandlerController {
 
     @GetMapping(path = "/{publicId}")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<ImmutableEntry>> getQueueEntryOutcome(@PathVariable("publicId") String publicId) {
-        Optional<ImmutableEntry> entry = queueHandlerService.getQueueEntryView(publicId);
+    public ResponseEntity<Resource<ImmutableEntry>> fetchEntry(@PathVariable("publicId") String publicId) {
+        Optional<ImmutableEntry> entry = queueHandlerService.getEntry(publicId);
 
         return entry
             .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
@@ -75,7 +75,7 @@ public class QueueHandlerController {
     private static Link linkToGetEntry(ImmutableEntry entry) {
         return new Link(
             MvcUriComponentsBuilder
-                .fromMethodCall(on(QueueHandlerController.class).getQueueEntryOutcome(entry.publicId()))
+                .fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId()))
                 .toUriString(),
             RequestMethod.GET);
     }

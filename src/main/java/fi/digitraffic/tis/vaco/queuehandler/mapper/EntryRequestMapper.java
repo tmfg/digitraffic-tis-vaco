@@ -60,14 +60,14 @@ public class EntryRequestMapper {
             return List.of();
         }
 
-        return Streams.map(conversions, validation -> fromJson(validation, ConversionInput.class)).toList();
+        return Streams.map(conversions, conversion -> fromJson(conversion, ConversionInput.class)).toList();
     }
 
     protected <T> T fromJson(JsonNode data, Class<T> type) {
         try {
             return objectMapper.treeToValue(data, type);
         } catch (JsonProcessingException e) {
-            throw new InvalidMappingException("Could not map JsonNode to ValidationInput", e);
+            throw new InvalidMappingException("Could not map JsonNode to " + type, e);
         }
     }
 }

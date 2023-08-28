@@ -28,7 +28,7 @@ public class PhaseRepository {
             int[][] result = jdbc.batchUpdate("""
                 INSERT INTO phase (entry_id, name, priority)
                      VALUES (?, ?, ?)
-                  RETURNING id, entry_id, name, priority, started, updated, completed
+                  RETURNING id, entry_id, name, priority, created, started, updated, completed
                 """,
                 phases,
                 100,
@@ -50,7 +50,7 @@ public class PhaseRepository {
                  UPDATE phase
                     SET started = NOW()
                   WHERE id = ?
-              RETURNING id, entry_id, name, priority, started, updated, completed
+              RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
             RowMappers.PHASE,
             phase.id());
@@ -61,7 +61,7 @@ public class PhaseRepository {
                  UPDATE phase
                     SET updated = NOW()
                   WHERE id = ?
-              RETURNING id, entry_id, name, priority, started, updated, completed
+              RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
             RowMappers.PHASE,
             phase.id());
@@ -74,7 +74,7 @@ public class PhaseRepository {
                     SET updated = NOW(),
                         completed = NOW()
                   WHERE id = ?
-              RETURNING id, entry_id, name, priority, started, updated, completed
+              RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
             RowMappers.PHASE,
             phase.id());
@@ -94,7 +94,7 @@ public class PhaseRepository {
                 SELECT *
                   FROM phase
                  WHERE entry_id = ?
-                 ORDER BY priority DESC
+                 ORDER BY priority ASC
                 """,
                 RowMappers.PHASE,
                 entryId);

@@ -44,7 +44,7 @@ public class ValidationService {
     public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
     public static final String EXECUTION_PHASE = "validation.execute";
 
-    private static final List<String> allSubPhases = List.of(DOWNLOAD_PHASE, RULESET_SELECTION_PHASE, EXECUTION_PHASE);
+    public static final List<String> ALL_SUBPHASES = List.of(DOWNLOAD_PHASE, RULESET_SELECTION_PHASE, EXECUTION_PHASE);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -169,6 +169,6 @@ public class ValidationService {
     }
 
     public List<String> listSubPhases() {
-        return allSubPhases;
+        return ALL_SUBPHASES;
     }
 }
