@@ -58,8 +58,8 @@ public class Streams {
      * @param <I>
      * @param <O>
      */
-    public static <I, O> Chain<O> mapIndexed(List<I> objects, BiFunction<Long, ? super I, ? extends O> mapper) {
-        return new Chain<>(IntStream.range(0, objects.size()).mapToObj(i -> mapper.apply((long) i, objects.get(i))));
+    public static <I, O> Chain<O> mapIndexed(List<I> objects, BiFunction<Integer, ? super I, ? extends O> mapper) {
+        return new Chain<>(IntStream.range(0, objects.size()).mapToObj(i -> mapper.apply(i, objects.get(i))));
     }
 
     /**

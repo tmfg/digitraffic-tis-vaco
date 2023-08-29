@@ -66,11 +66,11 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     private List<ImmutableTask> validationPhases = Streams.mapIndexed(
         ValidationService.ALL_SUBTASKS,
-        (i, p) -> ImmutableTask.of(null, p, (int) (100 + i)))
+        (i, p) -> ImmutableTask.of(null, p, 100 + i))
         .toList();
     private List<ImmutableTask> conversionPhases = Streams.mapIndexed(
         ConversionService.ALL_SUBTASKS,
-        (i, p) -> ImmutableTask.of(null, p, (int) (200 + i)))
+        (i, p) -> ImmutableTask.of(null, p, 200 + i))
         .toList();
 
     @Test

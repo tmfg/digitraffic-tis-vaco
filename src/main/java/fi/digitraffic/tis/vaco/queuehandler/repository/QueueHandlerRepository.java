@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 @Repository
 public class QueueHandlerRepository {
@@ -82,23 +81,22 @@ public class QueueHandlerRepository {
 
         if (entry.conversions() != null && !entry.conversions().isEmpty()) {
             List<String> conversionPhases = conversionService.listSubTasks();
-            allPhases.addAll(
-                IntStream.range(0, conversionPhases.size())
-                    .mapToObj(i -> ImmutableTask.of(entry.id(), conversionPhases.get(i), TaskCategory.CONVERSION.priority * 100 + i))
-                    .toList());
+            allPhases.addAll(extracted(conversionPhases, entry, TaskCategory.CONVERSION));
         }
 
         // validation phases are always included
         List<String> validationPhases = validationService.listSubTasks();
-        allPhases.addAll(
-            IntStream.range(0, validationPhases.size())
-                .mapToObj(i -> ImmutableTask.of(entry.id(), validationPhases.get(i), TaskCategory.VALIDATION.priority * 100 + i))
-                .toList());
+        allPhases.addAll(extracted(validationPhases, entry, TaskCategory.VALIDATION));
 
         // TODO: check return value
         taskService.createTasks(allPhases);
 
         return taskService.findTasks(entry);
+    }
+
+    private static List<ImmutableTask> extracted(List<String> validationPhases, ImmutableEntry entry, TaskCategory category) {
+        return Streams.mapIndexed(validationPhases, (i, p) -> ImmutableTask.of(entry.id(), p, category.priority * 100 + i))
+            .toList();
     }
 
     private List<ImmutableValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {

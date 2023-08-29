@@ -36,7 +36,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class ValidationService {
@@ -66,7 +65,7 @@ public class ValidationService {
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
         this.rulesetRepository = rulesetRepository;
-        this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
+        this.rules = Streams.collect(rules, Rule::getIdentifyingName, Function.identity());
     }
 
     public JobResult validate(ValidationJobMessage jobDescription) throws RuleExecutionException {
