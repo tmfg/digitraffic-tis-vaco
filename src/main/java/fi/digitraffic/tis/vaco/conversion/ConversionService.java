@@ -4,6 +4,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
+import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ConversionService {
-
+    public static final String PHASE = Subtask.CONVERSION.name().toLowerCase();
     public static final String RULESET_SELECTION_PHASE = "conversion.rulesets";
     public static final String EXECUTION_PHASE = "conversion.execute";
     public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
@@ -45,21 +46,30 @@ public class ConversionService {
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
 
+    private final S3Packager s3Packager;
+
     public ConversionService(S3Client s3ClientUtility,
                              PhaseService phaseService,
                              RulesetRepository rulesetRepository,
-                             List<Rule> rules) {
+                             List<Rule> rules, S3Packager s3Packager) {
         this.s3ClientUtility = s3ClientUtility;
         this.phaseService = phaseService;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
+        this.s3Packager = s3Packager;
     }
 
     public ImmutableJobResult convert(ImmutableConversionJobMessage jobDescription) {
-
+        Entry entry = jobDescription.message();
         PhaseResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.message());
 
         PhaseResult<List<ConversionReport>> conversionReports = executeRules(jobDescription.message(), conversionRulesets.result());
+
+        s3Packager.producePackage(
+            entry.publicId(),
+            S3Artifact.getPhasePath(entry.publicId(), PHASE),
+            PHASE + "_results",
+            null);
 
         return ImmutableJobResult.builder()
             .addResults(conversionRulesets, conversionReports)

@@ -6,6 +6,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
+import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ValidationService {
+    public static final String PHASE = Subtask.VALIDATION.name().toLowerCase();
     public static final String DOWNLOAD_PHASE = "validation.download";
     public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
     public static final String EXECUTION_PHASE = "validation.execute";
@@ -52,16 +54,19 @@ public class ValidationService {
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
 
+    private final S3Packager s3Packager;
+
     public ValidationService(PhaseService phaseService,
                              HttpClient httpClient,
                              S3Client s3ClientUtility,
                              RulesetRepository rulesetRepository,
-                             List<Rule> rules) {
+                             List<Rule> rules, S3Packager s3Packager) {
         this.phaseService = phaseService;
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
+        this.s3Packager = s3Packager;
     }
 
     public JobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
@@ -71,6 +76,12 @@ public class ValidationService {
         PhaseResult<Set<Ruleset>> validationRulesets = selectRulesets(entry);
 
         PhaseResult<List<ValidationReport>> validationReports = executeRules(entry, s3path.result(), validationRulesets.result());
+
+        s3Packager.producePackage(
+            entry.publicId(),
+            S3Artifact.getPhasePath(entry.publicId(), PHASE),
+            PHASE + "_results",
+            null);
 
         return ImmutableJobResult.builder()
                 .addResults(s3path, validationRulesets, validationReports)
