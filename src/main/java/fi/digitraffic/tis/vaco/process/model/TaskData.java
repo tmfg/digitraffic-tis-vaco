@@ -4,11 +4,11 @@ import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 @Value.Immutable
-public interface PhaseData<P> {
+public interface TaskData<P> {
     @Nullable
     P payload();
 
     @Value.Parameter
-    ImmutablePhase phase();
+    Task task();
 
 }

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
-import fi.digitraffic.tis.vaco.process.model.Phase;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -42,7 +42,7 @@ public interface Entry {
     JsonNode metadata();
 
     @Nullable
-    List<Phase> phases();
+    List<Task> tasks();
 
     // XXX: Mapstruct doesn't support Optional type natively at the moment so prefer `@Nullable`, see
     //      https://techlab.bol.com/en/blog/mapstruct-optional-fields/

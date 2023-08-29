@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.validation.rules;
 
-import fi.digitraffic.tis.vaco.process.model.PhaseData;
+import fi.digitraffic.tis.vaco.process.model.TaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
@@ -15,5 +15,5 @@ public interface Rule {
     CompletableFuture<ValidationReport> execute(
         Entry entry,
         Optional<ValidationInput> configuration,
-        PhaseData<FileReferences> phaseData);
+        TaskData<FileReferences> taskData);
 }

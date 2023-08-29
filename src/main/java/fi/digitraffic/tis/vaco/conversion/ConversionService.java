@@ -6,11 +6,11 @@ import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
-import fi.digitraffic.tis.vaco.process.PhaseService;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
-import fi.digitraffic.tis.vaco.process.model.PhaseResult;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
+import fi.digitraffic.tis.vaco.process.model.TaskResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
@@ -31,36 +31,36 @@ import java.util.stream.Collectors;
 @Service
 public class ConversionService {
 
-    public static final String RULESET_SELECTION_PHASE = "conversion.rulesets";
-    public static final String EXECUTION_PHASE = "conversion.execute";
-    public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
+    public static final String RULESET_SELECTION_SUBTASK = "conversion.rulesets";
+    public static final String EXECUTION_SUBTASK = "conversion.execute";
+    public static final String OUTPUT_VALIDATION_SUBTASK = "conversion.outputvalidation";
 
-    public static final List<String> ALL_SUBPHASES = List.of(
-        RULESET_SELECTION_PHASE,
-        EXECUTION_PHASE,
-        OUTPUT_VALIDATION_PHASE);
+    public static final List<String> ALL_SUBTASKS = List.of(
+        RULESET_SELECTION_SUBTASK,
+        EXECUTION_SUBTASK,
+        OUTPUT_VALIDATION_SUBTASK);
 
     Logger logger = LoggerFactory.getLogger(getClass());
     private final S3Client s3ClientUtility;
-    private final PhaseService phaseService;
+    private final TaskService taskService;
     private final RulesetService rulesetService;
     private final Map<String, Rule> rules;
 
     public ConversionService(S3Client s3ClientUtility,
-                             PhaseService phaseService,
+                             TaskService taskService,
                              List<Rule> rules,
                              RulesetService rulesetService) {
         this.s3ClientUtility = Objects.requireNonNull(s3ClientUtility);
-        this.phaseService = Objects.requireNonNull(phaseService);
+        this.taskService = Objects.requireNonNull(taskService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
     }
 
     public ImmutableJobResult convert(ImmutableConversionJobMessage jobDescription) {
 
-        PhaseResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.message());
+        TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.message());
 
-        PhaseResult<List<ConversionReport>> conversionReports = executeRules(jobDescription.message(), conversionRulesets.result());
+        TaskResult<List<ConversionReport>> conversionReports = executeRules(jobDescription.message(), conversionRulesets.result());
 
         return ImmutableJobResult.builder()
             .addResults(conversionRulesets, conversionReports)
@@ -68,27 +68,27 @@ public class ConversionService {
     }
 
     @VisibleForTesting
-    PhaseResult<Set<Ruleset>> selectRulesets(Entry entry) {
-        ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
-            phaseService.reportPhase(phaseService.findPhase(entry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
+    TaskResult<Set<Ruleset>> selectRulesets(Entry entry) {
+        ImmutableTaskData<Ruleset> phaseData = ImmutableTaskData.of(
+            taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START));
 
         Set<Ruleset> rulesets = rulesetService.selectRulesets(
             entry.businessId(),
             Type.CONVERSION_SYNTAX,
             Streams.map(entry.validations(), ValidationInput::name).toSet());
 
-        phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
+        phaseData.withTask(taskService.trackTask(phaseData.task(), ProcessingState.COMPLETE));
 
-        return ImmutablePhaseResult.of(RULESET_SELECTION_PHASE, rulesets);
+        return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
     }
 
     @VisibleForTesting
-    ImmutablePhaseResult<List<ConversionReport>> executeRules(Entry queueEntry, Set<Ruleset> conversionRulesets) {
+    ImmutableTaskResult<List<ConversionReport>> executeRules(Entry queueEntry, Set<Ruleset> conversionRulesets) {
         // TODO: when exact conversion implementations will be made, they will be executed here
-        return ImmutablePhaseResult.of(EXECUTION_PHASE, null);
+        return ImmutableTaskResult.of(EXECUTION_SUBTASK, null);
     }
 
-    public List<String> listSubPhases() {
-        return ALL_SUBPHASES;
+    public List<String> listSubTasks() {
+        return ALL_SUBTASKS;
     }
 }

@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.validation.rules.netex;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
@@ -69,11 +69,11 @@ class EnturNetexValidatorRuleTests {
     }
 
     @NotNull
-    private ImmutablePhaseData<FileReferences> forInput(String testFile) throws URISyntaxException {
-        return ImmutablePhaseData.<FileReferences>builder()
-            .phase(TestObjects.aPhase()
+    private ImmutableTaskData<FileReferences> forInput(String testFile) throws URISyntaxException {
+        return ImmutableTaskData.<FileReferences>builder()
+            .task(TestObjects.aPhase()
                 .id(MOCK_PHASE_ID)
-                .name(ValidationService.EXECUTION_PHASE)
+                .name(ValidationService.EXECUTION_SUBTASK)
                 .build())
             .payload(ImmutableFileReferences.of(testResource(testFile)))
             .build();

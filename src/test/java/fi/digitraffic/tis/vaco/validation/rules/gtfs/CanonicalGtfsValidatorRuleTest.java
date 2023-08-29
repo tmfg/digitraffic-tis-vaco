@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
@@ -118,7 +118,7 @@ class CanonicalGtfsValidatorRuleTest {
                                  request.bucket(), equalTo(vacoProperties.getS3processingBucket())),
                 () -> assertThat("S3 prefix contains all important ids so that the outputs get categorized correctly",
                                  request.s3Prefix().get(),
-                                 equalTo(S3Artifact.getValidationPhasePath("testPublicId", ValidationService.EXECUTION_PHASE, CanonicalGtfsValidatorRule.RULE_NAME)))
+                                 equalTo(S3Artifact.getValidationPhasePath("testPublicId", ValidationService.EXECUTION_SUBTASK, CanonicalGtfsValidatorRule.RULE_NAME)))
         );
     }
 
@@ -179,11 +179,11 @@ class CanonicalGtfsValidatorRuleTest {
     }
 
     @NotNull
-    private ImmutablePhaseData<FileReferences> forInput(String testFile) throws URISyntaxException {
-        return ImmutablePhaseData.<FileReferences>builder()
-            .phase(TestObjects.aPhase()
+    private ImmutableTaskData<FileReferences> forInput(String testFile) throws URISyntaxException {
+        return ImmutableTaskData.<FileReferences>builder()
+            .task(TestObjects.aPhase()
                 .id(MOCK_PHASE_ID)
-                .name(ValidationService.EXECUTION_PHASE)
+                .name(ValidationService.EXECUTION_SUBTASK)
                 .build())
             .payload(ImmutableFileReferences.of(testResource(testFile)))
             .build();

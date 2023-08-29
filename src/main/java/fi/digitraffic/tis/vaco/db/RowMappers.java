@@ -9,7 +9,7 @@ import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
@@ -43,7 +43,7 @@ public class RowMappers {
             .type(Type.forField(rs.getString("type")))
             .build();
 
-    public static final RowMapper<ImmutablePhase> PHASE = (rs, rowNum) -> ImmutablePhase.builder()
+    public static final RowMapper<ImmutableTask> PHASE = (rs, rowNum) -> ImmutableTask.builder()
             .id(rs.getLong("id"))
             .entryId(rs.getLong("entry_id"))
             .name(rs.getString("name"))

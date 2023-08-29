@@ -7,8 +7,8 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.process.model.Phase;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
@@ -64,13 +64,13 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         );
     }
 
-    private List<ImmutablePhase> validationPhases = Streams.mapIndexed(
-        ValidationService.ALL_SUBPHASES,
-        (i, p) -> ImmutablePhase.of(null, p, (int) (100 + i)))
+    private List<ImmutableTask> validationPhases = Streams.mapIndexed(
+        ValidationService.ALL_SUBTASKS,
+        (i, p) -> ImmutableTask.of(null, p, (int) (100 + i)))
         .toList();
-    private List<ImmutablePhase> conversionPhases = Streams.mapIndexed(
-        ConversionService.ALL_SUBPHASES,
-        (i, p) -> ImmutablePhase.of(null, p, (int) (200 + i)))
+    private List<ImmutableTask> conversionPhases = Streams.mapIndexed(
+        ConversionService.ALL_SUBTASKS,
+        (i, p) -> ImmutableTask.of(null, p, (int) (200 + i)))
         .toList();
 
     @Test
@@ -78,7 +78,7 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         ImmutableEntry result = repository.create(entry);
 
         assertThat(
-            Streams.map(result.phases(), this::withoutGeneratedValues).toList(),
+            Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
             equalTo(validationPhases));
     }
 
@@ -87,12 +87,12 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         ImmutableEntry result = repository.create(entry.withConversions(conversion));
 
         assertThat(
-            Streams.map(result.phases(), this::withoutGeneratedValues).toList(),
+            Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
             equalTo(Streams.concat(validationPhases, conversionPhases).toList()));
     }
 
     @NotNull
-    private ImmutablePhase withoutGeneratedValues(Phase p) {
-        return ImmutablePhase.copyOf(p).withId(null).withEntryId(null).withCreated(null);
+    private ImmutableTask withoutGeneratedValues(Task p) {
+        return ImmutableTask.copyOf(p).withId(null).withEntryId(null).withCreated(null);
     }
 }

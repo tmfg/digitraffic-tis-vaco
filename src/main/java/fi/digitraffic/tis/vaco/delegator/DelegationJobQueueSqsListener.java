@@ -4,15 +4,15 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
-import fi.digitraffic.tis.vaco.delegator.model.Subtask;
+import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.process.PhaseRepository;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.process.model.Phase;
+import fi.digitraffic.tis.vaco.process.TaskRepository;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
@@ -30,20 +30,20 @@ import java.util.Set;
 public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDelegationJobMessage> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DelegationJobQueueSqsListener.class);
-    private static final Subtask DEFAULT_SUBTASK = Subtask.VALIDATION;
+    private static final TaskCategory DEFAULT_TASK_CATEGORY = TaskCategory.VALIDATION;
 
     private final MessagingService messagingService;
-    private final PhaseRepository phaseRepository;
+    private final TaskRepository taskRepository;
     private final ValidationService validationService;
     private final ConversionService conversionService;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
-                                         PhaseRepository phaseRepository,
+                                         TaskRepository taskRepository,
                                          ValidationService validationService,
                                          ConversionService conversionService) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
-        this.phaseRepository = phaseRepository;
+        this.taskRepository = taskRepository;
         this.validationService = validationService;
         this.conversionService = conversionService;
     }
@@ -57,7 +57,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
     @Override
     protected void runTask(ImmutableDelegationJobMessage message) {
-        Optional<Subtask> taskToRun = nextSubtaskToRun(message);
+        Optional<TaskCategory> taskToRun = nextSubtaskToRun(message);
 
         if (taskToRun.isPresent()) {
             LOGGER.info("Job for entry {} next task to run {}", message.entry().publicId(), taskToRun.get());
@@ -83,11 +83,11 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         }
     }
 
-    private Optional<Subtask> nextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
-        Optional<Subtask> subtask = getNextSubtaskToRun(jobDescription);
+    private Optional<TaskCategory> nextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
+        Optional<TaskCategory> subtask = getNextSubtaskToRun(jobDescription);
 
         if (subtask.isPresent()) {
-            if (subtask.get().equals(DEFAULT_SUBTASK) && jobDescription.entry().started() == null) {
+            if (subtask.get().equals(DEFAULT_TASK_CATEGORY) && jobDescription.entry().started() == null) {
                 messagingService.updateJobProcessingStatus(jobDescription, ProcessingState.START);
             }
         }
@@ -96,22 +96,22 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         return subtask;
     }
 
-    private Optional<Subtask> getNextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
-        List<ImmutablePhase> allPhases = phaseRepository.findPhases(jobDescription.entry().id());
+    private Optional<TaskCategory> getNextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
+        List<ImmutableTask> allPhases = taskRepository.findTasks(jobDescription.entry().id());
 
-        Set<Subtask> completedSubtasks =
+        Set<TaskCategory> completedTaskCategories =
             Streams.filter(allPhases, (phase -> phase.completed() != null))
             .map(DelegationJobQueueSqsListener::asSubtask)
             .filter(Objects::nonNull)
             .toSet();
 
-        List<Subtask> potentialSubtasksToRun =
+        List<TaskCategory> potentialSubtasksToRun =
             Streams.map(allPhases, DelegationJobQueueSqsListener::asSubtask)
             .filter(Objects::nonNull)
             .toList();
 
-        potentialSubtasksToRun.add(Subtask.VALIDATION);  // default subtask if nothing else is detected
-        potentialSubtasksToRun.removeAll(completedSubtasks);
+        potentialSubtasksToRun.add(TaskCategory.VALIDATION);  // default subtask if nothing else is detected
+        potentialSubtasksToRun.removeAll(completedTaskCategories);
 
         if (potentialSubtasksToRun.isEmpty()) {
             return Optional.empty();
@@ -120,15 +120,15 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         }
     }
 
-    private static Subtask asSubtask(Phase phase) {
-        String subtask = phase.name().split("\\.")[0];
-        Subtask s = switch (subtask) {
-            case "validation" -> Subtask.VALIDATION;
-            case "conversion" -> Subtask.CONVERSION;
+    private static TaskCategory asSubtask(Task task) {
+        String subtask = task.name().split("\\.")[0];
+        TaskCategory s = switch (subtask) {
+            case "validation" -> TaskCategory.VALIDATION;
+            case "conversion" -> TaskCategory.CONVERSION;
             default -> null;
         };
         if (s == null) {
-            LOGGER.warn("Unmappable phase '{}'! {}", subtask, phase);
+            LOGGER.warn("Unmappable phase '{}'! {}", subtask, task);
         }
         return s;
     }

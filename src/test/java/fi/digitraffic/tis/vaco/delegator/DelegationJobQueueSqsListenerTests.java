@@ -8,7 +8,7 @@ import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
-import fi.digitraffic.tis.vaco.process.PhaseRepository;
+import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
@@ -41,7 +41,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     @Mock
     private MessagingService messagingService;
     @Mock
-    private PhaseRepository phaseRepository;
+    private TaskRepository taskRepository;
     @Mock
     private ValidationService validationService;
     @Mock
@@ -53,7 +53,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, phaseRepository, validationService, conversionService);
+        listener = new DelegationJobQueueSqsListener(messagingService, taskRepository, validationService, conversionService);
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(createQueueEntryForTesting())
             .retryStatistics(ImmutableRetryStatistics.of(5))
@@ -66,7 +66,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(messagingService, phaseRepository, validationService, conversionService);
+        verifyNoMoreInteractions(messagingService, taskRepository, validationService, conversionService);
     }
 
     @Test
@@ -77,7 +77,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.UPDATE));
 
         // no phases returned...
-        verify(phaseRepository).findPhases(jobMessage.entry().id());
+        verify(taskRepository).findTasks(jobMessage.entry().id());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
     }
@@ -108,7 +108,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         verify(messagingService).updateJobProcessingStatus(eq(alreadyStarted), eq(ProcessingState.UPDATE));
 
         // no phases returned...
-        verify(phaseRepository).findPhases(alreadyStarted.entry().id());
+        verify(taskRepository).findTasks(alreadyStarted.entry().id());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
     }

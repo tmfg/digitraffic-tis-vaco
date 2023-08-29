@@ -1,7 +1,8 @@
 package fi.digitraffic.tis.vaco.process;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,29 +14,29 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public class PhaseRepository {
+public class TaskRepository {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbc;
 
-    public PhaseRepository(JdbcTemplate jdbc) {
+    public TaskRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    public boolean createPhases(List<ImmutablePhase> phases) {
+    public boolean createTasks(List<ImmutableTask> phases) {
         try {
             int[][] result = jdbc.batchUpdate("""
-                INSERT INTO phase (entry_id, name, priority)
+                INSERT INTO task (entry_id, name, priority)
                      VALUES (?, ?, ?)
                   RETURNING id, entry_id, name, priority, created, started, updated, completed
                 """,
                 phases,
                 100,
-                (ps, phase) -> {
-                    ps.setLong(1, phase.entryId());
-                    ps.setString(2, phase.name());
-                    ps.setLong(3, phase.priority());
+                (ps, task) -> {
+                    ps.setLong(1, task.entryId());
+                    ps.setString(2, task.name());
+                    ps.setLong(3, task.priority());
                 });
             // TODO: inspect result counts to determine everything was inserted
             return true;
@@ -45,39 +46,39 @@ public class PhaseRepository {
         }
     }
 
-    public ImmutablePhase startPhase(ImmutablePhase phase) {
+    public ImmutableTask startTask(Task task) {
         return jdbc.queryForObject("""
-                 UPDATE phase
+                 UPDATE task
                     SET started = NOW()
                   WHERE id = ?
               RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
             RowMappers.PHASE,
-            phase.id());
+            task.id());
     }
 
-    public ImmutablePhase updatePhase(ImmutablePhase phase) {
+    public ImmutableTask updateTask(Task task) {
         return jdbc.queryForObject("""
-                 UPDATE phase
+                 UPDATE task
                     SET updated = NOW()
                   WHERE id = ?
               RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
             RowMappers.PHASE,
-            phase.id());
+            task.id());
 
     }
 
-    public ImmutablePhase completePhase(ImmutablePhase phase) {
+    public ImmutableTask completeTask(Task task) {
         return jdbc.queryForObject("""
-                 UPDATE phase
+                 UPDATE task
                     SET updated = NOW(),
                         completed = NOW()
                   WHERE id = ?
               RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
             RowMappers.PHASE,
-            phase.id());
+            task.id());
     }
 
     /**
@@ -88,11 +89,11 @@ public class PhaseRepository {
      * @param entry Entry reference for finding the phases.
      * @return Ordered list of phases or empty list if none found.
      */
-    public List<ImmutablePhase> findPhases(long entryId) {
+    public List<ImmutableTask> findTasks(long entryId) {
         try {
             return jdbc.query("""
                 SELECT *
-                  FROM phase
+                  FROM task
                  WHERE entry_id = ?
                  ORDER BY priority ASC
                 """,
@@ -109,12 +110,12 @@ public class PhaseRepository {
      * @return Number of phases for entry.
      */
     public long count(Entry entry) {
-        return jdbc.queryForObject("SELECT COUNT(id) FROM phase WHERE entry_id = ?", Long.class, entry.id());
+        return jdbc.queryForObject("SELECT COUNT(id) FROM task WHERE entry_id = ?", Long.class, entry.id());
     }
 
-    public ImmutablePhase findPhase(Long entryId, String phaseName) {
+    public ImmutableTask findTask(Long entryId, String phaseName) {
         return jdbc.queryForObject(
-            "SELECT * FROM phase WHERE entry_id = ? AND name = ?",
+            "SELECT * FROM task WHERE entry_id = ? AND name = ?",
             RowMappers.PHASE,
             entryId, phaseName);
     }

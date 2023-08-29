@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.validation.rules;
 
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.process.model.PhaseData;
+import fi.digitraffic.tis.vaco.process.model.TaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
@@ -33,15 +33,15 @@ public abstract class ValidatorRule implements Rule {
     public CompletableFuture<ValidationReport> execute(
         Entry queueEntry,
         Optional<ValidationInput> configuration,
-        PhaseData<FileReferences> phaseData) {
+        TaskData<FileReferences> taskData) {
 
         return CompletableFuture.supplyAsync(() -> {
             if (ruleFormat.equalsIgnoreCase(queueEntry.format())) {
-                return runValidator(queueEntry, configuration, phaseData);
+                return runValidator(queueEntry, configuration, taskData);
             } else {
                 ImmutableError error = ImmutableError.of(
                     queueEntry.id(),
-                    phaseData.phase().id(),
+                    taskData.task().id(),
                     rulesetRepository.findByName(getIdentifyingName()).orElseThrow().id(),
                     "Wrong format! Expected '%s', was '%s'".formatted(ruleFormat, queueEntry.format()));
                 errorHandlerService.reportError(error);
@@ -54,5 +54,5 @@ public abstract class ValidatorRule implements Rule {
     protected abstract ValidationReport runValidator(
         Entry queueEntry,
         Optional<ValidationInput> configuration,
-        PhaseData<FileReferences> phaseData);
+        TaskData<FileReferences> taskData);
 }
