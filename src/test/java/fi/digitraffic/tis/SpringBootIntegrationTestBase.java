@@ -81,7 +81,7 @@ public abstract class SpringBootIntegrationTestBase {
     @Autowired
     private ObjectMapper objectMapper;
 
-    protected <C> ResultActions apiCall(MockHttpServletRequestBuilder request) throws Exception {
+    protected ResultActions apiCall(MockHttpServletRequestBuilder request) throws Exception {
         return mockMvc.perform(request.contentType(MediaType.APPLICATION_JSON));
     }
 

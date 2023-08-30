@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.process.model.PhaseData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.validation.ValidationProcessException;
+import fi.digitraffic.tis.vaco.validation.RuleExecutionException;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
@@ -102,11 +102,11 @@ public class EnturNetexValidatorRule extends ValidatorRule implements Rule {
                     phaseData.phase().id(),
                     rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
                     message));
-            throw new ValidationProcessException(message, e);
+            throw new RuleExecutionException(message, e);
         }
     }
 
-    private ZipFile toZipFile(PhaseData phaseData, Path netexSource) {
+    private ZipFile toZipFile(PhaseData<FileReferences> phaseData, Path netexSource) {
         ZipFile zipFile;
         try {
             logger.debug("Processing {} as ZIP file", netexSource);
@@ -119,12 +119,12 @@ public class EnturNetexValidatorRule extends ValidatorRule implements Rule {
                     phaseData.phase().id(),
                     rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
                     message));
-            throw new ValidationProcessException(message, e1);
+            throw new RuleExecutionException(message, e1);
         }
         return zipFile;
     }
 
-    private byte[] getEntryContents(PhaseData phaseData, ZipFile zipFile, ZipEntry zipEntry) {
+    private byte[] getEntryContents(PhaseData<FileReferences> phaseData, ZipFile zipFile, ZipEntry zipEntry) {
         byte[] bytes;
         try {
             bytes = zipFile.getInputStream(zipEntry).readAllBytes();
@@ -136,7 +136,7 @@ public class EnturNetexValidatorRule extends ValidatorRule implements Rule {
                     phaseData.phase().id(),
                     rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
                     message));
-            throw new ValidationProcessException(message, e);
+            throw new RuleExecutionException(message, e);
         }
         return bytes;
     }

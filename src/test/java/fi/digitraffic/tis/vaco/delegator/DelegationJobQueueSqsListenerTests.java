@@ -1,23 +1,26 @@
 package fi.digitraffic.tis.vaco.delegator;
 
+import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.process.PhaseRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 
@@ -26,17 +29,23 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-@ExtendWith(MockitoExtension.class)
-class DelegationJobQueueSqsListenerTests {
+class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     private DelegationJobQueueSqsListener listener;
 
     private ImmutableDelegationJobMessage jobMessage;
 
+    @Autowired
+    private QueueHandlerRepository queueHandlerRepository;
+
     @Mock
     private MessagingService messagingService;
     @Mock
     private PhaseRepository phaseRepository;
+    @Mock
+    private ValidationService validationService;
+    @Mock
+    private ConversionService conversionService;
     @Mock
     private Acknowledgement acknowledgement;
     @Captor
@@ -44,16 +53,20 @@ class DelegationJobQueueSqsListenerTests {
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, phaseRepository);
+        listener = new DelegationJobQueueSqsListener(messagingService, phaseRepository, validationService, conversionService);
         jobMessage = ImmutableDelegationJobMessage.builder()
-            .entry(ImmutableEntry.of("floppy disk", "https://example.solita", TestConstants.FINTRAFFIC_BUSINESS_ID))
+            .entry(createQueueEntryForTesting())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
     }
 
+    private ImmutableEntry createQueueEntryForTesting() {
+        return queueHandlerRepository.create(TestObjects.anEntry("gtfs").build());
+    }
+
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(messagingService, phaseRepository);
+        verifyNoMoreInteractions(messagingService, phaseRepository, validationService, conversionService);
     }
 
     @Test
@@ -64,7 +77,7 @@ class DelegationJobQueueSqsListenerTests {
         verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.UPDATE));
 
         // no phases returned...
-        verify(phaseRepository).findPhases(jobMessage.entry());
+        verify(phaseRepository).findPhases(jobMessage.entry().id());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
     }
@@ -95,7 +108,7 @@ class DelegationJobQueueSqsListenerTests {
         verify(messagingService).updateJobProcessingStatus(eq(alreadyStarted), eq(ProcessingState.UPDATE));
 
         // no phases returned...
-        verify(phaseRepository).findPhases(alreadyStarted.entry());
+        verify(phaseRepository).findPhases(alreadyStarted.entry().id());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
     }

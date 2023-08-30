@@ -61,7 +61,7 @@ public class S3Client {
             .completionFuture();
     }
 
-    CompletableFuture<CompletedDirectoryDownload> downloadDirectory(Path directoryPath) throws IOException {
+    CompletableFuture<CompletedDirectoryDownload> downloadDirectory(Path directoryPath) {
         DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()
             .destination(directoryPath)
             .build();
@@ -69,7 +69,7 @@ public class S3Client {
             .completionFuture();
     }
 
-    CompletableFuture<CompletedFileDownload> downloadFile(Path filePath) throws IOException {
+    CompletableFuture<CompletedFileDownload> downloadFile(Path filePath) {
         DownloadFileRequest dfr = DownloadFileRequest.builder()
             .destination(filePath)
             .build();
@@ -79,12 +79,3 @@ public class S3Client {
     }
 }
 
-class S3ClientException extends RuntimeException {
-    public S3ClientException(String message) {
-        super(message);
-    }
-
-    public S3ClientException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}

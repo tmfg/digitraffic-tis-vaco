@@ -145,7 +145,6 @@
             <scope>provided</scope>
         </dependency>
 
-
         <!-- Database connectivity -->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -202,6 +201,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.assertj</groupId>
+                    <artifactId>assertj-parent</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -251,6 +256,12 @@
             <groupId>com.github.MobilityData</groupId>
             <artifactId>gtfs-validator</artifactId>
             <version>v4.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Entur NeTEx Validator -->

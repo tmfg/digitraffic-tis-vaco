@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
@@ -47,6 +48,7 @@ public class RowMappers {
             .entryId(rs.getLong("entry_id"))
             .name(rs.getString("name"))
             .priority(rs.getInt("priority"))
+            .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
             .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
             .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
             .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
@@ -70,6 +72,7 @@ public class RowMappers {
 
     public static final Function<ObjectMapper, RowMapper<ImmutableEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
     public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
+    public static final Function<ObjectMapper, RowMapper<ImmutableConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
     public static final Function<ObjectMapper, RowMapper<ImmutableError>> ERROR = RowMappers::mapError;
 
     private static RowMapper<ImmutableError> mapError(ObjectMapper objectMapper) {
@@ -109,12 +112,26 @@ public class RowMappers {
         return (rs, rowNum) -> {
             String name = rs.getString("name");
 
-            Class<? extends Configuration> cc = findSubtypeFromAnnotation(name);
+            Class<?> cc = findSubtypeFromAnnotation(name);
 
             return ImmutableValidationInput.builder()
                     .id(rs.getLong("id"))
                     .name(rs.getString("name"))
-                    .config(readValue(objectMapper, rs, "config", cc))
+                    .config(readValue(objectMapper, rs, "config", (Class<Configuration>) cc))
+                    .build();
+        };
+    }
+
+    private static RowMapper<ImmutableConversionInput> mapConversionInput(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> {
+            String name = rs.getString("name");
+
+            Class<?> cc = findSubtypeFromAnnotation(name);
+
+            return ImmutableConversionInput.builder()
+                    .id(rs.getLong("id"))
+                    .name(rs.getString("name"))
+                    .config(readValue(objectMapper, rs, "config", (Class<fi.digitraffic.tis.vaco.conversion.rules.Configuration>) cc))
                     .build();
         };
     }
@@ -122,13 +139,14 @@ public class RowMappers {
     /**
      * Tries to find matching configuration class reference from Jackson's annotations defined in the class based on
      * name of the rule.
-     *
+     * <p>
      * This method exists to avoid duplicating the type mapping code.
+     *
      * @param name Name of the rule
      * @return Matching configuration class reference or null if one couldn't be found.
      */
     @SuppressWarnings("unchecked")
-    private static Class<Configuration> findSubtypeFromAnnotation(String name) {
+    private static Class<?> findSubtypeFromAnnotation(String name) {
         JsonSubTypes definedSubTypes = Configuration.class.getDeclaredAnnotation(JsonSubTypes.class);
 
         Class<?> cc = Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
@@ -136,7 +154,7 @@ public class RowMappers {
             .findFirst()
             .orElse(null);
 
-        return (Class<Configuration>) cc;
+        return cc;
     }
 
     private static <I,O> O nullable(I input, Function<I, O> i2o) {

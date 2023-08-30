@@ -17,5 +17,5 @@ import org.immutables.value.Value;
 })
 public interface Subtype {
     @Nullable
-    abstract String getName();
+    String getName();
 }

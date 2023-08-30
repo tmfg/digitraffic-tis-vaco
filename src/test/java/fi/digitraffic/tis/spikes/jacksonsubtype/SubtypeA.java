@@ -10,5 +10,5 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableSubtypeA.class)
 public interface SubtypeA extends Subtype {
     @Nullable
-    abstract String subtypeValueA();
+    String subtypeValueA();
 }

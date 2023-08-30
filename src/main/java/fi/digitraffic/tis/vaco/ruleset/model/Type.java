@@ -1,11 +1,13 @@
 package fi.digitraffic.tis.vaco.ruleset.model;
 
 import fi.digitraffic.tis.utilities.model.PersistableEnum;
-import fi.digitraffic.tis.vaco.validation.model.InvalidMappingException;
+import fi.digitraffic.tis.vaco.InvalidMappingException;
 
 public enum Type implements PersistableEnum {
-    VALIDATION_SYNTAX("validation_syntax"), VALIDATION_LOGIC("validation_logic"),
-    CONVERSION_SYNTAX("conversion_syntax"), CONVERSION_LOGIC("conversion_logic");
+    VALIDATION_SYNTAX("validation_syntax"),
+    VALIDATION_LOGIC("validation_logic"),
+    CONVERSION_SYNTAX("conversion_syntax"),
+    CONVERSION_LOGIC("conversion_logic");
 
     private final String fieldName;
 

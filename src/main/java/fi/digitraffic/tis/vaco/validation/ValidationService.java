@@ -6,10 +6,8 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
-import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.JobResult;
@@ -18,6 +16,7 @@ import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
@@ -45,26 +44,32 @@ public class ValidationService {
     public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
     public static final String EXECUTION_PHASE = "validation.execute";
 
-    Logger logger = LoggerFactory.getLogger(getClass());
+    public static final List<String> ALL_SUBPHASES = List.of(DOWNLOAD_PHASE, RULESET_SELECTION_PHASE, EXECUTION_PHASE);
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final PhaseService phaseService;
+    private final RulesetService rulesetService;
     private final HttpClient httpClientUtility;
     private final S3Client s3ClientUtility;
     private final RulesetRepository rulesetRepository;
     private final Map<String, Rule> rules;
 
     public ValidationService(PhaseService phaseService,
+                             RulesetService rulesetService,
                              HttpClient httpClient,
                              S3Client s3ClientUtility,
                              RulesetRepository rulesetRepository,
                              List<Rule> rules) {
         this.phaseService = phaseService;
+        this.rulesetService = rulesetService;
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
         this.rulesetRepository = rulesetRepository;
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
     }
 
-    public JobResult validate(ValidationJobMessage jobDescription) throws ValidationProcessException {
+    public JobResult validate(ValidationJobMessage jobDescription) throws RuleExecutionException {
         Entry entry = jobDescription.message();
         PhaseResult<ImmutableFileReferences> s3path = downloadFile(entry);
 
@@ -77,14 +82,10 @@ public class ValidationService {
                 .build();
     }
 
-    private static ImmutablePhase uninitializedPhase(Long entryId, String phaseName) {
-        return ImmutablePhase.of(entryId, phaseName, Subtask.VALIDATION.priority);
-    }
-
     @VisibleForTesting
     PhaseResult<ImmutableFileReferences> downloadFile(Entry queueEntry) {
         ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
-                phaseService.reportPhase(uninitializedPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
+                phaseService.reportPhase(phaseService.findPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
         Path tempFilePath = s3ClientUtility.createVacoDownloadTempFile(queueEntry.publicId(),
             queueEntry.format(), phaseData.phase().name());
 
@@ -126,14 +127,12 @@ public class ValidationService {
     @VisibleForTesting
     PhaseResult<Set<Ruleset>> selectRulesets(Entry entry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
-                phaseService.reportPhase(uninitializedPhase(entry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
+                phaseService.reportPhase(phaseService.findPhase(entry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
-        Set<Ruleset> rulesets;
-        if (entry.validations().isEmpty()) {
-            rulesets = rulesetRepository.findRulesets(entry.businessId(), Type.VALIDATION_SYNTAX);
-        } else {
-            rulesets = rulesetRepository.findRulesets(entry.businessId(), Type.VALIDATION_SYNTAX, Streams.map(entry.validations(), ValidationInput::name).toSet());
-        }
+        Set<Ruleset> rulesets = rulesetService.selectRulesets(
+                entry.businessId(),
+                Type.VALIDATION_SYNTAX,
+                Streams.map(entry.validations(), ValidationInput::name).toSet());
 
         phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
@@ -143,7 +142,7 @@ public class ValidationService {
     @VisibleForTesting
     ImmutablePhaseResult<List<ValidationReport>> executeRules(Entry entry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
         PhaseData<FileReferences> phaseData = ImmutablePhaseData.<FileReferences>builder()
-                .phase(phaseService.reportPhase(uninitializedPhase(entry.id(), EXECUTION_PHASE), ProcessingState.START))
+                .phase(phaseService.reportPhase(phaseService.findPhase(entry.id(), EXECUTION_PHASE), ProcessingState.START))
                 .payload(fileReferences)
                 .build();
 
@@ -169,4 +168,7 @@ public class ValidationService {
         return rule;
     }
 
+    public List<String> listSubPhases() {
+        return ALL_SUBPHASES;
+    }
 }

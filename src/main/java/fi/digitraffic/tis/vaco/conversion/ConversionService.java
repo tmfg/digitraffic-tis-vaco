@@ -1,34 +1,30 @@
 package fi.digitraffic.tis.vaco.conversion;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
-import fi.digitraffic.tis.vaco.delegator.model.Subtask;
 import fi.digitraffic.tis.vaco.process.PhaseService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,19 +35,24 @@ public class ConversionService {
     public static final String EXECUTION_PHASE = "conversion.execute";
     public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
 
+    public static final List<String> ALL_SUBPHASES = List.of(
+        RULESET_SELECTION_PHASE,
+        EXECUTION_PHASE,
+        OUTPUT_VALIDATION_PHASE);
+
     Logger logger = LoggerFactory.getLogger(getClass());
     private final S3Client s3ClientUtility;
     private final PhaseService phaseService;
-    private final RulesetRepository rulesetRepository;
+    private final RulesetService rulesetService;
     private final Map<String, Rule> rules;
 
     public ConversionService(S3Client s3ClientUtility,
                              PhaseService phaseService,
-                             RulesetRepository rulesetRepository,
-                             List<Rule> rules) {
-        this.s3ClientUtility = s3ClientUtility;
-        this.phaseService = phaseService;
-        this.rulesetRepository = rulesetRepository;
+                             List<Rule> rules,
+                             RulesetService rulesetService) {
+        this.s3ClientUtility = Objects.requireNonNull(s3ClientUtility);
+        this.phaseService = Objects.requireNonNull(phaseService);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
         this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
     }
 
@@ -66,29 +67,15 @@ public class ConversionService {
             .build();
     }
 
-    private static ImmutablePhase uninitializedPhase(Long entryId, String phaseName) {
-        return ImmutablePhase.of(entryId, phaseName, Subtask.CONVERSION.priority);
-    }
-
-    private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
-        return phaseData -> {
-            String targetPath = S3Artifact.getConversionPhasePath(queueEntry.publicId(),
-                                                         "output",
-                                                                  queueEntry.conversion().targetFormat());
-            Path sourcePath = phaseData.payload().localPath();
-
-            return s3ClientUtility.uploadFile(targetPath, sourcePath)
-                .thenApply(u -> phaseData // upload done -> update phase
-                    .withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
-        };
-    }
-
     @VisibleForTesting
-    PhaseResult<Set<Ruleset>> selectRulesets(Entry queueEntry) {
+    PhaseResult<Set<Ruleset>> selectRulesets(Entry entry) {
         ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
-            phaseService.reportPhase(uninitializedPhase(queueEntry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
+            phaseService.reportPhase(phaseService.findPhase(entry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
 
-        Set<Ruleset> rulesets = rulesetRepository.findRulesets(queueEntry.businessId(), Type.CONVERSION_SYNTAX);
+        Set<Ruleset> rulesets = rulesetService.selectRulesets(
+            entry.businessId(),
+            Type.CONVERSION_SYNTAX,
+            Streams.map(entry.validations(), ValidationInput::name).toSet());
 
         phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
 
@@ -101,13 +88,7 @@ public class ConversionService {
         return ImmutablePhaseResult.of(EXECUTION_PHASE, null);
     }
 
-    private Optional<Rule> findMatchingRule(Ruleset ruleset) {
-        String identifyingName = ruleset.identifyingName();
-        Optional<Rule> ruleOptional = Optional.ofNullable(rules.get(identifyingName));
-        if (ruleOptional.isEmpty()) {
-            logger.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
-        }
-        return ruleOptional;
+    public List<String> listSubPhases() {
+        return ALL_SUBPHASES;
     }
-
 }
