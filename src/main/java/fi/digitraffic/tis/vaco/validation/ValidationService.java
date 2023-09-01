@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.process.model.TaskData;
 import fi.digitraffic.tis.vaco.process.model.TaskResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -23,9 +24,10 @@ import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.rules.Rule;
+import fi.digitraffic.tis.vaco.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.net.http.HttpResponse;
@@ -52,14 +54,14 @@ public class ValidationService {
     private final HttpClient httpClientUtility;
     private final S3Client s3ClientUtility;
     private final RulesetRepository rulesetRepository;
-    private final Map<String, Rule> rules;
+    private final Map<String, Rule<ValidationInput, ValidationReport>> rules;
 
     public ValidationService(TaskService taskService,
                              RulesetService rulesetService,
                              HttpClient httpClient,
                              S3Client s3ClientUtility,
                              RulesetRepository rulesetRepository,
-                             List<Rule> rules) {
+                             @Qualifier("validation") List<Rule<ValidationInput, ValidationReport>> rules) {
         this.taskService = taskService;
         this.rulesetService = rulesetService;
         this.httpClientUtility = httpClient;
@@ -158,9 +160,9 @@ public class ValidationService {
         return ImmutableTaskResult.of(EXECUTION_SUBTASK, reports);
     }
 
-    private Optional<Rule> findMatchingRule(Ruleset validationRule) {
+    private Optional<Rule<ValidationInput, ValidationReport>> findMatchingRule(Ruleset validationRule) {
         String identifyingName = validationRule.identifyingName();
-        Optional<Rule> rule = Optional.ofNullable(rules.get(identifyingName));
+        Optional<Rule<ValidationInput, ValidationReport>> rule = Optional.ofNullable(rules.get(identifyingName));
         if (rule.isEmpty()) {
             logger.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
         }

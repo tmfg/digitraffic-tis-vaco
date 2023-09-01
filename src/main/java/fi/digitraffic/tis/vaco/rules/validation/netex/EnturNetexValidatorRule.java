@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.validation.rules.netex;
+package fi.digitraffic.tis.vaco.rules.validation.netex;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
@@ -6,13 +6,12 @@ import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.process.model.TaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.validation.RuleExecutionException;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.rules.Rule;
-import fi.digitraffic.tis.vaco.validation.rules.ValidatorRule;
 import org.entur.netex.validation.validator.NetexValidatorsRunner;
 import org.entur.netex.validation.validator.schema.NetexSchemaValidator;
 import org.entur.netex.validation.xml.NetexXMLParser;
@@ -27,7 +26,7 @@ import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class EnturNetexValidatorRule extends ValidatorRule implements Rule {
+public class EnturNetexValidatorRule extends ValidatorRule {
     public static final String RULE_NAME = "netex.entur.v1_0_1";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());

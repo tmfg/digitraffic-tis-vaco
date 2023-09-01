@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.rules.conversion.ConverterConfiguration;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
@@ -13,10 +14,10 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
+import fi.digitraffic.tis.vaco.rules.validation.ValidatorConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.rules.Configuration;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,7 +118,7 @@ public class RowMappers {
             return ImmutableValidationInput.builder()
                     .id(rs.getLong("id"))
                     .name(rs.getString("name"))
-                    .config(readValue(objectMapper, rs, "config", (Class<Configuration>) cc))
+                    .config(readValue(objectMapper, rs, "config", (Class<ValidatorConfiguration>) cc))
                     .build();
         };
     }
@@ -131,7 +132,7 @@ public class RowMappers {
             return ImmutableConversionInput.builder()
                     .id(rs.getLong("id"))
                     .name(rs.getString("name"))
-                    .config(readValue(objectMapper, rs, "config", (Class<fi.digitraffic.tis.vaco.conversion.rules.Configuration>) cc))
+                    .config(readValue(objectMapper, rs, "config", (Class<ConverterConfiguration>) cc))
                     .build();
         };
     }
@@ -147,7 +148,7 @@ public class RowMappers {
      */
     @SuppressWarnings("unchecked")
     private static Class<?> findSubtypeFromAnnotation(String name) {
-        JsonSubTypes definedSubTypes = Configuration.class.getDeclaredAnnotation(JsonSubTypes.class);
+        JsonSubTypes definedSubTypes = ValidatorConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class);
 
         Class<?> cc = Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
             .map(JsonSubTypes.Type::value)

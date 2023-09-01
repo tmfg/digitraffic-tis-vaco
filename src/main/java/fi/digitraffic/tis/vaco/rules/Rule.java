@@ -1,19 +1,17 @@
-package fi.digitraffic.tis.vaco.validation.rules;
+package fi.digitraffic.tis.vaco.rules;
 
 import fi.digitraffic.tis.vaco.process.model.TaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
-import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public interface Rule {
+public interface Rule<INPUT, OUTPUT> {
     String getIdentifyingName();
 
-    CompletableFuture<ValidationReport> execute(
+    CompletableFuture<OUTPUT> execute(
         Entry entry,
-        Optional<ValidationInput> configuration,
+        Optional<INPUT> configuration,
         TaskData<FileReferences> taskData);
 }

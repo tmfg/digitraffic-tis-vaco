@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.validation.rules.gtfs;
+package fi.digitraffic.tis.vaco.rules.validation.gtfs;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,12 +11,11 @@ import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.process.model.TaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.rules.Rule;
-import fi.digitraffic.tis.vaco.validation.rules.ValidatorRule;
 import org.immutables.value.Value;
 import org.mobilitydata.gtfsvalidator.input.CountryCode;
 import org.mobilitydata.gtfsvalidator.runner.ValidationRunner;
@@ -39,7 +38,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class CanonicalGtfsValidatorRule extends ValidatorRule implements Rule {
+public class CanonicalGtfsValidatorRule extends ValidatorRule {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
