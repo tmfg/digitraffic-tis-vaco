@@ -23,8 +23,6 @@ public class QueueHandlerService {
 
     private final EntryRequestMapper entryRequestMapper;
 
-
-
     public QueueHandlerService(EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
                                QueueHandlerRepository queueHandlerRepository) {

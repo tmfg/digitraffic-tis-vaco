@@ -7,8 +7,11 @@ public enum Subtask {
 
     public final int priority;
 
+    public final String name;
+
     Subtask(int priority) {
         this.priority = priority;
+        this.name = this.name().toLowerCase();
     }
 
 }

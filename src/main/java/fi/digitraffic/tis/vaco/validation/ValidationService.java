@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ValidationService {
-    public static final String PHASE = Subtask.VALIDATION.name().toLowerCase();
+    public static final String PHASE = Subtask.VALIDATION.name;
     public static final String DOWNLOAD_PHASE = "validation.download";
     public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
     public static final String EXECUTION_PHASE = "validation.execute";
@@ -77,11 +77,11 @@ public class ValidationService {
 
         PhaseResult<List<ValidationReport>> validationReports = executeRules(entry, s3path.result(), validationRulesets.result());
 
+        String packageFileName = PHASE + "_results";
         s3Packager.producePackage(
-            entry.publicId(),
             S3Artifact.getPhasePath(entry.publicId(), PHASE),
-            PHASE + "_results",
-            null);
+            S3Artifact.getPackagePath(entry.publicId(), packageFileName),
+            PHASE + "_results");
 
         return ImmutableJobResult.builder()
                 .addResults(s3path, validationRulesets, validationReports)

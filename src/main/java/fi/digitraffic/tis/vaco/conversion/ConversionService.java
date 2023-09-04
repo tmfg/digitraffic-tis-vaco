@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ConversionService {
-    public static final String PHASE = Subtask.CONVERSION.name().toLowerCase();
+    public static final String PHASE = Subtask.CONVERSION.name;
     public static final String RULESET_SELECTION_PHASE = "conversion.rulesets";
     public static final String EXECUTION_PHASE = "conversion.execute";
     public static final String OUTPUT_VALIDATION_PHASE = "conversion.outputvalidation";
@@ -65,11 +65,11 @@ public class ConversionService {
 
         PhaseResult<List<ConversionReport>> conversionReports = executeRules(jobDescription.message(), conversionRulesets.result());
 
+        String packageFileName = PHASE + "_results";
         s3Packager.producePackage(
-            entry.publicId(),
             S3Artifact.getPhasePath(entry.publicId(), PHASE),
-            PHASE + "_results",
-            null);
+            S3Artifact.getPackagePath(entry.publicId(), packageFileName),
+            packageFileName);
 
         return ImmutableJobResult.builder()
             .addResults(conversionRulesets, conversionReports)

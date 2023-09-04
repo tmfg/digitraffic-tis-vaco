@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.aws;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -37,15 +38,14 @@ public class S3Packager {
 
     /**
      * Method to get a temporary folder, unique per packaging request.
-     * Looks like: s3Temp/<entryPublicId>_timestamp
+     * Looks like: s3Temp/random_uuid
      * Under this folder resides:
      *      /downloads with the downloaded S3 artifacts;
      *      <zipFileName>.zip that gets produced from /downloads folder
-     * @param entryPublicId
      * @return
      */
-    public static String getTempFolderPath(String entryPublicId) {
-        return S3_ROOT_DOWNLOADS_FOLDER + "/" + entryPublicId + "_" + LocalDateTime.now();
+    public static String getTempFolderPath() {
+        return S3_ROOT_DOWNLOADS_FOLDER + "/" + UUID.randomUUID();
     }
 
     public static String getZipPath(String tempFolder, String zipFileName) {
@@ -57,8 +57,8 @@ public class S3Packager {
     }
 
     private CompletableFuture<CompletedDirectoryDownload> downloadArtifacts(String s3SourcePath,
-                                                                    String[] filterKeys,
-                                                                    String tempFolder) throws IOException {
+                                                                            String[] filterKeys,
+                                                                            String tempFolder) throws IOException {
         Path s3DownloadsPath = Path.of(S3_ROOT_DOWNLOADS_FOLDER);
         if(!Files.exists(s3DownloadsPath)) {
             Files.createDirectory(s3DownloadsPath);
@@ -107,13 +107,14 @@ public class S3Packager {
         }
     }
 
-    private CompletableFuture<CompletedFileUpload> uploadZip(String entryPublicId, String zipFileName, String zipPath) {
-        return s3Client.uploadFile(S3Artifact.getPackagePath(entryPublicId, zipFileName), Path.of(zipPath));
+    private CompletableFuture<CompletedFileUpload> uploadZip(String s3TargetPath, String zipPath) {
+        return s3Client.uploadFile(s3TargetPath, Path.of(zipPath));
     }
 
     /**
      * After the zip  is uploaded to its final destination, time to clean up local folder
      */
+    @VisibleForTesting
     void cleanup(File itemToBeDeleted) throws IOException {
         File[] contents = itemToBeDeleted.listFiles();
         if (contents != null) {
@@ -124,17 +125,17 @@ public class S3Packager {
         Files.delete(itemToBeDeleted.toPath());
     }
 
-    public void producePackage(String entryPublicId,
-                               String s3SourcePath,
-                               String zipFileName ,
-                               String[] filterKeys) {
-        CompletableFuture.runAsync(() -> {
+    public CompletableFuture<Void> producePackage(String s3SourcePath,
+                                                  String s3TargetPath,
+                                                  String zipFileName,
+                                                  String... filterKeys) {
+        return CompletableFuture.runAsync(() -> {
             logger.info(String.format("S3Packager starting to package %s artifacts into %s", s3SourcePath, zipFileName));
-            String tempFolder = getTempFolderPath(entryPublicId);
+            String tempFolder = getTempFolderPath();
             try {
                 downloadArtifacts(s3SourcePath, filterKeys, tempFolder).join();
                 createZip(tempFolder, zipFileName);
-                uploadZip(entryPublicId, zipFileName, getZipPath(tempFolder, zipFileName)).join();
+                uploadZip(s3TargetPath + "/" + zipFileName + ".zip", getZipPath(tempFolder, zipFileName)).join();
                 logger.info(String.format("S3Packager successfully completed packaging %s into %s!", s3SourcePath, zipFileName));
             } catch (IOException e) {
                 logger.error(String.format("S3Packager encountered IOException while packaging %s into %s", s3SourcePath, zipFileName), e);
