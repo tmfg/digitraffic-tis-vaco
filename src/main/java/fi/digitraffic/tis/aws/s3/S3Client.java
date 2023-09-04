@@ -90,16 +90,14 @@ public class S3Client {
       }
 
     CompletableFuture<CompletedFileDownload> downloadFile(Path filePath) {
-        String bucketName = getUploadBucketName();
         DownloadFileRequest dfr = DownloadFileRequest.builder()
-            .bucket(bucketName)
             .destination(filePath)
             .build();
         return s3TransferManager
             .downloadFile(dfr)
             .completionFuture();
     }
-  
+
     CompletableFuture<CompletedDirectoryDownload> downloadDirectory(Path directoryPath) {
           String bucketName = getUploadBucketName();
           DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()

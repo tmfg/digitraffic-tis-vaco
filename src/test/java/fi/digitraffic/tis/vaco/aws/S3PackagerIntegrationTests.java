@@ -39,6 +39,7 @@ import static fi.digitraffic.tis.vaco.aws.TestData.fileToIgnoreInSubDirectoryNam
 import static fi.digitraffic.tis.vaco.aws.TestData.inputRootDirectoryPath;
 import static fi.digitraffic.tis.vaco.aws.TestData.outputDirectoryPath;
 import static fi.digitraffic.tis.vaco.aws.TestData.someFileName;
+import static fi.digitraffic.tis.vaco.aws.TestData.subDirectory;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -68,7 +69,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
             .resolve(TestData.inputRootDirectory));
         Path subDirectoryPath = Files.createDirectories(testDirectory.toPath()
             .resolve(TestData.inputRootDirectory)
-            .resolve(TestData.subDirectory));
+            .resolve(subDirectory));
         Path directoryToIgnorePath = Files.createDirectories(testDirectory.toPath()
             .resolve(TestData.inputRootDirectory)
             .resolve(TestData.directoryToIgnore));
@@ -137,11 +138,11 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     void testPackageWithFilteredDirectory() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
         s3Packager.producePackage(TestData.inputRootDirectory, TestData.outputDirectory,
-                packageFileName, directoryToIgnore).get();
+                packageFileName, ".*" + directoryToIgnore + ".*").get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
         List<String> filteredFiles = new ArrayList<>(List.copyOf(allFiles));
-        filteredFiles.remove(fileInIgnoredDirectoryName);
+        filteredFiles.remove(directoryToIgnore + "/" + fileInIgnoredDirectoryName);
         assertZipFileContents(filteredFiles, producedPackageZip);
         producedPackageZip.close();
     }
@@ -150,11 +151,11 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     void testPackageWithFilteredFile() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
         s3Packager.producePackage(TestData.inputRootDirectory, TestData.outputDirectory,
-            packageFileName, fileToIgnoreInSubDirectoryName).get();
+            packageFileName, ".*" + fileToIgnoreInSubDirectoryName).get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
         List<String> filteredFiles = new ArrayList<>(List.copyOf(allFiles));
-        filteredFiles.remove(fileToIgnoreInSubDirectoryName);
+        filteredFiles.remove(subDirectory + "/" +fileToIgnoreInSubDirectoryName);
         assertZipFileContents(filteredFiles, producedPackageZip);
         producedPackageZip.close();
     }
@@ -163,12 +164,14 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     void testPackageWithMultipleFilters() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
         s3Packager.producePackage(TestData.inputRootDirectory, TestData.outputDirectory,
-            packageFileName, fileToIgnoreInSubDirectoryName, directoryToIgnore).get();
+            packageFileName,
+            ".*" + fileToIgnoreInSubDirectoryName,
+            ".*" + directoryToIgnore + ".*").get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
         List<String> filteredFiles = new ArrayList<>(List.copyOf(allFiles));
-        filteredFiles.remove(someFileName);
-        filteredFiles.remove(directoryToIgnore);
+        filteredFiles.remove(subDirectory + "/" + fileToIgnoreInSubDirectoryName);
+        filteredFiles.remove(directoryToIgnore + "/" + fileInIgnoredDirectoryName);
         assertZipFileContents(filteredFiles, producedPackageZip);
         producedPackageZip.close();
     }
@@ -185,7 +188,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
         List<String> filteredFiles = new ArrayList<>(List.copyOf(allFiles));
         filteredFiles.remove(someFileName);
-        filteredFiles.remove("subDirectory/" + fileToIgnoreInSubDirectoryName);
+        filteredFiles.remove(subDirectory + "/" + fileToIgnoreInSubDirectoryName);
         assertZipFileContents(filteredFiles, producedPackageZip);
         producedPackageZip.close();
     }
