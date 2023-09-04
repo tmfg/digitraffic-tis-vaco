@@ -41,12 +41,3 @@ public class HttpClient {
     }
 }
 
-class HttpClientUtilityException extends RuntimeException {
-    public HttpClientUtilityException(String message) {
-        super(message);
-    }
-
-    public HttpClientUtilityException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}

@@ -29,6 +29,9 @@ public interface Phase {
     int priority();
 
     @Nullable
+    LocalDateTime created();
+
+    @Nullable
     LocalDateTime started();
 
     @Nullable

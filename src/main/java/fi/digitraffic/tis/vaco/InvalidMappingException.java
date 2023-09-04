@@ -1,8 +1,5 @@
-package fi.digitraffic.tis.vaco.validation.model;
+package fi.digitraffic.tis.vaco;
 
-import fi.digitraffic.tis.vaco.VacoException;
-
-// TODO: move this to errorhandling?
 public class InvalidMappingException extends VacoException {
     public InvalidMappingException(String message) {
         super(message);

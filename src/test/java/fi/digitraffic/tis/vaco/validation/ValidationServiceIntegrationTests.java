@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
 import fi.digitraffic.tis.vaco.process.model.PhaseData;
+import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -51,6 +52,9 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     public static final String TEST_RULE_NAME = "hello world";
     public static final String TEST_RULE_RESULT = "The world was greeted";
+
+    @Autowired
+    private QueueHandlerService queueHandlerService;
 
     @TestConfiguration
     public static class ContextConfiguration {

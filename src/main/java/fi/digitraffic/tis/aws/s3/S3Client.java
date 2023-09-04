@@ -87,15 +87,27 @@ public class S3Client {
         return s3TransferManager
             .uploadDirectory(udr)
             .completionFuture();
-    }
+      }
 
     CompletableFuture<CompletedFileDownload> downloadFile(Path filePath) {
+        String bucketName = getUploadBucketName();
         DownloadFileRequest dfr = DownloadFileRequest.builder()
+            .bucket(bucketName)
             .destination(filePath)
             .build();
         return s3TransferManager
             .downloadFile(dfr)
             .completionFuture();
+    }
+  
+    CompletableFuture<CompletedDirectoryDownload> downloadDirectory(Path directoryPath) {
+          String bucketName = getUploadBucketName();
+          DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()
+              .bucket(bucketName)
+              .destination(directoryPath)
+              .build();
+          return s3TransferManager.downloadDirectory(ddr)
+              .completionFuture();
     }
 
     public CompletableFuture<CompletedDirectoryDownload> downloadDirectory(String sourcePath,
@@ -141,12 +153,3 @@ public class S3Client {
     }
 }
 
-class S3ClientException extends RuntimeException {
-    public S3ClientException(String message) {
-        super(message);
-    }
-
-    public S3ClientException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}

@@ -7,8 +7,8 @@ import fi.digitraffic.tis.vaco.validation.rules.netex.EnturNetexValidatorConfigu
 import fi.digitraffic.tis.vaco.validation.rules.netex.EnturNetexValidatorRule;
 
 /**
- * Marker interface for validation rule configurations. Used mainly to instruct Jackson how to properly (de)serialize
- * related types.
+ * Marker interface for validation and conversion rule configurations. Used mainly to instruct Jackson how to properly
+ * (de)serialize related types.
  */
 @JsonSubTypes({
     @JsonSubTypes.Type(name = CanonicalGtfsValidatorRule.RULE_NAME, value = CanonicalGtfsValidatorConfiguration.class),

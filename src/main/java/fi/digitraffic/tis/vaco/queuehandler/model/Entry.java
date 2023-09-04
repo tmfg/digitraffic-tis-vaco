@@ -52,7 +52,7 @@ public interface Entry {
     List<ValidationInput> validations();
 
     @Nullable
-    ConversionInput conversion();
+    List<ConversionInput> conversions();
 
     @Nullable
     List<Error> errors();
