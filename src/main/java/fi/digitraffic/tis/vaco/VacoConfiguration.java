@@ -22,6 +22,9 @@ public class VacoConfiguration {
     private S3TransferManager s3TransferManager;
 
     @Autowired
+    private software.amazon.awssdk.services.s3.S3Client awsS3Client;
+
+    @Autowired
     private VacoProperties vacoProperties;
 
     @Bean
@@ -31,7 +34,7 @@ public class VacoConfiguration {
 
     @Bean
     public S3Client s3ClientUtility() {
-        return new S3Client(s3TransferManager, vacoProperties);
+        return new S3Client(s3TransferManager, vacoProperties, awsS3Client);
     }
 
     @Bean(name = "rulesetNameCache")
