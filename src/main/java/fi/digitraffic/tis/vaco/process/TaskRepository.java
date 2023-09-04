@@ -3,13 +3,13 @@ package fi.digitraffic.tis.vaco.process;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,6 +24,7 @@ public class TaskRepository {
         this.jdbc = jdbc;
     }
 
+    @Transactional
     public boolean createTasks(List<ImmutableTask> phases) {
         try {
             int[][] result = jdbc.batchUpdate("""
@@ -86,7 +87,7 @@ public class TaskRepository {
      * <p>
      * The priority order is somewhat arbitrary and decided during insert.
      *
-     * @param entry Entry reference for finding the phases.
+     * @param entryId Entry id reference for finding the phases.
      * @return Ordered list of phases or empty list if none found.
      */
     public List<ImmutableTask> findTasks(long entryId) {
@@ -102,15 +103,6 @@ public class TaskRepository {
         } catch (EmptyResultDataAccessException e) {
             return List.of();
         }
-    }
-
-    /**
-     * Returns simple count of known phases for given entry.
-     * @param entry Entry to scan.
-     * @return Number of phases for entry.
-     */
-    public long count(Entry entry) {
-        return jdbc.queryForObject("SELECT COUNT(id) FROM task WHERE entry_id = ?", Long.class, entry.id());
     }
 
     public ImmutableTask findTask(Long entryId, String phaseName) {
