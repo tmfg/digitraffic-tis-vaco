@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
@@ -101,12 +102,12 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
         Set<TaskCategory> completedTaskCategories =
             Streams.filter(allPhases, (phase -> phase.completed() != null))
-            .map(DelegationJobQueueSqsListener::asSubtask)
+            .map(DelegationJobQueueSqsListener::asTaskCategory)
             .filter(Objects::nonNull)
             .toSet();
 
         List<TaskCategory> potentialSubtasksToRun =
-            Streams.map(allPhases, DelegationJobQueueSqsListener::asSubtask)
+            Streams.map(allPhases, DelegationJobQueueSqsListener::asTaskCategory)
             .filter(Objects::nonNull)
             .toList();
 
@@ -120,7 +121,8 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         }
     }
 
-    private static TaskCategory asSubtask(Task task) {
+    @VisibleForTesting
+    protected static TaskCategory asTaskCategory(Task task) {
         String subtask = task.name().split("\\.")[0];
         TaskCategory s = switch (subtask) {
             case "validation" -> TaskCategory.VALIDATION;
