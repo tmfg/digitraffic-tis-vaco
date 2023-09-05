@@ -50,7 +50,7 @@ public class TestObjects {
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }
 
-    public static ImmutableTask.Builder aPhase() {
+    public static ImmutableTask.Builder aTask() {
         return ImmutableTask.builder()
             .id(new Random().nextLong())
             .name(UUID.randomUUID().toString())

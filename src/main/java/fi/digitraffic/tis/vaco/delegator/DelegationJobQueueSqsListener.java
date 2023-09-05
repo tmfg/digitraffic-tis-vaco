@@ -98,16 +98,16 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     }
 
     private Optional<TaskCategory> getNextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
-        List<ImmutableTask> allPhases = taskRepository.findTasks(jobDescription.entry().id());
+        List<ImmutableTask> allTasks = taskRepository.findTasks(jobDescription.entry().id());
 
         Set<TaskCategory> completedTaskCategories =
-            Streams.filter(allPhases, (phase -> phase.completed() != null))
+            Streams.filter(allTasks, (task -> task.completed() != null))
             .map(DelegationJobQueueSqsListener::asTaskCategory)
             .filter(Objects::nonNull)
             .toSet();
 
         List<TaskCategory> potentialSubtasksToRun =
-            Streams.map(allPhases, DelegationJobQueueSqsListener::asTaskCategory)
+            Streams.map(allTasks, DelegationJobQueueSqsListener::asTaskCategory)
             .filter(Objects::nonNull)
             .toList();
 
@@ -130,7 +130,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
             default -> null;
         };
         if (s == null) {
-            LOGGER.warn("Unmappable phase '{}'! {}", subtask, task);
+            LOGGER.warn("Unmappable task '{}'! {}", subtask, task);
         }
         return s;
     }

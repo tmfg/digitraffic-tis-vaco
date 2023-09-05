@@ -43,7 +43,7 @@ class EnturNetexValidatorRuleTests {
      * lots of shared code in the mocking infrastructure of these test classes.
      */
 
-    private static final Long MOCK_PHASE_ID = 4009763L;
+    private static final Long MOCK_TASK_ID = 4009763L;
 
     private ValidatorRule rule;
 
@@ -72,8 +72,8 @@ class EnturNetexValidatorRuleTests {
     @NotNull
     private ImmutableTaskData<FileReferences> forInput(String testFile) throws URISyntaxException {
         return ImmutableTaskData.<FileReferences>builder()
-            .task(TestObjects.aPhase()
-                .id(MOCK_PHASE_ID)
+            .task(TestObjects.aTask()
+                .id(MOCK_TASK_ID)
                 .name(ValidationService.EXECUTION_SUBTASK)
                 .build())
             .payload(ImmutableFileReferences.of(testResource(testFile)))

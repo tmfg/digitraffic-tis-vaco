@@ -28,12 +28,12 @@ public class TaskService {
         };
     }
 
-    public ImmutableTask findTask(Long entryId, String phaseName) {
-        return taskRepository.findTask(entryId, phaseName);
+    public ImmutableTask findTask(Long entryId, String taskName) {
+        return taskRepository.findTask(entryId, taskName);
     }
 
-    public boolean createTasks(List<ImmutableTask> phases) {
-        return taskRepository.createTasks(phases);
+    public boolean createTasks(List<ImmutableTask> tasks) {
+        return taskRepository.createTasks(tasks);
     }
 
     public List<ImmutableTask> findTasks(Entry entry) {

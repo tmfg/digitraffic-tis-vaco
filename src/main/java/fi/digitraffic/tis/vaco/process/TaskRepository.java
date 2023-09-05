@@ -25,14 +25,14 @@ public class TaskRepository {
     }
 
     @Transactional
-    public boolean createTasks(List<ImmutableTask> phases) {
+    public boolean createTasks(List<ImmutableTask> tasks) {
         try {
             int[][] result = jdbc.batchUpdate("""
                 INSERT INTO task (entry_id, name, priority)
                      VALUES (?, ?, ?)
                   RETURNING id, entry_id, name, priority, created, started, updated, completed
                 """,
-                phases,
+                tasks,
                 100,
                 (ps, task) -> {
                     ps.setLong(1, task.entryId());
@@ -42,7 +42,7 @@ public class TaskRepository {
             // TODO: inspect result counts to determine everything was inserted
             return true;
         } catch (DuplicateKeyException dke) {
-            logger.warn("Failed to batch insert phases", dke);
+            logger.warn("Failed to batch insert tasks", dke);
             return false;
         }
     }
@@ -54,7 +54,7 @@ public class TaskRepository {
                   WHERE id = ?
               RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
-            RowMappers.PHASE,
+            RowMappers.TASK,
             task.id());
     }
 
@@ -65,7 +65,7 @@ public class TaskRepository {
                   WHERE id = ?
               RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
-            RowMappers.PHASE,
+            RowMappers.TASK,
             task.id());
 
     }
@@ -78,17 +78,17 @@ public class TaskRepository {
                   WHERE id = ?
               RETURNING id, entry_id, name, priority, created, started, updated, completed
             """,
-            RowMappers.PHASE,
+            RowMappers.TASK,
             task.id());
     }
 
     /**
-     * Finds all phases for given entry, if any, ordered by priority.
+     * Finds all tasks for given entry, if any, ordered by priority.
      * <p>
      * The priority order is somewhat arbitrary and decided during insert.
      *
-     * @param entryId Entry id reference for finding the phases.
-     * @return Ordered list of phases or empty list if none found.
+     * @param entryId Entry id reference for finding the tasks.
+     * @return Ordered list of tasks or empty list if none found.
      */
     public List<ImmutableTask> findTasks(long entryId) {
         try {
@@ -98,17 +98,17 @@ public class TaskRepository {
                  WHERE entry_id = ?
                  ORDER BY priority ASC
                 """,
-                RowMappers.PHASE,
+                RowMappers.TASK,
                 entryId);
         } catch (EmptyResultDataAccessException e) {
             return List.of();
         }
     }
 
-    public ImmutableTask findTask(Long entryId, String phaseName) {
+    public ImmutableTask findTask(Long entryId, String taskName) {
         return jdbc.queryForObject(
             "SELECT * FROM task WHERE entry_id = ? AND name = ?",
-            RowMappers.PHASE,
-            entryId, phaseName);
+            RowMappers.TASK,
+            entryId, taskName);
     }
 }

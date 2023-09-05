@@ -81,7 +81,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.START));
         verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.UPDATE));
 
-        // no phases returned...
+        // no tasks returned...
         verify(taskRepository).findTasks(jobMessage.entry().id());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
@@ -112,7 +112,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         // only UPDATE, no START
         verify(messagingService).updateJobProcessingStatus(eq(alreadyStarted), eq(ProcessingState.UPDATE));
 
-        // no phases returned...
+        // no tasks returned...
         verify(taskRepository).findTasks(alreadyStarted.entry().id());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());

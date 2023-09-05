@@ -25,12 +25,12 @@ public class ErrorHandlerRepository {
     public ImmutableError create(Error error) {
         try {
             return jdbc.queryForObject("""
-                INSERT INTO error (entry_id, phase_id, ruleset_id, message, raw)
+                INSERT INTO error (entry_id, task_id, ruleset_id, message, raw)
                      VALUES (?, ?, ?, ?, ?)
-                  RETURNING id, public_id, entry_id, phase_id, ruleset_id, message, raw
+                  RETURNING id, public_id, entry_id, task_id, ruleset_id, message, raw
                 """,
                 RowMappers.ERROR.apply(objectMapper),
-                error.entryId(), error.phaseId(), error.rulesetId(), error.message(), objectMapper.writeValueAsString(error.raw()).getBytes());
+                error.entryId(), error.taskId(), error.rulesetId(), error.message(), objectMapper.writeValueAsString(error.raw()).getBytes());
         } catch (JsonProcessingException e) {
             throw new InvalidMappingException("Failed to convert JsonNode to bytes[]", e);
         }
@@ -40,7 +40,7 @@ public class ErrorHandlerRepository {
         try {
             return jdbc.query(
                     """
-                    SELECT id, public_id, entry_id, phase_id, ruleset_id, message, raw
+                    SELECT id, public_id, entry_id, task_id, ruleset_id, message, raw
                       FROM error em
                      WHERE em.entry_id = ?
                     """,

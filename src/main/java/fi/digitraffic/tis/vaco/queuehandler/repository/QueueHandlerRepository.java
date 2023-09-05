@@ -57,8 +57,8 @@ public class QueueHandlerRepository {
         created = created
             .withValidations(createValidationInputs(created.id(), entry.validations()))
             .withConversions(createConversionInputs(created.id(), entry.conversions()));
-        // createPhases requires validations and conversions to exist at this point
-        return created.withTasks(createPhases(created));
+        // createTasks requires validations and conversions to exist at this point
+        return created.withTasks(createTasks(created));
     }
 
     private ImmutableEntry createEntry(Entry entry) {
@@ -72,30 +72,30 @@ public class QueueHandlerRepository {
     }
 
     /**
-     * Resolves which phases should be executed for given entry based on requested validations and configurations.
+     * Resolves which tasks should be executed for given entry based on requested validations and configurations.
      * @param entry
      * @return
      */
-    private List<ImmutableTask> createPhases(ImmutableEntry entry) {
-        List<ImmutableTask> allPhases = new ArrayList<>();
+    private List<ImmutableTask> createTasks(ImmutableEntry entry) {
+        List<ImmutableTask> allTasks = new ArrayList<>();
 
         if (entry.conversions() != null && !entry.conversions().isEmpty()) {
-            List<String> conversionPhases = conversionService.listSubTasks();
-            allPhases.addAll(extracted(conversionPhases, entry, TaskCategory.CONVERSION));
+            List<String> conversionTasks = conversionService.listSubTasks();
+            allTasks.addAll(extracted(conversionTasks, entry, TaskCategory.CONVERSION));
         }
 
-        // validation phases are always included
-        List<String> validationPhases = validationService.listSubTasks();
-        allPhases.addAll(extracted(validationPhases, entry, TaskCategory.VALIDATION));
+        // validation tasks are always included
+        List<String> validationTasks = validationService.listSubTasks();
+        allTasks.addAll(extracted(validationTasks, entry, TaskCategory.VALIDATION));
 
         // TODO: check return value
-        taskService.createTasks(allPhases);
+        taskService.createTasks(allTasks);
 
         return taskService.findTasks(entry);
     }
 
-    private static List<ImmutableTask> extracted(List<String> validationPhases, ImmutableEntry entry, TaskCategory category) {
-        return Streams.mapIndexed(validationPhases, (i, p) -> ImmutableTask.of(entry.id(), p, category.priority * 100 + i))
+    private static List<ImmutableTask> extracted(List<String> validationTasks, ImmutableEntry entry, TaskCategory category) {
+        return Streams.mapIndexed(validationTasks, (i, t) -> ImmutableTask.of(entry.id(), t, category.priority * 100 + i))
             .toList();
     }
 

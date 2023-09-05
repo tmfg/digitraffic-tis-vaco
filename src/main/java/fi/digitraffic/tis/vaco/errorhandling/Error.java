@@ -27,7 +27,7 @@ public interface Error {
     @Value.Parameter
     @Nullable
     @JsonView(DataVisibility.Internal.class)
-    Long phaseId();
+    Long taskId();
 
     @Value.Parameter
     @Nullable

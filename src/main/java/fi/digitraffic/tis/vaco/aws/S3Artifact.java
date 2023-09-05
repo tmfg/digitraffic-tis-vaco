@@ -6,11 +6,11 @@ public class S3Artifact {
 
     public static final String METADATA = "/entries/%s/metadata.json";
 
-    static final String DOWNLOAD_PHASE = "/entries/%s/phases/download/%s";
+    static final String DOWNLOAD_TASK = "/entries/%s/tasks/download/%s";
 
-    static final String VALIDATION_PHASE = "/entries/%s/phases/validation/%s/%s";
+    static final String VALIDATION_TASK = "/entries/%s/tasks/validation/%s/%s";
 
-    static final String CONVERSION_PHASE = "/entries/%s/phases/conversion/%s/%s";
+    static final String CONVERSION_TASK = "/entries/%s/tasks/conversion/%s/%s";
 
     static final String PACKAGE = "/entries/%s/package/%s.zip";
 
@@ -33,40 +33,40 @@ public class S3Artifact {
     }
 
     /**
-     * Pattern: /entries/{entryPublicId}/phases/download/{fileName}.{extension}
+     * Pattern: /entries/{entryPublicId}/tasks/download/{fileName}.{extension}
      * @param entryPublicId
      * @param artifact: a file name
      * @return
      */
-    public static String getDownloadPhasePath(String entryPublicId,
-                                              String artifact) {
-        return String.format(DOWNLOAD_PHASE, entryPublicId, artifact);
+    public static String getDownloadTaskPath(String entryPublicId,
+                                             String artifact) {
+        return String.format(DOWNLOAD_TASK, entryPublicId, artifact);
     }
 
     /**
-     * Pattern: /entries/{entryPublicId}/phases/validation/{subPhase}/{fileName}.{extension}
+     * Pattern: /entries/{entryPublicId}/tasks/validation/{subTask}/{fileName}.{extension}
      * @param entryPublicId
-     * @param subPhase
+     * @param subTask
      * @param artifact: either a file name or directory with a bunch of files
      * @return
      */
-    public static String getValidationPhasePath(String entryPublicId,
-                                                String subPhase,
-                                                String artifact) {
-        return String.format(VALIDATION_PHASE, entryPublicId, subPhase, artifact);
+    public static String getValidationTaskPath(String entryPublicId,
+                                               String subTask,
+                                               String artifact) {
+        return String.format(VALIDATION_TASK, entryPublicId, subTask, artifact);
     }
 
     /**
-     * Pattern: /entries/{entryPublicId}/phases/conversion/{subPhase}/{fileName}.{extension}
+     * Pattern: /entries/{entryPublicId}/tasks/conversion/{subTask}/{fileName}.{extension}
      * @param entryPublicId
-     * @param subPhase
+     * @param subTask
      * @param artifact: either a file name or directory with a bunch of files
      * @return
      */
-    public static String getConversionPhasePath(String entryPublicId,
-                                                String subPhase,
-                                                String artifact) {
-        return String.format(CONVERSION_PHASE, entryPublicId, subPhase, artifact);
+    public static String getConversionTaskPath(String entryPublicId,
+                                               String subTask,
+                                               String artifact) {
+        return String.format(CONVERSION_TASK, entryPublicId, subTask, artifact);
     }
 
     /**

@@ -85,49 +85,49 @@ public class ValidationService {
 
     @VisibleForTesting
     TaskResult<ImmutableFileReferences> downloadFile(Entry queueEntry) {
-        ImmutableTaskData<ImmutableFileReferences> phaseData = ImmutableTaskData.of(
+        ImmutableTaskData<ImmutableFileReferences> taskData = ImmutableTaskData.of(
                 taskService.trackTask(taskService.findTask(queueEntry.id(), DOWNLOAD_SUBTASK), ProcessingState.START));
         Path tempFilePath = s3ClientUtility.createVacoDownloadTempFile(queueEntry.publicId(),
-            queueEntry.format(), phaseData.task().name());
+            queueEntry.format(), taskData.task().name());
 
         return httpClientUtility.downloadFile(tempFilePath, queueEntry.url(), queueEntry.etag())
-            .thenApply(wrapHttpResult(phaseData))
+            .thenApply(wrapHttpResult(taskData))
             .thenCompose(uploadToS3(queueEntry))
-            .thenApply(completeDownloadPhase())
+            .thenApply(completeDownloadTask())
             .join(); // wait for finish - might be temporary
     }
 
     private Function<HttpResponse<Path>, ImmutableTaskData<ImmutableFileReferences>> wrapHttpResult(ImmutableTaskData<ImmutableFileReferences> taskData) {
         return path -> taskData
-                // download done -> update phase
+                // download done -> update task
                 .withTask(taskService.trackTask(taskData.task(), ProcessingState.UPDATE))
                 .withPayload(ImmutableFileReferences.of(path.body()));
     }
 
     private Function<ImmutableTaskData<ImmutableFileReferences>, CompletableFuture<ImmutableTaskData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
-        return phaseData -> {
-            String targetPath = S3Artifact.getDownloadPhasePath(queueEntry.publicId(), queueEntry.format() + ".original");
-            Path sourcePath = phaseData.payload().localPath();
+        return taskData -> {
+            String targetPath = S3Artifact.getDownloadTaskPath(queueEntry.publicId(), queueEntry.format() + ".original");
+            Path sourcePath = taskData.payload().localPath();
 
             return s3ClientUtility.uploadFile(targetPath, sourcePath)
-                .thenApply(u -> phaseData // upload done -> update phase
-                    .withTask(taskService.trackTask(phaseData.task(), ProcessingState.UPDATE)));
+                .thenApply(u -> taskData // upload done -> update task
+                    .withTask(taskService.trackTask(taskData.task(), ProcessingState.UPDATE)));
         };
     }
 
-    private Function<TaskData<ImmutableFileReferences>, TaskResult<ImmutableFileReferences>> completeDownloadPhase() {
-        return phaseData -> {
-            ImmutableFileReferences fileRefs = phaseData.payload();
+    private Function<TaskData<ImmutableFileReferences>, TaskResult<ImmutableFileReferences>> completeDownloadTask() {
+        return taskData -> {
+            ImmutableFileReferences fileRefs = taskData.payload();
             logger.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
             // download complete, mark to database as complete and unwrap payload
-            taskService.trackTask(phaseData.task(), ProcessingState.COMPLETE);
+            taskService.trackTask(taskData.task(), ProcessingState.COMPLETE);
             return ImmutableTaskResult.of(DOWNLOAD_SUBTASK, fileRefs);
         };
     }
 
     @VisibleForTesting
     TaskResult<Set<Ruleset>> selectRulesets(Entry entry) {
-        ImmutableTaskData<Ruleset> phaseData = ImmutableTaskData.of(
+        ImmutableTaskData<Ruleset> taskData = ImmutableTaskData.of(
                 taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START));
 
         Set<Ruleset> rulesets = rulesetService.selectRulesets(
@@ -135,7 +135,7 @@ public class ValidationService {
                 Type.VALIDATION_SYNTAX,
                 Streams.map(entry.validations(), ValidationInput::name).toSet());
 
-        phaseData.withTask(taskService.trackTask(phaseData.task(), ProcessingState.COMPLETE));
+        taskData.withTask(taskService.trackTask(taskData.task(), ProcessingState.COMPLETE));
 
         return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
     }
@@ -155,7 +155,7 @@ public class ValidationService {
                 .map(r -> r.get().execute(entry, r.map(x -> configs.get(x.getIdentifyingName())), taskData))
                 .map(CompletableFuture::join)
                 .toList();
-        // everything's done at this point because of the ::join call, complete phase and return
+        // everything's done at this point because of the ::join call, complete task and return
         taskService.trackTask(taskData.task(), ProcessingState.COMPLETE);
         return ImmutableTaskResult.of(EXECUTION_SUBTASK, reports);
     }

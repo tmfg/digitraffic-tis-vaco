@@ -69,7 +69,7 @@ public class ConversionService {
 
     @VisibleForTesting
     TaskResult<Set<Ruleset>> selectRulesets(Entry entry) {
-        ImmutableTaskData<Ruleset> phaseData = ImmutableTaskData.of(
+        ImmutableTaskData<Ruleset> taskData = ImmutableTaskData.of(
             taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START));
 
         Set<Ruleset> rulesets = rulesetService.selectRulesets(
@@ -77,7 +77,7 @@ public class ConversionService {
             Type.CONVERSION_SYNTAX,
             Streams.map(entry.validations(), ValidationInput::name).toSet());
 
-        phaseData.withTask(taskService.trackTask(phaseData.task(), ProcessingState.COMPLETE));
+        taskData.withTask(taskService.trackTask(taskData.task(), ProcessingState.COMPLETE));
 
         return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
     }

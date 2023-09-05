@@ -44,7 +44,7 @@ public class RowMappers {
             .type(Type.forField(rs.getString("type")))
             .build();
 
-    public static final RowMapper<ImmutableTask> PHASE = (rs, rowNum) -> ImmutableTask.builder()
+    public static final RowMapper<ImmutableTask> TASK = (rs, rowNum) -> ImmutableTask.builder()
             .id(rs.getLong("id"))
             .entryId(rs.getLong("entry_id"))
             .name(rs.getString("name"))
@@ -81,7 +81,7 @@ public class RowMappers {
             ImmutableError.Builder b = ImmutableError.builder()
                     .id(rs.getLong("id"))
                     .publicId(rs.getString("public_id"))
-                    .phaseId(rs.getLong("phase_id"))
+                    .taskId(rs.getLong("task_id"))
                     .rulesetId(rs.getLong("ruleset_id"))
                     .message(rs.getString("message"));
             try {

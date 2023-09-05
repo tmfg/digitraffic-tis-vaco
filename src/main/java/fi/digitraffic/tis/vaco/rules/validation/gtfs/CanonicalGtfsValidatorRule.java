@@ -128,7 +128,7 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     }
 
     private List<ImmutableError> copyOutputToS3(Entry queueEntry, TaskData<FileReferences> taskData, Path outputDirectory) {
-        String s3Path = S3Artifact.getValidationPhasePath(queueEntry.publicId(),
+        String s3Path = S3Artifact.getValidationTaskPath(queueEntry.publicId(),
                                                           taskData.task().name(),
                                                           RULE_NAME);
 

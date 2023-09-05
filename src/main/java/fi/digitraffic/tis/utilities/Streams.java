@@ -123,6 +123,23 @@ public class Streams {
         return objects.stream().collect(Collectors.toMap(keyMapper, valueMapper));
     }
 
+    /**
+     *  Collect (=convert) given collection transforming each entry using the provided transformation function. Shorthand
+     * for
+     * <pre>
+     *     Streams.map(objects, mapper).toList()
+     * </pre>
+     *
+     * @param objects
+     * @param mapper
+     * @return
+     * @param <I>
+     * @param <O>
+     */
+    public static <I, O> List<? extends O> collect(Collection<I> objects, Function<? super I, ? extends O> mapper) {
+        return map(objects, mapper).toList();
+    }
+
     public static <T> Chain<? extends T> concat(Collection<? extends T> first, Collection<? extends T>... more) {
         Stream<? extends T> merged = first.stream();
 

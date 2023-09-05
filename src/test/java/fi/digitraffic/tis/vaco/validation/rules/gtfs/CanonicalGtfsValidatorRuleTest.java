@@ -57,7 +57,7 @@ import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 @ExtendWith(MockitoExtension.class)
 class CanonicalGtfsValidatorRuleTest {
 
-    private static final Long MOCK_PHASE_ID = 4038721L;
+    private static final Long MOCK_TASK_ID = 4038721L;
     private static final Long MOCK_VALIDATION_RULE_ID = 2031091L;
 
     private static final String testBucket = "vaco-test-canonical-gtfs-validator";
@@ -119,7 +119,7 @@ class CanonicalGtfsValidatorRuleTest {
                                  request.bucket(), equalTo(vacoProperties.getS3processingBucket())),
                 () -> assertThat("S3 prefix contains all important ids so that the outputs get categorized correctly",
                                  request.s3Prefix().get(),
-                                 equalTo(S3Artifact.getValidationPhasePath("testPublicId", ValidationService.EXECUTION_SUBTASK, CanonicalGtfsValidatorRule.RULE_NAME)))
+                                 equalTo(S3Artifact.getValidationTaskPath("testPublicId", ValidationService.EXECUTION_SUBTASK, CanonicalGtfsValidatorRule.RULE_NAME)))
         );
     }
 
@@ -173,7 +173,7 @@ class CanonicalGtfsValidatorRuleTest {
     private ImmutableError mockError(String expectedMessage) {
         return ImmutableError.builder()
                 .entryId(queueEntry.id())
-                .phaseId(MOCK_PHASE_ID)
+                .taskId(MOCK_TASK_ID)
                 .rulesetId(MOCK_VALIDATION_RULE_ID)
                 .message(expectedMessage)
                 .build();
@@ -182,8 +182,8 @@ class CanonicalGtfsValidatorRuleTest {
     @NotNull
     private ImmutableTaskData<FileReferences> forInput(String testFile) throws URISyntaxException {
         return ImmutableTaskData.<FileReferences>builder()
-            .task(TestObjects.aPhase()
-                .id(MOCK_PHASE_ID)
+            .task(TestObjects.aTask()
+                .id(MOCK_TASK_ID)
                 .name(ValidationService.EXECUTION_SUBTASK)
                 .build())
             .payload(ImmutableFileReferences.of(testResource(testFile)))
