@@ -2,19 +2,27 @@ POST http://localhost:8080/queue
 Content-Type: application/json
 
 {
-  "url": "http://localhost:8080/static/testfiles/padasjoen_kunta.zip",
-  "format": "gtfs",
-  "businessId": "2942108-7",
-  "etag": "etagg",
-  "validations": [{
-      "name": "gtfs.canonical.v4_0_0",
-      "config": {"lol":  "apua", "muumi": "pappa"}
-  }],
-  "metadata": {
-      "brewingEquipment": "teapot",
-      "capacity (ml)": 1500,
-      "tea": "Yorkshire Tea"
-  }
+    "url": "http://localhost:8080/static/testfiles/padasjoen_kunta.zip",
+    "format": "gtfs",
+    "businessId": "2942108-7",
+    "etag": "etagg",
+    "validations": [
+        {
+            "name": "gtfs.canonical.v4_0_0",
+            "config": {
+                "lol": "apua",
+                "muumi": "pappa"
+            }
+        }
+    ],
+    "conversions": [
+
+    ],
+    "metadata": {
+        "brewingEquipment": "teapot",
+        "capacity (ml)": 1500,
+        "tea": "Yorkshire Tea"
+    }
 }
 
 > {%

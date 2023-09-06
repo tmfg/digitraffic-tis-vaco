@@ -10,9 +10,9 @@ import org.immutables.value.Value;
 import java.time.LocalDateTime;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutablePhase.class)
-@JsonDeserialize(as = ImmutablePhase.class)
-public interface Phase {
+@JsonSerialize(as = ImmutableTask.class)
+@JsonDeserialize(as = ImmutableTask.class)
+public interface Task {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
     Long id();

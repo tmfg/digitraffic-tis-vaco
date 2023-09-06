@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.validation;
+package fi.digitraffic.tis.vaco.rules;
 
 import fi.digitraffic.tis.vaco.VacoException;
 

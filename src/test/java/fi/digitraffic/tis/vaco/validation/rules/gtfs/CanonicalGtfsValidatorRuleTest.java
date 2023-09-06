@@ -7,9 +7,10 @@ import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
@@ -56,7 +57,7 @@ import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 @ExtendWith(MockitoExtension.class)
 class CanonicalGtfsValidatorRuleTest {
 
-    private static final Long MOCK_PHASE_ID = 4038721L;
+    private static final Long MOCK_TASK_ID = 4038721L;
     private static final Long MOCK_VALIDATION_RULE_ID = 2031091L;
 
     private static final String testBucket = "vaco-test-canonical-gtfs-validator";
@@ -118,7 +119,7 @@ class CanonicalGtfsValidatorRuleTest {
                                  request.bucket(), equalTo(vacoProperties.getS3processingBucket())),
                 () -> assertThat("S3 prefix contains all important ids so that the outputs get categorized correctly",
                                  request.s3Prefix().get(),
-                                 equalTo(S3Artifact.getValidationPhasePath("testPublicId", ValidationService.EXECUTION_PHASE, CanonicalGtfsValidatorRule.RULE_NAME)))
+                                 equalTo(S3Artifact.getValidationTaskPath("testPublicId", ValidationService.EXECUTION_SUBTASK, CanonicalGtfsValidatorRule.RULE_NAME)))
         );
     }
 
@@ -172,18 +173,18 @@ class CanonicalGtfsValidatorRuleTest {
     private ImmutableError mockError(String expectedMessage) {
         return ImmutableError.builder()
                 .entryId(queueEntry.id())
-                .phaseId(MOCK_PHASE_ID)
+                .taskId(MOCK_TASK_ID)
                 .rulesetId(MOCK_VALIDATION_RULE_ID)
                 .message(expectedMessage)
                 .build();
     }
 
     @NotNull
-    private ImmutablePhaseData<FileReferences> forInput(String testFile) throws URISyntaxException {
-        return ImmutablePhaseData.<FileReferences>builder()
-            .phase(TestObjects.aPhase()
-                .id(MOCK_PHASE_ID)
-                .name(ValidationService.EXECUTION_PHASE)
+    private ImmutableTaskData<FileReferences> forInput(String testFile) throws URISyntaxException {
+        return ImmutableTaskData.<FileReferences>builder()
+            .task(TestObjects.aTask()
+                .id(MOCK_TASK_ID)
+                .name(ValidationService.EXECUTION_SUBTASK)
                 .build())
             .payload(ImmutableFileReferences.of(testResource(testFile)))
             .build();

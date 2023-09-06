@@ -7,16 +7,17 @@ import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
-import fi.digitraffic.tis.vaco.delegator.model.Subtask;
-import fi.digitraffic.tis.vaco.process.PhaseService;
+import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseResult;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
 import fi.digitraffic.tis.vaco.process.model.JobResult;
-import fi.digitraffic.tis.vaco.process.model.PhaseData;
-import fi.digitraffic.tis.vaco.process.model.PhaseResult;
+import fi.digitraffic.tis.vaco.process.model.TaskData;
+import fi.digitraffic.tis.vaco.process.model.TaskResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -25,9 +26,10 @@ import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.rules.Rule;
+import fi.digitraffic.tis.vaco.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.net.http.HttpResponse;
@@ -38,50 +40,49 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class ValidationService {
-    public static final String PHASE = Subtask.VALIDATION.name;
-    public static final String DOWNLOAD_PHASE = "validation.download";
-    public static final String RULESET_SELECTION_PHASE = "validation.rulesets";
-    public static final String EXECUTION_PHASE = "validation.execute";
+    public static final String PHASE = TaskCategory.VALIDATION.name;
+    public static final String DOWNLOAD_SUBTASK = "validation.download";
+    public static final String RULESET_SELECTION_SUBTASK = "validation.rulesets";
+    public static final String EXECUTION_SUBTASK = "validation.execute";
 
-    public static final List<String> ALL_SUBPHASES = List.of(DOWNLOAD_PHASE, RULESET_SELECTION_PHASE, EXECUTION_PHASE);
+    public static final List<String> ALL_SUBTASKS = List.of(DOWNLOAD_SUBTASK, RULESET_SELECTION_SUBTASK, EXECUTION_SUBTASK);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final PhaseService phaseService;
+    private final TaskService taskService;
     private final RulesetService rulesetService;
     private final HttpClient httpClientUtility;
     private final S3Client s3ClientUtility;
     private final RulesetRepository rulesetRepository;
-    private final Map<String, Rule> rules;
+    private final Map<String, Rule<ValidationInput, ValidationReport>> rules;
 
     private final S3Packager s3Packager;
 
-    public ValidationService(PhaseService phaseService,
+    public ValidationService(TaskService taskService,
                              RulesetService rulesetService,
                              HttpClient httpClient,
                              S3Client s3ClientUtility,
                              RulesetRepository rulesetRepository,
-                             List<Rule> rules, S3Packager s3Packager) {
-        this.phaseService = phaseService;
+                             @Qualifier("validation") List<Rule<ValidationInput, ValidationReport>> rules, S3Packager s3Packager) {
+        this.taskService = taskService;
         this.rulesetService = rulesetService;
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
         this.rulesetRepository = rulesetRepository;
-        this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
+        this.rules = Streams.collect(rules, Rule::getIdentifyingName, Function.identity());
         this.s3Packager = s3Packager;
     }
 
     public JobResult validate(ValidationJobMessage jobDescription) throws RuleExecutionException {
         Entry entry = jobDescription.message();
-        PhaseResult<ImmutableFileReferences> s3path = downloadFile(entry);
+        TaskResult<ImmutableFileReferences> s3path = downloadFile(entry);
 
-        PhaseResult<Set<Ruleset>> validationRulesets = selectRulesets(entry);
+        TaskResult<Set<Ruleset>> validationRulesets = selectRulesets(entry);
 
-        PhaseResult<List<ValidationReport>> validationReports = executeRules(entry, s3path.result(), validationRulesets.result());
+        TaskResult<List<ValidationReport>> validationReports = executeRules(entry, s3path.result(), validationRulesets.result());
 
         String packageFileName = PHASE + "_results";
         s3Packager.producePackage(
@@ -95,66 +96,66 @@ public class ValidationService {
     }
 
     @VisibleForTesting
-    PhaseResult<ImmutableFileReferences> downloadFile(Entry queueEntry) {
-        ImmutablePhaseData<ImmutableFileReferences> phaseData = ImmutablePhaseData.of(
-                phaseService.reportPhase(phaseService.findPhase(queueEntry.id(), DOWNLOAD_PHASE), ProcessingState.START));
+    TaskResult<ImmutableFileReferences> downloadFile(Entry queueEntry) {
+        ImmutableTaskData<ImmutableFileReferences> taskData = ImmutableTaskData.of(
+                taskService.trackTask(taskService.findTask(queueEntry.id(), DOWNLOAD_SUBTASK), ProcessingState.START));
         Path tempFilePath = s3ClientUtility.createVacoDownloadTempFile(queueEntry.publicId(),
-            queueEntry.format(), phaseData.phase().name());
+            queueEntry.format(), taskData.task().name());
 
         return httpClientUtility.downloadFile(tempFilePath, queueEntry.url(), queueEntry.etag())
-            .thenApply(wrapHttpResult(phaseData))
+            .thenApply(wrapHttpResult(taskData))
             .thenCompose(uploadToS3(queueEntry))
-            .thenApply(completeDownloadPhase())
+            .thenApply(completeDownloadTask())
             .join(); // wait for finish - might be temporary
     }
 
-    private Function<HttpResponse<Path>, ImmutablePhaseData<ImmutableFileReferences>> wrapHttpResult(ImmutablePhaseData<ImmutableFileReferences> phaseData) {
-        return path -> phaseData
-                // download done -> update phase
-                .withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.UPDATE))
+    private Function<HttpResponse<Path>, ImmutableTaskData<ImmutableFileReferences>> wrapHttpResult(ImmutableTaskData<ImmutableFileReferences> taskData) {
+        return path -> taskData
+                // download done -> update task
+                .withTask(taskService.trackTask(taskData.task(), ProcessingState.UPDATE))
                 .withPayload(ImmutableFileReferences.of(path.body()));
     }
 
-    private Function<ImmutablePhaseData<ImmutableFileReferences>, CompletableFuture<ImmutablePhaseData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
-        return phaseData -> {
-            String targetPath = S3Artifact.getValidationPhasePath(queueEntry.publicId(), DOWNLOAD_PHASE, queueEntry.format() + ".original");
-            Path sourcePath = phaseData.payload().localPath();
+    private Function<ImmutableTaskData<ImmutableFileReferences>, CompletableFuture<ImmutableTaskData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
+        return taskData -> {
+            String targetPath = S3Artifact.getValidationTaskPath(queueEntry.publicId(), DOWNLOAD_SUBTASK, queueEntry.format() + ".original");
+            Path sourcePath = taskData.payload().localPath();
 
             return s3ClientUtility.uploadFile(targetPath, sourcePath)
-                    .thenApply(u -> phaseData // upload done -> update phase
-                        .withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.UPDATE)));
+                .thenApply(u -> taskData // upload done -> update task
+                    .withTask(taskService.trackTask(taskData.task(), ProcessingState.UPDATE)));
         };
     }
 
-    private Function<PhaseData<ImmutableFileReferences>, PhaseResult<ImmutableFileReferences>> completeDownloadPhase() {
-        return phaseData -> {
-            ImmutableFileReferences fileRefs = phaseData.payload();
+    private Function<TaskData<ImmutableFileReferences>, TaskResult<ImmutableFileReferences>> completeDownloadTask() {
+        return taskData -> {
+            ImmutableFileReferences fileRefs = taskData.payload();
             logger.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
             // download complete, mark to database as complete and unwrap payload
-            phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
-            return ImmutablePhaseResult.of(DOWNLOAD_PHASE, fileRefs);
+            taskService.trackTask(taskData.task(), ProcessingState.COMPLETE);
+            return ImmutableTaskResult.of(DOWNLOAD_SUBTASK, fileRefs);
         };
     }
 
     @VisibleForTesting
-    PhaseResult<Set<Ruleset>> selectRulesets(Entry entry) {
-        ImmutablePhaseData<Ruleset> phaseData = ImmutablePhaseData.of(
-                phaseService.reportPhase(phaseService.findPhase(entry.id(), RULESET_SELECTION_PHASE), ProcessingState.START));
+    TaskResult<Set<Ruleset>> selectRulesets(Entry entry) {
+        ImmutableTaskData<Ruleset> taskData = ImmutableTaskData.of(
+                taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START));
 
         Set<Ruleset> rulesets = rulesetService.selectRulesets(
                 entry.businessId(),
                 Type.VALIDATION_SYNTAX,
                 Streams.map(entry.validations(), ValidationInput::name).toSet());
 
-        phaseData.withPhase(phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE));
+        taskData.withTask(taskService.trackTask(taskData.task(), ProcessingState.COMPLETE));
 
-        return ImmutablePhaseResult.of(RULESET_SELECTION_PHASE, rulesets);
+        return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
     }
 
     @VisibleForTesting
-    ImmutablePhaseResult<List<ValidationReport>> executeRules(Entry entry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
-        PhaseData<FileReferences> phaseData = ImmutablePhaseData.<FileReferences>builder()
-                .phase(phaseService.reportPhase(phaseService.findPhase(entry.id(), EXECUTION_PHASE), ProcessingState.START))
+    ImmutableTaskResult<List<ValidationReport>> executeRules(Entry entry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
+        TaskData<FileReferences> taskData = ImmutableTaskData.<FileReferences>builder()
+                .task(taskService.trackTask(taskService.findTask(entry.id(), EXECUTION_SUBTASK), ProcessingState.START))
                 .payload(fileReferences)
                 .build();
 
@@ -163,24 +164,24 @@ public class ValidationService {
         List<ValidationReport> reports = validationRulesets.parallelStream()
                 .map(this::findMatchingRule)
                 .filter(Optional::isPresent)
-                .map(r -> r.get().execute(entry, r.map(x -> configs.get(x.getIdentifyingName())), phaseData))
+                .map(r -> r.get().execute(entry, r.map(x -> configs.get(x.getIdentifyingName())), taskData))
                 .map(CompletableFuture::join)
                 .toList();
-        // everything's done at this point because of the ::join call, complete phase and return
-        phaseService.reportPhase(phaseData.phase(), ProcessingState.COMPLETE);
-        return ImmutablePhaseResult.of(EXECUTION_PHASE, reports);
+        // everything's done at this point because of the ::join call, complete task and return
+        taskService.trackTask(taskData.task(), ProcessingState.COMPLETE);
+        return ImmutableTaskResult.of(EXECUTION_SUBTASK, reports);
     }
 
-    private Optional<Rule> findMatchingRule(Ruleset validationRule) {
+    private Optional<Rule<ValidationInput, ValidationReport>> findMatchingRule(Ruleset validationRule) {
         String identifyingName = validationRule.identifyingName();
-        Optional<Rule> rule = Optional.ofNullable(rules.get(identifyingName));
+        Optional<Rule<ValidationInput, ValidationReport>> rule = Optional.ofNullable(rules.get(identifyingName));
         if (rule.isEmpty()) {
             logger.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
         }
         return rule;
     }
 
-    public List<String> listSubPhases() {
-        return ALL_SUBPHASES;
+    public List<String> listSubTasks() {
+        return ALL_SUBTASKS;
     }
 }

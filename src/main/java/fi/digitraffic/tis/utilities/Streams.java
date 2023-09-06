@@ -58,8 +58,8 @@ public class Streams {
      * @param <I>
      * @param <O>
      */
-    public static <I, O> Chain<O> mapIndexed(List<I> objects, BiFunction<Long, ? super I, ? extends O> mapper) {
-        return new Chain<>(IntStream.range(0, objects.size()).mapToObj(i -> mapper.apply((long) i, objects.get(i))));
+    public static <I, O> Chain<O> mapIndexed(List<I> objects, BiFunction<Integer, ? super I, ? extends O> mapper) {
+        return new Chain<>(IntStream.range(0, objects.size()).mapToObj(i -> mapper.apply(i, objects.get(i))));
     }
 
     /**
@@ -121,6 +121,23 @@ public class Streams {
         Function<? super I, K> keyMapper,
         Function<? super I, ? extends V> valueMapper) {
         return objects.stream().collect(Collectors.toMap(keyMapper, valueMapper));
+    }
+
+    /**
+     *  Collect (=convert) given collection transforming each entry using the provided transformation function. Shorthand
+     * for
+     * <pre>
+     *     Streams.map(objects, mapper).toList()
+     * </pre>
+     *
+     * @param objects
+     * @param mapper
+     * @return
+     * @param <I>
+     * @param <O>
+     */
+    public static <I, O> List<? extends O> collect(Collection<I> objects, Function<? super I, ? extends O> mapper) {
+        return map(objects, mapper).toList();
     }
 
     public static <T> Chain<? extends T> concat(Collection<? extends T> first, Collection<? extends T>... more) {

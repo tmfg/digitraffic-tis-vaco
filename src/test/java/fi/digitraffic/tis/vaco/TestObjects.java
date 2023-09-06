@@ -4,9 +4,9 @@ import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -50,8 +50,8 @@ public class TestObjects {
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }
 
-    public static ImmutablePhase.Builder aPhase() {
-        return ImmutablePhase.builder()
+    public static ImmutableTask.Builder aTask() {
+        return ImmutableTask.builder()
             .id(new Random().nextLong())
             .name(UUID.randomUUID().toString())
             .priority(new Random().nextInt());

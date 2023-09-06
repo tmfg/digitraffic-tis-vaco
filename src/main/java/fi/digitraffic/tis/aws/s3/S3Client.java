@@ -57,8 +57,8 @@ public class S3Client {
         }
     }
 
-    public Path createVacoDownloadTempFile(String publicId, String format, String phaseName) {
-        Path downloadDir = Paths.get(vacoProperties.getTemporaryDirectory(), publicId, phaseName);
+    public Path createVacoDownloadTempFile(String publicId, String format, String taskName) {
+        Path downloadDir = Paths.get(vacoProperties.getTemporaryDirectory(), publicId, taskName);
         return createTempFile(downloadDir, format, ".download");
     }
 

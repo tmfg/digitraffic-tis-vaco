@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.delegator.model.Subtask;
+import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
-import fi.digitraffic.tis.vaco.process.PhaseService;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
+import fi.digitraffic.tis.vaco.process.TaskService;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 @Repository
 public class QueueHandlerRepository {
@@ -34,20 +33,20 @@ public class QueueHandlerRepository {
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
-    private final PhaseService phaseService;
+    private final TaskService taskService;
     private final ValidationService validationService;
     private final ConversionService conversionService;
 
     public QueueHandlerRepository(JdbcTemplate jdbc,
                                   ObjectMapper objectMapper,
                                   ErrorHandlerRepository errorHandlerRepository,
-                                  PhaseService phaseService,
+                                  TaskService taskService,
                                   ValidationService validationService,
                                   ConversionService conversionService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
-        this.phaseService = Objects.requireNonNull(phaseService);
+        this.taskService = Objects.requireNonNull(taskService);
         this.validationService = Objects.requireNonNull(validationService);
         this.conversionService = Objects.requireNonNull(conversionService);
     }
@@ -58,8 +57,8 @@ public class QueueHandlerRepository {
         created = created
             .withValidations(createValidationInputs(created.id(), entry.validations()))
             .withConversions(createConversionInputs(created.id(), entry.conversions()));
-        // createPhases requires validations and conversions to exist at this point
-        return created.withPhases(createPhases(created));
+        // createTasks requires validations and conversions to exist at this point
+        return created.withTasks(createTasks(created));
     }
 
     private ImmutableEntry createEntry(Entry entry) {
@@ -73,32 +72,31 @@ public class QueueHandlerRepository {
     }
 
     /**
-     * Resolves which phases should be executed for given entry based on requested validations and configurations.
+     * Resolves which tasks should be executed for given entry based on requested validations and configurations.
      * @param entry
      * @return
      */
-    private List<ImmutablePhase> createPhases(ImmutableEntry entry) {
-        List<ImmutablePhase> allPhases = new ArrayList<>();
+    private List<ImmutableTask> createTasks(ImmutableEntry entry) {
+        List<ImmutableTask> allTasks = new ArrayList<>();
 
         if (entry.conversions() != null && !entry.conversions().isEmpty()) {
-            List<String> conversionPhases = conversionService.listSubPhases();
-            allPhases.addAll(
-                IntStream.range(0, conversionPhases.size())
-                    .mapToObj(i -> ImmutablePhase.of(entry.id(), conversionPhases.get(i), Subtask.CONVERSION.priority * 100 + i))
-                    .toList());
+            List<String> conversionTasks = conversionService.listSubTasks();
+            allTasks.addAll(extracted(conversionTasks, entry, TaskCategory.CONVERSION));
         }
 
-        // validation phases are always included
-        List<String> validationPhases = validationService.listSubPhases();
-        allPhases.addAll(
-            IntStream.range(0, validationPhases.size())
-                .mapToObj(i -> ImmutablePhase.of(entry.id(), validationPhases.get(i), Subtask.VALIDATION.priority * 100 + i))
-                .toList());
+        // validation tasks are always included
+        List<String> validationTasks = validationService.listSubTasks();
+        allTasks.addAll(extracted(validationTasks, entry, TaskCategory.VALIDATION));
 
         // TODO: check return value
-        phaseService.createPhases(allPhases);
+        taskService.createTasks(allTasks);
 
-        return phaseService.findPhases(entry);
+        return taskService.findTasks(entry);
+    }
+
+    private static List<ImmutableTask> extracted(List<String> validationTasks, ImmutableEntry entry, TaskCategory category) {
+        return Streams.mapIndexed(validationTasks, (i, t) -> ImmutableTask.of(entry.id(), t, category.priority * 100 + i))
+            .toList();
     }
 
     private List<ImmutableValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {
@@ -211,7 +209,7 @@ public class QueueHandlerRepository {
      */
     private ImmutableEntry buildCompleteEntry(ImmutableEntry entry) {
         return entry
-            .withPhases(phaseService.findPhases(entry))
+            .withTasks(taskService.findTasks(entry))
             .withValidations(findValidationInputs(entry.id()))
             .withConversions(findConversionInputs(entry.id()))
             .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));

@@ -4,11 +4,13 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
+import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
-import fi.digitraffic.tis.vaco.process.PhaseRepository;
+import fi.digitraffic.tis.vaco.process.TaskRepository;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
@@ -23,7 +25,10 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
@@ -41,7 +46,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     @Mock
     private MessagingService messagingService;
     @Mock
-    private PhaseRepository phaseRepository;
+    private TaskRepository taskRepository;
     @Mock
     private ValidationService validationService;
     @Mock
@@ -53,7 +58,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, phaseRepository, validationService, conversionService);
+        listener = new DelegationJobQueueSqsListener(messagingService, taskRepository, validationService, conversionService);
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(createQueueEntryForTesting())
             .retryStatistics(ImmutableRetryStatistics.of(5))
@@ -66,7 +71,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(messagingService, phaseRepository, validationService, conversionService);
+        verifyNoMoreInteractions(messagingService, taskRepository, validationService, conversionService);
     }
 
     @Test
@@ -76,8 +81,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.START));
         verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.UPDATE));
 
-        // no phases returned...
-        verify(phaseRepository).findPhases(jobMessage.entry().id());
+        // no tasks returned...
+        verify(taskRepository).findTasks(jobMessage.entry().id());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
     }
@@ -107,9 +112,18 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         // only UPDATE, no START
         verify(messagingService).updateJobProcessingStatus(eq(alreadyStarted), eq(ProcessingState.UPDATE));
 
-        // no phases returned...
-        verify(phaseRepository).findPhases(alreadyStarted.entry().id());
+        // no tasks returned...
+        verify(taskRepository).findTasks(alreadyStarted.entry().id());
         /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
+    }
+
+    @Test
+    void canDetectAllKnownTaskCategoriesFromTasks() {
+        Arrays.stream(TaskCategory.values())
+            .forEach(tc ->
+                assertThat(tc,
+                    equalTo(DelegationJobQueueSqsListener.asTaskCategory(
+                        ImmutableTask.of(1L, tc.name().toLowerCase() + ".testing", tc.priority)))));
     }
 }

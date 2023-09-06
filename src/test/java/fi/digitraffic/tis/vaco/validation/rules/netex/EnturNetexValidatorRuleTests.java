@@ -3,14 +3,15 @@ package fi.digitraffic.tis.vaco.validation.rules.netex;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhaseData;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.validation.rules.ValidatorRule;
+import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,7 @@ class EnturNetexValidatorRuleTests {
      * lots of shared code in the mocking infrastructure of these test classes.
      */
 
-    private static final Long MOCK_PHASE_ID = 4009763L;
+    private static final Long MOCK_TASK_ID = 4009763L;
 
     private ValidatorRule rule;
 
@@ -69,11 +70,11 @@ class EnturNetexValidatorRuleTests {
     }
 
     @NotNull
-    private ImmutablePhaseData<FileReferences> forInput(String testFile) throws URISyntaxException {
-        return ImmutablePhaseData.<FileReferences>builder()
-            .phase(TestObjects.aPhase()
-                .id(MOCK_PHASE_ID)
-                .name(ValidationService.EXECUTION_PHASE)
+    private ImmutableTaskData<FileReferences> forInput(String testFile) throws URISyntaxException {
+        return ImmutableTaskData.<FileReferences>builder()
+            .task(TestObjects.aTask()
+                .id(MOCK_TASK_ID)
+                .name(ValidationService.EXECUTION_SUBTASK)
                 .build())
             .payload(ImmutableFileReferences.of(testResource(testFile)))
             .build();

@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.delegator.model;
 
-public enum Subtask {
+public enum TaskCategory {
 
     VALIDATION(1),
     CONVERSION(2);
@@ -9,7 +9,7 @@ public enum Subtask {
 
     public final String name;
 
-    Subtask(int priority) {
+    TaskCategory(int priority) {
         this.priority = priority;
         this.name = this.name().toLowerCase();
     }

@@ -7,11 +7,13 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
-import fi.digitraffic.tis.vaco.process.model.ImmutablePhase;
-import fi.digitraffic.tis.vaco.process.model.Phase;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,40 +61,40 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
             () -> assertThat(result.metadata(), equalTo(metadata)),
             () -> assertThat(result.url(), equalTo("www.example.fi")),
             () -> assertThat(result.businessId(), equalTo(TestConstants.FINTRAFFIC_BUSINESS_ID)),
-            () -> assertThat(result.validations(), equalTo(List.of(validation.withId(1200000L)))),
-            () -> assertThat(result.conversions(), equalTo(List.of(conversion.withId(1300000L))))
+            () -> assertThat(Streams.collect(result.validations(), ValidationInput::name), equalTo(List.of(validation.name()))),
+            () -> assertThat(Streams.collect(result.conversions(), ConversionInput::name), equalTo(List.of(conversion.name())))
         );
     }
 
-    private List<ImmutablePhase> validationPhases = Streams.mapIndexed(
-        ValidationService.ALL_SUBPHASES,
-        (i, p) -> ImmutablePhase.of(null, p, (int) (100 + i)))
+    private List<ImmutableTask> validationTasks = Streams.mapIndexed(
+        ValidationService.ALL_SUBTASKS,
+        (i, p) -> ImmutableTask.of(null, p, 100 + i))
         .toList();
-    private List<ImmutablePhase> conversionPhases = Streams.mapIndexed(
-        ConversionService.ALL_SUBPHASES,
-        (i, p) -> ImmutablePhase.of(null, p, (int) (200 + i)))
+    private List<ImmutableTask> conversionTasks = Streams.mapIndexed(
+        ConversionService.ALL_SUBTASKS,
+        (i, p) -> ImmutableTask.of(null, p, 200 + i))
         .toList();
 
     @Test
-    void entryWithoutValidationsAndConversionsGetsGeneratedValidationPhases() {
+    void entryWithoutValidationsAndConversionsGetsGeneratedValidationTasks() {
         ImmutableEntry result = repository.create(entry);
 
         assertThat(
-            Streams.map(result.phases(), this::withoutGeneratedValues).toList(),
-            equalTo(validationPhases));
+            Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
+            equalTo(validationTasks));
     }
 
     @Test
-    void entryWithConversionsGetsGeneratedValidationAndConversionPhases() {
+    void entryWithConversionsGetsGeneratedValidationAndConversionTasks() {
         ImmutableEntry result = repository.create(entry.withConversions(conversion));
 
         assertThat(
-            Streams.map(result.phases(), this::withoutGeneratedValues).toList(),
-            equalTo(Streams.concat(validationPhases, conversionPhases).toList()));
+            Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
+            equalTo(Streams.concat(validationTasks, conversionTasks).toList()));
     }
 
     @NotNull
-    private ImmutablePhase withoutGeneratedValues(Phase p) {
-        return ImmutablePhase.copyOf(p).withId(null).withEntryId(null).withCreated(null);
+    private ImmutableTask withoutGeneratedValues(Task p) {
+        return ImmutableTask.copyOf(p).withId(null).withEntryId(null).withCreated(null);
     }
 }

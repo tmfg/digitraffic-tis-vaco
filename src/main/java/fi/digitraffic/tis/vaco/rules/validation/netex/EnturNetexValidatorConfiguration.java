@@ -1,12 +1,12 @@
-package fi.digitraffic.tis.vaco.validation.rules.netex;
+package fi.digitraffic.tis.vaco.rules.validation.netex;
 
-import fi.digitraffic.tis.vaco.validation.rules.Configuration;
+import fi.digitraffic.tis.vaco.rules.validation.ValidatorConfiguration;
 import org.immutables.value.Value;
 
 import java.util.Set;
 
 @Value.Immutable
-public interface EnturNetexValidatorConfiguration extends Configuration {
+public interface EnturNetexValidatorConfiguration extends ValidatorConfiguration {
     EnturNetexValidatorConfiguration DEFAULTS = ImmutableEnturNetexValidatorConfiguration.builder()
         .codespace("FIN")
         .reportId("NO_REPORT_ID_PROVIDED")
