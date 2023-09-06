@@ -7,8 +7,11 @@ public enum TaskCategory {
 
     public final int priority;
 
+    public final String name;
+
     TaskCategory(int priority) {
         this.priority = priority;
+        this.name = this.name().toLowerCase();
     }
 
 }
