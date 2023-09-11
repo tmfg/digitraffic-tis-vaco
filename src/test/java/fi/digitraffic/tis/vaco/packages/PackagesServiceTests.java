@@ -13,11 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.*;
 
 class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
@@ -42,5 +43,18 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
         assertThat(loaded.isPresent(), equalTo(true));
 
         assertThat(loaded.get(), equalTo(saved));
+    }
+
+    @Test
+    void providesHelperForDownloadingReferencedFile() throws IOException {
+        ImmutableTask task = TestObjects.aTask().build();
+        ImmutableEntry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
+        ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", "nothing/in/this/path", "resulting.zip");
+        Optional<Path> loaded = packagesService.downloadPackage(entry.publicId(), "FAKE_RULE");
+
+        assertThat(loaded.isPresent(), equalTo(true));
+
+        Path file = loaded.get();
+        assertThat(file.getFileName(), equalTo(Path.of("resulting.zip")));
     }
 }
