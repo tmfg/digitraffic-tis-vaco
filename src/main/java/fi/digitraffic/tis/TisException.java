@@ -2,7 +2,7 @@ package fi.digitraffic.tis;
 
 /**
  * Exception type hierarchy root for <i>all</i> exceptions thrown by TIS/VACO.
- *
+ * <p>
  * Do not use this type directly, instead use one of its applicable subtypes.
  */
 public abstract class TisException extends RuntimeException {

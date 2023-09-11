@@ -3,7 +3,9 @@ package fi.digitraffic.tis.vaco.aws;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,10 +26,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -46,6 +50,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
+
+    private Entry entry;
 
     @TempDir
     static File testDirectory;
@@ -85,48 +91,51 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     static void createTestFile(Path directory, String fileName, boolean includeParentDir) throws IOException {
         File file = new File(directory.toFile(), fileName);
         file.createNewFile();
+
         allFiles.add((includeParentDir ? file.getParentFile().getName() + "/" : "") + fileName);
     }
 
     @BeforeEach
     void prepareBucketWithData() {
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3processingBucket()).build());
-        s3Client.uploadDirectory(testDirectory.toPath()).join();
+        entry = TestObjects.anEntry("gtfs").build();
+
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
+        s3Client.uploadDirectory(testDirectory.toPath(), vacoProperties.getS3ProcessingBucket(), null).join();
     }
 
     @AfterEach
     void s3Cleanup() {
-        List<ObjectIdentifier> objects = Streams.map(s3Client.listObjectsInBucket("", vacoProperties.getS3processingBucket()),
+        List<ObjectIdentifier> objects = Streams.map(s3Client.listObjectsInBucket("", vacoProperties.getS3ProcessingBucket()),
             obj -> ObjectIdentifier.builder().key(obj.key()).build()).toList();
-        awsS3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(vacoProperties.getS3processingBucket()).delete(Delete.builder().objects(objects).build()).build());
-        awsS3Client.deleteBucket(DeleteBucketRequest.builder().bucket(vacoProperties.getS3processingBucket()).build());
+        awsS3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).delete(Delete.builder().objects(objects).build()).build());
+        awsS3Client.deleteBucket(DeleteBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
     }
 
     ZipFile downloadProducedZipPackage(String packageName) throws IOException {
-        byte[] producePackageData = s3Client.getObjectBytes(TestData.outputDirectory + "/" + packageName + ".zip");
+        byte[] producePackageData = s3Client.getObjectBytes(TestData.outputDirectory + "/" + packageName);
         File zipFile = new File(TestData.outputDirectoryPath.toFile(), UUID.randomUUID() + ".zip");
         zipFile.createNewFile();
-        OutputStream os = new FileOutputStream(zipFile);
-        os.write(producePackageData);
-        os.close();
+        try(OutputStream os = new FileOutputStream(zipFile)) {
+            os.write(producePackageData);
+        }
         return new ZipFile(zipFile);
     }
 
     void assertZipFileContents(List<String> expectedFiles, ZipFile zipFile) {
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        while(entries.hasMoreElements()) {
-            ZipEntry zipEntry = entries.nextElement();
-            System.out.println(zipEntry.getName());
-            if(!zipEntry.isDirectory()) {
-                assertThat(expectedFiles.contains(zipEntry.getName()), equalTo(true));
-            }
-        }
+
+        List<String> filesInZip = Streams.filter(entries, Predicate.not(ZipEntry::isDirectory))
+            .map(ZipEntry::getName)
+            .toList();
+
+        // Set wraps because we do not care about exact order
+        assertThat(new HashSet<>(filesInZip), equalTo(new HashSet<>(expectedFiles)));
     }
 
     @Test
     void testPackageAllFiles() throws ExecutionException, InterruptedException, IOException {
        String packageFileName = UUID.randomUUID().toString();
-       s3Packager.producePackage(TestData.inputRootDirectory, TestData.outputDirectory, packageFileName, null)
+       s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory, packageFileName)
            .get();
 
        ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
@@ -137,7 +146,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageWithFilteredDirectory() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
-        s3Packager.producePackage(TestData.inputRootDirectory, TestData.outputDirectory,
+        s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory,
                 packageFileName, ".*" + directoryToIgnore + ".*").get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
@@ -150,7 +159,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageWithFilteredFile() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
-        s3Packager.producePackage(TestData.inputRootDirectory, TestData.outputDirectory,
+        s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory,
             packageFileName, ".*" + fileToIgnoreInSubDirectoryName).get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
@@ -163,7 +172,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageWithMultipleFilters() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
-        s3Packager.producePackage(TestData.inputRootDirectory, TestData.outputDirectory,
+        s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory,
             packageFileName,
             ".*" + fileToIgnoreInSubDirectoryName,
             ".*" + directoryToIgnore + ".*").get();
@@ -179,7 +188,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageWithFilteredFilesByExtension() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
-        s3Packager.producePackage(TestData.inputRootDirectory, TestData.outputDirectory,
+        s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory,
             packageFileName,
             ".*\\.java", // all Java files
             ".*/subDirectory/.*\\.py" // all Python files under subDirectory

@@ -5,15 +5,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.rules.conversion.ConverterConfiguration;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
+import fi.digitraffic.tis.vaco.rules.conversion.ConverterConfiguration;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -54,6 +55,13 @@ public class RowMappers {
             .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
             .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
             .build();
+
+    public static final RowMapper<ImmutablePackage> PACKAGE = (rs, rowNum) -> ImmutablePackage.builder()
+        .id(rs.getLong("id"))
+        .entryId(rs.getLong("entry_id"))
+        .name(rs.getString("name"))
+        .path(rs.getString("path"))
+        .build();
 
     public static final Function<String, RowMapper<ImmutableOrganization>> ALIASED_ORGANIZATION = (alias) ->
         (rs, rowNum) -> ImmutableOrganization.builder()

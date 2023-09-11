@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -36,19 +37,22 @@ public class QueueHandlerRepository {
     private final TaskService taskService;
     private final ValidationService validationService;
     private final ConversionService conversionService;
+    private final PackagesService packagesService;
 
     public QueueHandlerRepository(JdbcTemplate jdbc,
                                   ObjectMapper objectMapper,
                                   ErrorHandlerRepository errorHandlerRepository,
                                   TaskService taskService,
                                   ValidationService validationService,
-                                  ConversionService conversionService) {
+                                  ConversionService conversionService,
+                                  PackagesService packagesService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
         this.taskService = Objects.requireNonNull(taskService);
         this.validationService = Objects.requireNonNull(validationService);
         this.conversionService = Objects.requireNonNull(conversionService);
+        this.packagesService = packagesService;
     }
 
     @Transactional
@@ -212,7 +216,8 @@ public class QueueHandlerRepository {
             .withTasks(taskService.findTasks(entry))
             .withValidations(findValidationInputs(entry.id()))
             .withConversions(findConversionInputs(entry.id()))
-            .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));
+            .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()))
+            .withPackages(packagesService.findPackages(entry.id()));
     }
 
 }

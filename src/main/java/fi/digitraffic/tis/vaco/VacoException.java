@@ -4,7 +4,7 @@ import fi.digitraffic.tis.TisException;
 
 /**
  * Common wrapping supertype for all custom expressions within VACO.
- *
+ * <p>
  * You shouldn't instantiate this class directly, instead use subsystem specific child class.
  */
 public abstract class VacoException extends TisException {

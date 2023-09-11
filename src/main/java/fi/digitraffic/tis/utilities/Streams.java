@@ -2,16 +2,20 @@ package fi.digitraffic.tis.utilities;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Helper for reducing boilerplate with Java Streams, e.g. instead of
@@ -77,6 +81,20 @@ public class Streams {
     }
 
     /**
+     * No direct functional equivalence due to custom internal {@link Spliterator} implementation. Behavior matches with
+     * any other matching overload, e.g. {@link #map(Collection, Function)}.
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
+     * @see #asStream(Enumeration)
+     */
+    public static <I, O> Chain<O> map(Enumeration<I> objects, Function<? super I, ? extends O> mapper) {
+        return new Chain<>(asStream(objects)).map(mapper);
+    }
+
+    /**
      * Functionally equivalent to {@link Stream#filter(Predicate)}. Shorthand for
      * <pre>
      *     objects.stream().filter(predicate)
@@ -102,6 +120,19 @@ public class Streams {
      */
     public static <O> Chain<O> filter(O[] objects, Predicate<? super O> predicate) {
         return new Chain<>(Arrays.stream(objects).filter(predicate));
+    }
+
+    /**
+     * No direct functional equivalence due to custom internal {@link Spliterator} implementation. Behavior matches with
+     * any other matching overload, e.g. {@link #filter(Collection, Predicate)}
+     * @param objects Objects to process.
+     * @param predicate Predicate function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of filtered objects.
+     * @param <O> Type for output objects.
+     * @see #asStream(Enumeration)
+     */
+    public static <O> Chain<O> filter(Enumeration<O> objects, Predicate<? super O> predicate) {
+        return new Chain<>(asStream(objects)).filter(predicate);
     }
 
     /**
@@ -140,6 +171,15 @@ public class Streams {
         return map(objects, mapper).toList();
     }
 
+    /**
+     * Create one concatenated stream from given collections. Non-recursive, eager implementation.
+     * @param first First collection to wrap. This is provided separately to make the compiler do some helpful work for
+     *              us.
+     * @param more Remaining collections to concatenate in order.
+     * @return Concatenated collections as single flat stream.
+     * @param <T> Common type for all the contained objects.
+     */
+    @SafeVarargs
     public static <T> Chain<? extends T> concat(Collection<? extends T> first, Collection<? extends T>... more) {
         Stream<? extends T> merged = first.stream();
 
@@ -148,6 +188,20 @@ public class Streams {
         }
 
         return new Chain<>(merged);
+    }
+
+    /**
+     * Custom {@link Spliterator} wrapping for legacy type {@link Enumeration} to provide a bridge to Java
+     * {@link Stream} with {@link StreamSupport}.
+     * @param objects Objects to process.
+     * @return <code>java.util.Enumeration</code> wrapped as <code>java.util.Stream</code>
+     * @param <I> Type for input objects.
+     */
+    private static <I> Stream<I> asStream(Enumeration<I> objects) {
+        return StreamSupport.stream(
+            Spliterators.spliteratorUnknownSize(objects.asIterator(), Spliterator.ORDERED),
+            false
+        );
     }
 
     /**

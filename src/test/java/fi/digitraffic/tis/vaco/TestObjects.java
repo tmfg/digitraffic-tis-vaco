@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
@@ -65,4 +66,8 @@ public class TestObjects {
             .type(Type.VALIDATION_SYNTAX);
     }
 
+    public static VacoProperties vacoProperties() {
+        String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
+        return new VacoProperties("unittests-" + randomSeed, null, "unittests-" + randomSeed + "-processing-bucket");
+    }
 }

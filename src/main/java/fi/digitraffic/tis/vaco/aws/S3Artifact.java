@@ -43,38 +43,14 @@ public class S3Artifact {
     }
 
     /**
-     * Pattern: entries/{entryPublicId}/phases/validation
-     * @param entryPublicId
-     * @param phase
-     * @return
-     */
-    public static String getPhasePath(String entryPublicId,
-                                      String phase) {
-        return String.format(TASK_FOLDER, entryPublicId, phase);
-    }
-
-    /**
      * Pattern: entries/{entryPublicId}/tasks/validation
      * @param entryPublicId
      * @param task
      * @return
      */
-    public static String getDownloadTaskPath(String entryPublicId,
-                                             String artifact) {
-        return String.format(DOWNLOAD_TASK, entryPublicId, artifact);
-    }
-
-    /**
-     * Pattern: /entries/{entryPublicId}/tasks/validation/{subTask}/{fileName}.{extension}
-     * @param entryPublicId
-     * @param subTask
-     * @param artifact: either a file name or directory with a bunch of files
-     * @return
-     */
-    public static String getValidationTaskPath(String entryPublicId,
-                                               String subTask,
-                                               String artifact) {
-        return String.format(VALIDATION_TASK, entryPublicId, subTask, artifact);
+    public static String getTaskPath(String entryPublicId,
+                                     String task) {
+        return String.format(TASKS_ROOT, entryPublicId, task);
     }
 
     /**
@@ -90,6 +66,10 @@ public class S3Artifact {
         return String.format(CONVERSION_TASK, entryPublicId, subTask, artifact);
     }
 
+    public static String getPackagesDirectory(String entryPublicId) {
+        return String.format(PACKAGES_ROOT, entryPublicId);
+    }
+
     /**
      * Pattern: /entries/{entryPublicId}/package/{format}.zip
      * @param entryPublicId
@@ -98,7 +78,7 @@ public class S3Artifact {
      */
     public static String getPackagePath(String entryPublicId,
                                         String packageName) {
-        return String.format(PACKAGE, entryPublicId, packageName);
+        return getPackagesDirectory(entryPublicId) + "/" + packageName;
     }
 
     /**
@@ -110,5 +90,9 @@ public class S3Artifact {
     public static String getErrorLogsPath(String entryPublicId,
                                           String artifact) {
         return String.format(ERROR_LOGS, entryPublicId, artifact);
+    }
+
+    public static String getRuleDirectory(String entryPublicId, String taskName, String ruleName) {
+        return getTaskPath(entryPublicId, taskName) + "/rules/" + ruleName;
     }
 }

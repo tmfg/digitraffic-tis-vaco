@@ -114,15 +114,15 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
 
         ImmutableEntry entry = createQueueEntryForTesting();
-        s3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3processingBucket()).build());
+        s3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
 
         validationService.downloadFile(entry);
 
         assertThat(entryUrl.getValue(), equalTo("https://testfile"));
 
         List<S3Object> uploadedFiles = s3Client.listObjectsV2(ListObjectsV2Request.builder()
-                        .bucket(vacoProperties.getS3processingBucket())
-                        .prefix("/entries/" + entry.publicId())
+                        .bucket(vacoProperties.getS3ProcessingBucket())
+                        .prefix("entries/" + entry.publicId())
                         .build())
                 .contents();
 
@@ -131,7 +131,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         String key = uploadedFiles.get(0).key();
         Path redownload = Paths.get(vacoProperties.getTemporaryDirectory(), "testfile");
         s3TransferManager.downloadFile(DownloadFileRequest.builder()
-                        .getObjectRequest(req -> req.bucket(vacoProperties.getS3processingBucket()).key(key))
+                        .getObjectRequest(req -> req.bucket(vacoProperties.getS3ProcessingBucket()).key(key))
                         .destination(redownload)
                         .build())
                 .completionFuture()
