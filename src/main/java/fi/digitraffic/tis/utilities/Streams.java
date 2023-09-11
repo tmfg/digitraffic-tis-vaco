@@ -35,11 +35,11 @@ public class Streams {
      * <pre>
      *     objects.stream().map(mapper)
      * </pre>
-     * @param objects
-     * @param mapper
-     * @return
-     * @param <O>
-     * @param <I>
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
      */
     public static <I, O> Chain<O> map(Collection<I> objects, Function<? super I, ? extends O> mapper) {
         return new Chain<>(objects.stream().map(mapper));
@@ -51,12 +51,11 @@ public class Streams {
      *     IntStream.range(0, objects.size())
      *              .mapToObj(i -> mapper.apply((long) i, objects.get(i)))
      * </pre>
-     *
-     * @param objects
-     * @param mapper
-     * @return
-     * @param <I>
-     * @param <O>
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
      */
     public static <I, O> Chain<O> mapIndexed(List<I> objects, BiFunction<Integer, ? super I, ? extends O> mapper) {
         return new Chain<>(IntStream.range(0, objects.size()).mapToObj(i -> mapper.apply(i, objects.get(i))));
@@ -67,11 +66,11 @@ public class Streams {
      * <pre>
      *     Arrays.stream(objects).filter(predicate)
      * </pre>
-     * @param objects
-     * @param mapper
-     * @return
-     * @param <I>
-     * @param <O>
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
      */
     public static <I, O> Chain<O> map(I[] objects, Function<? super I, ? extends O> mapper) {
         return new Chain<>(Arrays.stream(objects).map(mapper));
@@ -82,10 +81,10 @@ public class Streams {
      * <pre>
      *     objects.stream().filter(predicate)
      * </pre>
-     * @param objects
-     * @param predicate
-     * @return
-     * @param <O>
+     * @param objects Objects to process.
+     * @param predicate Predicate function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of filtered objects.
+     * @param <O> Type for output objects.
      */
     public static <O> Chain<O> filter(Collection<O> objects, Predicate<? super O> predicate) {
         return new Chain<>(objects.stream().filter(predicate));
@@ -96,10 +95,10 @@ public class Streams {
      * <pre>
      *     Arrays.stream(objects).filter(predicate)
      * </pre>
-     * @param objects
-     * @param predicate
-     * @return
-     * @param <O>
+     * @param objects Objects to process.
+     * @param predicate Predicate function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of filtered objects.
+     * @param <O> Type for output objects.
      */
     public static <O> Chain<O> filter(O[] objects, Predicate<? super O> predicate) {
         return new Chain<>(Arrays.stream(objects).filter(predicate));
@@ -110,11 +109,13 @@ public class Streams {
      * <pre>
      *     objects.stream().collect(Collectors.toMap(keyMapper, valueMapper)
      * </pre>
-     *
-     * @param objects
-     * @param keyMapper
-     * @param valueMapper
-     * @return
+     * @param objects Objects to process.
+     * @param keyMapper Mapping function to produce keys.
+     * @param valueMapper Mapping function to produce values.
+     * @return Map of converted objects.
+     * @param <I> Type for input objects.
+     * @param <K> Type for output map's keys.
+     * @param <V> Type for output map's values.
      */
     public static <I, K, V> Map<K, V> collect(
         Collection<I> objects,
@@ -129,12 +130,11 @@ public class Streams {
      * <pre>
      *     Streams.map(objects, mapper).toList()
      * </pre>
-     *
-     * @param objects
-     * @param mapper
-     * @return
-     * @param <I>
-     * @param <O>
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return List of converted objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
      */
     public static <I, O> List<? extends O> collect(Collection<I> objects, Function<? super I, ? extends O> mapper) {
         return map(objects, mapper).toList();
@@ -156,7 +156,7 @@ public class Streams {
      * for those cases where the needed operation isn't exposed in this wrapper and/or the extra calls doesn't make
      * client side code uglier.
      *
-     * @param <R>
+     * @param <R> Type for objects wrapped within chain's internal stream.
      */
     public static final class Chain<R> {
 

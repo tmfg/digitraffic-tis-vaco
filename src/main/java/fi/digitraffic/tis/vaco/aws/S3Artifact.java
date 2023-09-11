@@ -2,26 +2,28 @@ package fi.digitraffic.tis.vaco.aws;
 
 public class S3Artifact {
 
-    static final String ENTRY_FOLDER = "entries/%s";
+    static final String ENTRY_ROOT = "entries/%s";
 
-    public static final String ORIGINAL_ENTRY = "/entries/%s/entry.json";
+    public static final String ORIGINAL_ENTRY = ENTRY_ROOT + "/entry.json";
 
-    public static final String METADATA = "/entries/%s/metadata.json";
+    public static final String METADATA = ENTRY_ROOT + "/metadata.json";
 
-    static final String TASK_FOLDER = "entries/%s/phases/%s";
+    static final String TASKS_ROOT = ENTRY_ROOT + "/tasks/%s";
 
-    static final String DOWNLOAD_TASK = "/entries/%s/tasks/download/%s";
+    static final String DOWNLOAD_TASK = ENTRY_ROOT + "/tasks/download/%s";
 
-    static final String VALIDATION_TASK = "/entries/%s/tasks/validation/%s/%s";
+    static final String VALIDATION_TASK = ENTRY_ROOT + "/tasks/validation/%s/%s";
 
-    static final String CONVERSION_TASK = "/entries/%s/tasks/conversion/%s/%s";
+    static final String CONVERSION_TASK = ENTRY_ROOT + "/tasks/conversion/%s/%s";
 
-    static final String PACKAGE = "/entries/%s/package/%s.zip";
+    static final String PACKAGES_ROOT = ENTRY_ROOT + "/packages";
 
-    static final String ERROR_LOGS = "/entries/%s/logs/errors/%s";
+    static final String PACKAGE = ENTRY_ROOT + "/packages/%s.zip";
+
+    static final String ERROR_LOGS = ENTRY_ROOT + "/logs/errors/%s";
 
     public static String getEntryFolderPath(String entryPublicId) {
-        return String.format(ENTRY_FOLDER, entryPublicId);
+        return String.format(ENTRY_ROOT, entryPublicId);
     }
 
     /**
@@ -54,7 +56,7 @@ public class S3Artifact {
     /**
      * Pattern: entries/{entryPublicId}/tasks/validation
      * @param entryPublicId
-     * @param phase
+     * @param task
      * @return
      */
     public static String getDownloadTaskPath(String entryPublicId,
