@@ -38,10 +38,38 @@ public class PackagesService {
         this.packagesRepository = Objects.requireNonNull(packagesRepository);
     }
 
-    public Optional<Path> findPackage(String entryPublicId, String packageName) {
-        Optional<Package> fp = packagesRepository.findPackage(entryPublicId, packageName);
+    public ImmutablePackage createPackage(Entry entry,
+                                          Task task,
+                                          String ruleName,
+                                          String packageContentsS3Path,
+                                          String fileName) {
+        // TODO: error handling?
+        // upload package file to S3
+        s3Packager.producePackage(
+                entry,
+                S3Artifact.getRuleDirectory(entry.publicId(), task.name(), ruleName),
+                packageContentsS3Path,
+                fileName)
+            .join();
 
-        return fp.map(p -> {
+        // store database reference
+        return packagesRepository.createPackage(
+            ImmutablePackage.of(
+                entry.id(),
+                ruleName,  // TODO: This assumes same rule can be executed only once per job
+                packageContentsS3Path + "/" + fileName));
+    }
+
+    public List<ImmutablePackage> findPackages(Long entryId) {
+        return packagesRepository.findPackages(entryId);
+    }
+
+    public Optional<Package> findPackage(String entryPublicId, String packageName) {
+        return packagesRepository.findPackage(entryPublicId, packageName);
+    }
+
+    public Optional<Path> downloadPackage(String entryPublicId, String packageName) {
+        return findPackage(entryPublicId, packageName).map(p -> {
             Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entryPublicId, packageName)
                 .resolve(Path.of(p.path()).getFileName());
 
@@ -53,27 +81,5 @@ public class PackagesService {
                 targetPackagePath);
             return targetPackagePath;
         });
-    }
-
-    public ImmutablePackage createPackage(Entry entry, Task task, String ruleName, String fileName) {
-        // TODO: error handling?
-        // upload package file to S3
-        String packagePath = S3Artifact.getPackagePath(entry.publicId(), ruleName);
-        s3Packager.producePackage(
-                entry,
-                S3Artifact.getRuleDirectory(entry.publicId(), task.name(), ruleName),
-                packagePath,
-                fileName)
-            .join();
-
-        return packagesRepository.createPackage(
-            ImmutablePackage.of(
-                entry.id(),
-                ruleName,  // TODO: This assumes same rule can be executed only once per job
-                packagePath + "/" + fileName));
-    }
-
-    public List<ImmutablePackage> findPackages(Long entryId) {
-        return packagesRepository.findPackages(entryId);
     }
 }

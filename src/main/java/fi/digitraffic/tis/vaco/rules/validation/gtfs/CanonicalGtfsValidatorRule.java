@@ -133,11 +133,17 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
 
     private List<ImmutableError> copyOutputToS3(Entry entry, TaskData<FileReferences> taskData, Path outputDirectory) {
         // copy produced output to S3
-        String s3TargetPath = S3Artifact.getRuleDirectory(entry.publicId(), taskData.task().name(), RULE_NAME);
-        CompletedDirectoryUpload ud = s3Client.uploadDirectory(outputDirectory, vacoProperties.getS3ProcessingBucket(), s3TargetPath)
+        String s3TargetPath = S3Artifact.getRuleDirectory(
+                entry.publicId(),
+                taskData.task().name(),
+                RULE_NAME);
+        CompletedDirectoryUpload ud = s3Client.uploadDirectory(
+                outputDirectory,
+                vacoProperties.getS3ProcessingBucket(),
+                s3TargetPath)
             .join();
         // package and publish all of it
-        packagesService.createPackage(entry, taskData.task(), RULE_NAME, "content.zip");
+        packagesService.createPackage(entry, taskData.task(), RULE_NAME, s3TargetPath, "content.zip");
 
         // record failures if any
         return Streams.map(ud.failedTransfers(), failure -> {

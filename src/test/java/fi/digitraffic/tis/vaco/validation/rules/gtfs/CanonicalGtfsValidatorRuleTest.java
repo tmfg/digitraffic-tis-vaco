@@ -122,6 +122,7 @@ class CanonicalGtfsValidatorRuleTest {
             eq(queueEntry),
             eq(taskData.task()),
             eq(CanonicalGtfsValidatorRule.RULE_NAME),
+            eq("entries/testPublicId/tasks/validation.execute/rules/gtfs.canonical.v4_0_0"),
             eq("content.zip"));
 
         assertAll(

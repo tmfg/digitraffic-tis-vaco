@@ -31,7 +31,7 @@ public class PackagesController {
         @PathVariable("entryId") String entryPublicId,
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
-        Optional<Path> entry = packagesService.findPackage(entryPublicId, packageName);
+        Optional<Path> entry = packagesService.downloadPackage(entryPublicId, packageName);
 
         return entry
             .map(filePath -> {
