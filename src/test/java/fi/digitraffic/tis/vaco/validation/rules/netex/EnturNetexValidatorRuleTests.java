@@ -3,15 +3,14 @@ package fi.digitraffic.tis.vaco.validation.rules.netex;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,32 +51,28 @@ class EnturNetexValidatorRuleTests {
     private ErrorHandlerService errorHandlerService;
     @Mock
     private RulesetRepository rulesetRepository;
-    private ImmutableEntry queueEntry;
+    private ImmutableEntry entry;
+    private Task task;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
         rule = new EnturNetexValidatorRule(rulesetRepository, errorHandlerService, objectMapper);
-        queueEntry = TestObjects.anEntry("NeTEx").build();
+        entry = TestObjects.anEntry("NeTEx").build();
+        task = TestObjects.aTask().entryId(entry.id()).build();
     }
 
     @Test
     void validatesEntursExampleFilesWithoutErrors() throws URISyntaxException {
         String testFile = "public/testfiles/entur-netex.zip";
-        ValidationReport report = rule.execute(queueEntry, Optional.empty(), forInput(testFile)).join();
+        ValidationReport report = rule.execute(entry, task, forInput(testFile), Optional.empty()).join();
 
         assertThat(report.errors().size(), equalTo(0));
     }
 
     @NotNull
-    private ImmutableTaskData<FileReferences> forInput(String testFile) throws URISyntaxException {
-        return ImmutableTaskData.<FileReferences>builder()
-            .task(TestObjects.aTask()
-                .id(MOCK_TASK_ID)
-                .name(ValidationService.EXECUTION_SUBTASK)
-                .build())
-            .payload(ImmutableFileReferences.of(testResource(testFile)))
-            .build();
+    private FileReferences forInput(String testFile) throws URISyntaxException {
+        return ImmutableFileReferences.of(testResource(testFile));
     }
 
     private Path testResource(String resourceName) throws URISyntaxException {

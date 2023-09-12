@@ -9,13 +9,12 @@ import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
@@ -62,7 +61,8 @@ class CanonicalGtfsValidatorRuleTest {
     private static final String testBucket = "vaco-test-canonical-gtfs-validator";
 
     private CanonicalGtfsValidatorRule rule;
-    private ImmutableEntry queueEntry;
+    private ImmutableEntry entry;
+    private ImmutableTask task;
 
     private ObjectMapper objectMapper;
     private static VacoProperties vacoProperties;
@@ -93,7 +93,8 @@ class CanonicalGtfsValidatorRuleTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, errorHandlerService, rulesetRepository, s3Client, packagesService);
-        queueEntry = TestObjects.anEntry("gtfs").build();
+        entry = TestObjects.anEntry("gtfs").build();
+        task = TestObjects.aTask().id(MOCK_TASK_ID).entryId(entry.id()).build();
     }
 
     @AfterEach
@@ -108,8 +109,7 @@ class CanonicalGtfsValidatorRuleTest {
         whenDirectoryUpload();
 
         String testFile = "public/testfiles/padasjoen_kunta.zip";
-        ImmutableTaskData<FileReferences> taskData = forInput(testFile);
-        ValidationReport report = rule.execute(queueEntry, Optional.empty(), taskData).join();
+        ValidationReport report = rule.execute(entry, task, forInput(testFile), Optional.empty()).join();
 
         assertThat(report.errors().size(), equalTo(51));
 
@@ -119,10 +119,10 @@ class CanonicalGtfsValidatorRuleTest {
             uploadDirectoryBucketName.capture(),
             uploadDirectoryTargetPath.capture());
         verify(packagesService).createPackage(
-            eq(queueEntry),
-            eq(taskData.task()),
+            eq(entry),
+            eq(task),
             eq(CanonicalGtfsValidatorRule.RULE_NAME),
-            eq("entries/testPublicId/tasks/validation.execute/rules/gtfs.canonical.v4_0_0"),
+            eq("entries/testPublicId/tasks/" + task.name() + "/rules/gtfs.canonical.v4_0_0"),
             eq("content.zip"));
 
         assertAll(
@@ -132,7 +132,7 @@ class CanonicalGtfsValidatorRuleTest {
                                  uploadDirectoryBucketName.getValue(), equalTo(vacoProperties.getS3ProcessingBucket())),
                 () -> assertThat("S3 prefix contains all important ids so that the outputs get categorized correctly",
                                  uploadDirectoryTargetPath.getValue(),
-                                 equalTo(S3Artifact.getRuleDirectory(queueEntry.publicId(), ValidationService.EXECUTION_SUBTASK, CanonicalGtfsValidatorRule.RULE_NAME)))
+                                 equalTo(S3Artifact.getRuleDirectory(entry.publicId(), task.name(), CanonicalGtfsValidatorRule.RULE_NAME)))
         );
     }
 
@@ -141,8 +141,8 @@ class CanonicalGtfsValidatorRuleTest {
         whenFindValidationRuleByName();
         whenReportError();
 
-        Entry invalidFormat = ImmutableEntry.copyOf(queueEntry).withFormat("vhs");
-        ValidationReport report = rule.execute(invalidFormat, Optional.empty(), forInput("public/testfiles/padasjoen_kunta.zip")).join();
+        Entry invalidFormat = ImmutableEntry.copyOf(entry).withFormat("vhs");
+        ValidationReport report = rule.execute(invalidFormat, task, forInput("public/testfiles/padasjoen_kunta.zip"), Optional.empty()).join();
 
         ImmutableError error = mockError("Wrong format! Expected 'gtfs', was 'vhs'");
         assertThat(report.errors(), equalTo(List.of(error)));
@@ -185,7 +185,7 @@ class CanonicalGtfsValidatorRuleTest {
     @NotNull
     private ImmutableError mockError(String expectedMessage) {
         return ImmutableError.builder()
-                .entryId(queueEntry.id())
+                .entryId(entry.id())
                 .taskId(MOCK_TASK_ID)
                 .rulesetId(MOCK_VALIDATION_RULE_ID)
                 .message(expectedMessage)
@@ -193,14 +193,8 @@ class CanonicalGtfsValidatorRuleTest {
     }
 
     @NotNull
-    private ImmutableTaskData<FileReferences> forInput(String testFile) throws URISyntaxException {
-        return ImmutableTaskData.<FileReferences>builder()
-            .task(TestObjects.aTask()
-                .id(MOCK_TASK_ID)
-                .name(ValidationService.EXECUTION_SUBTASK)
-                .build())
-            .payload(ImmutableFileReferences.of(testResource(testFile)))
-            .build();
+    private FileReferences forInput(String testFile) throws URISyntaxException {
+        return ImmutableFileReferences.of(testResource(testFile));
     }
 
     private Path testResource(String resourceName) throws URISyntaxException {

@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.rules;
 
-import fi.digitraffic.tis.vaco.process.model.TaskData;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 
@@ -12,6 +12,7 @@ public interface Rule<INPUT, OUTPUT> {
 
     CompletableFuture<OUTPUT> execute(
         Entry entry,
-        Optional<INPUT> configuration,
-        TaskData<FileReferences> taskData);
+        Task task,
+        FileReferences fileReferences,
+        Optional<INPUT> configuration);
 }

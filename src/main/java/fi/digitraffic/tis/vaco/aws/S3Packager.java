@@ -95,7 +95,7 @@ public class S3Packager {
                 s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3FullTargetPath, localTargetFile).join();
                 logger.info("Successfully completed packaging {} via {} into {}", s3SourcePath, localArtifactTemp, s3FullTargetPath);
             } catch (IOException e) {
-                logger.error("Encountered IOException while packaging {} into {}", s3SourcePath, zipFileName, e);
+                throw new RuntimeException(String.format("Encountered IOException while packaging %s into %s", s3SourcePath, zipFileName), e);
             } finally {
                if (Files.exists(localArtifactTemp)) {
                    try {

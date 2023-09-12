@@ -76,7 +76,7 @@ public class ConversionService {
             entry,
             S3Artifact.getTaskPath(entry.publicId(), PHASE),
             S3Artifact.getPackagePath(entry.publicId(), packageFileName),
-            packageFileName);
+            packageFileName).join();
 
         return ImmutableJobResult.builder()
             .addResults(conversionRulesets, conversionReports)

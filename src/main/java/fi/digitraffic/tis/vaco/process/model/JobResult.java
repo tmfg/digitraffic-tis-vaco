@@ -4,6 +4,7 @@ import org.immutables.value.Value;
 
 import java.util.List;
 
+@Deprecated
 @Value.Immutable
 public interface JobResult {
     @Value.Parameter

@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.rules.validation;
 
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.process.model.TaskData;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.Rule;
@@ -31,20 +31,19 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
     }
 
     @Override
-    public CompletableFuture<ValidationReport> execute(
-        Entry queueEntry,
-        Optional<ValidationInput> configuration,
-        TaskData<FileReferences> taskData) {
-
+    public CompletableFuture<ValidationReport> execute(Entry entry,
+                                                       Task task,
+                                                       FileReferences fileReferences,
+                                                       Optional<ValidationInput> configuration) {
         return CompletableFuture.supplyAsync(() -> {
-            if (ruleFormat.equalsIgnoreCase(queueEntry.format())) {
-                return runValidator(queueEntry, configuration, taskData);
+            if (ruleFormat.equalsIgnoreCase(entry.format())) {
+                return runValidator(entry, task, fileReferences, configuration);
             } else {
                 ImmutableError error = ImmutableError.of(
-                    queueEntry.id(),
-                    taskData.task().id(),
+                    entry.id(),
+                    task.id(),
                     rulesetRepository.findByName(getIdentifyingName()).orElseThrow().id(),
-                    "Wrong format! Expected '%s', was '%s'".formatted(ruleFormat, queueEntry.format()));
+                    "Wrong format! Expected '%s', was '%s'".formatted(ruleFormat, entry.format()));
                 errorHandlerService.reportError(error);
                 // TODO: 'what' obviously needs something better
                 return ImmutableValidationReport.of("what").withErrors(error);
@@ -54,6 +53,7 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
 
     protected abstract ValidationReport runValidator(
         Entry queueEntry,
-        Optional<ValidationInput> configuration,
-        TaskData<FileReferences> taskData);
+        Task task,
+        FileReferences fileReferences,
+        Optional<ValidationInput> configuration);
 }
