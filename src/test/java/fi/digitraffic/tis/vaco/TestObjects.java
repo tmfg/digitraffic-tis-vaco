@@ -22,7 +22,7 @@ public class TestObjects {
         return ImmutableEntry.builder()
             .format(format)
             .url("https://testfile")
-            .publicId("testPublicId")
+            .publicId(NanoIdUtils.randomNanoId())
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
     }
 
