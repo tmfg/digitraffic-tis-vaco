@@ -1,7 +1,9 @@
 package fi.digitraffic.tis.vaco.validation.rules.gtfs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
@@ -82,7 +84,7 @@ class CanonicalGtfsValidatorRuleTest {
     @Captor
     private ArgumentCaptor<String> uploadDirectoryBucketName;
     @Captor
-    private ArgumentCaptor<String> uploadDirectoryTargetPath;
+    private ArgumentCaptor<S3Path> uploadDirectoryTargetPath;
 
     @BeforeAll
     static void beforeAll() {
@@ -122,7 +124,7 @@ class CanonicalGtfsValidatorRuleTest {
             eq(entry),
             eq(task),
             eq(CanonicalGtfsValidatorRule.RULE_NAME),
-            eq("entries/testPublicId/tasks/" + task.name() + "/rules/gtfs.canonical.v4_0_0"),
+            eq(ImmutableS3Path.of("entries/" + entry.publicId() + "/tasks/" + task.name() + "/rules/gtfs.canonical.v4_0_0")),
             eq("content.zip"));
 
         assertAll(
@@ -153,7 +155,7 @@ class CanonicalGtfsValidatorRuleTest {
 
     private void whenDirectoryUpload() {
         CompletableFuture<CompletedDirectoryUpload> cdu = CompletableFuture.completedFuture(CompletedDirectoryUpload.builder().build());
-        when(s3Client.uploadDirectory(isA(Path.class), isA(String.class), isA(String.class))).thenReturn(cdu);
+        when(s3Client.uploadDirectory(isA(Path.class), isA(String.class), isA(S3Path.class))).thenReturn(cdu);
     }
 
     private void whenFindValidationRuleByName() {

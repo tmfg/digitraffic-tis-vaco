@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.aws;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.vaco.VacoProperties;
@@ -80,8 +82,8 @@ public class S3Packager {
     }
 
     public CompletableFuture<Void> producePackage(Entry entry,
-                                                  String s3SourcePath,
-                                                  String s3TargetPath,
+                                                  S3Path s3SourcePath,
+                                                  S3Path s3TargetPath,
                                                   String zipFileName,
                                                   String... filterKeys) {
         return CompletableFuture.runAsync(() -> {
@@ -91,7 +93,8 @@ public class S3Packager {
             try {
                 s3Client.downloadDirectory(vacoProperties.getS3ProcessingBucket(), s3SourcePath, localArtifactTemp, filterKeys).join();
                 createZip(localArtifactTemp, localTargetFile);
-                String s3FullTargetPath = s3TargetPath + "/" + zipFileName;
+                S3Path
+                    s3FullTargetPath = ImmutableS3Path.of(s3TargetPath.path() + "/" + zipFileName);
                 s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3FullTargetPath, localTargetFile).join();
                 logger.info("Successfully completed packaging {} via {} into {}", s3SourcePath, localArtifactTemp, s3FullTargetPath);
             } catch (IOException e) {

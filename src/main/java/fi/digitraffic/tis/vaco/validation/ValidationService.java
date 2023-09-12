@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.validation;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
@@ -98,7 +100,7 @@ public class ValidationService {
                                                                                                 ImmutableTask task) {
         return response -> {
             ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
-            String s3TargetPath = S3Artifact.getTaskPath(queueEntry.publicId(), DOWNLOAD_SUBTASK) + "/" + queueEntry.format() + ".original";
+            S3Path s3TargetPath = ImmutableS3Path.of(S3Artifact.getTaskPath(queueEntry.publicId(), DOWNLOAD_SUBTASK).path() + "/" + queueEntry.format() + ".original");
 
             return s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3TargetPath, refs.localPath())
                 .thenApply(track(task, ProcessingState.UPDATE))

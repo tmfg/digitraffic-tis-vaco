@@ -1,5 +1,8 @@
 package fi.digitraffic.tis.vaco.aws;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
+import fi.digitraffic.tis.aws.s3.S3Path;
+
 public class S3Artifact {
 
     static final String ENTRY_ROOT = "entries/%s";
@@ -22,35 +25,36 @@ public class S3Artifact {
 
     static final String ERROR_LOGS = ENTRY_ROOT + "/logs/errors/%s";
 
-    public static String getEntryFolderPath(String entryPublicId) {
-        return String.format(ENTRY_ROOT, entryPublicId);
+    public static S3Path getEntryFolderPath(String entryPublicId) {
+        return ImmutableS3Path.of(String.format(ENTRY_ROOT, entryPublicId));
     }
 
     /**
      * @param entryPublicId
      * @return
      */
-    public static String getOriginalEntryPath(String entryPublicId) {
-        return String.format(ORIGINAL_ENTRY, entryPublicId);
+    public static S3Path getOriginalEntryPath(String entryPublicId) {
+        return ImmutableS3Path.of(String.format(ORIGINAL_ENTRY, entryPublicId));
     }
 
     /**
      * @param entryPublicId
      * @return
      */
-    public static String getMetadataPath(String entryPublicId) {
-        return String.format(METADATA, entryPublicId);
+    public static S3Path getMetadataPath(String entryPublicId) {
+        return ImmutableS3Path.of(String.format(METADATA, entryPublicId));
     }
 
     /**
      * Pattern: entries/{entryPublicId}/tasks/validation
+     *
      * @param entryPublicId
      * @param task
      * @return
      */
-    public static String getTaskPath(String entryPublicId,
+    public static S3Path getTaskPath(String entryPublicId,
                                      String task) {
-        return String.format(TASKS_ROOT, entryPublicId, task);
+        return ImmutableS3Path.of(String.format(TASKS_ROOT, entryPublicId, task));
     }
 
     /**
@@ -60,14 +64,14 @@ public class S3Artifact {
      * @param artifact: either a file name or directory with a bunch of files
      * @return
      */
-    public static String getConversionTaskPath(String entryPublicId,
+    public static S3Path getConversionTaskPath(String entryPublicId,
                                                String subTask,
                                                String artifact) {
-        return String.format(CONVERSION_TASK, entryPublicId, subTask, artifact);
+        return ImmutableS3Path.of(String.format(CONVERSION_TASK, entryPublicId, subTask, artifact));
     }
 
-    public static String getPackagesDirectory(String entryPublicId) {
-        return String.format(PACKAGES_ROOT, entryPublicId);
+    public static S3Path getPackagesDirectory(String entryPublicId) {
+        return ImmutableS3Path.of(String.format(PACKAGES_ROOT, entryPublicId));
     }
 
     /**
@@ -76,9 +80,9 @@ public class S3Artifact {
      * @param packageName
      * @return
      */
-    public static String getPackagePath(String entryPublicId,
+    public static S3Path getPackagePath(String entryPublicId,
                                         String packageName) {
-        return getPackagesDirectory(entryPublicId) + "/" + packageName;
+        return ImmutableS3Path.of(getPackagesDirectory(entryPublicId).path() + "/" + packageName);
     }
 
     /**
@@ -87,12 +91,12 @@ public class S3Artifact {
      * @param artifact: I guess some kind of json file in most cases?
      * @return
      */
-    public static String getErrorLogsPath(String entryPublicId,
+    public static S3Path getErrorLogsPath(String entryPublicId,
                                           String artifact) {
-        return String.format(ERROR_LOGS, entryPublicId, artifact);
+        return ImmutableS3Path.of(String.format(ERROR_LOGS, entryPublicId, artifact));
     }
 
-    public static String getRuleDirectory(String entryPublicId, String taskName, String ruleName) {
-        return getTaskPath(entryPublicId, taskName) + "/rules/" + ruleName;
+    public static S3Path getRuleDirectory(String entryPublicId, String taskName, String ruleName) {
+        return ImmutableS3Path.of(getTaskPath(entryPublicId, taskName).path() + "/rules/" + ruleName);
     }
 }

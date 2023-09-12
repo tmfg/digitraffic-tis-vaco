@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.packages;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
@@ -41,7 +42,7 @@ public class PackagesService {
     public ImmutablePackage createPackage(Entry entry,
                                           Task task,
                                           String ruleName,
-                                          String packageContentsS3Path,
+                                          S3Path packageContentsS3Path,
                                           String fileName) {
         // TODO: error handling?
         // upload package file to S3
@@ -57,7 +58,7 @@ public class PackagesService {
             ImmutablePackage.of(
                 entry.id(),
                 ruleName,  // TODO: This assumes same rule can be executed only once per job
-                packageContentsS3Path + "/" + fileName));
+                packageContentsS3Path.path() + "/" + fileName));
     }
 
     public List<ImmutablePackage> findPackages(Long entryId) {

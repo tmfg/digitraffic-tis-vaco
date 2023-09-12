@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.VacoProperties;
@@ -133,7 +134,7 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     private List<ImmutableError> copyOutputToS3(Entry entry,
                                                 Task task,
                                                 Path outputDirectory) {// copy produced output to S3
-        String s3TargetPath = S3Artifact.getRuleDirectory(
+        S3Path s3TargetPath = S3Artifact.getRuleDirectory(
                 entry.publicId(),
             task.name(),
             RULE_NAME);

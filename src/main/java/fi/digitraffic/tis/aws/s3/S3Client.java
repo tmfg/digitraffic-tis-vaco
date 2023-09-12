@@ -61,9 +61,9 @@ public class S3Client {
         return createTempFile(downloadDir, format, ".download");
     }
 
-    public CompletableFuture<CompletedFileUpload> uploadFile(String bucketName, String targetPath, Path sourcePath) {
+    public CompletableFuture<CompletedFileUpload> uploadFile(String bucketName, S3Path targetPath, Path sourcePath) {
         UploadFileRequest ufr = UploadFileRequest.builder()
-            .putObjectRequest(req -> req.bucket(bucketName).key(targetPath))
+            .putObjectRequest(req -> req.bucket(bucketName).key(targetPath.path()))
             .addTransferListener(LoggingTransferListener.create())
             .source(sourcePath)
             .build();
@@ -73,11 +73,11 @@ public class S3Client {
             .completionFuture();
     }
 
-    public CompletableFuture<CompletedDirectoryUpload> uploadDirectory(Path localSourcePath, String bucketName, String s3TargetPath) {
+    public CompletableFuture<CompletedDirectoryUpload> uploadDirectory(Path localSourcePath, String bucketName, S3Path s3TargetPath) {
         UploadDirectoryRequest udr = UploadDirectoryRequest.builder()
             .source(localSourcePath)
             .bucket(bucketName)
-            .s3Prefix(s3TargetPath)
+            .s3Prefix(s3TargetPath.path())
             .build();
         logger.info("Uploading directory from {} to s3:{}/{}", localSourcePath, bucketName, s3TargetPath);
         return s3TransferManager
@@ -86,12 +86,12 @@ public class S3Client {
       }
 
     public CompletableFuture<CompletedDirectoryDownload> downloadDirectory(String s3Bucket,
-                                                                           String s3SourcePath,
+                                                                           S3Path s3SourcePath,
                                                                            Path targetPath,
                                                                            String... filterKeys) {
         DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()
             .bucket(s3Bucket)
-            .listObjectsV2RequestTransformer(l -> l.prefix(s3SourcePath.replaceFirst("^/", "")))
+            .listObjectsV2RequestTransformer(l -> l.prefix(s3SourcePath.path().replaceFirst("^/", "")))
             .filter(filterKeys != null && filterKeys.length > 0
                 ? s3Object -> Arrays.stream(filterKeys).noneMatch(filterKey -> s3Object.key().matches(filterKey))
                 : DownloadFilter.allObjects())
@@ -104,10 +104,10 @@ public class S3Client {
     }
 
     // For local debug/test purposes:
-    public List<S3Object> listObjectsInBucket(String root, String bucket) {
+    public List<S3Object> listObjectsInBucket(S3Path root, String bucket) {
         ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
             .bucket(bucket)
-            .prefix(root)
+            .prefix(root.path())
             .build();
         ListObjectsV2Response listObjectsV2Response = awsS3Client.listObjectsV2(listObjectsV2Request);
         List<S3Object> contents = listObjectsV2Response.contents();
