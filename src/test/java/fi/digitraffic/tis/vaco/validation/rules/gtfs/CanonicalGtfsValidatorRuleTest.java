@@ -10,10 +10,14 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableRuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -111,7 +115,13 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         whenFindValidationRuleByName();
         whenReportError();
 
-        ValidationReport report = rule.execute(entry, task, s3Input, Optional.empty()).join();
+        RuleExecutionJobMessage<ValidationInput> message = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+            .entry(entry)
+            .task(task)
+            .workDirectory(s3Input.toString())
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
+        ValidationReport report = rule.execute(message).join();
 
         assertThat(report.errors().size(), equalTo(51));
 
@@ -130,7 +140,13 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         whenReportError();
 
         Entry invalidFormat = ImmutableEntry.copyOf(entry).withFormat("vhs");
-        ValidationReport report = rule.execute(invalidFormat, task, ImmutableS3Path.of(forInput("public/testfiles/padasjoen_kunta.zip").toString()), Optional.empty()).join();
+        RuleExecutionJobMessage<ValidationInput> message = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+            .entry(invalidFormat)
+            .task(task)
+            .workDirectory(ImmutableS3Path.of(forInput("public/testfiles/padasjoen_kunta.zip").toString()).toString())
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
+        ValidationReport report = rule.execute(message).join();
 
         ImmutableError error = mockError("Wrong format! Expected 'gtfs', was 'vhs'");
         assertThat(report.errors(), equalTo(List.of(error)));

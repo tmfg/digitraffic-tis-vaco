@@ -10,12 +10,16 @@ import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableRuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -137,7 +141,18 @@ public class ValidationService {
         List<ValidationReport> reports = validationRulesets.parallelStream()
                 .map(this::findMatchingRule)
                 .filter(Optional::isPresent)
-                .map(r -> r.get().execute(entry, task, inputDirectory, r.map(x -> configs.get(x.getIdentifyingName()))))
+                .map(r -> {
+                    Optional<ValidationInput> configuration = r.map(x -> configs.get(x.getIdentifyingName()));
+                    RuleExecutionJobMessage<ValidationInput> ruleMessage = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+                        .entry(ImmutableEntry.copyOf(entry).withTasks())
+                        .task(task)
+                        .workDirectory(inputDirectory.toString())
+                        .configuration(configuration.orElse(null))
+                        .retryStatistics(ImmutableRetryStatistics.of(5))
+                        .build();
+                    // TODO: here will be per-rule SQS queue submission logic instead of calling rules directly
+                    return r.get().execute(ruleMessage);
+                })
                 .map(CompletableFuture::join)
                 .toList();  // this is here to terminate the stream which ensures it gets evaluated properly
         // TODO: Do we want to do anything with these reports? Probably not, rules should be self-contained.

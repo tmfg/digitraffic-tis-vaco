@@ -66,10 +66,10 @@ public class ConversionService {
     }
 
     public ImmutableJobResult convert(ImmutableConversionJobMessage jobDescription) {
-        Entry entry = jobDescription.message();
-        TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.message());
+        Entry entry = jobDescription.entry();
+        TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.entry());
 
-        TaskResult<List<ConversionReport>> conversionReports = executeRules(jobDescription.message(), conversionRulesets.result());
+        TaskResult<List<ConversionReport>> conversionReports = executeRules(jobDescription.entry(), conversionRulesets.result());
 
         String packageFileName = PHASE + "_results";
         s3Packager.producePackage(

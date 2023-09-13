@@ -73,7 +73,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 }
                 case CONVERSION -> {
                     ImmutableConversionJobMessage conversionJob = ImmutableConversionJobMessage.builder()
-                        .message(message.entry())
+                        .entry(message.entry())
                         .retryStatistics(ImmutableRetryStatistics.of(5))
                         .build();
                     messagingService.submitConversionJob(conversionJob);

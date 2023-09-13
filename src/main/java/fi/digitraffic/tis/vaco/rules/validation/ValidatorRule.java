@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.Rule;
+import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
@@ -28,10 +29,11 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
     private final S3Client s3Client;
     private final VacoProperties vacoProperties;
 
-    protected ValidatorRule(
-        String ruleFormat,
-        RulesetRepository rulesetRepository,
-        ErrorHandlerService errorHandlerService, S3Client s3Client, VacoProperties vacoProperties) {
+    protected ValidatorRule(String ruleFormat,
+                            RulesetRepository rulesetRepository,
+                            ErrorHandlerService errorHandlerService,
+                            S3Client s3Client,
+                            VacoProperties vacoProperties) {
         this.ruleFormat = Objects.requireNonNull(ruleFormat);
         this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
         this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
@@ -40,10 +42,12 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
     }
 
     @Override
-    public CompletableFuture<ValidationReport> execute(Entry entry,
-                                                       Task task,
-                                                       S3Path inputDirectory,
-                                                       Optional<ValidationInput> configuration) {
+    public CompletableFuture<ValidationReport> execute(RuleExecutionJobMessage<ValidationInput> message) {
+        Entry entry = message.entry();
+        Task task = message.task();
+        S3Path inputDirectory = S3Path.of(message.workDirectory());
+        Optional<ValidationInput> configuration = Optional.ofNullable(message.configuration());
+
         return CompletableFuture.supplyAsync(() -> {
             if (ruleFormat.equalsIgnoreCase(entry.format())) {
                 return runValidator(entry, task, downloadFiles(entry, task, inputDirectory), configuration);

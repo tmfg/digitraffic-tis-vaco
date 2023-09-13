@@ -8,8 +8,12 @@ import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableRuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
@@ -100,7 +104,13 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
         givenTestFile("public/testfiles/entur-netex.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".download"));
         // zero errors -> no need for this. Left for future imporvements' sake
         // whenFindValidationRuleByName();
-        ValidationReport report = rule.execute(entry, task, s3Input, Optional.empty()).join();
+        RuleExecutionJobMessage<ValidationInput> message = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+            .entry(entry)
+            .task(task)
+            .workDirectory(s3Input.toString())
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
+        ValidationReport report = rule.execute(message).join();
 
         assertThat(report.errors().size(), equalTo(0));
     }

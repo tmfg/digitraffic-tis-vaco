@@ -7,13 +7,12 @@ import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
-import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.Rule;
+import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
@@ -41,7 +40,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -74,7 +72,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 }
 
                 @Override
-                public CompletableFuture<ValidationReport> execute(Entry entry, Task task, S3Path input, Optional<ValidationInput> configuration) {
+                public CompletableFuture<ValidationReport> execute(RuleExecutionJobMessage<ValidationInput> message) {
                     ImmutableValidationReport report = ImmutableValidationReport.of(TEST_RULE_RESULT);
                     ruleReport.set(report);
                     return CompletableFuture.completedFuture(report);
