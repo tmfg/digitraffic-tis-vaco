@@ -19,7 +19,6 @@ import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
@@ -71,15 +70,15 @@ public class ValidationService {
     public void validate(ValidationJobMessage message) throws RuleExecutionException {
         Entry entry = message.entry();
 
-        ImmutableFileReferences fileReferences = downloadFile(entry);
+        S3Path s3Path = downloadFile(entry);
 
         Set<Ruleset> validationRulesets = selectRulesets(entry);
 
-        executeRules(entry, fileReferences, validationRulesets);
+        executeRules(entry, s3Path, validationRulesets);
     }
 
     @VisibleForTesting
-    ImmutableFileReferences downloadFile(Entry entry) {
+    S3Path downloadFile(Entry entry) {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
         Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".download");
 
@@ -97,8 +96,8 @@ public class ValidationService {
         };
     }
 
-    private Function<HttpResponse<Path>, CompletableFuture<ImmutableFileReferences>> uploadToS3(Entry entry,
-                                                                                                ImmutableTask task) {
+    private Function<HttpResponse<Path>, CompletableFuture<S3Path>> uploadToS3(Entry entry,
+                                                                               ImmutableTask task) {
         return response -> {
             ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
             S3Path s3TargetPath = ImmutableS3Path.builder()
@@ -108,7 +107,7 @@ public class ValidationService {
 
             return s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3TargetPath, refs.localPath())
                 .thenApply(track(task, ProcessingState.UPDATE))
-                .thenApply(u -> refs.withS3Path(s3TargetPath));  // TODO: There's probably something useful in the `u` parameter
+                .thenApply(u -> s3TargetPath);  // TODO: There's probably something useful in the `u` parameter
         };
     }
 
@@ -129,7 +128,7 @@ public class ValidationService {
 
     @VisibleForTesting
     void executeRules(Entry entry,
-                      FileReferences fileReferences,
+                      S3Path inputDirectory,
                       Set<Ruleset> validationRulesets) {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), EXECUTION_SUBTASK), ProcessingState.START);
 
@@ -138,7 +137,7 @@ public class ValidationService {
         List<ValidationReport> reports = validationRulesets.parallelStream()
                 .map(this::findMatchingRule)
                 .filter(Optional::isPresent)
-                .map(r -> r.get().execute(entry, task, fileReferences.s3Path(), r.map(x -> configs.get(x.getIdentifyingName()))))
+                .map(r -> r.get().execute(entry, task, inputDirectory, r.map(x -> configs.get(x.getIdentifyingName()))))
                 .map(CompletableFuture::join)
                 .toList();  // this is here to terminate the stream which ensures it gets evaluated properly
         // TODO: Do we want to do anything with these reports? Probably not, rules should be self-contained.

@@ -15,7 +15,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import org.junit.jupiter.api.Test;
@@ -158,7 +157,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         S3Path s3TargetPath = ImmutableS3Path.of(S3Artifact.getTaskPath(entry.publicId(), ValidationService.DOWNLOAD_SUBTASK).path() + "/" + entry.format() + ".original");
         validationService.executeRules(
             entry,
-            ImmutableFileReferences.builder().s3Path(s3TargetPath).build(),
+            s3TargetPath,
             Set.of(TestObjects.aRuleset()
                     .identifyingName(TEST_RULE_NAME)
                     .description("running hello rule from tests")
