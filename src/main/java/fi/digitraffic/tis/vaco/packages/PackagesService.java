@@ -70,13 +70,13 @@ public class PackagesService {
         return packagesRepository.findPackages(entryId);
     }
 
-    public Optional<Package> findPackage(String entryPublicId, String packageName) {
-        return packagesRepository.findPackage(entryPublicId, packageName);
+    public Optional<Package> findPackage(Entry entry, String packageName) {
+        return packagesRepository.findPackage(entry.publicId(), packageName);
     }
 
-    public Optional<Path> downloadPackage(String entryPublicId, String packageName) {
-        return findPackage(entryPublicId, packageName).map(p -> {
-            Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entryPublicId, packageName)
+    public Optional<Path> downloadPackage(Entry entry, String packageName) {
+        return findPackage(entry, packageName).map(p -> {
+            Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, packageName)
                 .resolve(Path.of(p.path()).getFileName());
 
             logger.info("Downloading s3:{}:{} to local temp path {}", vacoProperties.getS3ProcessingBucket(), p.path(), targetPackagePath);

@@ -87,8 +87,8 @@ public class S3Packager {
                                                   String zipFileName,
                                                   String... filterKeys) {
         return CompletableFuture.runAsync(() -> {
-            Path localArtifactTemp = TempFiles.getArtifactDownloadDirectory(vacoProperties, entry.publicId());
-            Path localTargetFile = TempFiles.getArtifactPackagingFile(vacoProperties, entry.publicId(), zipFileName);
+            Path localArtifactTemp = TempFiles.getArtifactDownloadDirectory(vacoProperties, entry);
+            Path localTargetFile = TempFiles.getArtifactPackagingFile(vacoProperties, entry, zipFileName);
             logger.info("Starting to package s3:{} into {}", s3SourcePath, localTargetFile);
             try {
                 s3Client.downloadDirectory(vacoProperties.getS3ProcessingBucket(), s3SourcePath, localArtifactTemp, filterKeys).join();

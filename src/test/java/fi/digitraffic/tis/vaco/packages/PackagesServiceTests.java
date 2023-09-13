@@ -38,7 +38,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
         ImmutableTask task = TestObjects.aTask().build();
         ImmutableEntry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
         ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
-        Optional<Package> loaded = packagesService.findPackage(entry.publicId(), "FAKE_RULE");
+        Optional<Package> loaded = packagesService.findPackage(entry, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
 
@@ -50,7 +50,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
         ImmutableTask task = TestObjects.aTask().build();
         ImmutableEntry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
         ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
-        Optional<Path> loaded = packagesService.downloadPackage(entry.publicId(), "FAKE_RULE");
+        Optional<Path> loaded = packagesService.downloadPackage(entry, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
 

@@ -16,23 +16,21 @@ import java.util.UUID;
  */
 public class TempFiles {
 
-    // TODO: strongly type params
-
-    public static Path getPackageDirectory(VacoProperties vacoProperties, String entryPublicId, String packageName) {
+    public static Path getPackageDirectory(VacoProperties vacoProperties, Entry entry, String packageName) {
         return tempDir(vacoProperties,
             Paths.get(
                 "entries",
-                entryPublicId,
+                entry.publicId(),
                 "packages",
                 packageName
             ));
     }
 
-    public static Path getTaskTempDirectory(VacoProperties vacoProperties, String entryPublicId, String taskName) {
+    public static Path getTaskTempDirectory(VacoProperties vacoProperties, Entry entry, String taskName) {
         return tempDir(vacoProperties,
             Paths.get(
                 "entries",
-                entryPublicId,
+                entry.publicId(),
                 "tasks",
                 taskName
             ));
@@ -51,32 +49,32 @@ public class TempFiles {
             true);
     }
 
-    public static Path getArtifactDownloadDirectory(VacoProperties vacoProperties, String entryPublicId) {
+    public static Path getArtifactDownloadDirectory(VacoProperties vacoProperties, Entry entry) {
         return tempDir(vacoProperties,
             Paths.get(
                 "entries",
-                entryPublicId,
+                entry.publicId(),
                 "artifacts",
                 "downloads",
                 UUID.randomUUID().toString()
             ));
     }
 
-    public static Path getArtifactPackagingFile(VacoProperties vacoProperties, String entryPublicId, String zipFileName) {
+    public static Path getArtifactPackagingFile(VacoProperties vacoProperties, Entry entry, String zipFileName) {
         return tempDir(vacoProperties,
             Paths.get(
                 "entries",
-                entryPublicId,
+                entry.publicId(),
                 "artifacts",
                 "downloads"
             )).resolve(zipFileName);
     }
 
-    public static Path getRuleTempDirectory(VacoProperties vacoProperties, String entryPublicId, String taskName, String ruleName) {
+    public static Path getRuleTempDirectory(VacoProperties vacoProperties, Entry entry, String taskName, String ruleName) {
         return tempDir(vacoProperties,
             Paths.get(
                 "entries",
-                entryPublicId,
+                entry.publicId(),
                 "tasks",
                 taskName,
                 "rules",

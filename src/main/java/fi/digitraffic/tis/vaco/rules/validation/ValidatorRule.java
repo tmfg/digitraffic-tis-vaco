@@ -61,7 +61,7 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
     }
 
     private Path downloadFiles(Entry entry, Task task, S3Path inputDirectory) {
-        Path ruleTempDir = TempFiles.getRuleTempDirectory(vacoProperties, entry.publicId(), task.name(), getIdentifyingName());
+        Path ruleTempDir = TempFiles.getRuleTempDirectory(vacoProperties, entry, task.name(), getIdentifyingName());
         CompletedDirectoryDownload x = s3Client.downloadDirectory(
             vacoProperties.getS3ProcessingBucket(),
             inputDirectory,

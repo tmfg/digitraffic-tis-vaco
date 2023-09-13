@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.packages;
 
+import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ContentDisposition;
@@ -12,18 +13,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/packages")
 public class PackagesController {
 
     private final PackagesService packagesService;
+    private final QueueHandlerService queueHandlerService;
 
-    public PackagesController(PackagesService packagesService) {
+    public PackagesController(PackagesService packagesService,
+                              QueueHandlerService queueHandlerService) {
         this.packagesService = Objects.requireNonNull(packagesService);
+        this.queueHandlerService = queueHandlerService;
     }
 
     @GetMapping(path = "/{entryId}/{packageName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -31,9 +33,8 @@ public class PackagesController {
         @PathVariable("entryId") String entryPublicId,
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
-        Optional<Path> entry = packagesService.downloadPackage(entryPublicId, packageName);
-
-        return entry
+        return queueHandlerService.getEntry(entryPublicId)
+            .flatMap(e -> packagesService.downloadPackage(e, packageName))
             .map(filePath -> {
                 ContentDisposition contentDisposition = ContentDisposition.builder("inline")
                     .filename(packageName + ".zip")
