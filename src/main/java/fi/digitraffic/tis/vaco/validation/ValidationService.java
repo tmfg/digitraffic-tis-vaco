@@ -5,8 +5,8 @@ import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
+import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
-import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
@@ -17,8 +17,8 @@ import fi.digitraffic.tis.vaco.process.model.TaskData;
 import fi.digitraffic.tis.vaco.process.model.TaskResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -26,7 +26,6 @@ import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,7 +42,7 @@ import java.util.function.Function;
 
 @Service
 public class ValidationService {
-    public static final String PHASE = TaskCategory.VALIDATION.name;
+    public static final String TASK = TaskCategory.VALIDATION.name;
     public static final String DOWNLOAD_SUBTASK = "validation.download";
     public static final String RULESET_SELECTION_SUBTASK = "validation.rulesets";
     public static final String EXECUTION_SUBTASK = "validation.execute";
@@ -56,39 +55,31 @@ public class ValidationService {
     private final RulesetService rulesetService;
     private final HttpClient httpClientUtility;
     private final S3Client s3ClientUtility;
-    private final RulesetRepository rulesetRepository;
     private final Map<String, Rule<ValidationInput, ValidationReport>> rules;
 
-    private final S3Packager s3Packager;
+    private final VacoProperties vacoProperties;
 
     public ValidationService(TaskService taskService,
                              RulesetService rulesetService,
                              HttpClient httpClient,
                              S3Client s3ClientUtility,
-                             RulesetRepository rulesetRepository,
-                             @Qualifier("validation") List<Rule<ValidationInput, ValidationReport>> rules, S3Packager s3Packager) {
+                             @Qualifier("validation") List<Rule<ValidationInput, ValidationReport>> rules,
+                             VacoProperties vacoProperties) {
         this.taskService = taskService;
         this.rulesetService = rulesetService;
         this.httpClientUtility = httpClient;
         this.s3ClientUtility = s3ClientUtility;
-        this.rulesetRepository = rulesetRepository;
         this.rules = Streams.collect(rules, Rule::getIdentifyingName, Function.identity());
-        this.s3Packager = s3Packager;
+        this.vacoProperties = vacoProperties;
     }
 
-    public JobResult validate(ValidationJobMessage jobDescription) throws RuleExecutionException {
-        Entry entry = jobDescription.message();
+    public JobResult validate(ValidationJobMessage jobMessage) throws RuleExecutionException {
+        Entry entry = jobMessage.message();
         TaskResult<ImmutableFileReferences> s3path = downloadFile(entry);
 
         TaskResult<Set<Ruleset>> validationRulesets = selectRulesets(entry);
 
         TaskResult<List<ValidationReport>> validationReports = executeRules(entry, s3path.result(), validationRulesets.result());
-
-        String packageFileName = PHASE + "_results";
-        s3Packager.producePackage(
-            S3Artifact.getPhasePath(entry.publicId(), PHASE),
-            S3Artifact.getPackagePath(entry.publicId(), packageFileName),
-            PHASE + "_results");
 
         return ImmutableJobResult.builder()
                 .addResults(s3path, validationRulesets, validationReports)
@@ -118,10 +109,10 @@ public class ValidationService {
 
     private Function<ImmutableTaskData<ImmutableFileReferences>, CompletableFuture<ImmutableTaskData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
         return taskData -> {
-            String targetPath = S3Artifact.getValidationTaskPath(queueEntry.publicId(), DOWNLOAD_SUBTASK, queueEntry.format() + ".original");
+            String s3TargetPath = S3Artifact.getTaskPath(queueEntry.publicId(), DOWNLOAD_SUBTASK) + "/" + queueEntry.format() + ".original";
             Path sourcePath = taskData.payload().localPath();
 
-            return s3ClientUtility.uploadFile(targetPath, sourcePath)
+            return s3ClientUtility.uploadFile(vacoProperties.getS3ProcessingBucket(), s3TargetPath, sourcePath)
                 .thenApply(u -> taskData // upload done -> update task
                     .withTask(taskService.trackTask(taskData.task(), ProcessingState.UPDATE)));
         };

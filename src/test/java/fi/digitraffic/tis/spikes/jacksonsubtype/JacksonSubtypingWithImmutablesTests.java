@@ -15,9 +15,7 @@ public class JacksonSubtypingWithImmutablesTests {
         ImmutableContent content = ImmutableContent.of(ImmutableSubtypeA.builder().name("a").subtypeValueA("aaa").build());
         ObjectMapper mapper = new ObjectMapper();
         JsonNode tree = mapper.valueToTree(content);
-        System.out.println("tree = " + tree);
         Content reloaded = mapper.treeToValue(tree, Content.class);
-        System.out.println("reloaded = " + reloaded);
     }
 
 }

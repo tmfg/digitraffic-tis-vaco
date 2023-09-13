@@ -4,10 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.TaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -24,10 +28,7 @@ import org.mobilitydata.gtfsvalidator.util.VersionInfo;
 import org.mobilitydata.gtfsvalidator.util.VersionResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
-import software.amazon.awssdk.transfer.s3.model.FailedFileUpload;
-import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,19 +46,21 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     public static final String RULE_NAME = "gtfs.canonical.v4_0_0";
 
     private final ObjectMapper objectMapper;
-    private final S3TransferManager s3TransferManager;
     private final VacoProperties vacoProperties;
+    private final S3Client s3Client;
+    private final PackagesService packagesService;
 
-    public CanonicalGtfsValidatorRule(
-        ObjectMapper objectMapper,
-        VacoProperties vacoProperties,
-        S3TransferManager s3TransferManager,
-        ErrorHandlerService errorHandlerService,
-        RulesetRepository rulesetRepository) {
+    public CanonicalGtfsValidatorRule(ObjectMapper objectMapper,
+                                      VacoProperties vacoProperties,
+                                      ErrorHandlerService errorHandlerService,
+                                      RulesetRepository rulesetRepository,
+                                      S3Client s3Client,
+                                      PackagesService packagesService) {
         super("gtfs", rulesetRepository, errorHandlerService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.s3TransferManager = Objects.requireNonNull(s3TransferManager);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.s3Client = Objects.requireNonNull(s3Client);
+        this.packagesService = Objects.requireNonNull(packagesService);
     }
 
     @Override
@@ -71,7 +74,8 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
         Optional<ValidationInput> configuration,
         TaskData<FileReferences> taskData) {
 
-        Path ruleRoot = Path.of(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), taskData.task().name(), "rules", RULE_NAME);
+        Path ruleRoot = TempFiles.getRuleTempDirectory(vacoProperties, queueEntry.publicId(), taskData.task().name(), RULE_NAME);
+
         URI gtfsSource = taskData.payload().localPath().toUri();
         Path storageDirectory = ruleRoot.resolve("storage");
         Path outputDirectory = ruleRoot.resolve("output");
@@ -127,22 +131,24 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
         }
     }
 
-    private List<ImmutableError> copyOutputToS3(Entry queueEntry, TaskData<FileReferences> taskData, Path outputDirectory) {
-        String s3Path = S3Artifact.getValidationTaskPath(queueEntry.publicId(),
-                                                          taskData.task().name(),
-                                                          RULE_NAME);
+    private List<ImmutableError> copyOutputToS3(Entry entry, TaskData<FileReferences> taskData, Path outputDirectory) {
+        // copy produced output to S3
+        String s3TargetPath = S3Artifact.getRuleDirectory(
+                entry.publicId(),
+                taskData.task().name(),
+                RULE_NAME);
+        CompletedDirectoryUpload ud = s3Client.uploadDirectory(
+                outputDirectory,
+                vacoProperties.getS3ProcessingBucket(),
+                s3TargetPath)
+            .join();
+        // package and publish all of it
+        packagesService.createPackage(entry, taskData.task(), RULE_NAME, s3TargetPath, "content.zip");
 
-        CompletedDirectoryUpload ud = s3TransferManager.uploadDirectory(UploadDirectoryRequest.builder()
-                        .bucket(vacoProperties.getS3processingBucket())
-                        .s3Prefix(s3Path)
-                        .source(outputDirectory)
-                        .build())
-                .completionFuture()
-                .join();
-        List<FailedFileUpload> failed = ud.failedTransfers();
-        return failed.stream().map(failure -> {
+        // record failures if any
+        return Streams.map(ud.failedTransfers(), failure -> {
             ImmutableError error = ImmutableError.of(
-                    queueEntry.id(),
+                    entry.id(),
                     taskData.task().id(),
                     rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
                     "Failed to upload produced output file from %s to S3 %s:%s".formatted(

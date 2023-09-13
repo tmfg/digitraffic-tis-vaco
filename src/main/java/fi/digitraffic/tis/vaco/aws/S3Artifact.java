@@ -2,26 +2,28 @@ package fi.digitraffic.tis.vaco.aws;
 
 public class S3Artifact {
 
-    static final String ENTRY_FOLDER = "entries/%s";
+    static final String ENTRY_ROOT = "entries/%s";
 
-    public static final String ORIGINAL_ENTRY = "/entries/%s/entry.json";
+    public static final String ORIGINAL_ENTRY = ENTRY_ROOT + "/entry.json";
 
-    public static final String METADATA = "/entries/%s/metadata.json";
+    public static final String METADATA = ENTRY_ROOT + "/metadata.json";
 
-    static final String TASK_FOLDER = "entries/%s/phases/%s";
+    static final String TASKS_ROOT = ENTRY_ROOT + "/tasks/%s";
 
-    static final String DOWNLOAD_TASK = "/entries/%s/tasks/download/%s";
+    static final String DOWNLOAD_TASK = ENTRY_ROOT + "/tasks/download/%s";
 
-    static final String VALIDATION_TASK = "/entries/%s/tasks/validation/%s/%s";
+    static final String VALIDATION_TASK = ENTRY_ROOT + "/tasks/validation/%s/%s";
 
-    static final String CONVERSION_TASK = "/entries/%s/tasks/conversion/%s/%s";
+    static final String CONVERSION_TASK = ENTRY_ROOT + "/tasks/conversion/%s/%s";
 
-    static final String PACKAGE = "/entries/%s/package/%s.zip";
+    static final String PACKAGES_ROOT = ENTRY_ROOT + "/packages";
 
-    static final String ERROR_LOGS = "/entries/%s/logs/errors/%s";
+    static final String PACKAGE = ENTRY_ROOT + "/packages/%s.zip";
+
+    static final String ERROR_LOGS = ENTRY_ROOT + "/logs/errors/%s";
 
     public static String getEntryFolderPath(String entryPublicId) {
-        return String.format(ENTRY_FOLDER, entryPublicId);
+        return String.format(ENTRY_ROOT, entryPublicId);
     }
 
     /**
@@ -41,38 +43,14 @@ public class S3Artifact {
     }
 
     /**
-     * Pattern: entries/{entryPublicId}/phases/validation
-     * @param entryPublicId
-     * @param phase
-     * @return
-     */
-    public static String getPhasePath(String entryPublicId,
-                                      String phase) {
-        return String.format(TASK_FOLDER, entryPublicId, phase);
-    }
-
-    /**
      * Pattern: entries/{entryPublicId}/tasks/validation
      * @param entryPublicId
-     * @param phase
+     * @param task
      * @return
      */
-    public static String getDownloadTaskPath(String entryPublicId,
-                                             String artifact) {
-        return String.format(DOWNLOAD_TASK, entryPublicId, artifact);
-    }
-
-    /**
-     * Pattern: /entries/{entryPublicId}/tasks/validation/{subTask}/{fileName}.{extension}
-     * @param entryPublicId
-     * @param subTask
-     * @param artifact: either a file name or directory with a bunch of files
-     * @return
-     */
-    public static String getValidationTaskPath(String entryPublicId,
-                                               String subTask,
-                                               String artifact) {
-        return String.format(VALIDATION_TASK, entryPublicId, subTask, artifact);
+    public static String getTaskPath(String entryPublicId,
+                                     String task) {
+        return String.format(TASKS_ROOT, entryPublicId, task);
     }
 
     /**
@@ -88,6 +66,10 @@ public class S3Artifact {
         return String.format(CONVERSION_TASK, entryPublicId, subTask, artifact);
     }
 
+    public static String getPackagesDirectory(String entryPublicId) {
+        return String.format(PACKAGES_ROOT, entryPublicId);
+    }
+
     /**
      * Pattern: /entries/{entryPublicId}/package/{format}.zip
      * @param entryPublicId
@@ -96,7 +78,7 @@ public class S3Artifact {
      */
     public static String getPackagePath(String entryPublicId,
                                         String packageName) {
-        return String.format(PACKAGE, entryPublicId, packageName);
+        return getPackagesDirectory(entryPublicId) + "/" + packageName;
     }
 
     /**
@@ -108,5 +90,9 @@ public class S3Artifact {
     public static String getErrorLogsPath(String entryPublicId,
                                           String artifact) {
         return String.format(ERROR_LOGS, entryPublicId, artifact);
+    }
+
+    public static String getRuleDirectory(String entryPublicId, String taskName, String ruleName) {
+        return getTaskPath(entryPublicId, taskName) + "/rules/" + ruleName;
     }
 }

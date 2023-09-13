@@ -1,12 +1,14 @@
 package fi.digitraffic.tis.vaco.validation.rules.gtfs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -28,11 +30,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.internal.model.DefaultDirectoryUpload;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
-import software.amazon.awssdk.transfer.s3.model.DirectoryUpload;
-import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -46,6 +44,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -69,15 +68,21 @@ class CanonicalGtfsValidatorRuleTest {
     private static VacoProperties vacoProperties;
 
     @Mock
-    private static S3TransferManager s3TransferManager;
-    @Mock
     private ErrorHandlerService errorHandlerService;
     @Mock
     private RulesetRepository rulesetRepository;
+    @Mock
+    private S3Client s3Client;
+    @Mock
+    private PackagesService packagesService;
     @Captor
     private ArgumentCaptor<Error> errorCaptor;
     @Captor
-    private ArgumentCaptor<UploadDirectoryRequest> uploadDirRequestCaptor;
+    private ArgumentCaptor<Path> uploadDirectorySourcePath;
+    @Captor
+    private ArgumentCaptor<String> uploadDirectoryBucketName;
+    @Captor
+    private ArgumentCaptor<String> uploadDirectoryTargetPath;
 
     @BeforeAll
     static void beforeAll() {
@@ -87,13 +92,13 @@ class CanonicalGtfsValidatorRuleTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, s3TransferManager, errorHandlerService, rulesetRepository);
+        rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, errorHandlerService, rulesetRepository, s3Client, packagesService);
         queueEntry = TestObjects.anEntry("gtfs").build();
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(s3TransferManager, errorHandlerService, rulesetRepository);
+        verifyNoMoreInteractions(errorHandlerService, rulesetRepository, s3Client, packagesService);
     }
 
     @Test
@@ -103,23 +108,31 @@ class CanonicalGtfsValidatorRuleTest {
         whenDirectoryUpload();
 
         String testFile = "public/testfiles/padasjoen_kunta.zip";
-        ValidationReport report = rule.execute(queueEntry, Optional.empty(), forInput(testFile)).join();
+        ImmutableTaskData<FileReferences> taskData = forInput(testFile);
+        ValidationReport report = rule.execute(queueEntry, Optional.empty(), taskData).join();
 
         assertThat(report.errors().size(), equalTo(51));
 
         verify(rulesetRepository, times(51)).findByName(CanonicalGtfsValidatorRule.RULE_NAME);
-        verify(s3TransferManager).uploadDirectory(uploadDirRequestCaptor.capture());
-
-        UploadDirectoryRequest request = uploadDirRequestCaptor.getValue();
+        verify(s3Client).uploadDirectory(
+            uploadDirectorySourcePath.capture(),
+            uploadDirectoryBucketName.capture(),
+            uploadDirectoryTargetPath.capture());
+        verify(packagesService).createPackage(
+            eq(queueEntry),
+            eq(taskData.task()),
+            eq(CanonicalGtfsValidatorRule.RULE_NAME),
+            eq("entries/testPublicId/tasks/validation.execute/rules/gtfs.canonical.v4_0_0"),
+            eq("content.zip"));
 
         assertAll(
-                () -> assertTrue(request.source().startsWith(vacoProperties.getTemporaryDirectory()),
+                () -> assertTrue(uploadDirectorySourcePath.getValue().startsWith(vacoProperties.getTemporaryDirectory()),
                                  "Uploaded directory must reside within system's temporary directory root"),
                 () -> assertThat("uses processing bucket from VACO configuration",
-                                 request.bucket(), equalTo(vacoProperties.getS3processingBucket())),
+                                 uploadDirectoryBucketName.getValue(), equalTo(vacoProperties.getS3ProcessingBucket())),
                 () -> assertThat("S3 prefix contains all important ids so that the outputs get categorized correctly",
-                                 request.s3Prefix().get(),
-                                 equalTo(S3Artifact.getValidationTaskPath("testPublicId", ValidationService.EXECUTION_SUBTASK, CanonicalGtfsValidatorRule.RULE_NAME)))
+                                 uploadDirectoryTargetPath.getValue(),
+                                 equalTo(S3Artifact.getRuleDirectory(queueEntry.publicId(), ValidationService.EXECUTION_SUBTASK, CanonicalGtfsValidatorRule.RULE_NAME)))
         );
     }
 
@@ -138,9 +151,9 @@ class CanonicalGtfsValidatorRuleTest {
         verify(errorHandlerService).reportError(argThat(equalTo(error)));
     }
 
-    private static void whenDirectoryUpload() {
-        DirectoryUpload du = new DefaultDirectoryUpload(CompletableFuture.completedFuture(CompletedDirectoryUpload.builder().build()));
-        when(s3TransferManager.uploadDirectory(isA(UploadDirectoryRequest.class))).thenReturn(du);
+    private void whenDirectoryUpload() {
+        CompletableFuture<CompletedDirectoryUpload> cdu = CompletableFuture.completedFuture(CompletedDirectoryUpload.builder().build());
+        when(s3Client.uploadDirectory(isA(Path.class), isA(String.class), isA(String.class))).thenReturn(cdu);
     }
 
     private void whenFindValidationRuleByName() {

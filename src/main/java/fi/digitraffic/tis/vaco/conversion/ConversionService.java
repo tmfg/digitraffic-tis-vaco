@@ -14,14 +14,16 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
 import fi.digitraffic.tis.vaco.process.model.TaskResult;
+import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,13 +49,13 @@ public class ConversionService {
     private final S3Client s3ClientUtility;
     private final TaskService taskService;
     private final RulesetService rulesetService;
-    private final Map<String, Rule> rules;
+    private final Map<String, Rule<ConversionInput, ConversionReport>> rules;
 
     private final S3Packager s3Packager;
 
     public ConversionService(S3Client s3ClientUtility,
                              TaskService taskService,
-                             List<Rule> rules,
+                             @Qualifier("conversion") List<Rule<ConversionInput, ConversionReport>> rules,
                              RulesetService rulesetService,
                              S3Packager s3Packager) {
         this.s3ClientUtility = Objects.requireNonNull(s3ClientUtility);
@@ -71,7 +73,8 @@ public class ConversionService {
 
         String packageFileName = PHASE + "_results";
         s3Packager.producePackage(
-            S3Artifact.getPhasePath(entry.publicId(), PHASE),
+            entry,
+            S3Artifact.getTaskPath(entry.publicId(), PHASE),
             S3Artifact.getPackagePath(entry.publicId(), packageFileName),
             packageFileName);
 

@@ -24,9 +24,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
     @Test
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
-        EntryRequest request = TestObjects.aValidationEntryRequest(
-
-        ).build();
+        EntryRequest request = TestObjects.aValidationEntryRequest().build();
         MvcResult response = apiCall(post("/queue").content(toJson(request)))
             .andExpect(status().isOk())
             .andReturn();

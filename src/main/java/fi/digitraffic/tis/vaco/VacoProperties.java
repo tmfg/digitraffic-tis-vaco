@@ -13,14 +13,14 @@ public class VacoProperties {
 
     private final String temporaryDirectory;
 
-    private final String s3processingBucket;
+    private final String s3ProcessingBucket;
 
     public VacoProperties(@DefaultValue("local") String environment,
                           @NotBlank String temporaryDirectory,
-                          @NotBlank String s3processingBucket) {
+                          @NotBlank String s3ProcessingBucket) {
         this.environment = environment;
         this.temporaryDirectory = temporaryDirectory;
-        this.s3processingBucket = s3processingBucket;
+        this.s3ProcessingBucket = s3ProcessingBucket;
     }
 
     public String getEnvironment() {
@@ -31,7 +31,8 @@ public class VacoProperties {
         return temporaryDirectory != null ? temporaryDirectory : System.getProperty("java.io.tmpdir");
     }
 
-    public String getS3processingBucket() {
-        return s3processingBucket;
+    public String getS3ProcessingBucket() {
+        return s3ProcessingBucket;
     }
+
 }
