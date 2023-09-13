@@ -48,7 +48,7 @@ public class S3Client {
 
     public CompletableFuture<CompletedFileUpload> uploadFile(String bucketName, S3Path targetPath, Path sourcePath) {
         UploadFileRequest ufr = UploadFileRequest.builder()
-            .putObjectRequest(req -> req.bucket(bucketName).key(targetPath.path()))
+            .putObjectRequest(req -> req.bucket(bucketName).key(targetPath.toString()))
             .addTransferListener(LoggingTransferListener.create())
             .source(sourcePath)
             .build();
@@ -62,7 +62,7 @@ public class S3Client {
         UploadDirectoryRequest udr = UploadDirectoryRequest.builder()
             .source(localSourcePath)
             .bucket(bucketName)
-            .s3Prefix(s3TargetPath.path())
+            .s3Prefix(s3TargetPath.toString())
             .build();
         logger.info("Uploading directory from {} to s3:{}/{}", localSourcePath, bucketName, s3TargetPath);
         return s3TransferManager
@@ -76,7 +76,7 @@ public class S3Client {
                                                                            String... filterKeys) {
         DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()
             .bucket(s3Bucket)
-            .listObjectsV2RequestTransformer(l -> l.prefix(s3SourcePath.path().replaceFirst("^/", "")))
+            .listObjectsV2RequestTransformer(l -> l.prefix(s3SourcePath.toString()))
             .filter(filterKeys != null && filterKeys.length > 0
                 ? s3Object -> Arrays.stream(filterKeys).noneMatch(filterKey -> s3Object.key().matches(filterKey))
                 : DownloadFilter.allObjects())
@@ -92,7 +92,7 @@ public class S3Client {
     public List<S3Object> listObjectsInBucket(S3Path root, String bucket) {
         ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
             .bucket(bucket)
-            .prefix(root.path())
+            .prefix(root.toString())
             .build();
         ListObjectsV2Response listObjectsV2Response = awsS3Client.listObjectsV2(listObjectsV2Request);
         List<S3Object> contents = listObjectsV2Response.contents();

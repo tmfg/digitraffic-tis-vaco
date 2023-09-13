@@ -101,7 +101,10 @@ public class ValidationService {
                                                                                                 ImmutableTask task) {
         return response -> {
             ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
-            S3Path s3TargetPath = ImmutableS3Path.of(S3Artifact.getTaskPath(entry.publicId(), DOWNLOAD_SUBTASK).path() + "/" + entry.format() + ".original");
+            S3Path s3TargetPath = ImmutableS3Path.builder()
+                .from(S3Artifact.getTaskPath(entry.publicId(), DOWNLOAD_SUBTASK))
+                .addPath(entry.format() + ".original")
+                .build();
 
             return s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3TargetPath, refs.localPath())
                 .thenApply(track(task, ProcessingState.UPDATE))

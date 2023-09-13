@@ -94,7 +94,10 @@ public class S3Packager {
                 s3Client.downloadDirectory(vacoProperties.getS3ProcessingBucket(), s3SourcePath, localArtifactTemp, filterKeys).join();
                 createZip(localArtifactTemp, localTargetFile);
                 S3Path
-                    s3FullTargetPath = ImmutableS3Path.of(s3TargetPath.path() + "/" + zipFileName);
+                    s3FullTargetPath = ImmutableS3Path.builder()
+                    .from(s3TargetPath)
+                    .addPath(zipFileName)
+                    .build();
                 s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3FullTargetPath, localTargetFile).join();
                 logger.info("Successfully completed packaging {} via {} into {}", s3SourcePath, localArtifactTemp, s3FullTargetPath);
             } catch (IOException e) {

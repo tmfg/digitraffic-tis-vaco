@@ -82,7 +82,10 @@ public class S3Artifact {
      */
     public static S3Path getPackagePath(String entryPublicId,
                                         String packageName) {
-        return ImmutableS3Path.of(getPackagesDirectory(entryPublicId).path() + "/" + packageName);
+        return ImmutableS3Path.builder()
+            .from(getPackagesDirectory(entryPublicId))
+            .addPath(packageName)
+            .build();
     }
 
     /**
@@ -97,6 +100,9 @@ public class S3Artifact {
     }
 
     public static S3Path getRuleDirectory(String entryPublicId, String taskName, String ruleName) {
-        return ImmutableS3Path.of(getTaskPath(entryPublicId, taskName).path() + "/rules/" + ruleName);
+        return ImmutableS3Path.builder()
+            .from(getTaskPath(entryPublicId, taskName))
+            .addPath("rules", ruleName)
+            .build();
     }
 }
