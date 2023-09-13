@@ -1,9 +1,12 @@
 package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -12,7 +15,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -52,6 +56,8 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     public static final String TEST_RULE_NAME = "hello world";
     public static final String TEST_RULE_RESULT = "The world was greeted";
+
+    private static AtomicReference<ValidationReport> ruleReport = new AtomicReference<>();
 
     @Autowired
     private QueueHandlerService queueHandlerService;
@@ -69,8 +75,10 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 }
 
                 @Override
-                public CompletableFuture<ValidationReport> execute(Entry entry, Task task, FileReferences fileReferences, Optional<ValidationInput> configuration) {
-                    return CompletableFuture.completedFuture(ImmutableValidationReport.of(TEST_RULE_RESULT));
+                public CompletableFuture<ValidationReport> execute(Entry entry, Task task, S3Path input, Optional<ValidationInput> configuration) {
+                    ImmutableValidationReport report = ImmutableValidationReport.of(TEST_RULE_RESULT);
+                    ruleReport.set(report);
+                    return CompletableFuture.completedFuture(report);
                 }
             };
         }
@@ -147,20 +155,16 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void executesRulesBasedOnIdentifyingName() {
         ImmutableEntry entry = createQueueEntryForTesting();
-        validationService.executeRules(entry, null,
-                Set.of(TestObjects.aRuleset()
-                        .identifyingName(TEST_RULE_NAME)
-                        .description("running hello rule from tests")
-                        .category(Category.SPECIFIC)
-                        .build()));
-        /*
+        S3Path s3TargetPath = ImmutableS3Path.of(S3Artifact.getTaskPath(entry.publicId(), ValidationService.DOWNLOAD_SUBTASK).path() + "/" + entry.format() + ".original");
+        validationService.executeRules(
+            entry,
+            ImmutableFileReferences.builder().s3Path(s3TargetPath).build(),
+            Set.of(TestObjects.aRuleset()
+                    .identifyingName(TEST_RULE_NAME)
+                    .description("running hello rule from tests")
+                    .category(Category.SPECIFIC)
+                    .build()));
 
-        TODO: This obviously needs fixing
-
-        assertThat(results, equalTo(ImmutableTaskResult.of(
-            ValidationService.EXECUTION_SUBTASK,
-            List.of(ImmutableValidationReport.of(TEST_RULE_RESULT)))));
-
-         */
+        assertThat(ruleReport.get(), equalTo(ImmutableValidationReport.of(TEST_RULE_RESULT)));
     }
 }

@@ -15,11 +15,11 @@ public class HttpClient {
         this.javaHttpClient = java.net.http.HttpClient.newBuilder().build();
     }
 
-    public CompletableFuture<HttpResponse<Path>> downloadFile(Path filePath,
+    public CompletableFuture<HttpResponse<Path>> downloadFile(Path targetFilePath,
                                                               String url,
                                                               String etag) {
         HttpRequest request = buildGetRequest(url, etag);
-        HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(filePath);
+        HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
         return javaHttpClient.sendAsync(request, bodyHandler);
     }
 

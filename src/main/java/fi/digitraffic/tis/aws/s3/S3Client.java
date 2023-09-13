@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.aws.s3;
 
-import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,6 @@ import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -46,19 +44,6 @@ public class S3Client {
         this.s3TransferManager = Objects.requireNonNull(s3TransferManager);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.awsS3Client = Objects.requireNonNull(awsS3Client);
-    }
-
-    public Path createTempFile(Path downloadDir, String fileName, String extension) {
-        Path downloadFile = downloadDir.resolve(fileName + extension);
-        if (Files.exists(downloadFile)) {
-            throw new S3ClientException("File already exists! Is the process running twice?");
-        }
-        return downloadFile;
-    }
-
-    public Path createVacoDownloadTempFile(String publicId, String format, String taskName) {
-        Path downloadDir = TempFiles.getTaskTempDirectory(vacoProperties, publicId, taskName);
-        return createTempFile(downloadDir, format, ".download");
     }
 
     public CompletableFuture<CompletedFileUpload> uploadFile(String bucketName, S3Path targetPath, Path sourcePath) {

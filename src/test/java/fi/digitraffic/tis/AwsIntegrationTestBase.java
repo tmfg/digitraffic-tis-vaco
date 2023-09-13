@@ -10,6 +10,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 @Testcontainers
@@ -45,5 +46,9 @@ public abstract class AwsIntegrationTestBase {
         s3TransferManager = S3TransferManager.builder()
             .s3Client(s3AsyncClient)
             .build();
+    }
+
+    protected static void createBucket(String bucketName) {
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
     }
 }

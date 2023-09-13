@@ -26,15 +26,27 @@ public class ValidationRuleConfiguration {
                                                                  RulesetRepository rulesetRepository,
                                                                  S3Client s3Client,
                                                                  PackagesService packagesService) {
-        return new CanonicalGtfsValidatorRule(objectMapper,vacoProperties,errorHandlerService,rulesetRepository,s3Client,packagesService);
+        return new CanonicalGtfsValidatorRule(
+            objectMapper,
+            vacoProperties,
+            errorHandlerService,
+            rulesetRepository,
+            s3Client,
+            packagesService);
     }
 
     @Bean
     @Qualifier("validation")
-    public EnturNetexValidatorRule enturNetexValidatorRule(
-        RulesetRepository rulesetRepository,
-        ErrorHandlerService errorhandlerService,
-        ObjectMapper objectMapper) {
-        return new EnturNetexValidatorRule(rulesetRepository, errorhandlerService, objectMapper);
+    public EnturNetexValidatorRule enturNetexValidatorRule(RulesetRepository rulesetRepository,
+                                                           ErrorHandlerService errorhandlerService,
+                                                           ObjectMapper objectMapper,
+                                                           S3Client s3client,
+                                                           VacoProperties vacoProperties) {
+        return new EnturNetexValidatorRule(
+            rulesetRepository,
+            errorhandlerService,
+            objectMapper,
+            s3client,
+            vacoProperties);
     }
 }

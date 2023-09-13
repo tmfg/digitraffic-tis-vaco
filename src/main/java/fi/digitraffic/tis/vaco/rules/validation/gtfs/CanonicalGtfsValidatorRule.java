@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
@@ -18,7 +18,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import org.immutables.value.Value;
@@ -57,7 +56,7 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
                                       RulesetRepository rulesetRepository,
                                       S3Client s3Client,
                                       PackagesService packagesService) {
-        super("gtfs", rulesetRepository, errorHandlerService);
+        super("gtfs", rulesetRepository, errorHandlerService, s3Client, vacoProperties);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
@@ -72,13 +71,11 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     @Override
     protected ValidationReport runValidator(Entry entry,
                                             Task task,
-                                            FileReferences fileReferences,
+                                            Path workDirectory,
                                             Optional<ValidationInput> configuration) {
-        Path ruleRoot = TempFiles.getRuleTempDirectory(vacoProperties, entry.publicId(), task.name(), RULE_NAME);
-
-        URI gtfsSource = fileReferences.localPath().toUri();
-        Path storageDirectory = ruleRoot.resolve("storage");
-        Path outputDirectory = ruleRoot.resolve("output");
+        URI gtfsSource = workDirectory.resolve("input").resolve(entry.format() + ".download").toUri();
+        Path storageDirectory = workDirectory.resolve("storage");
+        Path outputDirectory = workDirectory.resolve("output");
 
         CountryCode countryCode = resolveCountryCode(entry);
 
@@ -134,10 +131,10 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     private List<ImmutableError> copyOutputToS3(Entry entry,
                                                 Task task,
                                                 Path outputDirectory) {// copy produced output to S3
-        S3Path s3TargetPath = S3Artifact.getRuleDirectory(
-                entry.publicId(),
+        S3Path s3TargetPath = ImmutableS3Path.of(S3Artifact.getRuleDirectory(
+            entry.publicId(),
             task.name(),
-            RULE_NAME);
+            RULE_NAME) + "/output");
 
         CompletedDirectoryUpload ud = s3Client.uploadDirectory(
                 outputDirectory,

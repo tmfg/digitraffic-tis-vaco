@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.rules.validation.netex;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -9,7 +11,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import org.entur.netex.validation.validator.NetexValidatorsRunner;
@@ -36,8 +37,10 @@ public class EnturNetexValidatorRule extends ValidatorRule {
     public EnturNetexValidatorRule(
         RulesetRepository rulesetRepository,
         ErrorHandlerService errorHandlerService,
-        ObjectMapper objectMapper) {
-        super("netex", rulesetRepository, errorHandlerService);
+        ObjectMapper objectMapper,
+        S3Client s3Client,
+        VacoProperties vacoProperties) {
+        super("netex", rulesetRepository, errorHandlerService, s3Client, vacoProperties);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
@@ -47,12 +50,15 @@ public class EnturNetexValidatorRule extends ValidatorRule {
     }
 
     @Override
-    protected ValidationReport runValidator(Entry queueEntry,
+    protected ValidationReport runValidator(Entry entry,
                                             Task task,
-                                            FileReferences fileReferences,
+                                            Path workDirectory,
                                             Optional<ValidationInput> configuration) {
 
-        Path netexSource = fileReferences.localPath();
+        Path netexSource = workDirectory.resolve("input").resolve(entry.format() + ".download");
+        Path storageDirectory = workDirectory.resolve("storage");
+        Path outputDirectory = workDirectory.resolve("output");
+
         EnturNetexValidatorConfiguration conf = validateConfiguration(configuration);
         // TODO: send errors to reporting? or did that happen elsewhere?
         List<ImmutableError> validationErrors = validateNetex(conf, task, netexSource);

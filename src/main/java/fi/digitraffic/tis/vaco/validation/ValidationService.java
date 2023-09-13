@@ -5,6 +5,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
@@ -80,7 +81,7 @@ public class ValidationService {
     @VisibleForTesting
     ImmutableFileReferences downloadFile(Entry entry) {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
-        Path tempFilePath = s3Client.createVacoDownloadTempFile(entry.publicId(), entry.format(), task.name());
+        Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".download");
 
         return httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
             .thenApply(track(task, ProcessingState.UPDATE))
@@ -96,11 +97,11 @@ public class ValidationService {
         };
     }
 
-    private Function<HttpResponse<Path>, CompletableFuture<ImmutableFileReferences>> uploadToS3(Entry queueEntry,
+    private Function<HttpResponse<Path>, CompletableFuture<ImmutableFileReferences>> uploadToS3(Entry entry,
                                                                                                 ImmutableTask task) {
         return response -> {
             ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
-            S3Path s3TargetPath = ImmutableS3Path.of(S3Artifact.getTaskPath(queueEntry.publicId(), DOWNLOAD_SUBTASK).path() + "/" + queueEntry.format() + ".original");
+            S3Path s3TargetPath = ImmutableS3Path.of(S3Artifact.getTaskPath(entry.publicId(), DOWNLOAD_SUBTASK).path() + "/" + entry.format() + ".original");
 
             return s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3TargetPath, refs.localPath())
                 .thenApply(track(task, ProcessingState.UPDATE))
@@ -134,9 +135,9 @@ public class ValidationService {
         List<ValidationReport> reports = validationRulesets.parallelStream()
                 .map(this::findMatchingRule)
                 .filter(Optional::isPresent)
-                .map(r -> r.get().execute(entry, task, fileReferences, r.map(x -> configs.get(x.getIdentifyingName()))))
+                .map(r -> r.get().execute(entry, task, fileReferences.s3Path(), r.map(x -> configs.get(x.getIdentifyingName()))))
                 .map(CompletableFuture::join)
-                .toList();
+                .toList();  // this is here to terminate the stream which ensures it gets evaluated properly
         // TODO: Do we want to do anything with these reports? Probably not, rules should be self-contained.
         // everything's done at this point because of the ::join call, complete task
         taskService.trackTask(task, ProcessingState.COMPLETE);
