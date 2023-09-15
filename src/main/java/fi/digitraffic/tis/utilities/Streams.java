@@ -244,5 +244,13 @@ public class Streams {
         public Optional<R> findFirst() {
             return stream().findFirst();
         }
+
+        /**
+         * Force evaluation of the currently wrapped stream without producing return values. Might throw exceptions
+         * based on underlying process.
+         */
+        public void complete() {
+            stream.forEach(action -> {});
+        }
     }
 }
