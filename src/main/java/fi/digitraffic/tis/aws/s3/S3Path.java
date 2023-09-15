@@ -2,6 +2,7 @@ package fi.digitraffic.tis.aws.s3;
 
 import org.immutables.value.Value;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,5 +21,21 @@ public abstract class S3Path {
     @Override
     public String toString() {
         return String.join("/", path());
+    }
+
+    public S3Path parent() {
+        if (path().size() <= 1) {
+            return ImmutableS3Path.of(List.of());
+        } else {
+            List<String> parentPath = new ArrayList<>(path());
+            parentPath.remove(path().size() - 1);
+            return ImmutableS3Path.of(parentPath);
+        }
+    }
+
+    public ImmutableS3Path resolve(String more) {
+        List<String> newPath = new ArrayList<>(path());
+        newPath.addAll(Arrays.asList(more.split(("/"))));
+        return ImmutableS3Path.of(newPath);
     }
 }
