@@ -25,14 +25,14 @@ public class ConversionQueueSqsListener extends SqsListenerBase<ImmutableConvers
 
     @SqsListener(QueueNames.VACO_JOBS_CONVERSION)
     public void listen(ImmutableConversionJobMessage message, Acknowledgement acknowledgement) {
-        handle(message, message.message().publicId(), acknowledgement, (ignored) -> {});
+        handle(message, message.entry().publicId(), acknowledgement, (ignored) -> {});
     }
 
     @Override
     protected void runTask(ImmutableConversionJobMessage message) {
         conversionService.convert(message);
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
-            .entry(message.message())
+            .entry(message.entry())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         messagingService.submitProcessingJob(job);

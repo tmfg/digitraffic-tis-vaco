@@ -56,7 +56,7 @@ class S3ClientTests extends AwsIntegrationTestBase {
         Path inputContent = writeContent(inputs.resolve("hello.txt"), content);
         Path outputContent = outputs.resolve("hello.txt");
 
-        s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), "hello.txt", inputContent).join();
+        s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), ImmutableS3Path.of("hello.txt"), inputContent).join();
         Long contentLength = s3Client.downloadFile(vacoProperties.getS3ProcessingBucket(), "hello.txt", outputContent);
 
         assertThat(contentLength.intValue(), equalTo(content.length()));
@@ -71,8 +71,8 @@ class S3ClientTests extends AwsIntegrationTestBase {
         writeContent(inputManyFiles.resolve("c.txt"), "c");
         Path outputManyFiles = Files.createDirectories(outputs.resolve("manyFiles"));
 
-        s3Client.uploadDirectory(inputManyFiles, vacoProperties.getS3ProcessingBucket(), "bunchOfFiles").join();
-        s3Client.downloadDirectory(vacoProperties.getS3ProcessingBucket(), "bunchOfFiles", outputManyFiles).join();
+        s3Client.uploadDirectory(inputManyFiles, vacoProperties.getS3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles")).join();
+        s3Client.downloadDirectory(vacoProperties.getS3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles"), outputManyFiles).join();
 
         assertThat(Files.readString(outputManyFiles.resolve("a.txt")), equalTo("a"));
         assertThat(Files.readString(outputManyFiles.resolve("b.txt")), equalTo("b"));

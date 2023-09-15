@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.packages;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -37,8 +37,8 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     void roundtrippingPackageEntityWorks() {
         ImmutableTask task = TestObjects.aTask().build();
         ImmutableEntry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
-        ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", "nothing/in/this/path", "resulting.zip");
-        Optional<Package> loaded = packagesService.findPackage(entry.publicId(), "FAKE_RULE");
+        ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
+        Optional<Package> loaded = packagesService.findPackage(entry, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
 
@@ -46,11 +46,11 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
-    void providesHelperForDownloadingReferencedFile() throws IOException {
+    void providesHelperForDownloadingReferencedFile() {
         ImmutableTask task = TestObjects.aTask().build();
         ImmutableEntry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
-        ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", "nothing/in/this/path", "resulting.zip");
-        Optional<Path> loaded = packagesService.downloadPackage(entry.publicId(), "FAKE_RULE");
+        ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
+        Optional<Path> loaded = packagesService.downloadPackage(entry, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
 

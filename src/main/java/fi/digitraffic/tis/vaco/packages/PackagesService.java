@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.packages;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
@@ -41,7 +43,7 @@ public class PackagesService {
     public ImmutablePackage createPackage(Entry entry,
                                           Task task,
                                           String ruleName,
-                                          String packageContentsS3Path,
+                                          S3Path packageContentsS3Path,
                                           String fileName) {
         // TODO: error handling?
         // upload package file to S3
@@ -57,20 +59,24 @@ public class PackagesService {
             ImmutablePackage.of(
                 entry.id(),
                 ruleName,  // TODO: This assumes same rule can be executed only once per job
-                packageContentsS3Path + "/" + fileName));
+                ImmutableS3Path.builder()
+                    .from(packageContentsS3Path)
+                    .addPath(fileName)
+                    .build()
+                    .toString()));
     }
 
     public List<ImmutablePackage> findPackages(Long entryId) {
         return packagesRepository.findPackages(entryId);
     }
 
-    public Optional<Package> findPackage(String entryPublicId, String packageName) {
-        return packagesRepository.findPackage(entryPublicId, packageName);
+    public Optional<Package> findPackage(Entry entry, String packageName) {
+        return packagesRepository.findPackage(entry.publicId(), packageName);
     }
 
-    public Optional<Path> downloadPackage(String entryPublicId, String packageName) {
-        return findPackage(entryPublicId, packageName).map(p -> {
-            Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entryPublicId, packageName)
+    public Optional<Path> downloadPackage(Entry entry, String packageName) {
+        return findPackage(entry, packageName).map(p -> {
+            Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, packageName)
                 .resolve(Path.of(p.path()).getFileName());
 
             logger.info("Downloading s3:{}:{} to local temp path {}", vacoProperties.getS3ProcessingBucket(), p.path(), targetPackagePath);

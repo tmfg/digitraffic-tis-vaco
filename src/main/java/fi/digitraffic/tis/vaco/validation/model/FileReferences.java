@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.validation.model;
 
+import fi.digitraffic.tis.aws.s3.S3Path;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
@@ -17,7 +18,7 @@ public interface FileReferences {
     Path localPath();
 
     @Nullable
-    String s3Path();
+    S3Path s3Path();
 
     @Nullable
     CompletedFileUpload upload();

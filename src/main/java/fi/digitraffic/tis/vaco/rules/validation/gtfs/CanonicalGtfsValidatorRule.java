@@ -4,20 +4,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
-import fi.digitraffic.tis.vaco.process.model.TaskData;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import org.immutables.value.Value;
@@ -56,7 +56,7 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
                                       RulesetRepository rulesetRepository,
                                       S3Client s3Client,
                                       PackagesService packagesService) {
-        super("gtfs", rulesetRepository, errorHandlerService);
+        super("gtfs", rulesetRepository, errorHandlerService, s3Client, vacoProperties);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
@@ -69,18 +69,15 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     }
 
     @Override
-    protected ValidationReport runValidator(
-        Entry queueEntry,
-        Optional<ValidationInput> configuration,
-        TaskData<FileReferences> taskData) {
+    protected ValidationReport runValidator(Entry entry,
+                                            Task task,
+                                            Path workDirectory,
+                                            Optional<ValidationInput> configuration) {
+        URI gtfsSource = workDirectory.resolve("input").resolve(entry.format() + ".download").toUri();
+        Path storageDirectory = workDirectory.resolve("storage");
+        Path outputDirectory = workDirectory.resolve("output");
 
-        Path ruleRoot = TempFiles.getRuleTempDirectory(vacoProperties, queueEntry.publicId(), taskData.task().name(), RULE_NAME);
-
-        URI gtfsSource = taskData.payload().localPath().toUri();
-        Path storageDirectory = ruleRoot.resolve("storage");
-        Path outputDirectory = ruleRoot.resolve("output");
-
-        CountryCode countryCode = resolveCountryCode(queueEntry);
+        CountryCode countryCode = resolveCountryCode(entry);
 
         ValidationRunnerConfig config = ValidationRunnerConfig.builder()
                 .setCountryCode(countryCode)
@@ -94,8 +91,8 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
 
         Path reportFile = outputDirectory.resolve("report.json");
         if (Files.exists(reportFile)) {
-            List<ImmutableError> failedUploads = copyOutputToS3(queueEntry, taskData, outputDirectory);
-            List<ImmutableError> validationErrors = scanErrors(queueEntry, taskData, reportFile);
+            List<ImmutableError> failedUploads = copyOutputToS3(entry, task, outputDirectory);
+            List<ImmutableError> validationErrors = scanErrors(entry, task, reportFile);
             return ImmutableValidationReport.builder()
                     .message("Canonical GTFS validation report")
                     .addAllErrors(failedUploads)
@@ -107,7 +104,7 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
         }
     }
 
-    private List<ImmutableError> scanErrors(Entry queueEntry, TaskData<FileReferences> taskData, Path reportFile) {
+    private List<ImmutableError> scanErrors(Entry entry, Task task, Path reportFile) {
         try {
             Report report = objectMapper.readValue(reportFile.toFile(), Report.class);
             List<ImmutableError> errors = report.notices()
@@ -115,8 +112,8 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
                     .flatMap(notice -> notice.sampleNotices()
                             .stream()
                             .map(sn -> ImmutableError.of(
-                                            queueEntry.id(),
-                                            taskData.task().id(),
+                                            entry.id(),
+                                            task.id(),
                                             rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
                                             notice.code())
                                     .withRaw(sn)))
@@ -126,30 +123,32 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
 
             return errors;
         } catch (IOException e) {
-            logger.warn("Failed to process {}/{}/{} output file", queueEntry.publicId(), taskData.task().name(), RULE_NAME, e);
+            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), RULE_NAME, e);
             return List.of();
         }
     }
 
-    private List<ImmutableError> copyOutputToS3(Entry entry, TaskData<FileReferences> taskData, Path outputDirectory) {
-        // copy produced output to S3
-        String s3TargetPath = S3Artifact.getRuleDirectory(
-                entry.publicId(),
-                taskData.task().name(),
-                RULE_NAME);
+    private List<ImmutableError> copyOutputToS3(Entry entry,
+                                                Task task,
+                                                Path outputDirectory) {// copy produced output to S3
+        S3Path s3TargetPath = ImmutableS3Path.builder()
+            .from(S3Artifact.getRuleDirectory(entry.publicId(), task.name(), RULE_NAME))
+            .addPath("output")
+            .build();
+
         CompletedDirectoryUpload ud = s3Client.uploadDirectory(
                 outputDirectory,
                 vacoProperties.getS3ProcessingBucket(),
                 s3TargetPath)
             .join();
         // package and publish all of it
-        packagesService.createPackage(entry, taskData.task(), RULE_NAME, s3TargetPath, "content.zip");
+        packagesService.createPackage(entry, task, RULE_NAME, s3TargetPath, "content.zip");
 
         // record failures if any
         return Streams.map(ud.failedTransfers(), failure -> {
             ImmutableError error = ImmutableError.of(
                     entry.id(),
-                    taskData.task().id(),
+                    task.id(),
                     rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
                     "Failed to upload produced output file from %s to S3 %s:%s".formatted(
                             failure.request().source(),

@@ -1,7 +1,9 @@
 package fi.digitraffic.tis.vaco.aws;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
@@ -63,9 +65,6 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     private S3Client s3Client;
 
     @Autowired
-    private software.amazon.awssdk.services.s3.S3Client awsS3Client;
-
-    @Autowired
     private VacoProperties vacoProperties;
 
     @BeforeAll
@@ -100,12 +99,12 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
         entry = TestObjects.anEntry("gtfs").build();
 
         awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
-        s3Client.uploadDirectory(testDirectory.toPath(), vacoProperties.getS3ProcessingBucket(), null).join();
+        s3Client.uploadDirectory(testDirectory.toPath(), vacoProperties.getS3ProcessingBucket(), ImmutableS3Path.of("")).join();
     }
 
     @AfterEach
     void s3Cleanup() {
-        List<ObjectIdentifier> objects = Streams.map(s3Client.listObjectsInBucket("", vacoProperties.getS3ProcessingBucket()),
+        List<ObjectIdentifier> objects = Streams.map(s3Client.listObjectsInBucket(ImmutableS3Path.of(""), vacoProperties.getS3ProcessingBucket()),
             obj -> ObjectIdentifier.builder().key(obj.key()).build()).toList();
         awsS3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).delete(Delete.builder().objects(objects).build()).build());
         awsS3Client.deleteBucket(DeleteBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
@@ -135,7 +134,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageAllFiles() throws ExecutionException, InterruptedException, IOException {
        String packageFileName = UUID.randomUUID().toString();
-       s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory, packageFileName)
+       s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory, packageFileName)
            .get();
 
        ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
@@ -146,7 +145,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageWithFilteredDirectory() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
-        s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory,
+        s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory,
                 packageFileName, ".*" + directoryToIgnore + ".*").get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
@@ -159,7 +158,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageWithFilteredFile() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
-        s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory,
+        s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory,
             packageFileName, ".*" + fileToIgnoreInSubDirectoryName).get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
@@ -172,7 +171,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageWithMultipleFilters() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
-        s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory,
+        s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory,
             packageFileName,
             ".*" + fileToIgnoreInSubDirectoryName,
             ".*" + directoryToIgnore + ".*").get();
@@ -188,7 +187,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageWithFilteredFilesByExtension() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
-        s3Packager.producePackage(entry, TestData.inputRootDirectory, TestData.outputDirectory,
+        s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory,
             packageFileName,
             ".*\\.java", // all Java files
             ".*/subDirectory/.*\\.py" // all Python files under subDirectory
@@ -213,6 +212,7 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
 
 class TestData {
     static String inputRootDirectory = "inputRootDirectory";
+    static S3Path s3InputRootDirectory = ImmutableS3Path.of(inputRootDirectory);
     static Path inputRootDirectoryPath;
     static String subDirectory = "subDirectory";
     static String directoryToIgnore = "directoryToIgnore";
@@ -221,6 +221,7 @@ class TestData {
     static String fileInIgnoredDirectoryName = "fileInIgnoredDirectory.txt";
     static String fileToIgnoreInSubDirectoryName = "fileToIgnoreInSubDirectory.py";
     static String outputDirectory = "outputDirectory";
+    static S3Path s3OutputDirectory = ImmutableS3Path.of(outputDirectory);
     static Path outputDirectoryPath;
     static List<String> allFiles = new ArrayList<>();
 }

@@ -5,7 +5,6 @@ import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.process.model.JobResult;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -27,16 +26,15 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
 
     @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
     public void listen(ImmutableValidationJobMessage message, Acknowledgement acknowledgement) {
-        handle(message, message.message().publicId(), acknowledgement, (ignored) -> {});
+        handle(message, message.entry().publicId(), acknowledgement, (ignored) -> {});
     }
 
     @Override
     protected void runTask(ImmutableValidationJobMessage message) {
-        // TODO: We have full results available here, but don't do anything with them - maybe we don't need 'em?
-        JobResult result = validationService.validate(message);
+        validationService.validate(message);
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
-            .entry(message.message())
+            .entry(message.entry())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         messagingService.submitProcessingJob(job);
