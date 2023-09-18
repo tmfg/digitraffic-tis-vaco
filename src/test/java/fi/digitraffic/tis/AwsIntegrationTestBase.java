@@ -11,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 @Testcontainers
@@ -23,29 +24,34 @@ public abstract class AwsIntegrationTestBase {
     protected static S3Client awsS3Client;
     protected static S3AsyncClient s3AsyncClient;
     protected static S3TransferManager s3TransferManager;
+    protected static SqsClient sqsClient;
 
     @BeforeAll
     static void awsBeforeAll() {
         // TODO: We should probably favor only the S3AsyncClient for consistency's sake
+        Region region = Region.of(localstack.getRegion());
+        StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(
+            AwsBasicCredentials.create(
+                localstack.getAccessKey(),
+                localstack.getSecretKey()));
         awsS3Client = software.amazon.awssdk.services.s3.S3Client.builder()
-            .region(Region.of(localstack.getRegion()))
+            .region(region)
             .credentialsProvider(
-                StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create(
-                        localstack.getAccessKey(),
-                        localstack.getSecretKey())))
+                credentialsProvider)
             .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.S3))
             .build();
         s3AsyncClient = S3AsyncClient.crtBuilder()
-            .region(Region.of(localstack.getRegion()))
-            .credentialsProvider(StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(
-                    localstack.getAccessKey(),
-                    localstack.getSecretKey())))
+            .region(region)
+            .credentialsProvider(credentialsProvider)
             .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.S3))
             .build();
         s3TransferManager = S3TransferManager.builder()
             .s3Client(s3AsyncClient)
+            .build();
+        sqsClient = SqsClient.builder()
+            .region(region)
+            .credentialsProvider(credentialsProvider)
+            .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.SQS))
             .build();
     }
 

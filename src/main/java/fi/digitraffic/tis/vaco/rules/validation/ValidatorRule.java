@@ -10,7 +10,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.Rule;
-import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
@@ -42,7 +42,7 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
     }
 
     @Override
-    public CompletableFuture<ValidationReport> execute(RuleExecutionJobMessage<ValidationInput> message) {
+    public CompletableFuture<ValidationReport> execute(ValidationRuleJobMessage message) {
         Entry entry = message.entry();
         Task task = message.task();
         S3Path inputDirectory = S3Path.of(message.workDirectory());

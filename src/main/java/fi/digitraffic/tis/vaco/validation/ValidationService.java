@@ -10,6 +10,7 @@ import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -18,14 +19,15 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableRuleExecutionJobMessage;
-import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
+import io.awspring.cloud.sqs.operations.SendResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -56,35 +58,39 @@ public class ValidationService {
     private final S3Client s3Client;
     private final Map<String, Rule<ValidationInput, ValidationReport>> rules;
     private final VacoProperties vacoProperties;
+    private final MessagingService messagingService;
 
     public ValidationService(TaskService taskService,
                              RulesetService rulesetService,
                              HttpClient httpClient,
                              S3Client s3Client,
                              @Qualifier("validation") List<Rule<ValidationInput, ValidationReport>> rules,
-                             VacoProperties vacoProperties) {
+                             VacoProperties vacoProperties,
+                             MessagingService messagingService) {
         this.taskService = taskService;
         this.rulesetService = rulesetService;
         this.httpClient = httpClient;
         this.s3Client = s3Client;
+        System.out.println("ValidationService.ValidationService(..., " + rules + " ,...)");
         this.rules = Streams.collect(rules, Rule::getIdentifyingName, Function.identity());
         this.vacoProperties = vacoProperties;
+        this.messagingService = messagingService;
     }
 
     public void validate(ValidationJobMessage message) throws RuleExecutionException {
         Entry entry = message.entry();
 
-        S3Path s3Path = downloadFile(entry);
+        S3Path downloadedFile = downloadFile(entry);
 
         Set<Ruleset> validationRulesets = selectRulesets(entry);
 
-        executeRules(entry, s3Path, validationRulesets);
+        executeRules(entry, downloadedFile.parent(), validationRulesets);
     }
 
     @VisibleForTesting
     S3Path downloadFile(Entry entry) {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
-        Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".download");
+        Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".zip");
 
         return httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
             .thenApply(track(task, ProcessingState.UPDATE))
@@ -106,7 +112,7 @@ public class ValidationService {
             ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
             S3Path s3TargetPath = ImmutableS3Path.builder()
                 .from(S3Artifact.getTaskPath(entry.publicId(), DOWNLOAD_SUBTASK))
-                .addPath(entry.format() + ".original")
+                .addPath(entry.format() + ".zip")
                 .build();
 
             return s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3TargetPath, refs.localPath())
@@ -138,23 +144,23 @@ public class ValidationService {
 
         Map<String, ValidationInput> configs = Streams.collect(entry.validations(), ValidationInput::name, Function.identity());
 
-        List<ValidationReport> reports = validationRulesets.parallelStream()
-                .map(this::findMatchingRule)
-                .filter(Optional::isPresent)
-                .map(r -> {
-                    Optional<ValidationInput> configuration = r.map(x -> configs.get(x.getIdentifyingName()));
-                    RuleExecutionJobMessage<ValidationInput> ruleMessage = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
-                        .entry(ImmutableEntry.copyOf(entry).withTasks())
-                        .task(task)
-                        .workDirectory(inputDirectory.toString())
-                        .configuration(configuration.orElse(null))
-                        .retryStatistics(ImmutableRetryStatistics.of(5))
-                        .build();
-                    // TODO: here will be per-rule SQS queue submission logic instead of calling rules directly
-                    return r.get().execute(ruleMessage);
-                })
-                .map(CompletableFuture::join)
-                .toList();  // this is here to terminate the stream which ensures it gets evaluated properly
+        List<SendResult<ValidationRuleJobMessage>> s = validationRulesets.parallelStream()
+            .map(this::findMatchingRule)
+            .filter(Optional::isPresent)
+            .map(r -> {
+                Rule<ValidationInput, ValidationReport> rule = r.get();
+                Optional<ValidationInput> configuration = r.map(x -> configs.get(x.getIdentifyingName()));
+                ValidationRuleJobMessage ruleMessage = ImmutableValidationRuleJobMessage.builder()
+                    .entry(ImmutableEntry.copyOf(entry).withTasks())
+                    .task(task)
+                    .workDirectory(inputDirectory.toString())
+                    .configuration(configuration.orElse(null))
+                    .retryStatistics(ImmutableRetryStatistics.of(5))
+                    .build();
+                return messagingService.submitRuleExecutionJob(rule.getIdentifyingName(), ruleMessage);
+            })
+            .map(CompletableFuture::join)
+            .toList();  // this is here to terminate the stream which ensures it gets evaluated properly
         // TODO: Do we want to do anything with these reports? Probably not, rules should be self-contained.
         // everything's done at this point because of the ::join call, complete task
         taskService.trackTask(task, ProcessingState.COMPLETE);

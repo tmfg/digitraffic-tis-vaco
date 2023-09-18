@@ -55,7 +55,7 @@ public class EnturNetexValidatorRule extends ValidatorRule {
                                             Path workDirectory,
                                             Optional<ValidationInput> configuration) {
 
-        Path netexSource = workDirectory.resolve("input").resolve(entry.format() + ".download");
+        Path netexSource = workDirectory.resolve("input").resolve(entry.format() + ".zip");
         Path storageDirectory = workDirectory.resolve("storage");
         Path outputDirectory = workDirectory.resolve("output");
 

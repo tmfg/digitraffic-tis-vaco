@@ -12,8 +12,8 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableRuleExecutionJobMessage;
-import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
@@ -101,10 +101,10 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     @Test
     void validatesEntursExampleFilesWithoutErrors() throws URISyntaxException, IOException {
         // XXX: A lot of this is copy-paste from CanonicalGtfsValidatorRuleTest
-        givenTestFile("public/testfiles/entur-netex.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".download"));
+        givenTestFile("public/testfiles/entur-netex.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".zip"));
         // zero errors -> no need for this. Left for future imporvements' sake
         // whenFindValidationRuleByName();
-        RuleExecutionJobMessage<ValidationInput> message = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+        ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.<ValidationInput>builder()
             .entry(entry)
             .task(task)
             .workDirectory(s3Input.toString())

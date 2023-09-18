@@ -73,7 +73,7 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
                                             Task task,
                                             Path workDirectory,
                                             Optional<ValidationInput> configuration) {
-        URI gtfsSource = workDirectory.resolve("input").resolve(entry.format() + ".download").toUri();
+        URI gtfsSource = workDirectory.resolve("input").resolve(entry.format() + ".zip").toUri();
         Path storageDirectory = workDirectory.resolve("storage");
         Path outputDirectory = workDirectory.resolve("output");
 

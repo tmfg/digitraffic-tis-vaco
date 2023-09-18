@@ -16,8 +16,8 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableRuleExecutionJobMessage;
-import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -91,6 +91,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         testInputDir = testDirectory.resolve("input");
         Files.createDirectories(testInputDir);
         vacoProperties = new VacoProperties("test", null, testBucket);
+        createBucket(vacoProperties.getS3ProcessingBucket());
     }
 
     @BeforeEach
@@ -100,7 +101,6 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, errorHandlerService, rulesetRepository, s3Client, packagesService);
         entry = TestObjects.anEntry("gtfs").build();
         task = TestObjects.aTask().id(MOCK_TASK_ID).entryId(entry.id()).build();
-        createBucket(vacoProperties.getS3ProcessingBucket());
     }
 
     @AfterEach
@@ -111,11 +111,11 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     @Test
     void validatesGivenEntry() throws URISyntaxException, IOException {
         // XXX: This {format}.download would be nice to express in some more type safe manner
-        givenTestFile("public/testfiles/padasjoen_kunta.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".download"));
+        givenTestFile("public/testfiles/padasjoen_kunta.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".zip"));
         whenFindValidationRuleByName();
         whenReportError();
 
-        RuleExecutionJobMessage<ValidationInput> message = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+        ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.<ValidationInput>builder()
             .entry(entry)
             .task(task)
             .workDirectory(s3Input.toString())
@@ -140,7 +140,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         whenReportError();
 
         Entry invalidFormat = ImmutableEntry.copyOf(entry).withFormat("vhs");
-        RuleExecutionJobMessage<ValidationInput> message = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+        ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.<ValidationInput>builder()
             .entry(invalidFormat)
             .task(task)
             .workDirectory(ImmutableS3Path.of(forInput("public/testfiles/padasjoen_kunta.zip").toString()).toString())
