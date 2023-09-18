@@ -36,6 +36,6 @@ jobs:
           ECR_REPOSITORY: "digitraffic-tis-vaco"
           IMAGE_TAG: latest
         run: |
-          mvn jib:dockerBuild -Djib-maven-plugin.configuration.to.image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          mvn clean compile jib:dockerBuild -Djib-maven-plugin.configuration.to.image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
