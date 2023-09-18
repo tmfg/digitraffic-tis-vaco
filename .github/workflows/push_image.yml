@@ -4,6 +4,10 @@ on:
     branches:
     - main
   pull_request:
+
+permissions:
+  id-token: write
+
 jobs:
   BuildAndPushImageToECR:
     name: "Build and Push to ECR"
