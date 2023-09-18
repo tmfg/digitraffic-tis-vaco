@@ -18,7 +18,8 @@ public abstract class AwsIntegrationTestBase {
 
     @Container
     protected static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.0.2"))
-        .withServices(LocalStackContainer.Service.SQS, LocalStackContainer.Service.S3);
+        .withServices(LocalStackContainer.Service.SQS, LocalStackContainer.Service.S3)
+        .withEnv("DEFAULT_REGION", Region.EU_NORTH_1.id());
     protected static S3Client awsS3Client;
     protected static S3AsyncClient s3AsyncClient;
     protected static S3TransferManager s3TransferManager;
