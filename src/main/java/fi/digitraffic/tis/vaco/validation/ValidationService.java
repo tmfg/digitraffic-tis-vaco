@@ -168,8 +168,4 @@ public class ValidationService {
         }
         return rule;
     }
-
-    public List<String> listSubTasks() {
-        return ALL_SUBTASKS;
-    }
 }

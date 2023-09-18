@@ -84,12 +84,12 @@ public class QueueHandlerRepository {
         List<ImmutableTask> allTasks = new ArrayList<>();
 
         if (entry.conversions() != null && !entry.conversions().isEmpty()) {
-            List<String> conversionTasks = conversionService.listSubTasks();
+            List<String> conversionTasks = ConversionService.ALL_SUBTASKS;
             allTasks.addAll(extracted(conversionTasks, entry, TaskCategory.CONVERSION));
         }
 
         // validation tasks are always included
-        List<String> validationTasks = validationService.listSubTasks();
+        List<String> validationTasks = ValidationService.ALL_SUBTASKS;
         allTasks.addAll(extracted(validationTasks, entry, TaskCategory.VALIDATION));
 
         // TODO: check return value

@@ -104,7 +104,4 @@ public class ConversionService {
         return ImmutableTaskResult.of(EXECUTION_SUBTASK, null);
     }
 
-    public List<String> listSubTasks() {
-        return ALL_SUBTASKS;
-    }
 }
