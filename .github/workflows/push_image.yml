@@ -1,0 +1,36 @@
+name: "Build and push to ECR"
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+jobs:
+  BuildAndPushImageToECR:
+    name: "Build and Push to ECR"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.OIDC_DEPLOY_ROLE_ARN }}
+          aws-region: eu-north-1
+          role-duration-seconds: 7200
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: "digitraffic-tis-vaco"
+          IMAGE_TAG: latest
+        run: |
+          mvn jib:dockerBuild -Djib-maven-plugin.configuration.to.image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
