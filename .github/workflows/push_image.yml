@@ -38,7 +38,6 @@ jobs:
 
       - name: Extract CURRENT version
         id: version
-        if: "${{ env.VERSION_ADJUSTMENT == 'major' }}"
         run: echo "version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUTS
 
       - name: Build, tag, and push image to Amazon ECR
