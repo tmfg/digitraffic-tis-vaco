@@ -52,7 +52,7 @@ jobs:
       - name: Extract next PATCH version
         id: version
         if: "${{ env.VERSION_ADJUSTMENT == 'patch' }}"
-        run: echo "version=$(mvn -q build-helper:parse-version -Dexec.executable=echo -Dexec.args='${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextPatchVersion}' --non-recursive exec:exec)" >> $GITHUB_ENV
+        run: echo "version=$(mvn -q build-helper:parse-version -Dexec.executable=echo -Dexec.args='${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}' --non-recursive exec:exec)" >> $GITHUB_ENV
 
       - name: Create tag
         uses: actions/github-script@v6
