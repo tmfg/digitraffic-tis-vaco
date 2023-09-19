@@ -1,9 +1,12 @@
-name: Releases
+name: Release new version
 
 on:
-  push:
-    tags:
-      - v*
+  workflow_dispatch:
+    inputs:
+      adjustment:
+        description: 'Release increment type. Defaults to "minor", available values are "major", "minor" and "patch"'
+        required: true
+        default: 'minor'
 
 jobs:
   build:
@@ -15,16 +18,49 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: digitraffic-tis-vaco
+
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version-file: '.java-version'
           distribution: 'temurin'
           cache: maven
+
       - name: Build with Maven
         run: mvn -B --show-version validate
+
       - name: Show git information
         run: |
           git status
           git log --no-color --graph --oneline -n 10
           git tag --list
+
+      # eventually this will have something better, for now this is fine
+      - name: Detect version increment adjustment
+        run: echo "VERSION_ADJUSTMENT=${{ github.event.inputs.adjustment }}" >> $GITHUB_ENV
+
+      - name: Extract next MAJOR version
+        id: version
+        if: "${{ env.VERSION_ADJUSTMENT == 'major' }}"
+        run: echo "version=$(mvn -q build-helper:parse-version -Dexec.executable=echo -Dexec.args='${parsedVersion.nextMajorVersion}.0.0' --non-recursive exec:exec)" >> $GITHUB_ENV
+
+      - name: Extract next MINOR version
+        id: version
+        if: "${{ env.VERSION_ADJUSTMENT == 'minor' }}"
+        run: echo "version=$(mvn -q build-helper:parse-version -Dexec.executable=echo -Dexec.args='${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0' --non-recursive exec:exec)" >> $GITHUB_ENV
+
+      - name: Extract next PATCH version
+        id: version
+        if: "${{ env.VERSION_ADJUSTMENT == 'patch' }}"
+        run: echo "version=$(mvn -q build-helper:parse-version -Dexec.executable=echo -Dexec.args='${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextPatchVersion}' --non-recursive exec:exec)" >> $GITHUB_ENV
+
+      - name: Create tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/v${{steps.version.outputs.version}}",
+              sha: context.sha
+            })
