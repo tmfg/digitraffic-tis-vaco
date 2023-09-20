@@ -12,7 +12,7 @@
 
     <groupId>fi.digitraffic.tis</groupId>
     <artifactId>vaco</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0</version>
     <packaging>jar</packaging>
 
     <name>vaco</name>
@@ -26,8 +26,10 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/tmfg/digitraffic-tis-vaco</connection>
-        <url>https://github.com/tmfg/digitraffic-tis-vaco</url>
+        <connection>scm:git:${project.scm.url}</connection>
+        <developerConnection>scm:git:${project.scm.url}</developerConnection>
+        <url>git@github.com:tmfg/digitraffic-tis-vaco.git</url>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
@@ -49,11 +51,13 @@
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.1.0</maven-surefire-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+        <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
         <jib-maven-plugin.version>3.3.2</jib-maven-plugin.version>
+        <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <springframework.boot-version>3.1.2</springframework.boot-version>
-        <jib-maven-plugin.configuration.to.image>${env.CONTAINER_REGISTRY_URI}/${project.groupId}.${project.name}:${project.version}</jib-maven-plugin.configuration.to.image>
+        <jib-maven-plugin.image-name>${project.groupId}.${project.name}:${project.version}:${project.version}</jib-maven-plugin.image-name>
     </properties>
 
     <dependencyManagement>
@@ -349,6 +353,11 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${build-helper-maven-plugin.version}</version>
+            </plugin>
+            <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>${jib-maven-plugin.version}</version>
@@ -358,7 +367,7 @@
                         <user>nobody:nobody</user> <!-- "homeless" Linux default user -->
                     </container>
                     <to>
-                        <image>${jib-maven-plugin.configuration.to.image}</image>
+                        <image>${jib-maven-plugin.image-name}</image>
                     </to>
                     <from>
                         <image>gcr.io/distroless/java17-debian11:nonroot@sha256:61463fa9d1bb9994de4e50e71f3e487d0e61f1676e26306388a743ff96311777</image>
