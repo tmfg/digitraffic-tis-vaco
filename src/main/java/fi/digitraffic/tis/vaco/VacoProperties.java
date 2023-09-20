@@ -15,12 +15,16 @@ public class VacoProperties {
 
     private final String s3processingBucket;
 
+    private final String uiUrl;
+
     public VacoProperties(@DefaultValue("local") String environment,
                           @NotBlank String temporaryDirectory,
-                          @NotBlank String s3processingBucket) {
+                          @NotBlank String s3processingBucket,
+                          String uiUrl) {
         this.environment = environment;
         this.temporaryDirectory = temporaryDirectory;
         this.s3processingBucket = s3processingBucket;
+        this.uiUrl = uiUrl;
     }
 
     public String getEnvironment() {
@@ -33,5 +37,9 @@ public class VacoProperties {
 
     public String getS3processingBucket() {
         return s3processingBucket;
+    }
+
+    public String getUiUrl() {
+        return uiUrl;
     }
 }

@@ -73,6 +73,8 @@ public abstract class SpringBootIntegrationTestBase {
         registry.add("spring.flyway.fail-on-missing-locations", () -> true);
         registry.add("spring.cloud.aws.sqs.endpoint", () -> localstack.getEndpointOverride(Service.SQS));
         registry.add("spring.cloud.aws.s3.endpoint", () -> localstack.getEndpointOverride(Service.S3));
+        registry.add("spring.cloud.azure.active-directory.enabled", () -> false);
+        //registry.add("spring.cloud.azure.active-directory.credential.client-id", () -> "<>");
     }
 
     @Autowired

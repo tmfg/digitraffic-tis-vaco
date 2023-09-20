@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +30,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 
 @RestController
 @RequestMapping("/queue")
+@CrossOrigin(origins = "${vaco.uiUrl}")
 public class QueueHandlerController {
 
     private final QueueHandlerService queueHandlerService;

@@ -81,7 +81,7 @@ class CanonicalGtfsValidatorRuleTest {
 
     @BeforeAll
     static void beforeAll() {
-        vacoProperties = new VacoProperties("test", null, testBucket);
+        vacoProperties = new VacoProperties("test", null, testBucket, null);
     }
 
     @BeforeEach
