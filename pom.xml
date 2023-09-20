@@ -199,7 +199,11 @@
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-starter-sqs</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-secrets-manager</artifactId>
+        </dependency>
+        
         <!-- All potentially publicly exposed id:s are nanoids. -->
         <dependency>
             <groupId>com.aventrix.jnanoid</groupId>
