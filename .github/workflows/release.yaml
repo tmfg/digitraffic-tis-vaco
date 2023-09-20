@@ -20,13 +20,12 @@ jobs:
       - name: Checkout project files
         uses: actions/checkout@v3
         with:
-          path: digitraffic-tis-vaco
           fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version-file: './.java-version'
+          java-version-file: '.java-version'
           distribution: 'temurin'
           cache: maven
 
