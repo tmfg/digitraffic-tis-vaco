@@ -4,6 +4,7 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
@@ -11,10 +12,12 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.config.DownloadFilter;
+import software.amazon.awssdk.transfer.s3.model.CompletedCopy;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
+import software.amazon.awssdk.transfer.s3.model.CopyRequest;
 import software.amazon.awssdk.transfer.s3.model.DownloadDirectoryRequest;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.FileDownload;
@@ -22,6 +25,7 @@ import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -52,23 +56,28 @@ public class S3Client {
             .addTransferListener(LoggingTransferListener.create())
             .source(sourcePath)
             .build();
-        logger.info("Uploading file from {} to s3:{}/{}", sourcePath, bucketName, targetPath);
+        logger.info("Uploading file from {} to s3://{}/{}", sourcePath, bucketName, targetPath);
         return s3TransferManager
             .uploadFile(ufr)
             .completionFuture();
     }
 
     public CompletableFuture<CompletedDirectoryUpload> uploadDirectory(Path localSourcePath, String bucketName, S3Path s3TargetPath) {
-        UploadDirectoryRequest udr = UploadDirectoryRequest.builder()
-            .source(localSourcePath)
-            .bucket(bucketName)
-            .s3Prefix(s3TargetPath.toString())
-            .build();
-        logger.info("Uploading directory from {} to s3:{}/{}", localSourcePath, bucketName, s3TargetPath);
-        return s3TransferManager
-            .uploadDirectory(udr)
-            .completionFuture();
-      }
+        if (Files.exists(localSourcePath)) {
+            UploadDirectoryRequest udr = UploadDirectoryRequest.builder()
+                .source(localSourcePath)
+                .bucket(bucketName)
+                .s3Prefix(s3TargetPath.toString())
+                .build();
+            logger.info("Uploading directory from {} to s3://{}/{}", localSourcePath, bucketName, s3TargetPath);
+            return s3TransferManager
+                .uploadDirectory(udr)
+                .completionFuture();
+        } else {
+            logger.info("Source doesn't exist, skipping directory upload from {} to s3://{}/{}", localSourcePath, bucketName, s3TargetPath);
+            return CompletableFuture.completedFuture(CompletedDirectoryUpload.builder().build());
+        }
+    }
 
     public CompletableFuture<CompletedDirectoryDownload> downloadDirectory(String s3Bucket,
                                                                            S3Path s3SourcePath,
@@ -82,7 +91,7 @@ public class S3Client {
                 : DownloadFilter.allObjects())
             .destination(targetPath)
             .build();
-        logger.info("Downloading directory from s3:{}{} to {}", vacoProperties.getS3ProcessingBucket(), s3SourcePath, targetPath);
+        logger.info("Downloading directory from s3://{}{} to {}", vacoProperties.getS3ProcessingBucket(), s3SourcePath, targetPath);
         return s3TransferManager
             .downloadDirectory(ddr)
             .completionFuture();
@@ -129,6 +138,28 @@ public class S3Client {
         logger.info("Content length [{}]", downloadResult.response().contentLength());
 
         return downloadResult.response().contentLength();
+    }
+
+    /**
+     * Copies given file in specified bucket from given location to target directory. Both paths are treated as absolute.
+     *
+     * @param bucket          Bucket in which the copy should occur.
+     * @param file            Source file.
+     * @param targetDirectory Target directory.
+     * @return
+     */
+    public CompletableFuture<CompletedCopy> copyFile(String bucket, S3Path file, S3Path targetDirectory) {
+        String targetPath = targetDirectory.resolve(file.getLast()).toString();
+        logger.info("Copying object in path s3://{}/{} to s3://{}/{}", bucket, file, bucket, targetPath);
+        return s3TransferManager.copy(CopyRequest.builder()
+                .copyObjectRequest(CopyObjectRequest.builder()
+                    .sourceBucket(bucket)
+                    .sourceKey(file.toString())
+                    .destinationBucket(bucket)
+                    .destinationKey(targetPath)
+                    .build())
+                .build())
+            .completionFuture();
     }
 }
 

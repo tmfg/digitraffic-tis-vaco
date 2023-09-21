@@ -71,7 +71,6 @@ public class ValidationService {
         this.rulesetService = rulesetService;
         this.httpClient = httpClient;
         this.s3Client = s3Client;
-        System.out.println("ValidationService.ValidationService(..., " + rules + " ,...)");
         this.rules = Streams.collect(rules, Rule::getIdentifyingName, Function.identity());
         this.vacoProperties = vacoProperties;
         this.messagingService = messagingService;
@@ -84,7 +83,7 @@ public class ValidationService {
 
         Set<Ruleset> validationRulesets = selectRulesets(entry);
 
-        executeRules(entry, downloadedFile.parent(), validationRulesets);
+        executeRules(entry, downloadedFile, validationRulesets);
     }
 
     @VisibleForTesting
@@ -138,7 +137,7 @@ public class ValidationService {
 
     @VisibleForTesting
     void executeRules(Entry entry,
-                      S3Path inputDirectory,
+                      S3Path downloadedFile,
                       Set<Ruleset> validationRulesets) {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), EXECUTION_SUBTASK), ProcessingState.START);
 
@@ -150,10 +149,18 @@ public class ValidationService {
             .map(r -> {
                 Rule<ValidationInput, ValidationReport> rule = r.get();
                 Optional<ValidationInput> configuration = r.map(x -> configs.get(x.getIdentifyingName()));
+
+                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), task.name(), rule.getIdentifyingName());
+                S3Path ruleS3Input = ruleBasePath.resolve("input");
+                S3Path ruleS3Output = ruleBasePath.resolve("output");
+
+                s3Client.copyFile(vacoProperties.getS3ProcessingBucket(), downloadedFile, ruleS3Input).join();
+
                 ValidationRuleJobMessage ruleMessage = ImmutableValidationRuleJobMessage.builder()
                     .entry(ImmutableEntry.copyOf(entry).withTasks())
                     .task(task)
-                    .workDirectory(inputDirectory.toString())
+                    .inputs(ruleS3Input.asUri(vacoProperties.getS3ProcessingBucket()))
+                    .outputs(ruleS3Output.asUri(vacoProperties.getS3ProcessingBucket()))
                     .configuration(configuration.orElse(null))
                     .retryStatistics(ImmutableRetryStatistics.of(5))
                     .build();

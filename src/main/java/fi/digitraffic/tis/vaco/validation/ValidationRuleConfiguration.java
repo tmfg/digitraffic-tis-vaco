@@ -26,7 +26,6 @@ public class ValidationRuleConfiguration {
                                                                  RulesetRepository rulesetRepository,
                                                                  S3Client s3Client,
                                                                  PackagesService packagesService) {
-        System.out.println("ValidationRuleConfiguration.canonicalGtfsValidatorRule");
         return new CanonicalGtfsValidatorRule(
             objectMapper,
             vacoProperties,
@@ -42,13 +41,14 @@ public class ValidationRuleConfiguration {
                                                            ErrorHandlerService errorhandlerService,
                                                            ObjectMapper objectMapper,
                                                            S3Client s3client,
-                                                           VacoProperties vacoProperties) {
-        System.out.println("ValidationRuleConfiguration.enturNetexValidatorRule");
+                                                           VacoProperties vacoProperties,
+                                                           PackagesService packagesService) {
         return new EnturNetexValidatorRule(
             rulesetRepository,
             errorhandlerService,
             objectMapper,
             s3client,
-            vacoProperties);
+            vacoProperties,
+            packagesService);
     }
 }

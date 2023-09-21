@@ -9,9 +9,9 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
@@ -38,6 +38,8 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -60,7 +62,8 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     private static final Long MOCK_VALIDATION_RULE_ID = 2003091L;
 
     static S3Path s3Root = ImmutableS3Path.of("entur-netex-test");
-    static S3Path s3Input = ImmutableS3Path.of(s3Root + "/input");
+    static S3Path s3Input = s3Root.resolve("input");
+    static S3Path s3Output = s3Root.resolve("output");
 
     private ValidatorRule rule;
 
@@ -69,6 +72,9 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     private ErrorHandlerService errorHandlerService;
     @Mock
     private RulesetRepository rulesetRepository;
+    @Mock
+    private PackagesService packagesService;
+
     private ImmutableEntry entry;
     private Task task;
     private S3Client s3Client;
@@ -88,31 +94,40 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
             errorHandlerService,
             objectMapper,
             s3Client,
-            vacoProperties);
+            vacoProperties,
+            packagesService);
         entry = TestObjects.anEntry("NeTEx").build();
         task = TestObjects.aTask().entryId(entry.id()).build();
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(errorHandlerService, rulesetRepository);
+        verifyNoMoreInteractions(errorHandlerService, rulesetRepository, packagesService);
     }
 
     @Test
     void validatesEntursExampleFilesWithoutErrors() throws URISyntaxException, IOException {
         // XXX: A lot of this is copy-paste from CanonicalGtfsValidatorRuleTest
         givenTestFile("public/testfiles/entur-netex.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".zip"));
-        // zero errors -> no need for this. Left for future imporvements' sake
-        // whenFindValidationRuleByName();
-        ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.<ValidationInput>builder()
+        // zero errors -> no need for this. Left for future improvements' sake
+        //whenFindValidationRuleByName();
+        ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.builder()
             .entry(entry)
             .task(task)
-            .workDirectory(s3Input.toString())
+            .inputs(s3Input.toString())
+            .outputs(s3Output.toString())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         ValidationReport report = rule.execute(message).join();
 
         assertThat(report.errors().size(), equalTo(0));
+
+        verify(packagesService).createPackage(
+            eq(entry),
+            eq(task),
+            eq(EnturNetexValidatorRule.RULE_NAME),
+            eq(s3Output),
+            eq("content.zip"));
     }
 
     private Path forInput(String testFile) throws URISyntaxException {

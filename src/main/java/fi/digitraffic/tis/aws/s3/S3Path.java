@@ -15,6 +15,10 @@ public abstract class S3Path {
     public abstract List<String> path();
 
     public static S3Path of(String pathLikeString) {
+        pathLikeString = pathLikeString.trim();
+        if (pathLikeString.startsWith("/")) {
+            pathLikeString = pathLikeString.substring(1);
+        }
         return ImmutableS3Path.of(Arrays.asList(pathLikeString.split("/")));
     }
 
@@ -33,9 +37,17 @@ public abstract class S3Path {
         }
     }
 
+    public String getLast() {
+        return path().get(path().size() - 1);
+    }
+
     public ImmutableS3Path resolve(String more) {
         List<String> newPath = new ArrayList<>(path());
         newPath.addAll(Arrays.asList(more.split(("/"))));
         return ImmutableS3Path.of(newPath);
+    }
+
+    public String asUri(String bucket) {
+        return "s3://" + bucket + "/" + this;
     }
 }

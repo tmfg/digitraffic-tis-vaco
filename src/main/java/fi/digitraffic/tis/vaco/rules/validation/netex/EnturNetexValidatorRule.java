@@ -5,6 +5,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -39,8 +40,9 @@ public class EnturNetexValidatorRule extends ValidatorRule {
         ErrorHandlerService errorHandlerService,
         ObjectMapper objectMapper,
         S3Client s3Client,
-        VacoProperties vacoProperties) {
-        super("netex", rulesetRepository, errorHandlerService, s3Client, vacoProperties);
+        VacoProperties vacoProperties,
+        PackagesService packagesService) {
+        super("netex", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
@@ -52,12 +54,11 @@ public class EnturNetexValidatorRule extends ValidatorRule {
     @Override
     protected ValidationReport runValidator(Entry entry,
                                             Task task,
-                                            Path workDirectory,
+                                            Path inputsDirectory,
+                                            Path outputsDirectory,
                                             Optional<ValidationInput> configuration) {
 
-        Path netexSource = workDirectory.resolve("input").resolve(entry.format() + ".zip");
-        Path storageDirectory = workDirectory.resolve("storage");
-        Path outputDirectory = workDirectory.resolve("output");
+        Path netexSource = inputsDirectory.resolve(entry.format() + ".zip");
 
         EnturNetexValidatorConfiguration conf = validateConfiguration(configuration);
         // TODO: send errors to reporting? or did that happen elsewhere?

@@ -67,6 +67,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
     static S3Path s3Root = ImmutableS3Path.of("canonical-gtfs-test");
     static S3Path s3Input = ImmutableS3Path.of(s3Root + "/input");
+    static S3Path s3Output = ImmutableS3Path.of(s3Root + "/output");
 
     private CanonicalGtfsValidatorRule rule;
     private ImmutableEntry entry;
@@ -111,14 +112,15 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     @Test
     void validatesGivenEntry() throws URISyntaxException, IOException {
         // XXX: This {format}.download would be nice to express in some more type safe manner
-        givenTestFile("public/testfiles/padasjoen_kunta.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".zip"));
+        givenTestFile("public/testfiles/padasjoen_kunta.zip", s3Input.resolve(entry.format() + ".zip"));
         whenFindValidationRuleByName();
         whenReportError();
 
         ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.<ValidationInput>builder()
             .entry(entry)
             .task(task)
-            .workDirectory(s3Input.toString())
+            .inputs(s3Input.toString())
+            .outputs(s3Output.toString())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         ValidationReport report = rule.execute(message).join();
@@ -130,7 +132,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
             eq(entry),
             eq(task),
             eq(CanonicalGtfsValidatorRule.RULE_NAME),
-            eq(ImmutableS3Path.of("entries/" + entry.publicId() + "/tasks/" + task.name() + "/rules/gtfs.canonical.v4_0_0/output")),
+            eq(s3Output),
             eq("content.zip"));
     }
 
@@ -143,7 +145,8 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.<ValidationInput>builder()
             .entry(invalidFormat)
             .task(task)
-            .workDirectory(ImmutableS3Path.of(forInput("public/testfiles/padasjoen_kunta.zip").toString()).toString())
+            .inputs(ImmutableS3Path.of(forInput("public/testfiles/padasjoen_kunta.zip").toString()).toString())
+            .outputs(ImmutableS3Path.of("just/a/path").toString())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         ValidationReport report = rule.execute(message).join();

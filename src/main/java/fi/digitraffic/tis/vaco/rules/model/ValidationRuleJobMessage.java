@@ -15,7 +15,8 @@ import org.immutables.value.Value;
 public interface ValidationRuleJobMessage extends JobMessage, Retryable {
     Task task();
 
-    String workDirectory();
+    String inputs();
+    String outputs();
 
     @Nullable
     ValidationInput configuration();

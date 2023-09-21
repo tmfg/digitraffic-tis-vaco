@@ -1,18 +1,23 @@
 package fi.digitraffic.tis.vaco.validation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
+import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
-import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -20,6 +25,8 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
@@ -27,6 +34,7 @@ import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
@@ -54,6 +62,12 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
     @Autowired
     private MessagingService messagingService;
 
+    @Autowired
+    private S3Client s3Client;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
     private HttpClient httpClientUtility;
 
@@ -69,6 +83,11 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
     @Mock
     HttpResponse<Path> response;
 
+    @BeforeAll
+    static void beforeAll(@Autowired VacoProperties vacoProperties) {
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
+    }
+
     @Test
     void uploadsDownloadedFileToS3() throws URISyntaxException, IOException {
         when(httpClientUtility.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
@@ -76,7 +95,6 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
         when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
 
         ImmutableEntry entry = createEntryForTesting();
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
 
         validationService.downloadFile(entry);
 
@@ -108,20 +126,47 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
     }
 
     @Test
-    void delegatesRuleProcessingToRuleSpecificQueueBasedOnRuleName() {
+    void delegatesRuleProcessingToRuleSpecificQueueBasedOnRuleName() throws URISyntaxException {
+        when(httpClientUtility.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
+            .thenReturn(CompletableFuture.supplyAsync(() -> response));
+        when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
+
         ImmutableEntry entry = createEntryForTesting();
         String testQueueName = createSqsQueue();
-        S3Path s3TargetPath = S3Artifact.getTaskPath(entry.publicId(), ValidationService.DOWNLOAD_SUBTASK).resolve(entry.format() + ".zip");
+        S3Path downloadedFile = validationService.downloadFile(entry);
+
         validationService.executeRules(
             entry,
-            s3TargetPath,
+            downloadedFile,
             Set.of(TestObjects.aRuleset()
                     .identifyingName(CanonicalGtfsValidatorRule.RULE_NAME)
                     .description("running hello rule from tests")
                     .category(Category.SPECIFIC)
                     .build()));
 
-        assertThat(messagingService.readMessages(testQueueName).toList().size(), equalTo(1));
+        List<ValidationRuleJobMessage> messages = messagingService.readMessages(testQueueName).map(m -> {
+            try {
+                return objectMapper.readValue(m.body(), ValidationRuleJobMessage.class);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }).toList();
+
+        // only one message is generated
+        assertThat(messages.size(), equalTo(1));
+        ValidationRuleJobMessage message = messages.get(0);
+        // S3 path references are correctly set
+        assertThat(message.inputs(), equalTo("s3://vaco-itest-processing/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/input"));
+        assertThat(message.outputs(), equalTo("s3://vaco-itest-processing/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/output"));
+        // downloaded file is copied to inputs
+        URI inputUri = URI.create(message.inputs());
+        S3Path expectedPath = ImmutableS3Path.of(inputUri.getPath() + "/" + downloadedFile.getLast());
+
+        HeadObjectResponse r = awsS3Client.headObject(HeadObjectRequest.builder()
+            .bucket(inputUri.getHost())
+            .key(expectedPath.toString())
+            .build());
+        assertThat(r.contentLength(), equalTo(12L));
     }
 
     @NotNull

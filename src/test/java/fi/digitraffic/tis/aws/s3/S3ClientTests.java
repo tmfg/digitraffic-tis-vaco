@@ -84,4 +84,14 @@ class S3ClientTests extends AwsIntegrationTestBase {
         Path sourcePath = testDirectory.resolve(path);
         return Files.writeString(Files.createFile(sourcePath), content);
     }
+
+    @Test
+    void wontTryToUploadNonexistentDirectory() {
+        // the test here is that underlying AWS client won't throw an exception
+        s3Client.uploadDirectory(
+                testDirectory.resolve("definitely/does/not/exist"),
+                "nonexistent-bucket",
+                ImmutableS3Path.of("irrelevant"))
+            .join();
+    }
 }
