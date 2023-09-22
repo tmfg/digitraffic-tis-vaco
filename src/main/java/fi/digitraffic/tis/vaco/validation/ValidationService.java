@@ -144,13 +144,11 @@ public class ValidationService {
         Map<String, ValidationInput> configs = Streams.collect(entry.validations(), ValidationInput::name, Function.identity());
 
         List<SendResult<ValidationRuleJobMessage>> s = validationRulesets.parallelStream()
-            .map(this::findMatchingRule)
-            .filter(Optional::isPresent)
             .map(r -> {
-                Rule<ValidationInput, ValidationReport> rule = r.get();
-                Optional<ValidationInput> configuration = r.map(x -> configs.get(x.getIdentifyingName()));
+                String identifyingName = r.identifyingName();
+                Optional<ValidationInput> configuration = Optional.ofNullable(configs.get(identifyingName));
 
-                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), task.name(), rule.getIdentifyingName());
+                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), task.name(), identifyingName);
                 S3Path ruleS3Input = ruleBasePath.resolve("input");
                 S3Path ruleS3Output = ruleBasePath.resolve("output");
 
@@ -164,21 +162,12 @@ public class ValidationService {
                     .configuration(configuration.orElse(null))
                     .retryStatistics(ImmutableRetryStatistics.of(5))
                     .build();
-                return messagingService.submitRuleExecutionJob(rule.getIdentifyingName(), ruleMessage);
+                return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
             })
             .map(CompletableFuture::join)
             .toList();  // this is here to terminate the stream which ensures it gets evaluated properly
-        // TODO: Do we want to do anything with these reports? Probably not, rules should be self-contained.
         // everything's done at this point because of the ::join call, complete task
         taskService.trackTask(task, ProcessingState.COMPLETE);
     }
 
-    private Optional<Rule<ValidationInput, ValidationReport>> findMatchingRule(Ruleset validationRule) {
-        String identifyingName = validationRule.identifyingName();
-        Optional<Rule<ValidationInput, ValidationReport>> rule = Optional.ofNullable(rules.get(identifyingName));
-        if (rule.isEmpty()) {
-            logger.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
-        }
-        return rule;
-    }
 }
