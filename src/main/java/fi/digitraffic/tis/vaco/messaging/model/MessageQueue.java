@@ -41,7 +41,7 @@ public enum MessageQueue {
                     .replace(".", "_"))
             .replace(' ', '_')
             .toLowerCase();
-        logger.debug("Munged {} with {} to {}", queueName, ruleName, munged);
+        logger.trace("Munged {} with {} to {}", queueName, ruleName, munged);
         return munged;
     }
 }

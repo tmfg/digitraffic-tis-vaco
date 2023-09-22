@@ -46,11 +46,13 @@ public class RuleListenerService {
             List<ValidationReport> x = messagingService.readMessages(queueName)
                 .map(m -> {
                     try {
+                        logger.trace("Processing message {}", m);
                         ValidationRuleJobMessage message =  objectMapper.readValue(m.body(), ValidationRuleJobMessage.class);
                         return canonicalGtfsValidatorRule.execute(message);
                     } catch (JsonProcessingException e) {
                         throw new RuleExecutionException("Failed to deserialize message in queue " + queueName, e);
                     } finally {
+                        logger.trace("Deleting message {}", m);
                         messagingService.deleteMessage(queueName, m);
                     }
                 })
