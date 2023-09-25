@@ -1,5 +1,8 @@
 package fi.digitraffic.tis.http;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
@@ -8,6 +11,8 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 public class HttpClient {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public final java.net.http.HttpClient javaHttpClient;
 
@@ -18,6 +23,7 @@ public class HttpClient {
     public CompletableFuture<HttpResponse<Path>> downloadFile(Path targetFilePath,
                                                               String url,
                                                               String etag) {
+        logger.info("Downloading file to {} from {} (eTag {})", targetFilePath, url, etag);
         HttpRequest request = buildGetRequest(url, etag);
         HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
         return javaHttpClient.sendAsync(request, bodyHandler);

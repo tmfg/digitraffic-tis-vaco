@@ -12,6 +12,7 @@ import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
  */
 @JsonSubTypes({
     @JsonSubTypes.Type(name = CanonicalGtfsValidatorRule.RULE_NAME, value = CanonicalGtfsValidatorConfiguration.class),
+    @JsonSubTypes.Type(name = "gtfs.canonical.v4_1_0", value = CanonicalGtfsValidatorConfiguration.class),
     @JsonSubTypes.Type(name = EnturNetexValidatorRule.RULE_NAME, value = EnturNetexValidatorConfiguration.class)
 })
 public interface ValidatorConfiguration {

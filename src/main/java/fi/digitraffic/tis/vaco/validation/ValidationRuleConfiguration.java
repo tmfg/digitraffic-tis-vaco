@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
@@ -25,14 +26,16 @@ public class ValidationRuleConfiguration {
                                                                  ErrorHandlerService errorHandlerService,
                                                                  RulesetRepository rulesetRepository,
                                                                  S3Client s3Client,
-                                                                 PackagesService packagesService) {
+                                                                 PackagesService packagesService,
+                                                                 MessagingService messagingService) {
         return new CanonicalGtfsValidatorRule(
             objectMapper,
             vacoProperties,
             errorHandlerService,
             rulesetRepository,
             s3Client,
-            packagesService);
+            packagesService,
+            messagingService);
     }
 
     @Bean
@@ -41,12 +44,16 @@ public class ValidationRuleConfiguration {
                                                            ErrorHandlerService errorhandlerService,
                                                            ObjectMapper objectMapper,
                                                            S3Client s3client,
-                                                           VacoProperties vacoProperties) {
+                                                           VacoProperties vacoProperties,
+                                                           PackagesService packagesService,
+                                                           MessagingService messagingService) {
         return new EnturNetexValidatorRule(
             rulesetRepository,
             errorhandlerService,
             objectMapper,
             s3client,
-            vacoProperties);
+            vacoProperties,
+            packagesService,
+            messagingService);
     }
 }

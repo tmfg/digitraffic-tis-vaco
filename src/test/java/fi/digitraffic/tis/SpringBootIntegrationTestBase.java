@@ -66,6 +66,9 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
         registry.add("spring.flyway.fail-on-missing-locations", () -> true);
         registry.add("spring.cloud.aws.sqs.endpoint", () -> localstack.getEndpointOverride(Service.SQS));
         registry.add("spring.cloud.aws.s3.endpoint", () -> localstack.getEndpointOverride(Service.S3));
+        registry.add("vaco.aws.region", () -> localstack.getRegion());
+        registry.add("vaco.aws.endpoint", () -> localstack.getEndpoint());
+        registry.add("vaco.scheduling.enable", () -> false);
     }
 
     @Autowired

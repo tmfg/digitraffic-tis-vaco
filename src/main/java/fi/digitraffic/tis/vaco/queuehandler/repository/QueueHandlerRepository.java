@@ -35,7 +35,6 @@ public class QueueHandlerRepository {
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
     private final TaskService taskService;
-    private final ValidationService validationService;
     private final ConversionService conversionService;
     private final PackagesService packagesService;
 
@@ -43,14 +42,12 @@ public class QueueHandlerRepository {
                                   ObjectMapper objectMapper,
                                   ErrorHandlerRepository errorHandlerRepository,
                                   TaskService taskService,
-                                  ValidationService validationService,
                                   ConversionService conversionService,
                                   PackagesService packagesService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
         this.taskService = Objects.requireNonNull(taskService);
-        this.validationService = Objects.requireNonNull(validationService);
         this.conversionService = Objects.requireNonNull(conversionService);
         this.packagesService = packagesService;
     }
@@ -84,12 +81,12 @@ public class QueueHandlerRepository {
         List<ImmutableTask> allTasks = new ArrayList<>();
 
         if (entry.conversions() != null && !entry.conversions().isEmpty()) {
-            List<String> conversionTasks = conversionService.listSubTasks();
+            List<String> conversionTasks = ConversionService.ALL_SUBTASKS;
             allTasks.addAll(extracted(conversionTasks, entry, TaskCategory.CONVERSION));
         }
 
         // validation tasks are always included
-        List<String> validationTasks = validationService.listSubTasks();
+        List<String> validationTasks = ValidationService.ALL_SUBTASKS;
         allTasks.addAll(extracted(validationTasks, entry, TaskCategory.VALIDATION));
 
         // TODO: check return value

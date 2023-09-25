@@ -84,9 +84,12 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
      */
     @Test
     void hasDefaultRulesAlwaysAvailable() {
-        Ruleset canonicalGtfsValidator = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
+        Ruleset canonicalGtfsValidator400 = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
+        Ruleset canonicalGtfsValidator410 = rulesetRepository.findByName("gtfs.canonical.v4_1_0").get();
         Ruleset enturNetexValidator = rulesetRepository.findByName(EnturNetexValidatorRule.RULE_NAME).get();
-        assertThat(rulesetRepository.findRulesets(fintraffic.businessId(), Type.VALIDATION_SYNTAX), equalTo(Set.of(canonicalGtfsValidator, enturNetexValidator)));
+        assertThat(
+            rulesetRepository.findRulesets(fintraffic.businessId(), Type.VALIDATION_SYNTAX),
+            equalTo(Set.of(canonicalGtfsValidator400, canonicalGtfsValidator410, enturNetexValidator)));
     }
 
     @Test

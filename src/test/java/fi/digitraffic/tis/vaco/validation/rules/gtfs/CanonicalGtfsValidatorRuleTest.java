@@ -7,17 +7,18 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
-import fi.digitraffic.tis.vaco.errorhandling.Error;
+import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableRuleExecutionJobMessage;
-import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -33,7 +34,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -43,16 +43,15 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 @ExtendWith(MockitoExtension.class)
 class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
@@ -67,6 +66,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
     static S3Path s3Root = ImmutableS3Path.of("canonical-gtfs-test");
     static S3Path s3Input = ImmutableS3Path.of(s3Root + "/input");
+    static S3Path s3Output = ImmutableS3Path.of(s3Root + "/output");
 
     private CanonicalGtfsValidatorRule rule;
     private ImmutableEntry entry;
@@ -76,14 +76,18 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     private static VacoProperties vacoProperties;
     private S3Client s3Client;
 
-    @Mock
     private ErrorHandlerService errorHandlerService;
     @Mock
     private RulesetRepository rulesetRepository;
     @Mock
     private PackagesService packagesService;
+    @Mock
+    private MessagingService messagingService;
+    @Mock
+    private ErrorHandlerRepository errorHandlerRepository;
+
     @Captor
-    private ArgumentCaptor<Error> errorCaptor;
+    private ArgumentCaptor<ImmutableErrorMessage> errorMessageCaptor;
 
     @BeforeAll
     static void beforeAll() throws IOException {
@@ -91,34 +95,37 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         testInputDir = testDirectory.resolve("input");
         Files.createDirectories(testInputDir);
         vacoProperties = new VacoProperties("test", null, testBucket);
+        createBucket(vacoProperties.getS3ProcessingBucket());
     }
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
         s3Client = new S3Client(vacoProperties, s3TransferManager, awsS3Client);
-        rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, errorHandlerService, rulesetRepository, s3Client, packagesService);
+
+        errorHandlerService = new ErrorHandlerService(errorHandlerRepository);
+
+        rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, errorHandlerService, rulesetRepository, s3Client, packagesService, messagingService);
         entry = TestObjects.anEntry("gtfs").build();
         task = TestObjects.aTask().id(MOCK_TASK_ID).entryId(entry.id()).build();
-        createBucket(vacoProperties.getS3ProcessingBucket());
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(errorHandlerService, rulesetRepository, packagesService);
+        verifyNoMoreInteractions(errorHandlerRepository, rulesetRepository, packagesService, messagingService);
     }
 
     @Test
-    void validatesGivenEntry() throws URISyntaxException, IOException {
-        // XXX: This {format}.download would be nice to express in some more type safe manner
-        givenTestFile("public/testfiles/padasjoen_kunta.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".download"));
+    void validatesGivenEntry() throws URISyntaxException {
+        givenTestFile("public/testfiles/padasjoen_kunta.zip", s3Input.resolve(entry.format() + ".zip"));
         whenFindValidationRuleByName();
-        whenReportError();
+        whenReportErrors();
 
-        RuleExecutionJobMessage<ValidationInput> message = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+        ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.builder()
             .entry(entry)
             .task(task)
-            .workDirectory(s3Input.toString())
+            .inputs(s3Input.toString())
+            .outputs(s3Output.toString())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         ValidationReport report = rule.execute(message).join();
@@ -130,20 +137,21 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
             eq(entry),
             eq(task),
             eq(CanonicalGtfsValidatorRule.RULE_NAME),
-            eq(ImmutableS3Path.of("entries/" + entry.publicId() + "/tasks/" + task.name() + "/rules/gtfs.canonical.v4_0_0/output")),
+            eq(s3Output),
             eq("content.zip"));
     }
 
     @Test
     void wontAcceptNonGtfsFormatEntries() throws URISyntaxException {
         whenFindValidationRuleByName();
-        whenReportError();
+        whenReportErrors();
 
         Entry invalidFormat = ImmutableEntry.copyOf(entry).withFormat("vhs");
-        RuleExecutionJobMessage<ValidationInput> message = ImmutableRuleExecutionJobMessage.<ValidationInput>builder()
+        ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.builder()
             .entry(invalidFormat)
             .task(task)
-            .workDirectory(ImmutableS3Path.of(forInput("public/testfiles/padasjoen_kunta.zip").toString()).toString())
+            .inputs(ImmutableS3Path.of(forInput("public/testfiles/padasjoen_kunta.zip").toString()).toString())
+            .outputs(ImmutableS3Path.of("just/a/path").toString())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         ValidationReport report = rule.execute(message).join();
@@ -152,24 +160,14 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         assertThat(report.errors(), equalTo(List.of(error)));
 
         verify(rulesetRepository).findByName(CanonicalGtfsValidatorRule.RULE_NAME);
-        verify(errorHandlerService).reportError(argThat(equalTo(error)));
     }
 
     private void whenFindValidationRuleByName() {
         when(rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME)).thenReturn(Optional.of(mockValidationRule()));
     }
 
-    private void whenReportError() {
-        doAnswer(voidCall()).when(errorHandlerService).reportError(errorCaptor.capture());
-    }
-
-    @NotNull
-    private static Answer voidCall() {
-        return invocation -> {
-            Object[] args = invocation.getArguments();
-            Object mock = invocation.getMock();
-            return null;
-        };
+    private void whenReportErrors() {
+        when(messagingService.submitErrors(errorMessageCaptor.capture())).thenAnswer(a -> CompletableFuture.supplyAsync(() -> a.getArgument(0)));
     }
 
     @NotNull
@@ -191,7 +189,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
                 .build();
     }
 
-    private void givenTestFile(String file, S3Path target) throws URISyntaxException, IOException {
+    private void givenTestFile(String file, S3Path target) throws URISyntaxException {
         URL resource = CanonicalGtfsValidatorRuleTest.class.getClassLoader().getResource(file);
         s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), target, Path.of(resource.toURI())).join();
     }

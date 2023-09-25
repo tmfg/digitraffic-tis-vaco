@@ -44,4 +44,12 @@ public class VacoConfiguration {
             .expireAfterWrite(Duration.ofHours(1))
             .build();
     }
+
+    @Bean(name = "sqsQueueUrlCache")
+    public Cache<String, String> sqsQueueUrlCache() {
+        return Caffeine.newBuilder()
+            .maximumSize(50)
+            .expireAfterWrite(Duration.ofHours(1))
+            .build();
+    }
 }

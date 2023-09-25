@@ -1,39 +1,40 @@
 package fi.digitraffic.tis.vaco.validation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
+import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
-import fi.digitraffic.tis.vaco.aws.S3Artifact;
-import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
-import fi.digitraffic.tis.vaco.rules.Rule;
-import fi.digitraffic.tis.vaco.rules.model.RuleExecutionJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
+import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
-import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.S3Object;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
+import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
@@ -42,44 +43,12 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.when;
 
-@Import(ValidationServiceIntegrationTests.ContextConfiguration.class)
-class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
-
-    public static final String TEST_RULE_NAME = "hello world";
-    public static final String TEST_RULE_RESULT = "The world was greeted";
-
-    private static AtomicReference<ValidationReport> ruleReport = new AtomicReference<>();
-
-    @Autowired
-    private QueueHandlerService queueHandlerService;
-
-    @TestConfiguration
-    public static class ContextConfiguration {
-
-        @Bean
-        @Qualifier("validation")
-        public Rule<ValidationInput, ValidationReport> monitoringService() {
-            return new Rule<>() {
-                @Override
-                public String getIdentifyingName() {
-                    return TEST_RULE_NAME;
-                }
-
-                @Override
-                public CompletableFuture<ValidationReport> execute(RuleExecutionJobMessage<ValidationInput> message) {
-                    ImmutableValidationReport report = ImmutableValidationReport.of(TEST_RULE_RESULT);
-                    ruleReport.set(report);
-                    return CompletableFuture.completedFuture(report);
-                }
-            };
-        }
-    }
+public class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private VacoProperties vacoProperties;
@@ -91,10 +60,13 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private ValidationService validationService;
 
     @Autowired
+    private MessagingService messagingService;
+
+    @Autowired
     private S3Client s3Client;
 
     @Autowired
-    private S3TransferManager s3TransferManager;
+    private ObjectMapper objectMapper;
 
     @MockBean
     private HttpClient httpClientUtility;
@@ -111,20 +83,24 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Mock
     HttpResponse<Path> response;
 
+    @BeforeAll
+    static void beforeAll(@Autowired VacoProperties vacoProperties) {
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
+    }
+
     @Test
     void uploadsDownloadedFileToS3() throws URISyntaxException, IOException {
         when(httpClientUtility.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
             .thenReturn(CompletableFuture.supplyAsync(() -> response));
         when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
 
-        ImmutableEntry entry = createQueueEntryForTesting();
-        s3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
+        ImmutableEntry entry = createEntryForTesting();
 
         validationService.downloadFile(entry);
 
         assertThat(entryUrl.getValue(), equalTo("https://testfile"));
 
-        List<S3Object> uploadedFiles = s3Client.listObjectsV2(ListObjectsV2Request.builder()
+        List<S3Object> uploadedFiles = awsS3Client.listObjectsV2(ListObjectsV2Request.builder()
                         .bucket(vacoProperties.getS3ProcessingBucket())
                         .prefix("entries/" + entry.publicId())
                         .build())
@@ -145,23 +121,59 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Files.delete(redownload);
     }
 
-    private ImmutableEntry createQueueEntryForTesting() {
+    private ImmutableEntry createEntryForTesting() {
         return queueHandlerRepository.create(TestObjects.anEntry("gtfs").build());
     }
 
     @Test
-    void executesRulesBasedOnIdentifyingName() {
-        ImmutableEntry entry = createQueueEntryForTesting();
-        S3Path s3TargetPath = ImmutableS3Path.of(S3Artifact.getTaskPath(entry.publicId(), ValidationService.DOWNLOAD_SUBTASK).path() + "/" + entry.format() + ".original");
+    void delegatesRuleProcessingToRuleSpecificQueueBasedOnRuleName() throws URISyntaxException {
+        when(httpClientUtility.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
+            .thenReturn(CompletableFuture.supplyAsync(() -> response));
+        when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
+
+        ImmutableEntry entry = createEntryForTesting();
+        String testQueueName = createSqsQueue();
+        S3Path downloadedFile = validationService.downloadFile(entry);
+
         validationService.executeRules(
             entry,
-            s3TargetPath,
+            downloadedFile,
             Set.of(TestObjects.aRuleset()
-                    .identifyingName(TEST_RULE_NAME)
+                    .identifyingName(CanonicalGtfsValidatorRule.RULE_NAME)
                     .description("running hello rule from tests")
                     .category(Category.SPECIFIC)
                     .build()));
 
-        assertThat(ruleReport.get(), equalTo(ImmutableValidationReport.of(TEST_RULE_RESULT)));
+        List<ValidationRuleJobMessage> messages = messagingService.readMessages(testQueueName).map(m -> {
+            try {
+                return objectMapper.readValue(m.body(), ValidationRuleJobMessage.class);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }).toList();
+
+        // only one message is generated
+        assertThat(messages.size(), equalTo(1));
+        ValidationRuleJobMessage message = messages.get(0);
+        // S3 path references are correctly set
+        assertThat(message.inputs(), equalTo("s3://vaco-itest-processing/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/input"));
+        assertThat(message.outputs(), equalTo("s3://vaco-itest-processing/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/output"));
+        // downloaded file is copied to inputs
+        URI inputUri = URI.create(message.inputs());
+        S3Path expectedPath = ImmutableS3Path.of(inputUri.getPath() + "/" + downloadedFile.getLast());
+
+        HeadObjectResponse r = awsS3Client.headObject(HeadObjectRequest.builder()
+            .bucket(inputUri.getHost())
+            .key(expectedPath.toString())
+            .build());
+        assertThat(r.contentLength(), equalTo(12L));
     }
+
+    @NotNull
+    private static String createSqsQueue() {
+        String testQueueName = MessageQueue.RULES.munge(CanonicalGtfsValidatorRule.RULE_NAME);
+        CreateQueueResponse r = sqsClient.createQueue(CreateQueueRequest.builder().queueName(testQueueName).build());
+        return testQueueName;
+    }
+
 }
