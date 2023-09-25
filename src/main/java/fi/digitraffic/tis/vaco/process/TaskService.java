@@ -20,6 +20,7 @@ public class TaskService {
     }
 
     public ImmutableTask trackTask(Task task, ProcessingState state) {
+        // TODO: add checks which prevent already started task from re-starting
         logger.info("Updating task {} to {}", task, state);
         return switch (state) {
             case START -> taskRepository.startTask(task);

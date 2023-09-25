@@ -45,7 +45,7 @@ class ValidationQueueSqsListenerTests {
 
         entry = ImmutableEntry.of(TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, TestConstants.FINTRAFFIC_BUSINESS_ID);
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
-        message = ImmutableValidationJobMessage.builder().message(entry).retryStatistics(retryStatistics).build();
+        message = ImmutableValidationJobMessage.builder().entry(entry).retryStatistics(retryStatistics).build();
     }
 
     @AfterEach

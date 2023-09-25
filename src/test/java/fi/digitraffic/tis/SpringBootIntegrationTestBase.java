@@ -3,8 +3,8 @@ package fi.digitraffic.tis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fi.digitraffic.tis.vaco.VacoApplication;
 import fi.digitraffic.tis.utilities.dto.Link;
+import fi.digitraffic.tis.vaco.VacoApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,11 +18,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer.Service;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.io.UnsupportedEncodingException;
 
@@ -43,12 +41,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 )
 @AutoConfigureMockMvc
 @DirtiesContext
-public abstract class SpringBootIntegrationTestBase {
-
-    @Container
-    static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.0.2"))
-        .withServices(Service.SQS, Service.S3);
-
+public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBase {
 
     @Container
     public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-bullseye")
@@ -73,6 +66,9 @@ public abstract class SpringBootIntegrationTestBase {
         registry.add("spring.flyway.fail-on-missing-locations", () -> true);
         registry.add("spring.cloud.aws.sqs.endpoint", () -> localstack.getEndpointOverride(Service.SQS));
         registry.add("spring.cloud.aws.s3.endpoint", () -> localstack.getEndpointOverride(Service.S3));
+        registry.add("vaco.aws.region", () -> localstack.getRegion());
+        registry.add("vaco.aws.endpoint", () -> localstack.getEndpoint());
+        registry.add("vaco.scheduling.enable", () -> false);
         registry.add("spring.cloud.azure.active-directory.enabled", () -> false);
         //registry.add("spring.cloud.azure.active-directory.credential.client-id", () -> "<>");
     }

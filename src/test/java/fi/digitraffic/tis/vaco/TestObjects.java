@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
@@ -21,7 +22,7 @@ public class TestObjects {
         return ImmutableEntry.builder()
             .format(format)
             .url("https://testfile")
-            .publicId("testPublicId")
+            .publicId(NanoIdUtils.randomNanoId())
             .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
     }
 
@@ -36,8 +37,17 @@ public class TestObjects {
 
     public static ImmutableOrganization.Builder anOrganization() {
         return ImmutableOrganization.builder()
-            .businessId(UUID.randomUUID().toString())
-            .name(UUID.randomUUID().toString());
+            .businessId(randomBusinessId())
+            .name("organization:name:" + UUID.randomUUID());
+    }
+
+    private static String randomBusinessId() {
+        Random r = new Random();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 7; i++) {
+            sb.append(r.nextInt(10));
+        }
+        return sb.append("-").append(r.nextInt(10)).toString();
     }
 
     public static ImmutableCooperation.Builder aCooperation() {
@@ -53,16 +63,20 @@ public class TestObjects {
     public static ImmutableTask.Builder aTask() {
         return ImmutableTask.builder()
             .id(new Random().nextLong())
-            .name(UUID.randomUUID().toString())
+            .name("task:name:" + UUID.randomUUID())
             .priority(new Random().nextInt());
     }
 
     public static ImmutableRuleset.Builder aRuleset() {
         return ImmutableRuleset.builder()
-            .identifyingName(UUID.randomUUID().toString())
+            .identifyingName("rule:identifyingName:" + UUID.randomUUID())
             .description("running hello rule from tests")
             .category(Category.GENERIC)
             .type(Type.VALIDATION_SYNTAX);
     }
 
+    public static VacoProperties vacoProperties() {
+        String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
+        return new VacoProperties("unittests-" + randomSeed, null, "unittests-" + randomSeed + "-processing-bucket");
+    }
 }

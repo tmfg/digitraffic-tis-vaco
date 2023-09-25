@@ -1,32 +1,32 @@
 package fi.digitraffic.tis.vaco.validation;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
+import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
-import fi.digitraffic.tis.vaco.aws.S3Packager;
-import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
-import fi.digitraffic.tis.vaco.process.model.JobResult;
-import fi.digitraffic.tis.vaco.process.model.TaskData;
-import fi.digitraffic.tis.vaco.process.model.TaskResult;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
+import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import fi.digitraffic.tis.vaco.rules.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,7 +43,6 @@ import java.util.function.Function;
 
 @Service
 public class ValidationService {
-    public static final String PHASE = TaskCategory.VALIDATION.name;
     public static final String DOWNLOAD_SUBTASK = "validation.download";
     public static final String RULESET_SELECTION_SUBTASK = "validation.rulesets";
     public static final String EXECUTION_SUBTASK = "validation.execute";
@@ -54,134 +53,120 @@ public class ValidationService {
 
     private final TaskService taskService;
     private final RulesetService rulesetService;
-    private final HttpClient httpClientUtility;
-    private final S3Client s3ClientUtility;
-    private final RulesetRepository rulesetRepository;
+    private final HttpClient httpClient;
+    private final S3Client s3Client;
     private final Map<String, Rule<ValidationInput, ValidationReport>> rules;
-
-    private final S3Packager s3Packager;
+    private final VacoProperties vacoProperties;
+    private final MessagingService messagingService;
 
     public ValidationService(TaskService taskService,
                              RulesetService rulesetService,
                              HttpClient httpClient,
-                             S3Client s3ClientUtility,
-                             RulesetRepository rulesetRepository,
-                             @Qualifier("validation") List<Rule<ValidationInput, ValidationReport>> rules, S3Packager s3Packager) {
+                             S3Client s3Client,
+                             @Qualifier("validation") List<Rule<ValidationInput, ValidationReport>> rules,
+                             VacoProperties vacoProperties,
+                             MessagingService messagingService) {
         this.taskService = taskService;
         this.rulesetService = rulesetService;
-        this.httpClientUtility = httpClient;
-        this.s3ClientUtility = s3ClientUtility;
-        this.rulesetRepository = rulesetRepository;
+        this.httpClient = httpClient;
+        this.s3Client = s3Client;
         this.rules = Streams.collect(rules, Rule::getIdentifyingName, Function.identity());
-        this.s3Packager = s3Packager;
+        this.vacoProperties = vacoProperties;
+        this.messagingService = messagingService;
     }
 
-    public JobResult validate(ValidationJobMessage jobDescription) throws RuleExecutionException {
-        Entry entry = jobDescription.message();
-        TaskResult<ImmutableFileReferences> s3path = downloadFile(entry);
+    public void validate(ValidationJobMessage message) throws RuleExecutionException {
+        Entry entry = message.entry();
 
-        TaskResult<Set<Ruleset>> validationRulesets = selectRulesets(entry);
+        S3Path downloadedFile = downloadFile(entry);
 
-        TaskResult<List<ValidationReport>> validationReports = executeRules(entry, s3path.result(), validationRulesets.result());
+        Set<Ruleset> validationRulesets = selectRulesets(entry);
 
-        String packageFileName = PHASE + "_results";
-        s3Packager.producePackage(
-            S3Artifact.getPhasePath(entry.publicId(), PHASE),
-            S3Artifact.getPackagePath(entry.publicId(), packageFileName),
-            PHASE + "_results");
+        executeRules(entry, downloadedFile, validationRulesets);
+    }
 
-        return ImmutableJobResult.builder()
-                .addResults(s3path, validationRulesets, validationReports)
+    @VisibleForTesting
+    S3Path downloadFile(Entry entry) {
+        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
+        Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".zip");
+
+        return httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
+            .thenApply(track(task, ProcessingState.UPDATE))
+            .thenCompose(uploadToS3(entry, task))
+            .thenApply(track(task, ProcessingState.COMPLETE))
+            .join();
+    }
+
+    private <T> Function<T, T> track(ImmutableTask task, ProcessingState state) {
+        return t -> {
+            taskService.trackTask(task, state);
+            return t;
+        };
+    }
+
+    private Function<HttpResponse<Path>, CompletableFuture<S3Path>> uploadToS3(Entry entry,
+                                                                               ImmutableTask task) {
+        return response -> {
+            ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
+            S3Path s3TargetPath = ImmutableS3Path.builder()
+                .from(S3Artifact.getTaskPath(entry.publicId(), DOWNLOAD_SUBTASK))
+                .addPath(entry.format() + ".zip")
                 .build();
-    }
 
-    @VisibleForTesting
-    TaskResult<ImmutableFileReferences> downloadFile(Entry queueEntry) {
-        ImmutableTaskData<ImmutableFileReferences> taskData = ImmutableTaskData.of(
-                taskService.trackTask(taskService.findTask(queueEntry.id(), DOWNLOAD_SUBTASK), ProcessingState.START));
-        Path tempFilePath = s3ClientUtility.createVacoDownloadTempFile(queueEntry.publicId(),
-            queueEntry.format(), taskData.task().name());
-
-        return httpClientUtility.downloadFile(tempFilePath, queueEntry.url(), queueEntry.etag())
-            .thenApply(wrapHttpResult(taskData))
-            .thenCompose(uploadToS3(queueEntry))
-            .thenApply(completeDownloadTask())
-            .join(); // wait for finish - might be temporary
-    }
-
-    private Function<HttpResponse<Path>, ImmutableTaskData<ImmutableFileReferences>> wrapHttpResult(ImmutableTaskData<ImmutableFileReferences> taskData) {
-        return path -> taskData
-                // download done -> update task
-                .withTask(taskService.trackTask(taskData.task(), ProcessingState.UPDATE))
-                .withPayload(ImmutableFileReferences.of(path.body()));
-    }
-
-    private Function<ImmutableTaskData<ImmutableFileReferences>, CompletableFuture<ImmutableTaskData<ImmutableFileReferences>>> uploadToS3(Entry queueEntry) {
-        return taskData -> {
-            String targetPath = S3Artifact.getValidationTaskPath(queueEntry.publicId(), DOWNLOAD_SUBTASK, queueEntry.format() + ".original");
-            Path sourcePath = taskData.payload().localPath();
-
-            return s3ClientUtility.uploadFile(targetPath, sourcePath)
-                .thenApply(u -> taskData // upload done -> update task
-                    .withTask(taskService.trackTask(taskData.task(), ProcessingState.UPDATE)));
+            return s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3TargetPath, refs.localPath())
+                .thenApply(track(task, ProcessingState.UPDATE))
+                .thenApply(u -> s3TargetPath);  // TODO: There's probably something useful in the `u` parameter
         };
     }
 
-    private Function<TaskData<ImmutableFileReferences>, TaskResult<ImmutableFileReferences>> completeDownloadTask() {
-        return taskData -> {
-            ImmutableFileReferences fileRefs = taskData.payload();
-            logger.info("S3 path: {}, upload status: {}", fileRefs.s3Path(), fileRefs.upload());
-            // download complete, mark to database as complete and unwrap payload
-            taskService.trackTask(taskData.task(), ProcessingState.COMPLETE);
-            return ImmutableTaskResult.of(DOWNLOAD_SUBTASK, fileRefs);
-        };
-    }
-
+    // TODO: convert to CompletableFuture chain
     @VisibleForTesting
-    TaskResult<Set<Ruleset>> selectRulesets(Entry entry) {
-        ImmutableTaskData<Ruleset> taskData = ImmutableTaskData.of(
-                taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START));
+    Set<Ruleset> selectRulesets(Entry entry) {
+        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
 
         Set<Ruleset> rulesets = rulesetService.selectRulesets(
                 entry.businessId(),
                 Type.VALIDATION_SYNTAX,
                 Streams.map(entry.validations(), ValidationInput::name).toSet());
 
-        taskData.withTask(taskService.trackTask(taskData.task(), ProcessingState.COMPLETE));
+        taskService.trackTask(task, ProcessingState.COMPLETE);
 
-        return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
+        return rulesets;
     }
 
     @VisibleForTesting
-    ImmutableTaskResult<List<ValidationReport>> executeRules(Entry entry, ImmutableFileReferences fileReferences, Set<Ruleset> validationRulesets) {
-        TaskData<FileReferences> taskData = ImmutableTaskData.<FileReferences>builder()
-                .task(taskService.trackTask(taskService.findTask(entry.id(), EXECUTION_SUBTASK), ProcessingState.START))
-                .payload(fileReferences)
-                .build();
+    void executeRules(Entry entry,
+                      S3Path downloadedFile,
+                      Set<Ruleset> validationRulesets) {
+        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), EXECUTION_SUBTASK), ProcessingState.START);
 
         Map<String, ValidationInput> configs = Streams.collect(entry.validations(), ValidationInput::name, Function.identity());
 
-        List<ValidationReport> reports = validationRulesets.parallelStream()
-                .map(this::findMatchingRule)
-                .filter(Optional::isPresent)
-                .map(r -> r.get().execute(entry, r.map(x -> configs.get(x.getIdentifyingName())), taskData))
-                .map(CompletableFuture::join)
-                .toList();
-        // everything's done at this point because of the ::join call, complete task and return
-        taskService.trackTask(taskData.task(), ProcessingState.COMPLETE);
-        return ImmutableTaskResult.of(EXECUTION_SUBTASK, reports);
+        List<ValidationRuleJobMessage> s = validationRulesets.parallelStream()
+            .map(r -> {
+                String identifyingName = r.identifyingName();
+                Optional<ValidationInput> configuration = Optional.ofNullable(configs.get(identifyingName));
+
+                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), task.name(), identifyingName);
+                S3Path ruleS3Input = ruleBasePath.resolve("input");
+                S3Path ruleS3Output = ruleBasePath.resolve("output");
+
+                s3Client.copyFile(vacoProperties.getS3ProcessingBucket(), downloadedFile, ruleS3Input).join();
+
+                ValidationRuleJobMessage ruleMessage = ImmutableValidationRuleJobMessage.builder()
+                    .entry(ImmutableEntry.copyOf(entry).withTasks())
+                    .task(task)
+                    .inputs(ruleS3Input.asUri(vacoProperties.getS3ProcessingBucket()))
+                    .outputs(ruleS3Output.asUri(vacoProperties.getS3ProcessingBucket()))
+                    .configuration(configuration.orElse(null))
+                    .retryStatistics(ImmutableRetryStatistics.of(5))
+                    .build();
+                return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
+            })
+            .map(CompletableFuture::join)
+            .toList();  // this is here to terminate the stream which ensures it gets evaluated properly
+        // everything's done at this point because of the ::join call, complete task
+        taskService.trackTask(task, ProcessingState.COMPLETE);
     }
 
-    private Optional<Rule<ValidationInput, ValidationReport>> findMatchingRule(Ruleset validationRule) {
-        String identifyingName = validationRule.identifyingName();
-        Optional<Rule<ValidationInput, ValidationReport>> rule = Optional.ofNullable(rules.get(identifyingName));
-        if (rule.isEmpty()) {
-            logger.error("No matching rule found with identifying name '{}' from available {}", identifyingName, rules.keySet());
-        }
-        return rule;
-    }
-
-    public List<String> listSubTasks() {
-        return ALL_SUBTASKS;
-    }
 }

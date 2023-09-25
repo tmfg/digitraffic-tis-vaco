@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
+import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
@@ -53,6 +54,9 @@ public interface Entry {
 
     @Nullable
     List<ConversionInput> conversions();
+
+    @Nullable
+    List<Package> packages();
 
     @Nullable
     List<Error> errors();

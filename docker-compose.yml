@@ -45,7 +45,7 @@ services:
       - SERVICES=sqs,s3
       - AWS_ACCESS_KEY_ID=localstack
       - AWS_SECRET_ACCESS_KEY=localstack
-      - AWS_DEFAULT_REGION=eu-central-1
+      - AWS_DEFAULT_REGION=eu-north-1
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"

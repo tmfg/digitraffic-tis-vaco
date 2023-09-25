@@ -1,78 +1,60 @@
 package fi.digitraffic.tis.vaco.aws;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
+import fi.digitraffic.tis.aws.s3.S3Path;
+
 public class S3Artifact {
 
-    static final String ENTRY_FOLDER = "entries/%s";
+    static final String ENTRY_ROOT = "entries/%s";
 
-    public static final String ORIGINAL_ENTRY = "/entries/%s/entry.json";
+    public static final String ORIGINAL_ENTRY = ENTRY_ROOT + "/entry.json";
 
-    public static final String METADATA = "/entries/%s/metadata.json";
+    public static final String METADATA = ENTRY_ROOT + "/metadata.json";
 
-    static final String TASK_FOLDER = "entries/%s/phases/%s";
+    static final String TASKS_ROOT = ENTRY_ROOT + "/tasks/%s";
 
-    static final String DOWNLOAD_TASK = "/entries/%s/tasks/download/%s";
+    static final String DOWNLOAD_TASK = ENTRY_ROOT + "/tasks/download/%s";
 
-    static final String VALIDATION_TASK = "/entries/%s/tasks/validation/%s/%s";
+    static final String VALIDATION_TASK = ENTRY_ROOT + "/tasks/validation/%s/%s";
 
-    static final String CONVERSION_TASK = "/entries/%s/tasks/conversion/%s/%s";
+    static final String CONVERSION_TASK = ENTRY_ROOT + "/tasks/conversion/%s/%s";
 
-    static final String PACKAGE = "/entries/%s/package/%s.zip";
+    static final String PACKAGES_ROOT = ENTRY_ROOT + "/packages";
 
-    static final String ERROR_LOGS = "/entries/%s/logs/errors/%s";
+    static final String PACKAGE = ENTRY_ROOT + "/packages/%s.zip";
 
-    public static String getEntryFolderPath(String entryPublicId) {
-        return String.format(ENTRY_FOLDER, entryPublicId);
+    static final String ERROR_LOGS = ENTRY_ROOT + "/logs/errors/%s";
+
+    public static S3Path getEntryFolderPath(String entryPublicId) {
+        return ImmutableS3Path.of(String.format(ENTRY_ROOT, entryPublicId));
     }
 
     /**
      * @param entryPublicId
      * @return
      */
-    public static String getOriginalEntryPath(String entryPublicId) {
-        return String.format(ORIGINAL_ENTRY, entryPublicId);
+    public static S3Path getOriginalEntryPath(String entryPublicId) {
+        return ImmutableS3Path.of(String.format(ORIGINAL_ENTRY, entryPublicId));
     }
 
     /**
      * @param entryPublicId
      * @return
      */
-    public static String getMetadataPath(String entryPublicId) {
-        return String.format(METADATA, entryPublicId);
-    }
-
-    /**
-     * Pattern: entries/{entryPublicId}/phases/validation
-     * @param entryPublicId
-     * @param phase
-     * @return
-     */
-    public static String getPhasePath(String entryPublicId,
-                                      String phase) {
-        return String.format(TASK_FOLDER, entryPublicId, phase);
+    public static S3Path getMetadataPath(String entryPublicId) {
+        return ImmutableS3Path.of(String.format(METADATA, entryPublicId));
     }
 
     /**
      * Pattern: entries/{entryPublicId}/tasks/validation
+     *
      * @param entryPublicId
-     * @param phase
+     * @param task
      * @return
      */
-    public static String getDownloadTaskPath(String entryPublicId,
-                                             String artifact) {
-        return String.format(DOWNLOAD_TASK, entryPublicId, artifact);
-    }
-
-    /**
-     * Pattern: /entries/{entryPublicId}/tasks/validation/{subTask}/{fileName}.{extension}
-     * @param entryPublicId
-     * @param subTask
-     * @param artifact: either a file name or directory with a bunch of files
-     * @return
-     */
-    public static String getValidationTaskPath(String entryPublicId,
-                                               String subTask,
-                                               String artifact) {
-        return String.format(VALIDATION_TASK, entryPublicId, subTask, artifact);
+    public static S3Path getTaskPath(String entryPublicId,
+                                     String task) {
+        return ImmutableS3Path.of(String.format(TASKS_ROOT, entryPublicId, task));
     }
 
     /**
@@ -82,10 +64,14 @@ public class S3Artifact {
      * @param artifact: either a file name or directory with a bunch of files
      * @return
      */
-    public static String getConversionTaskPath(String entryPublicId,
+    public static S3Path getConversionTaskPath(String entryPublicId,
                                                String subTask,
                                                String artifact) {
-        return String.format(CONVERSION_TASK, entryPublicId, subTask, artifact);
+        return ImmutableS3Path.of(String.format(CONVERSION_TASK, entryPublicId, subTask, artifact));
+    }
+
+    public static S3Path getPackagesDirectory(String entryPublicId) {
+        return ImmutableS3Path.of(String.format(PACKAGES_ROOT, entryPublicId));
     }
 
     /**
@@ -94,9 +80,12 @@ public class S3Artifact {
      * @param packageName
      * @return
      */
-    public static String getPackagePath(String entryPublicId,
+    public static S3Path getPackagePath(String entryPublicId,
                                         String packageName) {
-        return String.format(PACKAGE, entryPublicId, packageName);
+        return ImmutableS3Path.builder()
+            .from(getPackagesDirectory(entryPublicId))
+            .addPath(packageName)
+            .build();
     }
 
     /**
@@ -105,8 +94,15 @@ public class S3Artifact {
      * @param artifact: I guess some kind of json file in most cases?
      * @return
      */
-    public static String getErrorLogsPath(String entryPublicId,
+    public static S3Path getErrorLogsPath(String entryPublicId,
                                           String artifact) {
-        return String.format(ERROR_LOGS, entryPublicId, artifact);
+        return ImmutableS3Path.of(String.format(ERROR_LOGS, entryPublicId, artifact));
+    }
+
+    public static S3Path getRuleDirectory(String entryPublicId, String taskName, String ruleName) {
+        return ImmutableS3Path.builder()
+            .from(getTaskPath(entryPublicId, taskName))
+            .addPath("rules", ruleName)
+            .build();
     }
 }

@@ -4,16 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.VacoProperties;
-import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.process.model.TaskData;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.validation.model.FileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import org.immutables.value.Value;
@@ -24,10 +25,6 @@ import org.mobilitydata.gtfsvalidator.util.VersionInfo;
 import org.mobilitydata.gtfsvalidator.util.VersionResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
-import software.amazon.awssdk.transfer.s3.model.FailedFileUpload;
-import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,19 +42,22 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     public static final String RULE_NAME = "gtfs.canonical.v4_0_0";
 
     private final ObjectMapper objectMapper;
-    private final S3TransferManager s3TransferManager;
     private final VacoProperties vacoProperties;
+    private final S3Client s3Client;
+    private final PackagesService packagesService;
 
-    public CanonicalGtfsValidatorRule(
-        ObjectMapper objectMapper,
-        VacoProperties vacoProperties,
-        S3TransferManager s3TransferManager,
-        ErrorHandlerService errorHandlerService,
-        RulesetRepository rulesetRepository) {
-        super("gtfs", rulesetRepository, errorHandlerService);
+    public CanonicalGtfsValidatorRule(ObjectMapper objectMapper,
+                                      VacoProperties vacoProperties,
+                                      ErrorHandlerService errorHandlerService,
+                                      RulesetRepository rulesetRepository,
+                                      S3Client s3Client,
+                                      PackagesService packagesService,
+                                      MessagingService messagingService) {
+        super("gtfs", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper, messagingService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.s3TransferManager = Objects.requireNonNull(s3TransferManager);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.s3Client = Objects.requireNonNull(s3Client);
+        this.packagesService = Objects.requireNonNull(packagesService);
     }
 
     @Override
@@ -66,35 +66,29 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     }
 
     @Override
-    protected ValidationReport runValidator(
-        Entry queueEntry,
-        Optional<ValidationInput> configuration,
-        TaskData<FileReferences> taskData) {
+    protected ValidationReport runValidator(Entry entry,
+                                            Task task,
+                                            Path workDirectory,
+                                            Path outputsDirectory,
+                                            Optional<ValidationInput> configuration) {
+        URI gtfsSource = workDirectory.resolve(entry.format() + ".zip").toUri();
 
-        Path ruleRoot = Path.of(vacoProperties.getTemporaryDirectory(), queueEntry.publicId(), taskData.task().name(), "rules", RULE_NAME);
-        URI gtfsSource = taskData.payload().localPath().toUri();
-        Path storageDirectory = ruleRoot.resolve("storage");
-        Path outputDirectory = ruleRoot.resolve("output");
-
-        CountryCode countryCode = resolveCountryCode(queueEntry);
+        CountryCode countryCode = resolveCountryCode(entry);
 
         ValidationRunnerConfig config = ValidationRunnerConfig.builder()
                 .setCountryCode(countryCode)
                 .setGtfsSource(gtfsSource)
-                .setStorageDirectory(storageDirectory)
-                .setOutputDirectory(outputDirectory)
+                .setOutputDirectory(outputsDirectory)
                 .setValidationReportFileName("report.json")
                 .setPrettyJson(true)
                 .build();
         new ValidationRunner(new StaticVersionResolver()).run(config);
 
-        Path reportFile = outputDirectory.resolve("report.json");
+        Path reportFile = outputsDirectory.resolve("report.json");
         if (Files.exists(reportFile)) {
-            List<ImmutableError> failedUploads = copyOutputToS3(queueEntry, taskData, outputDirectory);
-            List<ImmutableError> validationErrors = scanErrors(queueEntry, taskData, reportFile);
+            List<ImmutableError> validationErrors = scanErrors(entry, task, reportFile);
             return ImmutableValidationReport.builder()
                     .message("Canonical GTFS validation report")
-                    .addAllErrors(failedUploads)
                     .addAllErrors(validationErrors)
                     .build();
         } else {
@@ -103,56 +97,25 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
         }
     }
 
-    private List<ImmutableError> scanErrors(Entry queueEntry, TaskData<FileReferences> taskData, Path reportFile) {
+    private List<ImmutableError> scanErrors(Entry entry, Task task, Path reportFile) {
         try {
             Report report = objectMapper.readValue(reportFile.toFile(), Report.class);
-            List<ImmutableError> errors = report.notices()
+            return report.notices()
                     .stream()
                     .flatMap(notice -> notice.sampleNotices()
                             .stream()
                             .map(sn -> ImmutableError.of(
-                                            queueEntry.id(),
-                                            taskData.task().id(),
-                                            rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
-                                            notice.code())
-                                    .withRaw(sn)))
+                                    entry.id(),
+                                    task.id(),
+                                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                                    notice.code())
+                                .withRaw(sn)))
                     .filter(Objects::nonNull)
                     .toList();
-            errors.forEach(errorHandlerService::reportError);
-
-            return errors;
         } catch (IOException e) {
-            logger.warn("Failed to process {}/{}/{} output file", queueEntry.publicId(), taskData.task().name(), RULE_NAME, e);
+            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), RULE_NAME, e);
             return List.of();
         }
-    }
-
-    private List<ImmutableError> copyOutputToS3(Entry queueEntry, TaskData<FileReferences> taskData, Path outputDirectory) {
-        String s3Path = S3Artifact.getValidationTaskPath(queueEntry.publicId(),
-                                                          taskData.task().name(),
-                                                          RULE_NAME);
-
-        CompletedDirectoryUpload ud = s3TransferManager.uploadDirectory(UploadDirectoryRequest.builder()
-                        .bucket(vacoProperties.getS3processingBucket())
-                        .s3Prefix(s3Path)
-                        .source(outputDirectory)
-                        .build())
-                .completionFuture()
-                .join();
-        List<FailedFileUpload> failed = ud.failedTransfers();
-        return failed.stream().map(failure -> {
-            ImmutableError error = ImmutableError.of(
-                    queueEntry.id(),
-                    taskData.task().id(),
-                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
-                    "Failed to upload produced output file from %s to S3 %s:%s".formatted(
-                            failure.request().source(),
-                            failure.request().putObjectRequest().bucket(),
-                            failure.request().putObjectRequest().key()))
-                    .withRaw(objectMapper.valueToTree(failure.exception()));
-            errorHandlerService.reportError(error);
-            return error;
-        }).toList();
     }
 
     private static CountryCode resolveCountryCode(Entry queueEntry) {

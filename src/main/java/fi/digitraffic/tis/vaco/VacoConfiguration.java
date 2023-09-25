@@ -34,13 +34,21 @@ public class VacoConfiguration {
 
     @Bean
     public S3Client s3ClientUtility() {
-        return new S3Client(s3TransferManager, vacoProperties, awsS3Client);
+        return new S3Client(vacoProperties, s3TransferManager,awsS3Client);
     }
 
     @Bean(name = "rulesetNameCache")
     public Cache<String, Ruleset> rulesetNameCache() {
         return Caffeine.newBuilder()
             .maximumSize(500)
+            .expireAfterWrite(Duration.ofHours(1))
+            .build();
+    }
+
+    @Bean(name = "sqsQueueUrlCache")
+    public Cache<String, String> sqsQueueUrlCache() {
+        return Caffeine.newBuilder()
+            .maximumSize(50)
             .expireAfterWrite(Duration.ofHours(1))
             .build();
     }

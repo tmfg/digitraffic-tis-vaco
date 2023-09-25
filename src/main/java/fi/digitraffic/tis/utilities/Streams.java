@@ -2,16 +2,20 @@ package fi.digitraffic.tis.utilities;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Helper for reducing boilerplate with Java Streams, e.g. instead of
@@ -35,11 +39,11 @@ public class Streams {
      * <pre>
      *     objects.stream().map(mapper)
      * </pre>
-     * @param objects
-     * @param mapper
-     * @return
-     * @param <O>
-     * @param <I>
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
      */
     public static <I, O> Chain<O> map(Collection<I> objects, Function<? super I, ? extends O> mapper) {
         return new Chain<>(objects.stream().map(mapper));
@@ -51,12 +55,11 @@ public class Streams {
      *     IntStream.range(0, objects.size())
      *              .mapToObj(i -> mapper.apply((long) i, objects.get(i)))
      * </pre>
-     *
-     * @param objects
-     * @param mapper
-     * @return
-     * @param <I>
-     * @param <O>
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
      */
     public static <I, O> Chain<O> mapIndexed(List<I> objects, BiFunction<Integer, ? super I, ? extends O> mapper) {
         return new Chain<>(IntStream.range(0, objects.size()).mapToObj(i -> mapper.apply(i, objects.get(i))));
@@ -67,14 +70,28 @@ public class Streams {
      * <pre>
      *     Arrays.stream(objects).filter(predicate)
      * </pre>
-     * @param objects
-     * @param mapper
-     * @return
-     * @param <I>
-     * @param <O>
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
      */
     public static <I, O> Chain<O> map(I[] objects, Function<? super I, ? extends O> mapper) {
         return new Chain<>(Arrays.stream(objects).map(mapper));
+    }
+
+    /**
+     * No direct functional equivalence due to custom internal {@link Spliterator} implementation. Behavior matches with
+     * any other matching overload, e.g. {@link #map(Collection, Function)}.
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
+     * @see #asStream(Enumeration)
+     */
+    public static <I, O> Chain<O> map(Enumeration<I> objects, Function<? super I, ? extends O> mapper) {
+        return new Chain<>(asStream(objects)).map(mapper);
     }
 
     /**
@@ -82,10 +99,10 @@ public class Streams {
      * <pre>
      *     objects.stream().filter(predicate)
      * </pre>
-     * @param objects
-     * @param predicate
-     * @return
-     * @param <O>
+     * @param objects Objects to process.
+     * @param predicate Predicate function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of filtered objects.
+     * @param <O> Type for output objects.
      */
     public static <O> Chain<O> filter(Collection<O> objects, Predicate<? super O> predicate) {
         return new Chain<>(objects.stream().filter(predicate));
@@ -96,13 +113,26 @@ public class Streams {
      * <pre>
      *     Arrays.stream(objects).filter(predicate)
      * </pre>
-     * @param objects
-     * @param predicate
-     * @return
-     * @param <O>
+     * @param objects Objects to process.
+     * @param predicate Predicate function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of filtered objects.
+     * @param <O> Type for output objects.
      */
     public static <O> Chain<O> filter(O[] objects, Predicate<? super O> predicate) {
         return new Chain<>(Arrays.stream(objects).filter(predicate));
+    }
+
+    /**
+     * No direct functional equivalence due to custom internal {@link Spliterator} implementation. Behavior matches with
+     * any other matching overload, e.g. {@link #filter(Collection, Predicate)}
+     * @param objects Objects to process.
+     * @param predicate Predicate function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of filtered objects.
+     * @param <O> Type for output objects.
+     * @see #asStream(Enumeration)
+     */
+    public static <O> Chain<O> filter(Enumeration<O> objects, Predicate<? super O> predicate) {
+        return new Chain<>(asStream(objects)).filter(predicate);
     }
 
     /**
@@ -110,11 +140,13 @@ public class Streams {
      * <pre>
      *     objects.stream().collect(Collectors.toMap(keyMapper, valueMapper)
      * </pre>
-     *
-     * @param objects
-     * @param keyMapper
-     * @param valueMapper
-     * @return
+     * @param objects Objects to process.
+     * @param keyMapper Mapping function to produce keys.
+     * @param valueMapper Mapping function to produce values.
+     * @return Map of converted objects.
+     * @param <I> Type for input objects.
+     * @param <K> Type for output map's keys.
+     * @param <V> Type for output map's values.
      */
     public static <I, K, V> Map<K, V> collect(
         Collection<I> objects,
@@ -129,17 +161,25 @@ public class Streams {
      * <pre>
      *     Streams.map(objects, mapper).toList()
      * </pre>
-     *
-     * @param objects
-     * @param mapper
-     * @return
-     * @param <I>
-     * @param <O>
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return List of converted objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
      */
     public static <I, O> List<? extends O> collect(Collection<I> objects, Function<? super I, ? extends O> mapper) {
         return map(objects, mapper).toList();
     }
 
+    /**
+     * Create one concatenated stream from given collections. Non-recursive, eager implementation.
+     * @param first First collection to wrap. This is provided separately to make the compiler do some helpful work for
+     *              us.
+     * @param more Remaining collections to concatenate in order.
+     * @return Concatenated collections as single flat stream.
+     * @param <T> Common type for all the contained objects.
+     */
+    @SafeVarargs
     public static <T> Chain<? extends T> concat(Collection<? extends T> first, Collection<? extends T>... more) {
         Stream<? extends T> merged = first.stream();
 
@@ -151,12 +191,26 @@ public class Streams {
     }
 
     /**
+     * Custom {@link Spliterator} wrapping for legacy type {@link Enumeration} to provide a bridge to Java
+     * {@link Stream} with {@link StreamSupport}.
+     * @param objects Objects to process.
+     * @return <code>java.util.Enumeration</code> wrapped as <code>java.util.Stream</code>
+     * @param <I> Type for input objects.
+     */
+    private static <I> Stream<I> asStream(Enumeration<I> objects) {
+        return StreamSupport.stream(
+            Spliterators.spliteratorUnknownSize(objects.asIterator(), Spliterator.ORDERED),
+            false
+        );
+    }
+
+    /**
      * Java Streams are internally modeled as pipelines, <code>Chain</code> mimics this by providing shorthands to
      * operations which would need multiple steps/calls otherwise. {@link #stream()} exposes the underlying {@link Stream}
      * for those cases where the needed operation isn't exposed in this wrapper and/or the extra calls doesn't make
      * client side code uglier.
      *
-     * @param <R>
+     * @param <R> Type for objects wrapped within chain's internal stream.
      */
     public static final class Chain<R> {
 
@@ -189,6 +243,14 @@ public class Streams {
 
         public Optional<R> findFirst() {
             return stream().findFirst();
+        }
+
+        /**
+         * Force evaluation of the currently wrapped stream without producing return values. Might throw exceptions
+         * based on underlying process.
+         */
+        public void complete() {
+            stream.forEach(action -> {});
         }
     }
 }

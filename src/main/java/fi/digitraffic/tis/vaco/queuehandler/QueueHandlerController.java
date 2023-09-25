@@ -5,6 +5,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,7 +73,21 @@ public class QueueHandlerController {
     }
 
     private static Resource<ImmutableEntry> asQueueHandlerResource(ImmutableEntry entry) {
-        return new Resource<>(entry, Map.of("self", linkToGetEntry(entry)));
+
+        Map<String, Link> links = new HashMap<>();
+        links.put("self", linkToGetEntry(entry));
+
+        if (entry.packages() != null) {
+            links.putAll(Streams.collect(entry.packages(),
+                p -> "package." + p.name(),
+                p -> new Link(
+                    MvcUriComponentsBuilder
+                        .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), p.name(), null))
+                        .toUriString(),
+                    RequestMethod.GET)));
+        }
+
+        return new Resource<>(entry, links);
     }
 
     private static Link linkToGetEntry(ImmutableEntry entry) {

@@ -17,9 +17,9 @@ public class RulesetService {
     public Set<Ruleset> selectRulesets(String businessId, Type type, Set<String> names) {
         Set<Ruleset> rulesets;
         if (names.isEmpty()) {
-            rulesets = rulesetRepository.findRulesets(businessId, Type.VALIDATION_SYNTAX);
+            rulesets = rulesetRepository.findRulesets(businessId, type);
         } else {
-            rulesets = rulesetRepository.findRulesets(businessId, Type.VALIDATION_SYNTAX, names);
+            rulesets = rulesetRepository.findRulesets(businessId, type, names);
         }
         return rulesets;
     }
