@@ -5,6 +5,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -41,8 +42,9 @@ public class EnturNetexValidatorRule extends ValidatorRule {
         ObjectMapper objectMapper,
         S3Client s3Client,
         VacoProperties vacoProperties,
-        PackagesService packagesService) {
-        super("netex", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper);
+        PackagesService packagesService,
+        MessagingService messagingService) {
+        super("netex", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper, messagingService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 

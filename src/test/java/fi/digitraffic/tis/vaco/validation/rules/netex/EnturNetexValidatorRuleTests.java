@@ -7,25 +7,27 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
-import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
-import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -33,8 +35,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -68,12 +69,18 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     private ValidatorRule rule;
 
     private ObjectMapper objectMapper;
-    @Mock
     private ErrorHandlerService errorHandlerService;
     @Mock
     private RulesetRepository rulesetRepository;
     @Mock
     private PackagesService packagesService;
+    @Mock
+    private MessagingService messagingService;
+    @Mock
+    private ErrorHandlerRepository errorHandlerRepository;
+
+    @Captor
+    private ArgumentCaptor<ImmutableErrorMessage> errorMessageCaptor;
 
     private ImmutableEntry entry;
     private Task task;
@@ -89,20 +96,22 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     void setUp() {
         objectMapper = new ObjectMapper();
         s3Client = new S3Client(vacoProperties, s3TransferManager, awsS3Client);
+        errorHandlerService = new ErrorHandlerService(errorHandlerRepository);
         rule = new EnturNetexValidatorRule(
             rulesetRepository,
             errorHandlerService,
             objectMapper,
             s3Client,
             vacoProperties,
-            packagesService);
+            packagesService,
+            messagingService);
         entry = TestObjects.anEntry("NeTEx").build();
         task = TestObjects.aTask().entryId(entry.id()).build();
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(errorHandlerService, rulesetRepository, packagesService);
+        verifyNoMoreInteractions(errorHandlerRepository, rulesetRepository, packagesService, messagingService);
     }
 
     @Test
@@ -111,6 +120,7 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
         givenTestFile("public/testfiles/entur-netex.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".zip"));
         // zero errors -> no need for this. Left for future improvements' sake
         //whenFindValidationRuleByName();
+        whenReportErrors();
         ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.builder()
             .entry(entry)
             .task(task)
@@ -130,26 +140,8 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
             eq("content.zip"));
     }
 
-    private Path forInput(String testFile) throws URISyntaxException {
-        return testResource(testFile);
-    }
-
-    private Path testResource(String resourceName) throws URISyntaxException {
-        URL resource = getClass().getClassLoader().getResource(resourceName);
-        return Path.of(Objects.requireNonNull(resource).toURI());
-    }
-
-    private void whenFindValidationRuleByName() {
-        when(rulesetRepository.findByName(EnturNetexValidatorRule.RULE_NAME)).thenReturn(Optional.of(mockValidationRule()));
-    }
-
-    @NotNull
-    private static ImmutableRuleset mockValidationRule() {
-        return TestObjects.aRuleset()
-            .id(MOCK_VALIDATION_RULE_ID)
-            .identifyingName(CanonicalGtfsValidatorRule.RULE_NAME)
-            .description("injected mock version of the rule")
-            .build();
+    private void whenReportErrors() {
+        when(messagingService.submitErrors(errorMessageCaptor.capture())).thenAnswer(a -> CompletableFuture.supplyAsync(() -> a.getArgument(0)));
     }
 
     private void givenTestFile(String file, S3Path target) throws URISyntaxException, IOException {

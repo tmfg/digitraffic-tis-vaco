@@ -27,7 +27,6 @@ import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
-import io.awspring.cloud.sqs.operations.SendResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -143,7 +142,7 @@ public class ValidationService {
 
         Map<String, ValidationInput> configs = Streams.collect(entry.validations(), ValidationInput::name, Function.identity());
 
-        List<SendResult<ValidationRuleJobMessage>> s = validationRulesets.parallelStream()
+        List<ValidationRuleJobMessage> s = validationRulesets.parallelStream()
             .map(r -> {
                 String identifyingName = r.identifyingName();
                 Optional<ValidationInput> configuration = Optional.ofNullable(configs.get(identifyingName));

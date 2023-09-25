@@ -7,10 +7,10 @@ import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.operations.MessagingOperationFailedException;
-import io.awspring.cloud.sqs.operations.SendResult;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,25 +44,25 @@ public class MessagingService {
         this.queueHandlerRepository = queueHandlerRepository;
     }
 
-    private <P> CompletableFuture<SendResult<P>> sendMessage(String queueName, P payload) {
+    private <P> CompletableFuture<P> sendMessage(String queueName, P payload) {
         try {
             logger.debug("send {} <- {}", queueName, payload);
-            return sqsTemplate.sendAsync(queueName, payload);
+            return sqsTemplate.sendAsync(queueName, payload).thenApply(sr -> sr.message().getPayload());
         } catch (MessagingOperationFailedException mofe) {
             logger.warn("Failed to send message %s to queue %s".formatted(payload, queueName), mofe);
             return CompletableFuture.failedFuture(mofe);
         }
     }
 
-    public CompletableFuture<SendResult<DelegationJobMessage>> submitProcessingJob(DelegationJobMessage delegationJobMessage) {
+    public CompletableFuture<DelegationJobMessage> submitProcessingJob(DelegationJobMessage delegationJobMessage) {
         return sendMessage(MessageQueue.JOBS.getQueueName(), delegationJobMessage);
     }
 
-    public CompletableFuture<SendResult<ValidationJobMessage>> submitValidationJob(ValidationJobMessage jobDescription) {
+    public CompletableFuture<ValidationJobMessage> submitValidationJob(ValidationJobMessage jobDescription) {
         return sendMessage(MessageQueue.JOBS_VALIDATION.getQueueName(), jobDescription);
     }
-
-   public CompletableFuture<SendResult<ConversionJobMessage>> submitConversionJob(ConversionJobMessage jobDescription) {
+    // TODO: reduce scopes of return values
+   public CompletableFuture<ConversionJobMessage> submitConversionJob(ConversionJobMessage jobDescription) {
         return sendMessage(MessageQueue.JOBS_CONVERSION.getQueueName(), jobDescription);
     }
 
@@ -74,8 +74,12 @@ public class MessagingService {
         }
     }
 
-    public <C> CompletableFuture<SendResult<ValidationRuleJobMessage>> submitRuleExecutionJob(String ruleName, ValidationRuleJobMessage ruleMessage) {
+    public CompletableFuture<ValidationRuleJobMessage> submitRuleExecutionJob(String ruleName, ValidationRuleJobMessage ruleMessage) {
         return sendMessage(MessageQueue.RULES.munge(ruleName), ruleMessage);
+    }
+
+    public CompletableFuture<ImmutableErrorMessage> submitErrors(ImmutableErrorMessage message) {
+        return sendMessage(MessageQueue.ERRORS.getQueueName(), message);
     }
 
     public void deleteMessage(String queueName, Message m) {

@@ -8,6 +8,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -50,8 +51,9 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
                                       ErrorHandlerService errorHandlerService,
                                       RulesetRepository rulesetRepository,
                                       S3Client s3Client,
-                                      PackagesService packagesService) {
-        super("gtfs", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper);
+                                      PackagesService packagesService,
+                                      MessagingService messagingService) {
+        super("gtfs", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper, messagingService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
@@ -66,10 +68,10 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     @Override
     protected ValidationReport runValidator(Entry entry,
                                             Task task,
-                                            Path inputsDirectory,
+                                            Path workDirectory,
                                             Path outputsDirectory,
                                             Optional<ValidationInput> configuration) {
-        URI gtfsSource = inputsDirectory.resolve(entry.format() + ".zip").toUri();
+        URI gtfsSource = workDirectory.resolve(entry.format() + ".zip").toUri();
 
         CountryCode countryCode = resolveCountryCode(entry);
 
@@ -98,21 +100,18 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     private List<ImmutableError> scanErrors(Entry entry, Task task, Path reportFile) {
         try {
             Report report = objectMapper.readValue(reportFile.toFile(), Report.class);
-            List<ImmutableError> errors = report.notices()
+            return report.notices()
                     .stream()
                     .flatMap(notice -> notice.sampleNotices()
                             .stream()
                             .map(sn -> ImmutableError.of(
-                                            entry.id(),
-                                            task.id(),
-                                            rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
-                                            notice.code())
-                                    .withRaw(sn)))
+                                    entry.id(),
+                                    task.id(),
+                                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                                    notice.code())
+                                .withRaw(sn)))
                     .filter(Objects::nonNull)
                     .toList();
-            errors.forEach(errorHandlerService::reportError);
-
-            return errors;
         } catch (IOException e) {
             logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), RULE_NAME, e);
             return List.of();

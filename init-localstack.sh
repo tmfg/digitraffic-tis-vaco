@@ -4,6 +4,7 @@
 echo $(awslocal sqs create-queue --queue-name 'vaco_jobs')
 echo $(awslocal sqs create-queue --queue-name 'vaco_jobs_validation')
 echo $(awslocal sqs create-queue --queue-name 'vaco_jobs_conversion')
+echo $(awslocal sqs create-queue --queue-name 'vaco_errors')
 # -- > each rule needs to have a matching queue
 echo $(awslocal sqs create-queue --queue-name 'vaco_rules_gtfs_canonical_v4-0-0')
 echo $(awslocal sqs create-queue --queue-name 'vaco_rules_gtfs_canonical_v4-1-0')
