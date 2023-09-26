@@ -8,7 +8,7 @@ Content-Type: application/json
   "etag": "etagg",
   "validations": [
     {
-      "name": "gtfs.canonical.v4_0_0",
+      "name": "gtfs.canonical.v4_1_0",
       "config": {
         "lol": "apua",
         "muumi": "pappa"

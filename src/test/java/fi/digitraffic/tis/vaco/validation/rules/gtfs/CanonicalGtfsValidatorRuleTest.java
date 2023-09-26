@@ -103,7 +103,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         objectMapper = new ObjectMapper();
         s3Client = new S3Client(vacoProperties, s3TransferManager, awsS3Client);
 
-        errorHandlerService = new ErrorHandlerService(errorHandlerRepository);
+        errorHandlerService = new ErrorHandlerService(errorHandlerRepository, rulesetRepository);
 
         rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, errorHandlerService, rulesetRepository, s3Client, packagesService, messagingService);
         entry = TestObjects.anEntry("gtfs").build();
@@ -182,7 +182,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     @NotNull
     private ImmutableError mockError(String expectedMessage) {
         return ImmutableError.builder()
-                .entryId(entry.id())
+                .entryId(entry.publicId())
                 .taskId(MOCK_TASK_ID)
                 .rulesetId(MOCK_VALIDATION_RULE_ID)
                 .message(expectedMessage)

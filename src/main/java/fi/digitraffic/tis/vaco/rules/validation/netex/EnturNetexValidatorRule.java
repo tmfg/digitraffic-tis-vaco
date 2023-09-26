@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.validation.netex;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.VacoProperties;
@@ -64,7 +65,7 @@ public class EnturNetexValidatorRule extends ValidatorRule {
 
         EnturNetexValidatorConfiguration conf = validateConfiguration(configuration);
         // TODO: send errors to reporting? or did that happen elsewhere?
-        List<ImmutableError> validationErrors = validateNetex(conf, task, netexSource);
+        List<ImmutableError> validationErrors = validateNetex(conf, entry, task, netexSource);
         return ImmutableValidationReport.builder()
             .message("Entur NeTEx validation report")
             .addAllErrors(validationErrors)
@@ -84,37 +85,47 @@ public class EnturNetexValidatorRule extends ValidatorRule {
 
     private List<ImmutableError> validateNetex(
         EnturNetexValidatorConfiguration configuration,
+        Entry entry,
         Task taskData,
         Path netexSource) {
 
-        try (ZipFile zipFile = toZipFile(taskData, netexSource)) {
+        try (ZipFile zipFile = toZipFile(entry, taskData, netexSource)) {
             return zipFile.stream()
                 .filter(e -> !e.isDirectory())
                 .map(zipEntry -> {
                     logger.debug("Extracting ZIP entry {} from archive...", zipEntry);
-                    byte[] bytes = getEntryContents(taskData, zipFile, zipEntry);
+                    byte[] bytes = getEntryContents(entry, taskData, zipFile, zipEntry);
                     return validateNetexEntry(configuration, zipEntry, bytes);
                 }).flatMap(report -> {
-                    return report.getValidationReportEntries().stream().map(e -> ImmutableError.of(
-                        taskData.entryId(),
-                        taskData.id(),
-                        rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
-                        e.getMessage())
-                    .withRaw(objectMapper.valueToTree(e)));
+                    return report.getValidationReportEntries().stream().map(e -> {
+                        try {
+                            return ImmutableError.of(
+                                entry.publicId(),
+                                taskData.id(),
+                                rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                                getIdentifyingName(),
+                                e.getMessage())
+                            .withRaw(objectMapper.writeValueAsBytes(e));
+                        } catch (JsonProcessingException ex) {
+                            logger.warn("Failed to convert tree to bytes", ex);
+                            return null;
+                        }
+                    });
             }).toList();
         } catch (IOException e) {
             String message = "Failed to close ZIP stream " + netexSource + " gracefully";
             errorHandlerService.reportError(
                 ImmutableError.of(
-                    taskData.entryId(),
+                    entry.publicId(),
                     taskData.id(),
                     rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                    getIdentifyingName(),
                     message));
             throw new RuleExecutionException(message, e);
         }
     }
 
-    private ZipFile toZipFile(Task task, Path netexSource) {
+    private ZipFile toZipFile(Entry entry, Task task, Path netexSource) {
         ZipFile zipFile;
         try {
             logger.debug("Processing {} as ZIP file", netexSource);
@@ -123,16 +134,17 @@ public class EnturNetexValidatorRule extends ValidatorRule {
             String message = "Failed to unzip provided NeTEx package " + netexSource;
             errorHandlerService.reportError(
                 ImmutableError.of(
-                    task.entryId(),
+                    entry.publicId(),
                     task.id(),
                     rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                    getIdentifyingName(),
                     message));
             throw new RuleExecutionException(message, e1);
         }
         return zipFile;
     }
 
-    private byte[] getEntryContents(Task task, ZipFile zipFile, ZipEntry zipEntry) {
+    private byte[] getEntryContents(Entry entry, Task task, ZipFile zipFile, ZipEntry zipEntry) {
         byte[] bytes;
         try {
             bytes = zipFile.getInputStream(zipEntry).readAllBytes();
@@ -140,9 +152,10 @@ public class EnturNetexValidatorRule extends ValidatorRule {
             String message = "Failed to access file " + zipEntry.getName() + " within provided NeTEx package " + zipFile.getName();
             errorHandlerService.reportError(
                 ImmutableError.of(
-                    task.entryId(),
+                    entry.publicId(),
                     task.id(),
                     rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                    getIdentifyingName(),
                     message));
             throw new RuleExecutionException(message, e);
         }

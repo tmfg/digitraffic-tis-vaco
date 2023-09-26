@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -82,24 +81,15 @@ public class RowMappers {
     public static final Function<ObjectMapper, RowMapper<ImmutableEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
     public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
     public static final Function<ObjectMapper, RowMapper<ImmutableConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
-    public static final Function<ObjectMapper, RowMapper<ImmutableError>> ERROR = RowMappers::mapError;
-
-    private static RowMapper<ImmutableError> mapError(ObjectMapper objectMapper) {
-        return (rs, rowNum) -> {
-            ImmutableError.Builder b = ImmutableError.builder()
-                    .id(rs.getLong("id"))
-                    .publicId(rs.getString("public_id"))
-                    .taskId(rs.getLong("task_id"))
-                    .rulesetId(rs.getLong("ruleset_id"))
-                    .message(rs.getString("message"));
-            try {
-                b = b.raw(objectMapper.readTree(rs.getBytes("raw")));  // TODO: this is byte[] while it could be JSONB
-            } catch (IOException e) {
-                LOGGER.warn("Failed to read field 'raw' of Error row. Not JSON?", e);
-            }
-            return b.build();
-        };
-    }
+    public static final RowMapper<ImmutableError> ERROR = (rs, rowNum) -> ImmutableError.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .taskId(rs.getLong("task_id"))
+        .rulesetId(rs.getLong("ruleset_id"))
+        .source(rs.getString("source"))
+        .message(rs.getString("message"))
+        .raw(rs.getBytes("raw"))
+        .build();
 
     private static RowMapper<ImmutableEntry> mapQueueEntry(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableEntry.builder()

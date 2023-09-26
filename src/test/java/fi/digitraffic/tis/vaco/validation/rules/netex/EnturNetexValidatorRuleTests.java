@@ -96,7 +96,7 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     void setUp() {
         objectMapper = new ObjectMapper();
         s3Client = new S3Client(vacoProperties, s3TransferManager, awsS3Client);
-        errorHandlerService = new ErrorHandlerService(errorHandlerRepository);
+        errorHandlerService = new ErrorHandlerService(errorHandlerRepository, rulesetRepository);
         rule = new EnturNetexValidatorRule(
             rulesetRepository,
             errorHandlerService,

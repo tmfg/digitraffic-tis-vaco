@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.validation.gtfs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -104,12 +105,20 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
                     .stream()
                     .flatMap(notice -> notice.sampleNotices()
                             .stream()
-                            .map(sn -> ImmutableError.of(
-                                    entry.id(),
-                                    task.id(),
-                                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
-                                    notice.code())
-                                .withRaw(sn)))
+                            .map(sn -> {
+                                try {
+                                    return ImmutableError.of(
+                                            entry.publicId(),
+                                            task.id(),
+                                            rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                                            getIdentifyingName(),
+                                            notice.code())
+                                        .withRaw(objectMapper.writeValueAsBytes(sn));
+                                } catch (JsonProcessingException e) {
+                                    logger.warn("Failed to convert tree to bytes", e);
+                                    return null;
+                                }
+                            }))
                     .filter(Objects::nonNull)
                     .toList();
         } catch (IOException e) {
