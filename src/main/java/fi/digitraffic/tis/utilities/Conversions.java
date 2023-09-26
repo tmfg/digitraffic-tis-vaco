@@ -5,7 +5,8 @@ import java.io.StringWriter;
 
 public class Conversions {
     public static String serializeThrowable(Throwable e) {
-        e.printStackTrace(new PrintWriter(new StringWriter()));
-        return new StringWriter().toString();
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
     }
 }
