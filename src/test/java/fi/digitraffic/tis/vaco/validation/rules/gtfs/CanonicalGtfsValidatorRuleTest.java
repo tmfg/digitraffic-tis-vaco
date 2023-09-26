@@ -182,11 +182,12 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     @NotNull
     private ImmutableError mockError(String expectedMessage) {
         return ImmutableError.builder()
-                .entryId(entry.publicId())
-                .taskId(MOCK_TASK_ID)
-                .rulesetId(MOCK_VALIDATION_RULE_ID)
-                .message(expectedMessage)
-                .build();
+            .entryId(entry.publicId())
+            .taskId(MOCK_TASK_ID)
+            .rulesetId(MOCK_VALIDATION_RULE_ID)
+            .source(rule.getIdentifyingName())
+            .message(expectedMessage)
+            .build();
     }
 
     private void givenTestFile(String file, S3Path target) throws URISyntaxException {
