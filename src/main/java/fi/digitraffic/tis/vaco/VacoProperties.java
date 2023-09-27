@@ -16,15 +16,18 @@ public class VacoProperties {
     private final String s3ProcessingBucket;
 
     private final String uiUrl;
+    private final String companyNameClaim;
 
     public VacoProperties(@DefaultValue("local") String environment,
                           @NotBlank String temporaryDirectory,
                           @NotBlank String s3ProcessingBucket,
-                          String uiUrl) {
+                          @NotBlank String uiUrl,
+                          @NotBlank String companyNameClaim) {
         this.environment = environment;
         this.temporaryDirectory = temporaryDirectory;
         this.s3ProcessingBucket = s3ProcessingBucket;
         this.uiUrl = uiUrl;
+        this.companyNameClaim = companyNameClaim;
     }
 
     public String getEnvironment() {
@@ -43,4 +46,7 @@ public class VacoProperties {
         return uiUrl;
     }
 
+    public String getCompanyNameClaim() {
+        return companyNameClaim;
+    }
 }

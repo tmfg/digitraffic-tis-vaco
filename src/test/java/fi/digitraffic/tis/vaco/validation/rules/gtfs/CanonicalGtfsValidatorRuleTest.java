@@ -94,7 +94,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         // create input directory which matches the behavior of ValidatorService
         testInputDir = testDirectory.resolve("input");
         Files.createDirectories(testInputDir);
-        vacoProperties = new VacoProperties("test", null, testBucket, null);
+        vacoProperties = new VacoProperties("test", null, testBucket, null, "biz");
         createBucket(vacoProperties.getS3ProcessingBucket());
     }
 

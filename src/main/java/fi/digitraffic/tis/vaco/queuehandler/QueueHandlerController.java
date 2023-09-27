@@ -5,12 +5,14 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,9 +38,12 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 public class QueueHandlerController {
 
     private final QueueHandlerService queueHandlerService;
+    private final VacoProperties vacoProperties;
 
-    public QueueHandlerController(QueueHandlerService queueHandlerService) {
+    public QueueHandlerController(QueueHandlerService queueHandlerService,
+                                  VacoProperties vacoProperties) {
         this.queueHandlerService = queueHandlerService;
+        this.vacoProperties = vacoProperties;
     }
 
     @PostMapping(path = "")
@@ -52,13 +57,22 @@ public class QueueHandlerController {
     @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<List<Resource<ImmutableEntry>>> listEntries(
+        JwtAuthenticationToken token,
         @RequestParam String businessId,
         @RequestParam(required = false) boolean full) {
-        // TODO: Once we have authentication there needs to be an authentication check that the calling user has access
-        //       to the businessId. No authentication yet though, so no such check either.
+        // TODO: We do not know the exact claim name (or maybe we need to use Graph) at this point, so this is kind of
+        //       meh passthrough until we get more details.
+        businessId = safeGet(token, vacoProperties.getCompanyNameClaim()).orElse(businessId);
         return ResponseEntity.ok(
             Streams.map(queueHandlerService.getAllQueueEntriesFor(businessId, full), QueueHandlerController::asQueueHandlerResource)
             .toList());
+    }
+
+    private Optional<String> safeGet(JwtAuthenticationToken token, String companyNameClaim) {
+        if (token != null && token.getTokenAttributes().containsKey(companyNameClaim)) {
+            return Optional.of(token.getTokenAttributes().get(companyNameClaim).toString());
+        }
+        return Optional.empty();
     }
 
     @GetMapping(path = "/{publicId}")
