@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +37,7 @@ public class CooperationController {
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
     public ResponseEntity<Resource<Cooperation>> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
         Optional<ImmutableOrganization> partnerA = organizationService.findByBusinessId(cooperationRequest.partnerABusinessId());
         Optional<ImmutableOrganization> partnerB = organizationService.findByBusinessId(cooperationRequest.partnerBBusinessId());

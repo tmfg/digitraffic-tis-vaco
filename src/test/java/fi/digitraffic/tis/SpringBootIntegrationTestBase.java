@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
     classes = VacoApplication.class,
     webEnvironment = WebEnvironment.RANDOM_PORT
 )
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @DirtiesContext
 public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBase {
 
@@ -69,6 +69,8 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
         registry.add("vaco.aws.region", () -> localstack.getRegion());
         registry.add("vaco.aws.endpoint", () -> localstack.getEndpoint());
         registry.add("vaco.scheduling.enable", () -> false);
+        registry.add("spring.cloud.azure.active-directory.enabled", () -> false);
+        //registry.add("spring.cloud.azure.active-directory.credential.client-id", () -> "<>");
     }
 
     @Autowired
