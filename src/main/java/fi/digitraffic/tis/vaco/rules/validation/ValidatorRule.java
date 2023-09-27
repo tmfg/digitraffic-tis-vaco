@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.rules.validation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.Conversions;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.VacoProperties;
@@ -24,8 +25,6 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
@@ -91,9 +90,10 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
                     return report;
                 } else {
                     ImmutableError error = ImmutableError.of(
-                        entry.id(),
+                        entry.publicId(),
                         task.id(),
                         rulesetRepository.findByName(getIdentifyingName()).orElseThrow().id(),
+                        getIdentifyingName(),
                         "Wrong format! Expected '%s', was '%s'".formatted(ruleFormat, entry.format()));
                     messagingService.submitErrors(ImmutableErrorMessage.of(List.of(error)));
                     // TODO: 'what' obviously needs something better
@@ -101,13 +101,12 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
                 }
             } catch (Exception e) {
                 logger.warn("Uncaught exception during rule processing!");
-                StringWriter stringWriter = new StringWriter();
-                e.printStackTrace(new PrintWriter(stringWriter));
                 ImmutableError error = ImmutableError.of(
-                    entry.id(),
+                    entry.publicId(),
                     task.id(),
                     rulesetRepository.findByName(getIdentifyingName()).orElseThrow().id(),
-                    stringWriter.toString());
+                    getIdentifyingName(),
+                    Conversions.serializeThrowable(e));
                 messagingService.submitErrors(ImmutableErrorMessage.of(List.of(error)));
 
                 return ImmutableValidationReport.of("Rule execution failed, see errors");
@@ -139,14 +138,15 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
         // record failures if any
         Streams.map(ud.failedTransfers(), failure -> {
             ImmutableError error = ImmutableError.of(
-                    entry.id(),
+                    entry.publicId(),
                     task.id(),
                     rulesetRepository.findByName(getIdentifyingName()).orElseThrow().id(),
+                    getIdentifyingName(),
                     "Failed to upload produced output file from %s to S3 %s:%s".formatted(
                         failure.request().source(),
                         failure.request().putObjectRequest().bucket(),
                         failure.request().putObjectRequest().key()))
-                .withRaw(objectMapper.valueToTree(failure.exception()));
+                .withRaw(Conversions.serializeThrowable(failure.exception()).getBytes());
             errorHandlerService.reportError(error);
             return error;
         }).complete();

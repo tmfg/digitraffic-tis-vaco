@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.errorhandling;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
@@ -22,7 +21,7 @@ public interface Error {
     @Value.Parameter
     @Nullable
     @JsonView(DataVisibility.Internal.class)
-    Long entryId();
+    String entryId();
 
     @Value.Parameter
     @Nullable
@@ -35,8 +34,11 @@ public interface Error {
     Long rulesetId();
 
     @Value.Parameter
+    String source();
+
+    @Value.Parameter
     String message();
 
     @Nullable
-    JsonNode raw();
+    byte[] raw();
 }

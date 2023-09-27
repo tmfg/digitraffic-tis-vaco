@@ -35,7 +35,7 @@ public class ErrorHandlerRepository {
                      VALUES (?, ?, ?, ?, ?)
                   RETURNING id, public_id, entry_id, task_id, ruleset_id, message, raw
                 """,
-                RowMappers.ERROR.apply(objectMapper),
+                RowMappers.ERROR,
                 error.entryId(), error.taskId(), error.rulesetId(), error.message(), objectMapper.writeValueAsString(error.raw()).getBytes());
         } catch (JsonProcessingException e) {
             throw new InvalidMappingException("Failed to convert JsonNode to bytes[]", e);
@@ -46,11 +46,11 @@ public class ErrorHandlerRepository {
         try {
             return jdbc.query(
                     """
-                    SELECT id, public_id, entry_id, task_id, ruleset_id, message, raw
+                    SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, raw
                       FROM error em
                      WHERE em.entry_id = ?
                     """,
-                    RowMappers.ERROR.apply(objectMapper),
+                    RowMappers.ERROR,
                     entryId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
@@ -62,19 +62,20 @@ public class ErrorHandlerRepository {
     public boolean createErrors(List<Error> errors) {
         try {
             int[][] result = jdbc.batchUpdate("""
-                INSERT INTO error (entry_id, task_id, ruleset_id, message, raw)
-                     VALUES (?, ?, ?, ?, ?)
-                  RETURNING id, public_id, entry_id, task_id, ruleset_id, message, raw
+                INSERT INTO error (entry_id, task_id, ruleset_id, source, message, raw)
+                     VALUES ((SELECT id FROM entry WHERE public_id = ?), ?, ?, ?, ?, ?)
+                  RETURNING id, public_id, entry_id, task_id, ruleset_id, source, message, raw
                 """,
                 errors,
                 100,
                 (ps, error) -> {
-                    ps.setLong(1, error.entryId());
+                    ps.setString(1, error.entryId());
                     ps.setLong(2, error.taskId());
                     ps.setLong(3, error.rulesetId());
-                    ps.setString(4, error.message());
+                    ps.setString(4, error.source());
+                    ps.setString(5, error.message());
                     try {
-                        ps.setObject(5, objectMapper.writeValueAsString(error.raw()).getBytes());
+                        ps.setObject(6, objectMapper.writeValueAsString(error.raw()).getBytes());
                     } catch (JsonProcessingException e) {
                         throw new InvalidMappingException("Failed to convert JsonNode to bytes[]", e);
                     }
