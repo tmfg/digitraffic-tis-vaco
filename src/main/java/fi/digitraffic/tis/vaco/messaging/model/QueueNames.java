@@ -7,10 +7,10 @@ package fi.digitraffic.tis.vaco.messaging.model;
  * @see MessageQueue
  */
 public class QueueNames {
-    public static final String VACO_JOBS = "vaco_jobs";
-    public static final String VACO_JOBS_VALIDATION = VACO_JOBS + "_validation";
-    public static final String VACO_JOBS_CONVERSION = VACO_JOBS + "_conversion";
-    public static final String VACO_RULES_TEMPLATE = "vaco_rules_{ruleName}";
-    public static final String VACO_DEAD_LETTERS = "vaco_deadletters";
-    public static final String VACO_ERRORS = "vaco_errors";
+    public static final String VACO_JOBS = "vaco-jobs";
+    public static final String VACO_JOBS_VALIDATION = VACO_JOBS + "-validation";
+    public static final String VACO_JOBS_CONVERSION = VACO_JOBS + "-conversion";
+    public static final String VACO_RULES_TEMPLATE = "vaco-rules-{ruleName}";
+    public static final String VACO_DEAD_LETTERS = "vaco-deadletters";
+    public static final String VACO_ERRORS = "vaco-errors";
 }

@@ -36,11 +36,12 @@ public enum MessageQueue {
      */
     public String munge(String ruleName) {
         String munged = queueName
+            .trim()
             .replace(
                 "{ruleName}",
-                ruleName.replace("_", "-")
-                    .replace(".", "_"))
-            .replace(' ', '_')
+                ruleName.replace(".", "-"))
+            .replace(' ', '-')
+            .trim()
             .toLowerCase();
         logger.trace("Munged {} with {} to {}", queueName, ruleName, munged);
         return munged;
