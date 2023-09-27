@@ -1,9 +1,7 @@
 package fi.digitraffic.tis.vaco.errorhandling;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.InvalidMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -29,17 +27,13 @@ public class ErrorHandlerRepository {
     }
 
     public ImmutableError create(Error error) {
-        try {
-            return jdbc.queryForObject("""
-                INSERT INTO error (entry_id, task_id, ruleset_id, message, raw)
-                     VALUES (?, ?, ?, ?, ?)
-                  RETURNING id, public_id, entry_id, task_id, ruleset_id, message, raw
-                """,
-                RowMappers.ERROR,
-                error.entryId(), error.taskId(), error.rulesetId(), error.message(), objectMapper.writeValueAsString(error.raw()).getBytes());
-        } catch (JsonProcessingException e) {
-            throw new InvalidMappingException("Failed to convert JsonNode to bytes[]", e);
-        }
+        return jdbc.queryForObject("""
+            INSERT INTO error (entry_id, task_id, ruleset_id, message, raw)
+                 VALUES (?, ?, ?, ?, ?)
+              RETURNING id, public_id, entry_id, task_id, ruleset_id, message, raw
+            """,
+            RowMappers.ERROR,
+            error.entryId(), error.taskId(), error.rulesetId(), error.message(), error.raw());
     }
 
     public List<ImmutableError> findErrorsByEntryId(Long entryId) {
@@ -74,11 +68,7 @@ public class ErrorHandlerRepository {
                     ps.setLong(3, error.rulesetId());
                     ps.setString(4, error.source());
                     ps.setString(5, error.message());
-                    try {
-                        ps.setObject(6, objectMapper.writeValueAsString(error.raw()).getBytes());
-                    } catch (JsonProcessingException e) {
-                        throw new InvalidMappingException("Failed to convert JsonNode to bytes[]", e);
-                    }
+                    ps.setObject(6, error.raw());
                 });
             // TODO: inspect result counts to determine everything was inserted
             return true;
