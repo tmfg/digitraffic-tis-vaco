@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
     classes = VacoApplication.class,
     webEnvironment = WebEnvironment.RANDOM_PORT
 )
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @DirtiesContext
 public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBase {
 
