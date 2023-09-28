@@ -39,7 +39,7 @@ public enum MessageQueue {
             .trim()
             .replace(
                 "{ruleName}",
-                ruleName.replace("_", "-").replace(".", "_"))
+                ruleName.replace(".", "-"))
             .replace(' ', '-')
             .trim()
             .toLowerCase();
