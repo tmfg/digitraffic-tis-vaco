@@ -15,7 +15,7 @@ echo Listing queues ...
 echo $(awslocal sqs list-queues)
 
 # -- > Create S3 buckets used by VACO
-echo $(awslocal s3api create-bucket --bucket 'vaco-local-processing' --create-bucket-configuration LocationConstraint=eu-north-1)
+echo $(awslocal s3api create-bucket --bucket 'digitraffic-tis-processing-local' --create-bucket-configuration LocationConstraint=eu-north-1)
 
 # --> List S3 buckets
 echo $(awslocal s3api list-buckets)

@@ -156,8 +156,8 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
         assertThat(messages.size(), equalTo(1));
         ValidationRuleJobMessage message = messages.get(0);
         // S3 path references are correctly set
-        assertThat(message.inputs(), equalTo("s3://vaco-itest-processing/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/input"));
-        assertThat(message.outputs(), equalTo("s3://vaco-itest-processing/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/output"));
+        assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/input"));
+        assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/output"));
         // downloaded file is copied to inputs
         URI inputUri = URI.create(message.inputs());
         S3Path expectedPath = ImmutableS3Path.of(inputUri.getPath() + "/" + downloadedFile.getLast());
