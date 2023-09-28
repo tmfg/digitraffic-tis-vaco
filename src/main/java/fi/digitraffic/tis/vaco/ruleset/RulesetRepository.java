@@ -35,6 +35,34 @@ public class RulesetRepository {
         this.namedJdbc = namedJdbc;
     }
 
+    public Set<Ruleset> findRulesets(String businessId) {
+        List<ImmutableRuleset> rulesets = namedJdbc.query("""
+                WITH current_id AS (
+                    SELECT id
+                      FROM organization
+                     WHERE business_id = :businessId
+                ),
+                parents AS (
+                    SELECT partner_a_id AS id
+                      FROM cooperation, current_id
+                     WHERE partner_b_id = current_id.id
+                )
+                SELECT DISTINCT r.*
+                  FROM ruleset r, current_id
+                 WHERE r.owner_id = current_id.id
+                UNION
+                SELECT DISTINCT r.*
+                  FROM ruleset r, parents
+                 WHERE r.owner_id IN (parents.id)
+                   AND r.category = 'generic'
+                """,
+            new MapSqlParameterSource()
+                .addValue("businessId", businessId),
+            RowMappers.RULESET);
+        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
+        return Set.copyOf(rulesets);
+    }
+
     public Set<Ruleset> findRulesets(String businessId, Type type) {
         List<ImmutableRuleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (

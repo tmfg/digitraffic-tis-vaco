@@ -14,6 +14,10 @@ public class RulesetService {
         this.rulesetRepository = rulesetRepository;
     }
 
+    public Set<Ruleset> selectRulesets(String businessId) {
+        return rulesetRepository.findRulesets(businessId);
+    }
+
     public Set<Ruleset> selectRulesets(String businessId, Type type, Set<String> names) {
         Set<Ruleset> rulesets;
         if (names.isEmpty()) {
