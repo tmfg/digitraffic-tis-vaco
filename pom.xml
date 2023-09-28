@@ -212,7 +212,7 @@
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-starter-secrets-manager</artifactId>
         </dependency>
-        
+
         <!-- All potentially publicly exposed id:s are nanoids. -->
         <dependency>
             <groupId>com.aventrix.jnanoid</groupId>
@@ -315,9 +315,11 @@
     </dependencies>
 
     <repositories>
-        <repository> <!-- Needed for MobilityData/gtfs-validator -->
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
+        <!-- local mirror for hard-to-get dependencies -->
+        <repository>
+            <id>local-dependencies</id>
+            <name>local-dependencies</name>
+            <url>file://${project.basedir}/local-dependencies</url>
         </repository>
     </repositories>
 
