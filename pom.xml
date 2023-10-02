@@ -54,7 +54,7 @@
         <maven-surefire-plugin.version>3.1.0</maven-surefire-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
-        <jib-maven-plugin.version>3.3.2</jib-maven-plugin.version>
+        <jib-maven-plugin.version>3.4.0</jib-maven-plugin.version>
         <build-helper-maven-plugin.version>3.4.0</build-helper-maven-plugin.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
