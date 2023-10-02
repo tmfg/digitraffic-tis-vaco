@@ -147,7 +147,7 @@ public class ValidationService {
                 String identifyingName = r.identifyingName();
                 Optional<ValidationInput> configuration = Optional.ofNullable(configs.get(identifyingName));
 
-                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), task.name(), identifyingName);
+                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), r.identifyingName(), identifyingName);
                 S3Path ruleS3Input = ruleBasePath.resolve("input");
                 S3Path ruleS3Output = ruleBasePath.resolve("output");
 

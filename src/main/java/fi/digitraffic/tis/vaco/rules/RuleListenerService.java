@@ -143,7 +143,6 @@ public class RuleListenerService {
                 URI s3Uri = URI.create(files.get("report.json"));
                 s3Client.downloadFile(s3Uri.getHost(), S3Path.of(s3Uri.getPath()), reportFile);
 
-                logger.warn("resultmessage " + resultMessage.toString());
                 List<ImmutableError> r = canonicalGtfsValidatorRule.scanReportFile(entry, task, resultMessage.ruleName(), reportFile);
                 messagingService.submitErrors(ImmutableErrorMessage.of(r)).join();
 

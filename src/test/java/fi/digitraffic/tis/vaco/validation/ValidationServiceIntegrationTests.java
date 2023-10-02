@@ -156,8 +156,9 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
         assertThat(messages.size(), equalTo(1));
         ValidationRuleJobMessage message = messages.get(0);
         // S3 path references are correctly set
-        assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/input"));
-        assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/output"));
+        // NOTE: the task name repeats the matching task name on purpose
+        assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL_4_0_0 + "/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/input"));
+        assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL_4_0_0 + "/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/output"));
         // downloaded file is copied to inputs
         URI inputUri = URI.create(message.inputs());
         S3Path expectedPath = ImmutableS3Path.of(inputUri.getPath() + "/" + downloadedFile.getLast());
