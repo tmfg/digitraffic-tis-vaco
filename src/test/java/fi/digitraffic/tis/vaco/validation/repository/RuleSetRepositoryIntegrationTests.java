@@ -7,13 +7,12 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
-import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,9 +83,9 @@ class RuleSetRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
      */
     @Test
     void hasDefaultRulesAlwaysAvailable() {
-        Ruleset canonicalGtfsValidator400 = rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME).get();
+        Ruleset canonicalGtfsValidator400 = rulesetRepository.findByName(RuleName.GTFS_CANONICAL_4_0_0).get();
         Ruleset canonicalGtfsValidator410 = rulesetRepository.findByName("gtfs.canonical.v4_1_0").get();
-        Ruleset enturNetexValidator = rulesetRepository.findByName(EnturNetexValidatorRule.RULE_NAME).get();
+        Ruleset enturNetexValidator = rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).get();
         assertThat(
             rulesetRepository.findRulesets(fintraffic.businessId(), Type.VALIDATION_SYNTAX),
             equalTo(Set.of(canonicalGtfsValidator400, canonicalGtfsValidator410, enturNetexValidator)));

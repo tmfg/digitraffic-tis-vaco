@@ -127,6 +127,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         TaskCategory s = switch (subtask) {
             case "validation" -> TaskCategory.VALIDATION;
             case "conversion" -> TaskCategory.CONVERSION;
+            case "rule" -> TaskCategory.RULE;  // XXX: Rules aren't actually convertable like this, so this might not be sensible
             default -> null;
         };
         if (s == null) {

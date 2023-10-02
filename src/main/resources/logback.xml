@@ -30,6 +30,7 @@
     <logger name="org.hibernate.validator" level="WARN" />
     <logger name="org.mobilitydata" level="WARN" />
     <logger name="org.xnio" level="WARN" />
+    <logger name="org.thymeleaf" level="WARN" />
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />

@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.messaging.model;
 
-import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
-import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,16 +23,16 @@ class MessageQueueTests {
     @Test
     void ruleQueueMatchesDesiredPattern() {
         String versionedPattern = "^([a-z]+?-?)+v\\d+_\\d+_\\d$";
-        String gtfsQueue = MessageQueue.RULES.munge(CanonicalGtfsValidatorRule.RULE_NAME);
+        String gtfsQueue = MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL_4_0_0);
 
-        assertThat(gtfsQueue, equalTo("vaco-rules-gtfs-canonical-v4_0_0"));
+        assertThat(gtfsQueue, equalTo("rules-processing-gtfs-canonical-v4_0_0"));
 
-        String netexQueue = MessageQueue.RULES.munge(EnturNetexValidatorRule.RULE_NAME);
-        assertThat(netexQueue, equalTo("vaco-rules-netex-entur-v1_0_1"));
+        String netexQueue = MessageQueue.RULE_PROCESSING.munge(RuleName.NETEX_ENTUR_1_0_1);
+        assertThat(netexQueue, equalTo("rules-processing-netex-entur-v1_0_1"));
         assertThat(netexQueue, matchesPattern(versionedPattern));
 
-        String fakeQueue = MessageQueue.RULES.munge("fake.rule.v1_2_3");
-        assertThat(fakeQueue, matchesPattern("vaco-rules-fake-rule-v1_2_3"));
+        String fakeQueue = MessageQueue.RULE_PROCESSING.munge("fake.rule.v1_2_3");
+        assertThat(fakeQueue, matchesPattern("rules-processing-fake-rule-v1_2_3"));
         assertThat(fakeQueue, matchesPattern(versionedPattern));
     }
 }

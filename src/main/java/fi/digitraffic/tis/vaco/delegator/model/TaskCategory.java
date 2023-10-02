@@ -3,7 +3,8 @@ package fi.digitraffic.tis.vaco.delegator.model;
 public enum TaskCategory {
 
     VALIDATION(1),
-    CONVERSION(2);
+    CONVERSION(2),
+    RULE(3);
 
     public final int priority;
 

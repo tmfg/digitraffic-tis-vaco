@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
@@ -27,7 +28,8 @@ public class ValidationRuleConfiguration {
                                                                  RulesetRepository rulesetRepository,
                                                                  S3Client s3Client,
                                                                  PackagesService packagesService,
-                                                                 MessagingService messagingService) {
+                                                                 MessagingService messagingService,
+                                                                 TaskService taskService) {
         return new CanonicalGtfsValidatorRule(
             objectMapper,
             vacoProperties,
@@ -35,7 +37,8 @@ public class ValidationRuleConfiguration {
             rulesetRepository,
             s3Client,
             packagesService,
-            messagingService);
+            messagingService,
+            taskService);
     }
 
     @Bean
@@ -46,7 +49,8 @@ public class ValidationRuleConfiguration {
                                                            S3Client s3client,
                                                            VacoProperties vacoProperties,
                                                            PackagesService packagesService,
-                                                           MessagingService messagingService) {
+                                                           MessagingService messagingService,
+                                                           TaskService taskService) {
         return new EnturNetexValidatorRule(
             rulesetRepository,
             errorhandlerService,
@@ -54,6 +58,7 @@ public class ValidationRuleConfiguration {
             s3client,
             vacoProperties,
             packagesService,
-            messagingService);
+            messagingService,
+            taskService);
     }
 }

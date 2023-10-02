@@ -39,6 +39,10 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
     private ImmutableValidationInput validation;
     private ImmutableConversionInput conversion;
 
+    private List<ImmutableTask> validationTasks;
+    private List<ImmutableTask> conversionTasks;
+    private List<ImmutableTask> conversionRuleTasks;
+
     @BeforeEach
     void setUp() throws JsonProcessingException {
         entry = ImmutableEntry.of("gtfs", "www.example.fi", TestConstants.FINTRAFFIC_BUSINESS_ID);
@@ -46,6 +50,18 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         validation = ImmutableValidationInput.of("ananas");
         conversion = ImmutableConversionInput.of("bananas");
 
+        validationTasks = Streams.mapIndexed(
+                ValidationService.ALL_SUBTASKS,
+                (i, p) -> ImmutableTask.of(null, p, 100 + i))
+            .toList();
+        conversionTasks = Streams.mapIndexed(
+                ConversionService.ALL_SUBTASKS,
+                (i, p) -> ImmutableTask.of(null, p, 200 + i))
+            .toList();
+        conversionRuleTasks = Streams.mapIndexed(
+                List.of(conversion),
+                (i, p) -> ImmutableTask.of(null, p.name(), 300 + i))
+            .toList();
     }
 
     @Test
@@ -66,15 +82,6 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         );
     }
 
-    private List<ImmutableTask> validationTasks = Streams.mapIndexed(
-        ValidationService.ALL_SUBTASKS,
-        (i, p) -> ImmutableTask.of(null, p, 100 + i))
-        .toList();
-    private List<ImmutableTask> conversionTasks = Streams.mapIndexed(
-        ConversionService.ALL_SUBTASKS,
-        (i, p) -> ImmutableTask.of(null, p, 200 + i))
-        .toList();
-
     @Test
     void entryWithoutValidationsAndConversionsGetsGeneratedValidationTasks() {
         ImmutableEntry result = repository.create(entry);
@@ -90,7 +97,7 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
-            equalTo(Streams.concat(validationTasks, conversionTasks).toList()));
+            equalTo(Streams.concat(validationTasks, conversionTasks, conversionRuleTasks).toList()));
     }
 
     @NotNull

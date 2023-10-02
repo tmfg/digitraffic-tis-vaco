@@ -5,6 +5,7 @@ import fi.digitraffic.tis.AwsIntegrationTestBase;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
@@ -12,8 +13,10 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
-import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.process.TaskService;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
@@ -78,12 +81,14 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     private MessagingService messagingService;
     @Mock
     private ErrorHandlerRepository errorHandlerRepository;
+    @Mock
+    private TaskService taskService;
 
     @Captor
     private ArgumentCaptor<ImmutableErrorMessage> errorMessageCaptor;
 
     private ImmutableEntry entry;
-    private Task task;
+    private ImmutableTask task;
     private S3Client s3Client;
     private static VacoProperties vacoProperties = TestObjects.vacoProperties();
 
@@ -104,14 +109,15 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
             s3Client,
             vacoProperties,
             packagesService,
-            messagingService);
+            messagingService,
+            taskService);
         entry = TestObjects.anEntry("NeTEx").build();
         task = TestObjects.aTask().entryId(entry.id()).build();
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(errorHandlerRepository, rulesetRepository, packagesService, messagingService);
+        verifyNoMoreInteractions(errorHandlerRepository, rulesetRepository, packagesService, messagingService, taskService);
     }
 
     @Test
@@ -120,6 +126,10 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
         givenTestFile("public/testfiles/entur-netex.zip", ImmutableS3Path.of(s3Input + "/" + entry.format() + ".zip"));
         // zero errors -> no need for this. Left for future improvements' sake
         //whenFindValidationRuleByName();
+        when(taskService.findTask(eq(entry.id()), eq(RuleName.NETEX_ENTUR_1_0_1))).thenReturn(task);
+        when(taskService.trackTask(eq(task), eq(ProcessingState.START))).thenReturn(task);
+        when(taskService.trackTask(eq(task), eq(ProcessingState.COMPLETE))).thenReturn(task);
+
         whenReportErrors();
         ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.builder()
             .entry(entry)
@@ -135,7 +145,7 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
         verify(packagesService).createPackage(
             eq(entry),
             eq(task),
-            eq(EnturNetexValidatorRule.RULE_NAME),
+            eq(RuleName.NETEX_ENTUR_1_0_1),
             eq(s3Output),
             eq("content.zip"));
     }

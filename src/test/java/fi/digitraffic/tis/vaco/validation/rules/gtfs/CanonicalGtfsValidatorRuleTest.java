@@ -5,6 +5,7 @@ import fi.digitraffic.tis.AwsIntegrationTestBase;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
@@ -13,9 +14,11 @@ import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
@@ -85,6 +88,8 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     private MessagingService messagingService;
     @Mock
     private ErrorHandlerRepository errorHandlerRepository;
+    @Mock
+    private TaskService taskService;
 
     @Captor
     private ArgumentCaptor<ImmutableErrorMessage> errorMessageCaptor;
@@ -105,14 +110,22 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
         errorHandlerService = new ErrorHandlerService(errorHandlerRepository, rulesetRepository);
 
-        rule = new CanonicalGtfsValidatorRule(objectMapper, vacoProperties, errorHandlerService, rulesetRepository, s3Client, packagesService, messagingService);
+        rule = new CanonicalGtfsValidatorRule(
+            objectMapper,
+            vacoProperties,
+            errorHandlerService,
+            rulesetRepository,
+            s3Client,
+            packagesService,
+            messagingService,
+            taskService);
         entry = TestObjects.anEntry("gtfs").build();
         task = TestObjects.aTask().id(MOCK_TASK_ID).entryId(entry.id()).build();
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(errorHandlerRepository, rulesetRepository, packagesService, messagingService);
+        verifyNoMoreInteractions(errorHandlerRepository, rulesetRepository, packagesService, messagingService, taskService);
     }
 
     @Test
@@ -120,6 +133,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         givenTestFile("public/testfiles/padasjoen_kunta.zip", s3Input.resolve(entry.format() + ".zip"));
         whenFindValidationRuleByName();
         whenReportErrors();
+        whenTaskStateChangesAreTracked();
 
         ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.builder()
             .entry(entry)
@@ -132,19 +146,26 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
         assertThat(report.errors().size(), equalTo(51));
 
-        verify(rulesetRepository, times(51)).findByName(CanonicalGtfsValidatorRule.RULE_NAME);
+        verify(rulesetRepository, times(51)).findByName(RuleName.GTFS_CANONICAL_4_0_0);
         verify(packagesService).createPackage(
             eq(entry),
             eq(task),
-            eq(CanonicalGtfsValidatorRule.RULE_NAME),
+            eq(RuleName.GTFS_CANONICAL_4_0_0),
             eq(s3Output),
             eq("content.zip"));
+    }
+
+    private void whenTaskStateChangesAreTracked() {
+        when(taskService.findTask(eq(entry.id()), eq(RuleName.GTFS_CANONICAL_4_0_0))).thenReturn(task);
+        when(taskService.trackTask(eq(task), eq(ProcessingState.START))).thenReturn(task);
+        when(taskService.trackTask(eq(task), eq(ProcessingState.COMPLETE))).thenReturn(task);
     }
 
     @Test
     void wontAcceptNonGtfsFormatEntries() throws URISyntaxException {
         whenFindValidationRuleByName();
         whenReportErrors();
+        whenTaskStateChangesAreTracked();
 
         Entry invalidFormat = ImmutableEntry.copyOf(entry).withFormat("vhs");
         ValidationRuleJobMessage message = ImmutableValidationRuleJobMessage.builder()
@@ -159,11 +180,11 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         ImmutableError error = mockError("Wrong format! Expected 'gtfs', was 'vhs'");
         assertThat(report.errors(), equalTo(List.of(error)));
 
-        verify(rulesetRepository).findByName(CanonicalGtfsValidatorRule.RULE_NAME);
+        verify(rulesetRepository).findByName(RuleName.GTFS_CANONICAL_4_0_0);
     }
 
     private void whenFindValidationRuleByName() {
-        when(rulesetRepository.findByName(CanonicalGtfsValidatorRule.RULE_NAME)).thenReturn(Optional.of(mockValidationRule()));
+        when(rulesetRepository.findByName(RuleName.GTFS_CANONICAL_4_0_0)).thenReturn(Optional.of(mockValidationRule()));
     }
 
     private void whenReportErrors() {
@@ -174,7 +195,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     private static ImmutableRuleset mockValidationRule() {
         return TestObjects.aRuleset()
                 .id(MOCK_VALIDATION_RULE_ID)
-                .identifyingName(CanonicalGtfsValidatorRule.RULE_NAME)
+                .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
                 .description("injected mock version of the rule")
                 .build();
     }

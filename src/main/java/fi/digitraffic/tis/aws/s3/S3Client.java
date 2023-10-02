@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.aws.s3;
 
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.ResponseBytes;
@@ -25,6 +26,7 @@ import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -123,8 +125,21 @@ public class S3Client {
     }
 
     public Long downloadFile(String bucketName,
+                             S3Path key,
+                             Path downloadTargetPath) {
+        return downloadFile(bucketName, key.toString(), downloadTargetPath);
+    }
+
+    @Deprecated
+    public Long downloadFile(String bucketName,
                              String key,
                              Path downloadTargetPath) {
+        try {
+            Files.createDirectories(downloadTargetPath.getParent());
+        } catch (IOException e) {
+            throw new RuleExecutionException("Failed to create directory for target file " + downloadTargetPath, e);
+        }
+
         DownloadFileRequest downloadFileRequest =
             DownloadFileRequest.builder()
                 .getObjectRequest(b -> b.bucket(bucketName).key(key))
