@@ -18,7 +18,6 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.Rule;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
@@ -30,6 +29,7 @@ import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -90,7 +90,7 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
                         downloadFiles(inputDir, inputsDirectory),
                         outputDir,
                         configuration);
-                    messagingService.submitErrors(ImmutableErrorMessage.of(report.errors())).join();
+                    errorHandlerService.reportErrors(new ArrayList<>(report.errors()));
                     copyOutputToS3(entry, task, outputDir, outputsDirectory);
                     return report;
                 } else {
@@ -100,7 +100,7 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
                         rulesetRepository.findByName(getIdentifyingName()).orElseThrow().id(),
                         getIdentifyingName(),
                         "Wrong format! Expected '%s', was '%s'".formatted(ruleFormat, entry.format()));
-                    messagingService.submitErrors(ImmutableErrorMessage.of(List.of(error)));
+                    errorHandlerService.reportErrors(List.of(error));
                     // TODO: 'what' obviously needs something better
                     return ImmutableValidationReport.of("what").withErrors(error);
                 }
@@ -112,7 +112,7 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
                     rulesetRepository.findByName(getIdentifyingName()).orElseThrow().id(),
                     getIdentifyingName(),
                     Conversions.serializeThrowable(e));
-                messagingService.submitErrors(ImmutableErrorMessage.of(List.of(error)));
+                errorHandlerService.reportErrors(List.of(error));
 
                 return ImmutableValidationReport.of("Rule execution failed, see errors");
             } finally {

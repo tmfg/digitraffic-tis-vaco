@@ -8,7 +8,7 @@ import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
+import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -17,13 +17,13 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,16 +33,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -72,6 +74,7 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     private ValidatorRule rule;
 
     private ObjectMapper objectMapper;
+    @Mock
     private ErrorHandlerService errorHandlerService;
     @Mock
     private RulesetRepository rulesetRepository;
@@ -80,12 +83,10 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     @Mock
     private MessagingService messagingService;
     @Mock
-    private ErrorHandlerRepository errorHandlerRepository;
-    @Mock
     private TaskService taskService;
 
     @Captor
-    private ArgumentCaptor<ImmutableErrorMessage> errorMessageCaptor;
+    private ArgumentCaptor<List<Error>> errorCaptor;
 
     private ImmutableEntry entry;
     private ImmutableTask task;
@@ -101,7 +102,6 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     void setUp() {
         objectMapper = new ObjectMapper();
         s3Client = new S3Client(vacoProperties, s3TransferManager, awsS3Client);
-        errorHandlerService = new ErrorHandlerService(errorHandlerRepository, rulesetRepository);
         rule = new EnturNetexValidatorRule(
             rulesetRepository,
             errorHandlerService,
@@ -117,7 +117,7 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(errorHandlerRepository, rulesetRepository, packagesService, messagingService, taskService);
+        verifyNoMoreInteractions(errorHandlerService, rulesetRepository, packagesService, messagingService, taskService);
     }
 
     @Test
@@ -151,7 +151,16 @@ class EnturNetexValidatorRuleTests extends AwsIntegrationTestBase {
     }
 
     private void whenReportErrors() {
-        when(messagingService.submitErrors(errorMessageCaptor.capture())).thenAnswer(a -> CompletableFuture.supplyAsync(() -> a.getArgument(0)));
+        doAnswer(voidCall()).when(errorHandlerService).reportErrors(errorCaptor.capture());
+    }
+
+    @NotNull
+    private static Answer voidCall() {
+        return invocation -> {
+            Object[] args = invocation.getArguments();
+            Object mock = invocation.getMock();
+            return null;
+        };
     }
 
     private void givenTestFile(String file, S3Path target) throws URISyntaxException, IOException {

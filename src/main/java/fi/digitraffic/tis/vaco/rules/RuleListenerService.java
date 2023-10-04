@@ -9,7 +9,6 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
-import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -18,7 +17,6 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
@@ -30,6 +28,7 @@ import software.amazon.awssdk.services.sqs.model.SqsException;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -143,8 +142,7 @@ public class RuleListenerService {
                 URI s3Uri = URI.create(files.get("report.json"));
                 s3Client.downloadFile(s3Uri.getHost(), S3Path.of(s3Uri.getPath()), reportFile);
 
-                List<ImmutableError> r = canonicalGtfsValidatorRule.scanReportFile(entry, task, resultMessage.ruleName(), reportFile);
-                messagingService.submitErrors(ImmutableErrorMessage.of(r)).join();
+                errorHandlerService.reportErrors(new ArrayList<>(canonicalGtfsValidatorRule.scanReportFile(entry, task, resultMessage.ruleName(), reportFile)));
 
                 packagesService.createPackage(entry, task, resultMessage.ruleName(), S3Path.of(URI.create(resultMessage.outputs()).getPath()), "content.zip");
             } else {
