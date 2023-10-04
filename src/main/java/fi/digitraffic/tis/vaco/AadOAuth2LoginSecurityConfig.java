@@ -1,5 +1,7 @@
 package fi.digitraffic.tis.vaco;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +32,9 @@ import java.util.List;
 @EnableMethodSecurity
 @ConditionalOnProperty(value = "spring.cloud.azure.active-directory.enabled", havingValue = "true")
 public class AadOAuth2LoginSecurityConfig {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            CorsConfigurationSource corsConfigurationSource) throws Exception {
@@ -46,6 +51,7 @@ public class AadOAuth2LoginSecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource(@Value("${vaco.ui-url}") String uiUrl) {
+        logger.info("Setting CORS configuration for {}", uiUrl);
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(uiUrl));
         configuration.setAllowedMethods(List.of("OPTIONS", "GET", "POST"));
