@@ -75,7 +75,7 @@ public class MessagingService {
     }
 
     public CompletableFuture<ValidationRuleJobMessage> submitRuleExecutionJob(String ruleName, ValidationRuleJobMessage ruleMessage) {
-        return sendMessage(MessageQueue.RULES.munge(ruleName), ruleMessage);
+        return sendMessage(MessageQueue.RULE_PROCESSING.munge(ruleName), ruleMessage);
     }
 
     public CompletableFuture<ImmutableErrorMessage> submitErrors(ImmutableErrorMessage message) {

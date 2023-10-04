@@ -89,6 +89,12 @@ public class QueueHandlerRepository {
         List<String> validationTasks = ValidationService.ALL_SUBTASKS;
         allTasks.addAll(extracted(validationTasks, entry, TaskCategory.VALIDATION));
 
+        // create task for each rule by rule name
+        List<String> rules = new ArrayList<>();
+        rules.addAll(entry.validations().stream().map(ValidationInput::name).toList());
+        rules.addAll(entry.conversions().stream().map(ConversionInput::name).toList());
+        allTasks.addAll(extracted(rules, entry, TaskCategory.RULE));
+
         // TODO: check return value
         taskService.createTasks(allTasks);
 

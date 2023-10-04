@@ -8,10 +8,12 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.validation.ValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationReport;
@@ -31,7 +33,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class EnturNetexValidatorRule extends ValidatorRule {
-    public static final String RULE_NAME = "netex.entur.v1_0_1";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -44,14 +45,15 @@ public class EnturNetexValidatorRule extends ValidatorRule {
         S3Client s3Client,
         VacoProperties vacoProperties,
         PackagesService packagesService,
-        MessagingService messagingService) {
-        super("netex", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper, messagingService);
+        MessagingService messagingService,
+        TaskService taskService) {
+        super("netex", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper, messagingService, taskService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     @Override
     public String getIdentifyingName() {
-        return RULE_NAME;
+        return RuleName.NETEX_ENTUR_1_0_1;
     }
 
     @Override
@@ -102,7 +104,7 @@ public class EnturNetexValidatorRule extends ValidatorRule {
                             return ImmutableError.of(
                                 entry.publicId(),
                                 taskData.id(),
-                                rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                                rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).orElseThrow().id(),
                                 getIdentifyingName(),
                                 e.getMessage())
                             .withRaw(objectMapper.writeValueAsBytes(e));
@@ -118,7 +120,7 @@ public class EnturNetexValidatorRule extends ValidatorRule {
                 ImmutableError.of(
                     entry.publicId(),
                     taskData.id(),
-                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                    rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).orElseThrow().id(),
                     getIdentifyingName(),
                     message));
             throw new RuleExecutionException(message, e);
@@ -136,7 +138,7 @@ public class EnturNetexValidatorRule extends ValidatorRule {
                 ImmutableError.of(
                     entry.publicId(),
                     task.id(),
-                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                    rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).orElseThrow().id(),
                     getIdentifyingName(),
                     message));
             throw new RuleExecutionException(message, e1);
@@ -154,7 +156,7 @@ public class EnturNetexValidatorRule extends ValidatorRule {
                 ImmutableError.of(
                     entry.publicId(),
                     task.id(),
-                    rulesetRepository.findByName(RULE_NAME).orElseThrow().id(),
+                    rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).orElseThrow().id(),
                     getIdentifyingName(),
                     message));
             throw new RuleExecutionException(message, e);

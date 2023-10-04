@@ -6,11 +6,14 @@ import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Conversions;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.process.TaskService;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -44,6 +47,7 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
     private final PackagesService packagesService;
     private final ObjectMapper objectMapper;
     private final MessagingService messagingService;
+    private final TaskService taskService;
 
     protected ValidatorRule(String ruleFormat,
                             RulesetRepository rulesetRepository,
@@ -52,7 +56,7 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
                             VacoProperties vacoProperties,
                             PackagesService packagesService,
                             ObjectMapper objectMapper,
-                            MessagingService messagingService) {
+                            MessagingService messagingService, TaskService taskService) {
         this.ruleFormat = Objects.requireNonNull(ruleFormat);
         this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
         this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
@@ -61,12 +65,13 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
         this.packagesService = Objects.requireNonNull(packagesService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.messagingService = messagingService;
+        this.taskService = taskService;
     }
 
     @Override
     public CompletableFuture<ValidationReport> execute(ValidationRuleJobMessage message) {
         Entry entry = message.entry();
-        Task task = message.task();
+        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), getIdentifyingName()), ProcessingState.START);
         // TODO: this is rudimentary path handling and slightly lossy, we should use other parts of the message's S3
         //       paths to also resolve the buckets eventually
         S3Path inputsDirectory = S3Path.of(URI.create(message.inputs()).getPath());
@@ -110,6 +115,8 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
                 messagingService.submitErrors(ImmutableErrorMessage.of(List.of(error)));
 
                 return ImmutableValidationReport.of("Rule execution failed, see errors");
+            } finally {
+                taskService.trackTask(task, ProcessingState.COMPLETE);
             }
         });
     }

@@ -13,8 +13,8 @@ import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
-import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
@@ -139,7 +139,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
             entry,
             downloadedFile,
             Set.of(TestObjects.aRuleset()
-                    .identifyingName(CanonicalGtfsValidatorRule.RULE_NAME)
+                    .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
                     .description("running hello rule from tests")
                     .category(Category.SPECIFIC)
                     .build()));
@@ -156,8 +156,9 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
         assertThat(messages.size(), equalTo(1));
         ValidationRuleJobMessage message = messages.get(0);
         // S3 path references are correctly set
-        assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/input"));
-        assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/validation.execute/rules/" + CanonicalGtfsValidatorRule.RULE_NAME + "/output"));
+        // NOTE: the task name repeats the matching task name on purpose
+        assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL_4_0_0 + "/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/input"));
+        assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL_4_0_0 + "/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/output"));
         // downloaded file is copied to inputs
         URI inputUri = URI.create(message.inputs());
         S3Path expectedPath = ImmutableS3Path.of(inputUri.getPath() + "/" + downloadedFile.getLast());
@@ -171,7 +172,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
 
     @NotNull
     private static String createSqsQueue() {
-        String testQueueName = MessageQueue.RULES.munge(CanonicalGtfsValidatorRule.RULE_NAME);
+        String testQueueName = MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL_4_0_0);
         CreateQueueResponse r = sqsClient.createQueue(CreateQueueRequest.builder().queueName(testQueueName).build());
         return testQueueName;
     }
