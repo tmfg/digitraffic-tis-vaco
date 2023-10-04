@@ -8,7 +8,7 @@ import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
+import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -19,7 +19,6 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
@@ -37,6 +36,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -46,11 +46,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -79,6 +79,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     private static VacoProperties vacoProperties;
     private S3Client s3Client;
 
+    @Mock
     private ErrorHandlerService errorHandlerService;
     @Mock
     private RulesetRepository rulesetRepository;
@@ -87,12 +88,10 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     @Mock
     private MessagingService messagingService;
     @Mock
-    private ErrorHandlerRepository errorHandlerRepository;
-    @Mock
     private TaskService taskService;
 
     @Captor
-    private ArgumentCaptor<ImmutableErrorMessage> errorMessageCaptor;
+    private ArgumentCaptor<List<Error>> errorCaptor;
 
     @BeforeAll
     static void beforeAll() throws IOException {
@@ -107,8 +106,6 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     void setUp() {
         objectMapper = new ObjectMapper();
         s3Client = new S3Client(vacoProperties, s3TransferManager, awsS3Client);
-
-        errorHandlerService = new ErrorHandlerService(errorHandlerRepository, rulesetRepository);
 
         rule = new CanonicalGtfsValidatorRule(
             objectMapper,
@@ -125,7 +122,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(errorHandlerRepository, rulesetRepository, packagesService, messagingService, taskService);
+        verifyNoMoreInteractions(errorHandlerService, rulesetRepository, packagesService, messagingService, taskService);
     }
 
     @Test
@@ -188,7 +185,16 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     }
 
     private void whenReportErrors() {
-        when(messagingService.submitErrors(errorMessageCaptor.capture())).thenAnswer(a -> CompletableFuture.supplyAsync(() -> a.getArgument(0)));
+        doAnswer(voidCall()).when(errorHandlerService).reportErrors(errorCaptor.capture());
+    }
+
+    @NotNull
+    private static Answer voidCall() {
+        return invocation -> {
+            Object[] args = invocation.getArguments();
+            Object mock = invocation.getMock();
+            return null;
+        };
     }
 
     @NotNull
