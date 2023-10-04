@@ -34,7 +34,10 @@ public class AadOAuth2LoginSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            CorsConfigurationSource corsConfigurationSource) throws Exception {
         return http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
-            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .authorizeHttpRequests(auth -> {
+                auth.requestMatchers("/health/**").permitAll()
+                    .anyRequest().authenticated();
+            })
             // NOTE: Order is important here! Above is for Azure AD support, below is our extras
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
