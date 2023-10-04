@@ -42,7 +42,7 @@ public class AadOAuth2LoginSecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(@Value("${vaco.uiUrl}") String uiUrl) {
+    public CorsConfigurationSource corsConfigurationSource(@Value("${vaco.ui-url}") String uiUrl) {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(uiUrl));
         configuration.setAllowedMethods(List.of("OPTIONS", "GET", "POST"));

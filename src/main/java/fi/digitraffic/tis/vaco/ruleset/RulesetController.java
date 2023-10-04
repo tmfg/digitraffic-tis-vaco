@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/rules")
-@CrossOrigin(origins = "${vaco.uiUrl}")
+@CrossOrigin(origins = "${vaco.ui-url}")
 public class RulesetController {
 
     private final RulesetService rulesetService;
