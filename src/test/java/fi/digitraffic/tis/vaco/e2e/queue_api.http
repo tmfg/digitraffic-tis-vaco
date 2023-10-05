@@ -1,6 +1,20 @@
+# To run this file, you'll need private http client environment file. Ask from your team mates.
+
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{clientId}}&grant_type=client_credentials&scope= {{clientId}}/.default&client_secret={{clientSecret}}
+
+
+> {%
+  client.global.set("tis_token", response.body.access_token)
+%}
+
+###
+
 POST https://digitraffic-tis-dev.aws.fintraffic.cloud/api/queue
 Content-Type: application/json
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyJ9.eyJhdWQiOiI1N2MxYjhhMC1mMzNlLTRlNDctODQwZC04YzE4MGQ5MzNjNDEiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vZDg1MzZjNzEtZjkxZi00ZTU0LWI2OGMtMjE1YTdmZDk1MTBiL3YyLjAiLCJpYXQiOjE2OTY0MDg3MTksIm5iZiI6MTY5NjQwODcxOSwiZXhwIjoxNjk2NDEyNjE5LCJhaW8iOiJBU1FBMi84VUFBQUE0disyeHZsQ2hXcVdxZy8zT2pzTjBHbTNPMy9Xb29EeTZJYnQyaHlhczdVPSIsImF6cCI6IjU3YzFiOGEwLWYzM2UtNGU0Ny04NDBkLThjMTgwZDkzM2M0MSIsImF6cGFjciI6IjEiLCJvaWQiOiIzNTQ5ODE3OS04OTJjLTRmYjEtODAwYi05M2NjYmFjN2I3ZTEiLCJyaCI6IjAuQVhrQWNXeFQyQl81VkU2MmpDRmFmOWxSQzZDNHdWYy04MGRPaEEyTUdBMlRQRUdVQUFBLiIsInN1YiI6IjM1NDk4MTc5LTg5MmMtNGZiMS04MDBiLTkzY2NiYWM3YjdlMSIsInRpZCI6ImQ4NTM2YzcxLWY5MWYtNGU1NC1iNjhjLTIxNWE3ZmQ5NTEwYiIsInV0aSI6IlJKQy13YTRubmttcFlfZ2tiYTgtQUEiLCJ2ZXIiOiIyLjAifQ.YhAXiKGUp9WCLBuUgGnvIz5fa9mJTjfQ1smdbLdovOi3B22JIyvpo4o49rpBOInwP46TjQ09ZLmV5uwyL7lql_y3JQE1ceofVRt4egrba1-ttdznBS7b5sU1wq7ObVst6dlfg8zJlYwUmX5SaGMcZ96tgCqs497dQ2PUzJkTzVK6PBYFEPrngHJ-NJoWSGFvYkcSSJgjkrPqRw2mLV4mNhmAfNGJShh2pcBj94-SSF_dW2uAuzroB8VTWt4F-Wg83GtiyaqCXbcRXoIUNBobR10R9HmQtHZONOczP5lCIA-oAJrznfLT4pr3QqJZAO3YUBQ-fvsbkygEPaVm0xi_uA
+Authorization: Bearer {{tis_token}}
 
 {
   "url": "https://tvv.fra1.digitaloceanspaces.com/203.zip",
