@@ -21,3 +21,6 @@ scratch.*
 
 # LocalStack's volume directory
 volume/
+
+# hide any files explicitly named 'private'
+*.private.*
