@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -59,16 +60,19 @@ public class RuleListenerService {
                                ObjectMapper objectMapper,
                                S3Client s3Client,
                                CanonicalGtfsValidatorRule canonicalGtfsValidatorRule,
-                               VacoProperties vacoProperties, QueueHandlerService queueHandlerService, PackagesService packagesService, TaskService taskService) {
-        this.messagingService = messagingService;
-        this.errorHandlerService = errorHandlerService;
-        this.objectMapper = objectMapper;
-        this.s3Client = s3Client;
-        this.canonicalGtfsValidatorRule = canonicalGtfsValidatorRule;
-        this.vacoProperties = vacoProperties;
-        this.queueHandlerService = queueHandlerService;
-        this.packagesService = packagesService;
-        this.taskService = taskService;
+                               VacoProperties vacoProperties,
+                               QueueHandlerService queueHandlerService,
+                               PackagesService packagesService,
+                               TaskService taskService) {
+        this.messagingService = Objects.requireNonNull(messagingService);
+        this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.s3Client = Objects.requireNonNull(s3Client);
+        this.canonicalGtfsValidatorRule = Objects.requireNonNull(canonicalGtfsValidatorRule);
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
+        this.packagesService = Objects.requireNonNull(packagesService);
+        this.taskService = Objects.requireNonNull(taskService);
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.canonical-gtfs-validation-rule.poll-rate}")
