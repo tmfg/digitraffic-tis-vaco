@@ -6,7 +6,6 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -39,9 +38,6 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final ObjectMapper objectMapper;
-    private final VacoProperties vacoProperties;
-    private final S3Client s3Client;
-    private final PackagesService packagesService;
 
     public CanonicalGtfsValidatorRule(ObjectMapper objectMapper,
                                       VacoProperties vacoProperties,
@@ -49,13 +45,9 @@ public class CanonicalGtfsValidatorRule extends ValidatorRule {
                                       RulesetRepository rulesetRepository,
                                       S3Client s3Client,
                                       PackagesService packagesService,
-                                      MessagingService messagingService,
                                       TaskService taskService) {
-        super("gtfs", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, objectMapper, messagingService, taskService);
+        super("gtfs", rulesetRepository, errorHandlerService, s3Client, vacoProperties, packagesService, taskService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.vacoProperties = Objects.requireNonNull(vacoProperties);
-        this.s3Client = Objects.requireNonNull(s3Client);
-        this.packagesService = Objects.requireNonNull(packagesService);
     }
 
     @Override

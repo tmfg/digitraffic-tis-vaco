@@ -55,7 +55,6 @@ public class ValidationService {
     private final RulesetService rulesetService;
     private final HttpClient httpClient;
     private final S3Client s3Client;
-    private final Map<String, Rule<ValidationInput, ValidationReport>> rules;
     private final VacoProperties vacoProperties;
     private final MessagingService messagingService;
 
@@ -63,14 +62,12 @@ public class ValidationService {
                              RulesetService rulesetService,
                              HttpClient httpClient,
                              S3Client s3Client,
-                             @Qualifier("validation") List<Rule<ValidationInput, ValidationReport>> rules,
                              VacoProperties vacoProperties,
                              MessagingService messagingService) {
         this.taskService = taskService;
         this.rulesetService = rulesetService;
         this.httpClient = httpClient;
         this.s3Client = s3Client;
-        this.rules = Streams.collect(rules, Rule::getIdentifyingName, Function.identity());
         this.vacoProperties = vacoProperties;
         this.messagingService = messagingService;
     }

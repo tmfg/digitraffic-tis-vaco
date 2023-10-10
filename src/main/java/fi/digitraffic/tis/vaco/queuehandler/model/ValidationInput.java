@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.rules.validation.ValidatorConfiguration;
+import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -22,5 +22,5 @@ public interface ValidationInput {
 
     @Nullable
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "name")
-    ValidatorConfiguration config();
+    RuleConfiguration config();
 }

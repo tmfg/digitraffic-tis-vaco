@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.rules.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Conversions;
@@ -10,7 +9,6 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -35,7 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public abstract class ValidatorRule implements Rule<ValidationInput, ValidationReport> {
+public abstract class ValidatorRule implements Rule<ValidationReport> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -45,8 +43,6 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
     private final S3Client s3Client;
     private final VacoProperties vacoProperties;
     private final PackagesService packagesService;
-    private final ObjectMapper objectMapper;
-    private final MessagingService messagingService;
     private final TaskService taskService;
 
     protected ValidatorRule(String ruleFormat,
@@ -55,17 +51,14 @@ public abstract class ValidatorRule implements Rule<ValidationInput, ValidationR
                             S3Client s3Client,
                             VacoProperties vacoProperties,
                             PackagesService packagesService,
-                            ObjectMapper objectMapper,
-                            MessagingService messagingService, TaskService taskService) {
+                            TaskService taskService) {
         this.ruleFormat = Objects.requireNonNull(ruleFormat);
         this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
         this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.packagesService = Objects.requireNonNull(packagesService);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.messagingService = messagingService;
-        this.taskService = taskService;
+        this.taskService = Objects.requireNonNull(taskService);
     }
 
     @Override

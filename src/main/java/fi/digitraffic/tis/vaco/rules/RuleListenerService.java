@@ -113,7 +113,18 @@ public class RuleListenerService {
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
-        return false;
+        Optional<ImmutableEntry> e = queueHandlerService.getEntry(resultMessage.entryId());
+
+        if (e.isPresent()) {
+            ImmutableEntry entry = e.get();
+            ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), resultMessage.ruleName()), ProcessingState.START);
+
+            packagesService.createPackage(entry, task, resultMessage.ruleName(), S3Path.of(URI.create(resultMessage.outputs()).getPath()), "content.zip");
+            taskService.trackTask(task, ProcessingState.COMPLETE);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private boolean processResultFromGtfsCanonical400(ResultMessage resultMessage) {

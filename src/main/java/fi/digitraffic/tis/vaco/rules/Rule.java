@@ -4,7 +4,7 @@ import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface Rule<INPUT, OUTPUT> {
+public interface Rule<OUTPUT> {
     String getIdentifyingName();
 
     CompletableFuture<OUTPUT> execute(

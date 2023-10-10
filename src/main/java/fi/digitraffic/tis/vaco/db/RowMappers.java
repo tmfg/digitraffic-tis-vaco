@@ -14,8 +14,7 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
-import fi.digitraffic.tis.vaco.rules.conversion.ConverterConfiguration;
-import fi.digitraffic.tis.vaco.rules.validation.ValidatorConfiguration;
+import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -116,7 +115,7 @@ public class RowMappers {
             return ImmutableValidationInput.builder()
                     .id(rs.getLong("id"))
                     .name(rs.getString("name"))
-                    .config(readValue(objectMapper, rs, "config", (Class<ValidatorConfiguration>) cc))
+                    .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
                     .build();
         };
     }
@@ -130,7 +129,7 @@ public class RowMappers {
             return ImmutableConversionInput.builder()
                     .id(rs.getLong("id"))
                     .name(rs.getString("name"))
-                    .config(readValue(objectMapper, rs, "config", (Class<ConverterConfiguration>) cc))
+                    .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
                     .build();
         };
     }
@@ -146,7 +145,7 @@ public class RowMappers {
      */
     @SuppressWarnings("unchecked")
     private static Class<?> findSubtypeFromAnnotation(String name) {
-        JsonSubTypes definedSubTypes = ValidatorConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class);
+        JsonSubTypes definedSubTypes = RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class);
 
         Class<?> cc = Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
             .map(JsonSubTypes.Type::value)

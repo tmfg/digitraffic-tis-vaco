@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.conversion;
 
-import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
@@ -14,24 +13,18 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
 import fi.digitraffic.tis.vaco.process.model.TaskResult;
-import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class ConversionService {
@@ -46,22 +39,17 @@ public class ConversionService {
         OUTPUT_VALIDATION_SUBTASK);
 
     Logger logger = LoggerFactory.getLogger(getClass());
-    private final S3Client s3ClientUtility;
+
     private final TaskService taskService;
     private final RulesetService rulesetService;
-    private final Map<String, Rule<ConversionInput, ConversionReport>> rules;
 
     private final S3Packager s3Packager;
 
-    public ConversionService(S3Client s3ClientUtility,
-                             TaskService taskService,
-                             @Qualifier("conversion") List<Rule<ConversionInput, ConversionReport>> rules,
+    public ConversionService(TaskService taskService,
                              RulesetService rulesetService,
                              S3Packager s3Packager) {
-        this.s3ClientUtility = Objects.requireNonNull(s3ClientUtility);
         this.taskService = Objects.requireNonNull(taskService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
-        this.rules = rules.stream().collect(Collectors.toMap(Rule::getIdentifyingName, Function.identity()));
         this.s3Packager = s3Packager;
     }
 
