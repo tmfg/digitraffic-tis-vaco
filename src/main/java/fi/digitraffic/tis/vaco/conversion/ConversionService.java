@@ -9,8 +9,7 @@ import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.process.model.ImmutableJobResult;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTaskData;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
 import fi.digitraffic.tis.vaco.process.model.TaskResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -53,7 +52,7 @@ public class ConversionService {
         this.s3Packager = s3Packager;
     }
 
-    public ImmutableJobResult convert(ImmutableConversionJobMessage jobDescription) {
+    public void convert(ImmutableConversionJobMessage jobDescription) {
         Entry entry = jobDescription.entry();
         TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.entry());
 
@@ -65,23 +64,18 @@ public class ConversionService {
             S3Artifact.getTaskPath(entry.publicId(), PHASE),
             S3Artifact.getPackagePath(entry.publicId(), packageFileName),
             packageFileName).join();
-
-        return ImmutableJobResult.builder()
-            .addResults(conversionRulesets, conversionReports)
-            .build();
     }
 
     @VisibleForTesting
     TaskResult<Set<Ruleset>> selectRulesets(Entry entry) {
-        ImmutableTaskData<Ruleset> taskData = ImmutableTaskData.of(
-            taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START));
+        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
 
         Set<Ruleset> rulesets = rulesetService.selectRulesets(
             entry.businessId(),
             Type.CONVERSION_SYNTAX,
             Streams.map(entry.validations(), ValidationInput::name).toSet());
 
-        taskData.withTask(taskService.trackTask(taskData.task(), ProcessingState.COMPLETE));
+        task = taskService.trackTask(task, ProcessingState.COMPLETE);
 
         return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
     }
