@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.delegator;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -14,7 +13,6 @@ import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -35,18 +33,12 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
     private final MessagingService messagingService;
     private final TaskRepository taskRepository;
-    private final ValidationService validationService;
-    private final ConversionService conversionService;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
-                                         TaskRepository taskRepository,
-                                         ValidationService validationService,
-                                         ConversionService conversionService) {
+                                         TaskRepository taskRepository) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
         this.taskRepository = taskRepository;
-        this.validationService = validationService;
-        this.conversionService = conversionService;
     }
 
     @SqsListener(QueueNames.VACO_JOBS)

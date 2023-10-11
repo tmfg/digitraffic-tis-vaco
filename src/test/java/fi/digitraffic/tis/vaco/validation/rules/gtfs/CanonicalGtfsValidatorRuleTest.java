@@ -11,7 +11,6 @@ import fi.digitraffic.tis.vaco.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
@@ -86,8 +85,6 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     @Mock
     private PackagesService packagesService;
     @Mock
-    private MessagingService messagingService;
-    @Mock
     private TaskService taskService;
 
     @Captor
@@ -114,7 +111,6 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
             rulesetRepository,
             s3Client,
             packagesService,
-            messagingService,
             taskService);
         entry = TestObjects.anEntry("gtfs").build();
         task = TestObjects.aTask().id(MOCK_TASK_ID).entryId(entry.id()).build();
@@ -122,7 +118,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(errorHandlerService, rulesetRepository, packagesService, messagingService, taskService);
+        verifyNoMoreInteractions(errorHandlerService, rulesetRepository, packagesService, taskService);
     }
 
     @Test

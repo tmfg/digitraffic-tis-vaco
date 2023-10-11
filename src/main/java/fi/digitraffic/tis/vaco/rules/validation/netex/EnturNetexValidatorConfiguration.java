@@ -1,22 +1,18 @@
 package fi.digitraffic.tis.vaco.rules.validation.netex;
 
-import fi.digitraffic.tis.vaco.rules.validation.ValidatorConfiguration;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import org.immutables.value.Value;
 
 import java.util.Set;
 
 @Value.Immutable
-public interface EnturNetexValidatorConfiguration extends ValidatorConfiguration {
-    EnturNetexValidatorConfiguration DEFAULTS = ImmutableEnturNetexValidatorConfiguration.builder()
-        .codespace("FIN")
-        .reportId("NO_REPORT_ID_PROVIDED")
-        .addIgnorableNetexElements("SiteFrame")
-        .maximumErrors(128)
-        .build();
-
+@JsonSerialize(as = ImmutableEnturNetexValidatorConfiguration.class)
+@JsonDeserialize(as = ImmutableEnturNetexValidatorConfiguration.class)
+public interface EnturNetexValidatorConfiguration extends RuleConfiguration {
     String codespace();
     String reportId();
     Set<String> ignorableNetexElements();
     int maximumErrors();
-
 }

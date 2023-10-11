@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.delegator;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -13,7 +12,6 @@ import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
@@ -48,17 +46,13 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     @Mock
     private TaskRepository taskRepository;
     @Mock
-    private ValidationService validationService;
-    @Mock
-    private ConversionService conversionService;
-    @Mock
     private Acknowledgement acknowledgement;
     @Captor
     private ArgumentCaptor<ValidationJobMessage> validationJob;
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, taskRepository, validationService, conversionService);
+        listener = new DelegationJobQueueSqsListener(messagingService, taskRepository);
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(createQueueEntryForTesting())
             .retryStatistics(ImmutableRetryStatistics.of(5))
@@ -71,7 +65,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(messagingService, taskRepository, validationService, conversionService);
+        verifyNoMoreInteractions(messagingService, taskRepository);
     }
 
     @Test
