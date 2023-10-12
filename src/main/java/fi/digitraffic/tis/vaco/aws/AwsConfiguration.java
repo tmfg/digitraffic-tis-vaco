@@ -1,11 +1,12 @@
 package fi.digitraffic.tis.vaco.aws;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.vaco.configuration.Aws;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
 import io.awspring.cloud.sqs.listener.acknowledgement.AcknowledgementOrdering;
 import io.awspring.cloud.sqs.listener.acknowledgement.handler.AcknowledgementMode;
 import io.awspring.cloud.sqs.support.converter.SqsMessagingMessageConverter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -21,16 +22,15 @@ import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.Optional;
 
 @Configuration
 public class AwsConfiguration {
 
     @Profile("local | tests")
     @Bean
-    public AwsCredentialsProvider localCredentials(@Value("${vaco.aws.accessKeyId}") String accessKeyId,
-                                                   @Value("${vaco.aws.secretKey}") String secretKey) {
-        return StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretKey));
+    public AwsCredentialsProvider localCredentials(VacoProperties vacoProperties) {
+        Aws aws = vacoProperties.aws();
+        return StaticCredentialsProvider.create(AwsBasicCredentials.create(aws.accessKeyId(), aws.secretKey()));
     }
 
     @Profile("!local & !tests")
@@ -40,14 +40,13 @@ public class AwsConfiguration {
     }
 
     @Bean
-    public SqsClient amazonSQSClient(@Value("${vaco.aws.endpoint:#{null}}") Optional<String> endpoint,
-                                     @Value("${vaco.aws.region}") String region,
+    public SqsClient amazonSQSClient(VacoProperties vacoProperties,
                                      AwsCredentialsProvider credentialsProvider) {
         SqsClientBuilder b = SqsClient.builder()
-            .region(Region.of(region))
+            .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider);
-        if (endpoint.isPresent()) {
-            b = b.endpointOverride(URI.create(endpoint.get()));
+        if (vacoProperties.aws().endpoint().isPresent()) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint().get()));
         }
         return b.build();
     }

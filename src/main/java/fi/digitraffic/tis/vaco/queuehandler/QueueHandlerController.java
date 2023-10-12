@@ -5,7 +5,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;

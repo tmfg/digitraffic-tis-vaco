@@ -7,7 +7,8 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.Aws;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
@@ -96,8 +97,9 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         // create input directory which matches the behavior of ValidatorService
         testInputDir = testDirectory.resolve("input");
         Files.createDirectories(testInputDir);
+        Aws aws = new Aws("eu-north-1", Optional.empty(), null, null);
         AzureAd azureAd = new AzureAd("tenantId", "clientId");
-        vacoProperties = new VacoProperties("test", null, testBucket, null, "biz", azureAd);
+        vacoProperties = new VacoProperties("test", null, testBucket, null, "biz", aws, azureAd);
         createBucket(vacoProperties.s3ProcessingBucket());
     }
 

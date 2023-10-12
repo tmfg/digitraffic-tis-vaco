@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.packages;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;

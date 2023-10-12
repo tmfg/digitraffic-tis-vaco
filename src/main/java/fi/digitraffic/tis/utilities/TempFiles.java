@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.utilities;
 
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;

@@ -4,7 +4,7 @@ import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;

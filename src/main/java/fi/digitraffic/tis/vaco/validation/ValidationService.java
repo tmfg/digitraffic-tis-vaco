@@ -8,7 +8,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;

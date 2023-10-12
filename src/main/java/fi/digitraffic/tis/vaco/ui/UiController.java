@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.ui;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

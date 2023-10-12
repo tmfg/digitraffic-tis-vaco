@@ -6,7 +6,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;

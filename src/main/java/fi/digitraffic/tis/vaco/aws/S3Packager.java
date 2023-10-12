@@ -5,7 +5,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.aws.s3;
 
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

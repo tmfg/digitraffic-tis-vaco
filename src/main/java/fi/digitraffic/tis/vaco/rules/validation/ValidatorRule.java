@@ -6,7 +6,7 @@ import fi.digitraffic.tis.utilities.Conversions;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.packages.PackagesService;

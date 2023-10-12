@@ -1,6 +1,5 @@
-package fi.digitraffic.tis.vaco;
+package fi.digitraffic.tis.vaco.configuration;
 
-import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -14,6 +13,7 @@ public record VacoProperties(@DefaultValue("local") String environment,
                              @NotBlank String s3ProcessingBucket,
                              @NotBlank String uiUrl,
                              String companyNameClaim,
+                             @NestedConfigurationProperty Aws aws,
                              @NestedConfigurationProperty AzureAd azureAd) {
     @Override
     public String temporaryDirectory() {

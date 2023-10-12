@@ -8,7 +8,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;

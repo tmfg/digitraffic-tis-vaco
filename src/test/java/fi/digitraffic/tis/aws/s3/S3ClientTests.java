@@ -2,7 +2,7 @@ package fi.digitraffic.tis.aws.s3;
 
 import fi.digitraffic.tis.AwsIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;

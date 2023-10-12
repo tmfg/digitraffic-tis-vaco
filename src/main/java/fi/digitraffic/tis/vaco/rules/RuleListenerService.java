@@ -7,7 +7,7 @@ import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
