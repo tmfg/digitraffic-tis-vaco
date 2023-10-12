@@ -79,10 +79,10 @@ public class PackagesService {
             Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, packageName)
                 .resolve(Path.of(p.path()).getFileName());
 
-            logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.getS3ProcessingBucket(), p.path(), targetPackagePath);
+            logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
 
             s3Client.downloadFile(
-                vacoProperties.getS3ProcessingBucket(),
+                vacoProperties.s3ProcessingBucket(),
                 p.path(),
                 targetPackagePath);
             return targetPackagePath;

@@ -89,17 +89,17 @@ public class S3Packager {
         return CompletableFuture.runAsync(() -> {
             Path localArtifactTemp = TempFiles.getArtifactDownloadDirectory(vacoProperties, entry);
             Path localTargetFile = TempFiles.getArtifactPackagingFile(vacoProperties, entry, zipFileName);
-            logger.info("Starting to package s3://{}/{} into {}", vacoProperties.getS3ProcessingBucket(), s3SourcePath, localTargetFile);
+            logger.info("Starting to package s3://{}/{} into {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, localTargetFile);
             try {
-                s3Client.downloadDirectory(vacoProperties.getS3ProcessingBucket(), s3SourcePath, localArtifactTemp, filterKeys).join();
+                s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), s3SourcePath, localArtifactTemp, filterKeys).join();
                 createZip(localArtifactTemp, localTargetFile);
                 S3Path
                     s3FullTargetPath = ImmutableS3Path.builder()
                     .from(s3TargetPath)
                     .addPath(zipFileName)
                     .build();
-                s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3FullTargetPath, localTargetFile).join();
-                logger.info("Successfully completed packaging s3://{}/{} via {} into {}", vacoProperties.getS3ProcessingBucket(), s3SourcePath, localArtifactTemp, s3FullTargetPath);
+                s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3FullTargetPath, localTargetFile).join();
+                logger.info("Successfully completed packaging s3://{}/{} via {} into {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, localArtifactTemp, s3FullTargetPath);
             } catch (IOException e) {
                 throw new RuntimeException(String.format("Encountered IOException while packaging %s into %s", s3SourcePath, zipFileName), e);
             } finally {

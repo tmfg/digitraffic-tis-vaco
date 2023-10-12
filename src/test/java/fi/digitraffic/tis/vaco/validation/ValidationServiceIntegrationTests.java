@@ -85,7 +85,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
 
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
         assertThat(entryUrl.getValue(), equalTo("https://testfile"));
 
         List<S3Object> uploadedFiles = awsS3Client.listObjectsV2(ListObjectsV2Request.builder()
-                        .bucket(vacoProperties.getS3ProcessingBucket())
+                        .bucket(vacoProperties.s3ProcessingBucket())
                         .prefix("entries/" + entry.publicId())
                         .build())
                 .contents();
@@ -109,9 +109,9 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
         assertThat(uploadedFiles.size(), equalTo(1));
 
         String key = uploadedFiles.get(0).key();
-        Path redownload = Paths.get(vacoProperties.getTemporaryDirectory(), "testfile");
+        Path redownload = Paths.get(vacoProperties.temporaryDirectory(), "testfile");
         s3TransferManager.downloadFile(DownloadFileRequest.builder()
-                        .getObjectRequest(req -> req.bucket(vacoProperties.getS3ProcessingBucket()).key(key))
+                        .getObjectRequest(req -> req.bucket(vacoProperties.s3ProcessingBucket()).key(key))
                         .destination(redownload)
                         .build())
                 .completionFuture()

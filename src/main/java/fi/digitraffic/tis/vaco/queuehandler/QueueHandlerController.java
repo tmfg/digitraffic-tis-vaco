@@ -62,7 +62,7 @@ public class QueueHandlerController {
         @RequestParam(required = false) boolean full) {
         // TODO: We do not know the exact claim name (or maybe we need to use Graph) at this point, so this is kind of
         //       meh passthrough until we get more details.
-        businessId = safeGet(token, vacoProperties.getCompanyNameClaim()).orElse(businessId);
+        businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);
         return ResponseEntity.ok(
             Streams.map(queueHandlerService.getAllQueueEntriesFor(businessId, full), QueueHandlerController::asQueueHandlerResource)
             .toList());

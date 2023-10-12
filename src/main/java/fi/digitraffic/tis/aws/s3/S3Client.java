@@ -93,7 +93,7 @@ public class S3Client {
                 : DownloadFilter.allObjects())
             .destination(targetPath)
             .build();
-        logger.info("Downloading directory from s3://{}{} to {}", vacoProperties.getS3ProcessingBucket(), s3SourcePath, targetPath);
+        logger.info("Downloading directory from s3://{}{} to {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, targetPath);
         return s3TransferManager
             .downloadDirectory(ddr)
             .completionFuture();
@@ -118,7 +118,7 @@ public class S3Client {
         GetObjectRequest objectRequest = GetObjectRequest
             .builder()
             .key(keyName)
-            .bucket(vacoProperties.getS3ProcessingBucket())
+            .bucket(vacoProperties.s3ProcessingBucket())
             .build();
         ResponseBytes<GetObjectResponse> objectBytes = awsS3Client.getObjectAsBytes(objectRequest);
         return objectBytes.asByteArray();

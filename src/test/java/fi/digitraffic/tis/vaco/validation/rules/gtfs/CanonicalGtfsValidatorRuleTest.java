@@ -8,6 +8,7 @@ import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
@@ -95,8 +96,9 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
         // create input directory which matches the behavior of ValidatorService
         testInputDir = testDirectory.resolve("input");
         Files.createDirectories(testInputDir);
-        vacoProperties = new VacoProperties("test", null, testBucket, null, "biz");
-        createBucket(vacoProperties.getS3ProcessingBucket());
+        AzureAd azureAd = new AzureAd("tenantId", "clientId");
+        vacoProperties = new VacoProperties("test", null, testBucket, null, "biz", azureAd);
+        createBucket(vacoProperties.s3ProcessingBucket());
     }
 
     @BeforeEach
@@ -215,7 +217,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
     private void givenTestFile(String file, S3Path target) throws URISyntaxException {
         URL resource = CanonicalGtfsValidatorRuleTest.class.getClassLoader().getResource(file);
-        s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), target, Path.of(resource.toURI())).join();
+        s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), target, Path.of(resource.toURI())).join();
     }
 
     private Path forInput(String testFile) throws URISyntaxException {

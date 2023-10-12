@@ -116,7 +116,7 @@ public abstract class ValidatorRule implements Rule<ValidationReport> {
 
     private Path downloadFiles(Path inputTempDir, S3Path inputDirectory) {
         CompletedDirectoryDownload x = s3Client.downloadDirectory(
-            vacoProperties.getS3ProcessingBucket(),
+            vacoProperties.s3ProcessingBucket(),
             inputDirectory,
             inputTempDir
         ).join();
@@ -129,7 +129,7 @@ public abstract class ValidatorRule implements Rule<ValidationReport> {
                                 S3Path s3TargetPath) {// copy produced output to S3
         CompletedDirectoryUpload ud = s3Client.uploadDirectory(
                 outputDirectory,
-                vacoProperties.getS3ProcessingBucket(),
+                vacoProperties.s3ProcessingBucket(),
                 s3TargetPath)
             .join();
         // package and publish all of it

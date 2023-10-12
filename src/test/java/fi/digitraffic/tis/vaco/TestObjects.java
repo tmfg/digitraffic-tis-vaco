@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
@@ -77,6 +78,7 @@ public class TestObjects {
 
     public static VacoProperties vacoProperties() {
         String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
-        return new VacoProperties("unittests-" + randomSeed, null, "unittests-" + randomSeed + "-processing-bucket", "localhost:5173", "biz");
+        AzureAd azureAd = new AzureAd("tenantId", "clientId");
+        return new VacoProperties("unittests-" + randomSeed, null, "unittests-" + randomSeed + "-processing-bucket", "localhost:5173", "biz", azureAd);
     }
 }

@@ -84,7 +84,7 @@ public class TempFiles {
 
     private static Path tempDir(VacoProperties vacoProperties, Path path) {
         try {
-            Path root = Paths.get(vacoProperties.getTemporaryDirectory());
+            Path root = Paths.get(vacoProperties.temporaryDirectory());
             Path result = Files.createDirectories(root.resolve(path));
             return result;
         } catch (IOException e) {

@@ -30,7 +30,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
     }
 
     @Test

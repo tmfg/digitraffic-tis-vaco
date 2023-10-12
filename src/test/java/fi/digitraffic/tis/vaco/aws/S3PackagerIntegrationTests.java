@@ -98,16 +98,16 @@ public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     void prepareBucketWithData() {
         entry = TestObjects.anEntry("gtfs").build();
 
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
-        s3Client.uploadDirectory(testDirectory.toPath(), vacoProperties.getS3ProcessingBucket(), ImmutableS3Path.of("")).join();
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
+        s3Client.uploadDirectory(testDirectory.toPath(), vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("")).join();
     }
 
     @AfterEach
     void s3Cleanup() {
-        List<ObjectIdentifier> objects = Streams.map(s3Client.listObjectsInBucket(ImmutableS3Path.of(""), vacoProperties.getS3ProcessingBucket()),
+        List<ObjectIdentifier> objects = Streams.map(s3Client.listObjectsInBucket(ImmutableS3Path.of(""), vacoProperties.s3ProcessingBucket()),
             obj -> ObjectIdentifier.builder().key(obj.key()).build()).toList();
-        awsS3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).delete(Delete.builder().objects(objects).build()).build());
-        awsS3Client.deleteBucket(DeleteBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
+        awsS3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).delete(Delete.builder().objects(objects).build()).build());
+        awsS3Client.deleteBucket(DeleteBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
     }
 
     ZipFile downloadProducedZipPackage(String packageName) throws IOException {
