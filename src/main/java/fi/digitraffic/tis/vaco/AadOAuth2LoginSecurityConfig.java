@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco;
 
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,10 +51,13 @@ public class AadOAuth2LoginSecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(@Value("${vaco.ui-url}") String uiUrl) {
-        logger.info("Setting CORS configuration for {}", uiUrl);
+    public CorsConfigurationSource corsConfigurationSource(VacoProperties vacoProperties) {
+        String uiBaseUrl = "local".equals(vacoProperties.environment())
+            ? "http://localhost:5173"
+            : vacoProperties.baseUrl();
+        logger.info("Setting CORS configuration for {}", uiBaseUrl);
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(uiUrl));
+        configuration.setAllowedOrigins(List.of(uiBaseUrl));
         configuration.setAllowedMethods(List.of("OPTIONS", "GET", "POST"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("*"));

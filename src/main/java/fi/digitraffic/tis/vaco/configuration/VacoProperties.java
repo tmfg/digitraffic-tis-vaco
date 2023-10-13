@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 public record VacoProperties(@DefaultValue("local") String environment,
                              String temporaryDirectory,
                              @NotBlank String s3ProcessingBucket,
-                             @NotBlank String uiUrl,
+                             @NotBlank String baseUrl,
                              String companyNameClaim,
                              @NestedConfigurationProperty Aws aws,
                              @NestedConfigurationProperty AzureAd azureAd) {

@@ -12,6 +12,9 @@ public interface Bootstrap {
     String environment();
 
     @Value.Parameter
+    String baseUrl();
+
+    @Value.Parameter
     String tenantId();
 
     @Value.Parameter

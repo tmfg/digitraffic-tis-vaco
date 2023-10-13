@@ -34,7 +34,6 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 
 @RestController
 @RequestMapping("/queue")
-@CrossOrigin(origins = "${vaco.ui-url}")
 public class QueueHandlerController {
 
     private final QueueHandlerService queueHandlerService;

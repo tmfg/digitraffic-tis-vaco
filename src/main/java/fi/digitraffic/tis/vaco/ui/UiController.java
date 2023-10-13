@@ -25,6 +25,7 @@ public class UiController {
         return ResponseEntity.ok()
             .body(ImmutableBootstrap.of(
                 vacoProperties.environment(),
+                vacoProperties.baseUrl(),
                 vacoProperties.azureAd().tenantId(),
                 vacoProperties.azureAd().clientId()));
     }

@@ -6,7 +6,6 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +16,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/rules")
-@CrossOrigin(origins = "${vaco.ui-url}")
 public class RulesetController {
 
     private final RulesetService rulesetService;
