@@ -5,7 +5,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -34,7 +34,6 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 
 @RestController
 @RequestMapping("/queue")
-@CrossOrigin(origins = "${vaco.ui-url}")
 public class QueueHandlerController {
 
     private final QueueHandlerService queueHandlerService;
@@ -62,7 +61,7 @@ public class QueueHandlerController {
         @RequestParam(required = false) boolean full) {
         // TODO: We do not know the exact claim name (or maybe we need to use Graph) at this point, so this is kind of
         //       meh passthrough until we get more details.
-        businessId = safeGet(token, vacoProperties.getCompanyNameClaim()).orElse(businessId);
+        businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);
         return ResponseEntity.ok(
             Streams.map(queueHandlerService.getAllQueueEntriesFor(businessId, full), QueueHandlerController::asQueueHandlerResource)
             .toList());

@@ -2,7 +2,7 @@ package fi.digitraffic.tis.aws.s3;
 
 import fi.digitraffic.tis.AwsIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,7 +38,7 @@ class S3ClientTests extends AwsIntegrationTestBase {
         Files.createDirectories(outputs);
 
         vacoProperties = TestObjects.vacoProperties();
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.getS3ProcessingBucket()).build());
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
     }
 
     @BeforeEach
@@ -56,8 +56,8 @@ class S3ClientTests extends AwsIntegrationTestBase {
         Path inputContent = writeContent(inputs.resolve("hello.txt"), content);
         Path outputContent = outputs.resolve("hello.txt");
 
-        s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), ImmutableS3Path.of("hello.txt"), inputContent).join();
-        Long contentLength = s3Client.downloadFile(vacoProperties.getS3ProcessingBucket(), "hello.txt", outputContent);
+        s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("hello.txt"), inputContent).join();
+        Long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), "hello.txt", outputContent);
 
         assertThat(contentLength.intValue(), equalTo(content.length()));
         assertThat(Files.readString(outputContent), equalTo(content));
@@ -71,8 +71,8 @@ class S3ClientTests extends AwsIntegrationTestBase {
         writeContent(inputManyFiles.resolve("c.txt"), "c");
         Path outputManyFiles = Files.createDirectories(outputs.resolve("manyFiles"));
 
-        s3Client.uploadDirectory(inputManyFiles, vacoProperties.getS3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles")).join();
-        s3Client.downloadDirectory(vacoProperties.getS3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles"), outputManyFiles).join();
+        s3Client.uploadDirectory(inputManyFiles, vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles")).join();
+        s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles"), outputManyFiles).join();
 
         assertThat(Files.readString(outputManyFiles.resolve("a.txt")), equalTo("a"));
         assertThat(Files.readString(outputManyFiles.resolve("b.txt")), equalTo("b"));

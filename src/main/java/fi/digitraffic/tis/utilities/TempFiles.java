@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.utilities;
 
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
@@ -84,7 +84,7 @@ public class TempFiles {
 
     private static Path tempDir(VacoProperties vacoProperties, Path path) {
         try {
-            Path root = Paths.get(vacoProperties.getTemporaryDirectory());
+            Path root = Paths.get(vacoProperties.temporaryDirectory());
             Path result = Files.createDirectories(root.resolve(path));
             return result;
         } catch (IOException e) {

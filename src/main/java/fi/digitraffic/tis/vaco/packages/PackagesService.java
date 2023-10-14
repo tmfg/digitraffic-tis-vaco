@@ -4,7 +4,7 @@ import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
@@ -79,10 +79,10 @@ public class PackagesService {
             Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, packageName)
                 .resolve(Path.of(p.path()).getFileName());
 
-            logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.getS3ProcessingBucket(), p.path(), targetPackagePath);
+            logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
 
             s3Client.downloadFile(
-                vacoProperties.getS3ProcessingBucket(),
+                vacoProperties.s3ProcessingBucket(),
                 p.path(),
                 targetPackagePath);
             return targetPackagePath;

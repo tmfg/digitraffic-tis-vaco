@@ -8,7 +8,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -17,7 +17,6 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
@@ -26,10 +25,8 @@ import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
-import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.net.http.HttpResponse;
@@ -110,7 +107,7 @@ public class ValidationService {
                 .addPath(entry.format() + ".zip")
                 .build();
 
-            return s3Client.uploadFile(vacoProperties.getS3ProcessingBucket(), s3TargetPath, refs.localPath())
+            return s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3TargetPath, refs.localPath())
                 .thenApply(track(task, ProcessingState.UPDATE))
                 .thenApply(u -> s3TargetPath);  // TODO: There's probably something useful in the `u` parameter
         };
@@ -148,13 +145,13 @@ public class ValidationService {
                 S3Path ruleS3Input = ruleBasePath.resolve("input");
                 S3Path ruleS3Output = ruleBasePath.resolve("output");
 
-                s3Client.copyFile(vacoProperties.getS3ProcessingBucket(), downloadedFile, ruleS3Input).join();
+                s3Client.copyFile(vacoProperties.s3ProcessingBucket(), downloadedFile, ruleS3Input).join();
 
                 ValidationRuleJobMessage ruleMessage = ImmutableValidationRuleJobMessage.builder()
                     .entry(ImmutableEntry.copyOf(entry).withTasks())
                     .task(task)
-                    .inputs(ruleS3Input.asUri(vacoProperties.getS3ProcessingBucket()))
-                    .outputs(ruleS3Output.asUri(vacoProperties.getS3ProcessingBucket()))
+                    .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
+                    .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
                     .configuration(configuration.orElse(null))
                     .retryStatistics(ImmutableRetryStatistics.of(5))
                     .build();
