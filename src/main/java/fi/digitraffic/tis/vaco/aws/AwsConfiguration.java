@@ -45,8 +45,8 @@ public class AwsConfiguration {
         SqsClientBuilder b = SqsClient.builder()
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider);
-        if (vacoProperties.aws().endpoint().isPresent()) {
-            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint().get()));
+        if (vacoProperties.aws().endpoint() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
         }
         return b.build();
     }
