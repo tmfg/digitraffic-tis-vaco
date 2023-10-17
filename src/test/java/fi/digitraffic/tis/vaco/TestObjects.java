@@ -16,7 +16,6 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -81,7 +80,7 @@ public class TestObjects {
 
     public static VacoProperties vacoProperties() {
         String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
-        Aws aws = new Aws("eu-north-1", Optional.empty(), null, null);
+        Aws aws = new Aws("eu-north-1", null, null, null);
         AzureAd azureAd = new AzureAd("tenantId", "clientId");
         return new VacoProperties("unittests-" + randomSeed, null, "unittests-" + randomSeed + "-processing-bucket", "localhost:5173", "biz", aws, azureAd);
     }
