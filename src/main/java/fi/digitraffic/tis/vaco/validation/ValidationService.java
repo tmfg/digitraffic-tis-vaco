@@ -95,8 +95,8 @@ public class ValidationService {
         } finally {
             try {
                 Files.deleteIfExists(tempFilePath);
-            } catch (IOException e) {
-                // TODO: mute exception on purpose, although we could re-throw
+            } catch (IOException ignored) {
+                // NOTE: ignored exception on purpose, although we could re-throw
             }
         }
     }
@@ -119,11 +119,10 @@ public class ValidationService {
 
             return s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3TargetPath, refs.localPath())
                 .thenApply(track(task, ProcessingState.UPDATE))
-                .thenApply(u -> s3TargetPath);  // TODO: There's probably something useful in the `u` parameter
+                .thenApply(u -> s3TargetPath);  // NOTE: There's probably something useful in the `u` parameter
         };
     }
 
-    // TODO: convert to CompletableFuture chain
     @VisibleForTesting
     Set<Ruleset> selectRulesets(Entry entry) {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);

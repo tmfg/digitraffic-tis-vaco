@@ -117,7 +117,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         Arrays.stream(TaskCategory.values())
             .forEach(tc ->
                 assertThat(tc,
-                    equalTo(DelegationJobQueueSqsListener.asTaskCategory(
+                    equalTo(listener.asTaskCategory(
                         ImmutableTask.of(1L, tc.name().toLowerCase() + ".testing", tc.priority)))));
     }
 }
