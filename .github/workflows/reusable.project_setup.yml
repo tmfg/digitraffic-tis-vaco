@@ -1,0 +1,39 @@
+ame: "[reusable] Project Setup"
+
+on:
+  workflow_call:
+    secrets:
+        DBMIGRATOR_DEPLOY_KEY:
+          required: true
+    
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project files
+        uses: actions/checkout@v3
+        with:
+          path: digitraffic-tis-vaco
+          fetch-depth: 0
+
+      - name: Checkout database migrations
+        uses: ./digitraffic-tis-vaco/.github/actions/checkout
+        with:
+          repository: tmfg/digitraffic-tis-dbmigrator
+          path: digitraffic-tis-dbmigrator
+          deploy-key: ${{ secrets.DBMIGRATOR_DEPLOY_KEY }}
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version-file: './digitraffic-tis-vaco/.java-version'
+          distribution: 'temurin'
+      
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
