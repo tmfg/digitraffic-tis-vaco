@@ -29,7 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -84,11 +86,19 @@ public class ValidationService {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
         Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".zip");
 
-        return httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
-            .thenApply(track(task, ProcessingState.UPDATE))
-            .thenCompose(uploadToS3(entry, task))
-            .thenApply(track(task, ProcessingState.COMPLETE))
-            .join();
+        try {
+            return httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
+                .thenApply(track(task, ProcessingState.UPDATE))
+                .thenCompose(uploadToS3(entry, task))
+                .thenApply(track(task, ProcessingState.COMPLETE))
+                .join();
+        } finally {
+            try {
+                Files.deleteIfExists(tempFilePath);
+            } catch (IOException e) {
+                // TODO: mute exception on purpose, although we could re-throw
+            }
+        }
     }
 
     private <T> Function<T, T> track(ImmutableTask task, ProcessingState state) {
@@ -118,10 +128,15 @@ public class ValidationService {
     Set<Ruleset> selectRulesets(Entry entry) {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
 
-        Set<Ruleset> rulesets = rulesetService.selectRulesets(
+        // find all possible rulesets to execute
+        Set<Ruleset> rulesets = Streams.filter(
+            rulesetService.selectRulesets(
                 entry.businessId(),
                 Type.VALIDATION_SYNTAX,
-                Streams.map(entry.validations(), ValidationInput::name).toSet());
+                Streams.map(entry.validations(), ValidationInput::name).toSet()),
+            // filter to contain only format compatible rulesets
+            r -> r.identifyingName().startsWith(entry.format() + "."))
+            .toSet();
 
         taskService.trackTask(task, ProcessingState.COMPLETE);
 
