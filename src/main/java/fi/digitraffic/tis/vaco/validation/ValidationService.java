@@ -125,6 +125,8 @@ public class ValidationService {
 
         taskService.trackTask(task, ProcessingState.COMPLETE);
 
+        logger.info("Selected rulesets for {} are {}", entry.publicId(), Streams.collect(rulesets, Ruleset::identifyingName));
+
         return rulesets;
     }
 
