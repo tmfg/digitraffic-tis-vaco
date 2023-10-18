@@ -119,8 +119,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         TaskCategory s = switch (subtask) {
             case "validation" -> TaskCategory.VALIDATION;
             case "conversion" -> TaskCategory.CONVERSION;
-            case "rule" -> TaskCategory.RULE;  // XXX: Rules aren't actually convertable like this, so this might not be sensible
-            default -> null;
+            default -> TaskCategory.RULE;  // XXX: Rules aren't actually convertable like this, so this might not be sensible
         };
         if (s == null) {
             LOGGER.warn("Unmappable task '{}'! {}", subtask, task);
