@@ -12,6 +12,6 @@ import org.immutables.value.Value;
 public interface CanonicalGtfsValidatorConfiguration extends RuleConfiguration {
 
     @Nullable
-    String lol();
+    String lol();  // TODO: remove
 
 }
