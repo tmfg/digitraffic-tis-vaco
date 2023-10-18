@@ -15,8 +15,8 @@
     <version>0</version>
     <packaging>jar</packaging>
 
-    <name>vaco</name>
-    <description>Validation-Converter</description>
+    <name>Digitraffic TIS / Validation-Conversion</name>
+    <description>Validation-Conversion backend and API</description>
     <inceptionYear>2023</inceptionYear>
     <licenses>
         <license>
