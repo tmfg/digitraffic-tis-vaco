@@ -12,7 +12,7 @@ permissions:
   checks: write  # required by scacap/action-surefire-report
   contents: read  # required by scacap/action-surefire-report
 
-jobs:  
+jobs:
   verify:
     name: Verify Pull Request
     runs-on: ubuntu-latest
@@ -36,11 +36,11 @@ jobs:
       - name: Publish test report
         if: always()
         uses: scacap/action-surefire-report@v1
-  
+
   sonar:
     name: Run SonarCloud Analysis
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         working-directory: ./digitraffic-tis-vaco
@@ -68,4 +68,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=tmfg_digitraffic-tis-vaco
+        run: mvn -B verify -Pcoverage org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=tmfg_digitraffic-tis-vaco
