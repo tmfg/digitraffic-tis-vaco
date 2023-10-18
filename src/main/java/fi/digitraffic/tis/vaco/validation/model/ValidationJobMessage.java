@@ -12,8 +12,5 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableValidationJobMessage.class)
 public interface ValidationJobMessage extends JobMessage, Retryable {
     @Nullable
-    String previous();
-
-    @Nullable
     FileReferences fileReferences();
 }

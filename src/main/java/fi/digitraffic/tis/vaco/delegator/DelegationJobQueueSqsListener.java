@@ -16,8 +16,6 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -28,7 +26,6 @@ import java.util.Set;
 @Component
 public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDelegationJobMessage> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DelegationJobQueueSqsListener.class);
     private static final TaskCategory DEFAULT_TASK_CATEGORY = TaskCategory.VALIDATION;
 
     private final MessagingService messagingService;
@@ -53,7 +50,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         Optional<TaskCategory> taskToRun = nextSubtaskToRun(message);
 
         if (taskToRun.isPresent()) {
-            LOGGER.info("Job for entry {} next task to run {}", message.entry().publicId(), taskToRun.get());
+            logger.info("Job for entry {} next task to run {}", message.entry().publicId(), taskToRun.get());
 
             switch (taskToRun.get()) {
                 case VALIDATION -> {
@@ -94,12 +91,12 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
         Set<TaskCategory> completedTaskCategories =
             Streams.filter(allTasks, (task -> task.completed() != null))
-            .map(DelegationJobQueueSqsListener::asTaskCategory)
+            .map(this::asTaskCategory)
             .filter(Objects::nonNull)
             .toSet();
 
         List<TaskCategory> potentialSubtasksToRun =
-            Streams.map(allTasks, DelegationJobQueueSqsListener::asTaskCategory)
+            Streams.map(allTasks, this::asTaskCategory)
             .filter(Objects::nonNull)
             .toList();
 
@@ -114,16 +111,15 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     }
 
     @VisibleForTesting
-    protected static TaskCategory asTaskCategory(Task task) {
+    protected TaskCategory asTaskCategory(Task task) {
         String subtask = task.name().split("\\.")[0];
         TaskCategory s = switch (subtask) {
             case "validation" -> TaskCategory.VALIDATION;
             case "conversion" -> TaskCategory.CONVERSION;
-            case "rule" -> TaskCategory.RULE;  // XXX: Rules aren't actually convertable like this, so this might not be sensible
-            default -> null;
+            default -> TaskCategory.RULE;  // XXX: Rules aren't actually convertable like this, so this might not be sensible
         };
         if (s == null) {
-            LOGGER.warn("Unmappable task '{}'! {}", subtask, task);
+            logger.warn("Unmappable task '{}'! {}", subtask, task);
         }
         return s;
     }

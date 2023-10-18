@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 
 public abstract class SqsListenerBase<M extends Retryable> {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final BiConsumer<M, RetryStatistics> retrier;
 

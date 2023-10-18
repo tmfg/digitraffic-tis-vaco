@@ -5,8 +5,8 @@ import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
@@ -18,8 +18,11 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ValidationQueueSqsListenerTests {
@@ -28,7 +31,7 @@ class ValidationQueueSqsListenerTests {
 
     private ImmutableValidationJobMessage message;
 
-    private Entry entry;
+    private ImmutableEntry entry;
 
     @Mock
     private Acknowledgement acknowledgement;
@@ -36,12 +39,14 @@ class ValidationQueueSqsListenerTests {
     private MessagingService messagingService;
     @Mock
     private ValidationService validationService;
+    @Mock
+    private QueueHandlerRepository queueHandlerRepository;
     @Captor
     private ArgumentCaptor<DelegationJobMessage> delegationJobMessage;
 
     @BeforeEach
     void setUp() {
-        listener = new ValidationQueueSqsListener(messagingService, validationService);
+        listener = new ValidationQueueSqsListener(messagingService, validationService, queueHandlerRepository);
 
         entry = ImmutableEntry.of(TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, TestConstants.FINTRAFFIC_BUSINESS_ID);
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
@@ -55,10 +60,14 @@ class ValidationQueueSqsListenerTests {
 
     @Test
     void submitsItselfBackToDelegationQueueAndAcknowledgesOriginalMessageOnCompletion() {
+        when(queueHandlerRepository.findByPublicId(entry.publicId()))
+            .thenReturn(Optional.of(entry));
+
         listener.listen(message, acknowledgement);
 
         verify(validationService).validate(message);
         verify(messagingService).submitProcessingJob(delegationJobMessage.capture());
         verify(acknowledgement).acknowledge();
     }
+
 }
