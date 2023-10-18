@@ -56,6 +56,8 @@
         <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
         <jib-maven-plugin.version>3.4.0</jib-maven-plugin.version>
         <build-helper-maven-plugin.version>3.4.0</build-helper-maven-plugin.version>
+        <sonar.organization>fintraffic</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <springframework.boot-version>3.1.2</springframework.boot-version>
