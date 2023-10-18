@@ -6,13 +6,14 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   checks: write  # required by scacap/action-surefire-report
   contents: read  # required by scacap/action-surefire-report
 
-jobs:
-  build:
+jobs:  
+  verify:
     name: Verify Pull Request
     runs-on: ubuntu-latest
     defaults:
@@ -24,23 +25,47 @@ jobs:
         with:
           path: digitraffic-tis-vaco
 
-      - name: Checkout database migrations
-        uses: ./digitraffic-tis-vaco/.github/actions/checkout
+      - name: Setup project
+        uses: ./digitraffic-tis-vaco/.github/actions/project_setup
         with:
-          repository: tmfg/digitraffic-tis-dbmigrator
-          path: digitraffic-tis-dbmigrator
           deploy-key: ${{ secrets.DBMIGRATOR_DEPLOY_KEY }}
-
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version-file: './digitraffic-tis-vaco/.java-version'
-          distribution: 'temurin'
-          cache: maven
 
       - name: Run tests
         run: mvn test
 
-      - name: Publish Test Report
+      - name: Publish test report
         if: always()
         uses: scacap/action-surefire-report@v1
+  
+  sonar:
+    name: Run SonarCloud Analysis
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./digitraffic-tis-vaco
+
+    steps:
+      - name: Checkout project files
+        uses: actions/checkout@v3
+        with:
+          path: digitraffic-tis-vaco
+          fetch-depth: 0
+
+      - name: Setup project
+        uses: ./digitraffic-tis-vaco/.github/actions/project_setup
+        with:
+          deploy-key: ${{ secrets.DBMIGRATOR_DEPLOY_KEY }}
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=tmfg_digitraffic-tis-vaco
