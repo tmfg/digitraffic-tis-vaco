@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.ruleset;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.slf4j.Logger;
@@ -36,7 +35,7 @@ public class RulesetRepository {
     }
 
     public Set<Ruleset> findRulesets(String businessId) {
-        List<ImmutableRuleset> rulesets = namedJdbc.query("""
+        List<Ruleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM organization
@@ -64,7 +63,7 @@ public class RulesetRepository {
     }
 
     public Set<Ruleset> findRulesets(String businessId, Type type) {
-        List<ImmutableRuleset> rulesets = namedJdbc.query("""
+        List<Ruleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM organization
@@ -96,7 +95,7 @@ public class RulesetRepository {
         if (rulesetNames.isEmpty()) {
             return findRulesets(businessId, type);
         }
-        List<ImmutableRuleset> rulesets = namedJdbc.query("""
+        List<Ruleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM organization
@@ -133,7 +132,7 @@ public class RulesetRepository {
         return Set.copyOf(rulesets);
     }
 
-    public ImmutableRuleset createRuleset(ImmutableRuleset ruleset) {
+    public Ruleset createRuleset(Ruleset ruleset) {
         return jdbc.queryForObject("""
                 INSERT INTO ruleset(owner_id, category, identifying_name, description, "type")
                      VALUES (?, ?::ruleset_category, ?, ?, ?)
@@ -157,7 +156,7 @@ public class RulesetRepository {
         }
     }
 
-    public void deleteRuleset(ImmutableRuleset rule) {
+    public void deleteRuleset(Ruleset rule) {
         jdbc.update("DELETE FROM ruleset WHERE public_id = ?", rule.publicId());
     }
 

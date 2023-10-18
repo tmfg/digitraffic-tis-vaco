@@ -17,6 +17,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
@@ -33,15 +34,15 @@ public class RowMappers {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RowMappers.class);
 
-    public static final RowMapper<ImmutableRuleset> RULESET = (rs, rowNum) -> ImmutableRuleset.builder()
-            .id(rs.getLong("id"))
-            .publicId(rs.getString("public_id"))
-            .ownerId(rs.getLong("owner_id"))
-            .identifyingName(rs.getString("identifying_name"))
-            .description(rs.getString("description"))
-            .category(Category.forField(rs.getString("category")))
-            .type(Type.forField(rs.getString("type")))
-            .build();
+    public static final RowMapper<Ruleset> RULESET = (rs, rowNum) -> ImmutableRuleset.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .ownerId(rs.getLong("owner_id"))
+        .identifyingName(rs.getString("identifying_name"))
+        .description(rs.getString("description"))
+        .category(Category.forField(rs.getString("category")))
+        .type(Type.forField(rs.getString("type")))
+        .build();
 
     public static final RowMapper<ImmutableTask> TASK = (rs, rowNum) -> ImmutableTask.builder()
             .id(rs.getLong("id"))

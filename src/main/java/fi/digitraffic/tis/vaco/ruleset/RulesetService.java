@@ -1,12 +1,14 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -34,5 +36,25 @@ public class RulesetService {
         logger.info("Selected {} rulesets for {} are {}", type, businessId, Streams.collect(rulesets, Ruleset::identifyingName));
 
         return rulesets;
+    }
+
+    public Ruleset createRuleset(ImmutableRuleset ruleset) {
+        return rulesetRepository.createRuleset(ruleset);
+    }
+
+    public void deleteRuleset(Ruleset ruleset) {
+        rulesetRepository.deleteRuleset(ruleset);
+    }
+
+    public Optional<Ruleset> findByName(String rulesetName) {
+        return rulesetRepository.findByName(rulesetName);
+    }
+
+    public Set<Ruleset> findRulesets(String businessId, Type type) {
+        return rulesetRepository.findRulesets(businessId, type);
+    }
+
+    public Set<Ruleset> findRulesets(String businessId, Type type, Set<String> rulesetNames) {
+        return rulesetRepository.findRulesets(businessId, type, rulesetNames);
     }
 }
