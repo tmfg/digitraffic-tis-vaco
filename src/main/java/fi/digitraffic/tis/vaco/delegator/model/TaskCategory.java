@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.delegator.model;
 
-@Deprecated
 public enum TaskCategory {
 
     VALIDATION(1),
