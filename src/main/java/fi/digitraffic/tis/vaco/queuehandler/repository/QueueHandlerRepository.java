@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.exceptions.PersistenceException;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.db.RowMappers;
@@ -33,21 +34,18 @@ public class QueueHandlerRepository {
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
     private final TaskService taskService;
-    private final ConversionService conversionService;
     private final PackagesService packagesService;
 
     public QueueHandlerRepository(JdbcTemplate jdbc,
                                   ObjectMapper objectMapper,
                                   ErrorHandlerRepository errorHandlerRepository,
                                   TaskService taskService,
-                                  ConversionService conversionService,
                                   PackagesService packagesService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
         this.taskService = Objects.requireNonNull(taskService);
-        this.conversionService = Objects.requireNonNull(conversionService);
-        this.packagesService = packagesService;
+        this.packagesService = Objects.requireNonNull(packagesService);
     }
 
     @Transactional
@@ -72,8 +70,8 @@ public class QueueHandlerRepository {
 
     /**
      * Resolves which tasks should be executed for given entry based on requested validations and configurations.
-     * @param entry
-     * @return
+     * @param entry Persisted entry root to which the tasks should be created for
+     * @return List of created tasks
      */
     private List<ImmutableTask> createTasks(ImmutableEntry entry) {
         List<ImmutableTask> allTasks = new ArrayList<>();
@@ -93,8 +91,9 @@ public class QueueHandlerRepository {
         rules.addAll(entry.conversions().stream().map(ConversionInput::name).toList());
         allTasks.addAll(extracted(rules, entry, TaskCategory.RULE));
 
-        // TODO: check return value
-        taskService.createTasks(allTasks);
+        if (!taskService.createTasks(allTasks)) {
+            throw new PersistenceException("Failed to create all tasks for entry " + entry);
+        }
 
         return taskService.findTasks(entry);
     }
