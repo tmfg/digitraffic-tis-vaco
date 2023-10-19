@@ -5,8 +5,10 @@ name: Setup project tools and dependencies
 
 inputs:
   deploy-key:
+    description: SSH Deploy Key for checking out dependent repositories
     required: true
-    type: string
+
+description: Common steps for checking out project dependents and tools with caching
 
 runs:
   using: composite
@@ -25,7 +27,7 @@ runs:
       with:
         java-version-file: './digitraffic-tis-vaco/.java-version'
         distribution: 'temurin'
-    
+
     - name: Cache Maven packages
       uses: actions/cache@v3
       with:

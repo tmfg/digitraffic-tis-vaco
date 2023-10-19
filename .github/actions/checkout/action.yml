@@ -7,23 +7,25 @@ name: Conditional Checkout
 
 inputs:
   fetch-depth:
-    default: 1
+    default: '1'
+    description: Fetch depth for the dependent repository, defaults to shallow fetching
     required: false
-    type: number
   repository:
+    description: The dependent repository to checkout
     required: true
-    type: string
   path:
     default: ''
+    description: Path to checkout the dependent repository to
     required: true
-    type: string
   deploy-key:
     required: true
-    type: string
+    description: SSH Deploy Key for checking out the dependent repository
   default-branch:
     default: 'main'
     required: false
-    type: string
+    description: Default branch of the dependent repository to checkout
+
+description: Checkout another potentially private repository using SSH Deploy Keys
 
 runs:
   using: composite
