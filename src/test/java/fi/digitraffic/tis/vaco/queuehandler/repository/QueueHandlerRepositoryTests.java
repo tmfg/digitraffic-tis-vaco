@@ -3,9 +3,9 @@ package fi.digitraffic.tis.vaco.queuehandler.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -45,7 +45,7 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
-        entry = ImmutableEntry.of("gtfs", "www.example.fi", TestConstants.FINTRAFFIC_BUSINESS_ID);
+        entry = ImmutableEntry.of("gtfs", "www.example.fi", Constants.FINTRAFFIC_BUSINESS_ID);
         metadata = objectMapper.readTree("{\"metadata\":true}");
         validation = ImmutableValidationInput.of("ananas");
         conversion = ImmutableConversionInput.of("bananas");
@@ -76,7 +76,7 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
             () -> assertThat(result.etag(), equalTo("etag")),
             () -> assertThat(result.metadata(), equalTo(metadata)),
             () -> assertThat(result.url(), equalTo("www.example.fi")),
-            () -> assertThat(result.businessId(), equalTo(TestConstants.FINTRAFFIC_BUSINESS_ID)),
+            () -> assertThat(result.businessId(), equalTo(Constants.FINTRAFFIC_BUSINESS_ID)),
             () -> assertThat(Streams.collect(result.validations(), ValidationInput::name), equalTo(List.of(validation.name()))),
             () -> assertThat(Streams.collect(result.conversions(), ConversionInput::name), equalTo(List.of(conversion.name())))
         );
