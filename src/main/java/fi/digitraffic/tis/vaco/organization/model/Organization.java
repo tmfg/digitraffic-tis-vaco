@@ -16,11 +16,6 @@ public interface Organization {
     @JsonView(DataVisibility.Internal.class)
     Long id();
 
-    // TODO: think about removing publicId
-    @Nullable
-    @Value.Parameter
-    String publicId();
-
     @Value.Parameter
     String businessId();
 

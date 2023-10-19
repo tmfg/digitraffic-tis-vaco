@@ -21,7 +21,7 @@ public class OrganizationRepository {
         return jdbc.queryForObject("""
                 INSERT INTO organization(business_id, name)
                      VALUES (?, ?)
-                  RETURNING id, public_id, business_id, name
+                  RETURNING id, business_id, name
                 """,
                 RowMappers.ORGANIZATION,
                 organization.businessId(), organization.name());

@@ -65,7 +65,6 @@ public class RowMappers {
     public static final Function<String, RowMapper<ImmutableOrganization>> ALIASED_ORGANIZATION = (alias) ->
         (rs, rowNum) -> ImmutableOrganization.builder()
             .id(rs.getLong(alias + "id"))
-            .publicId(rs.getString(alias + "public_id"))
             .businessId(rs.getString(alias + "business_id"))
             .name(rs.getString(alias + "name"))
             .build();

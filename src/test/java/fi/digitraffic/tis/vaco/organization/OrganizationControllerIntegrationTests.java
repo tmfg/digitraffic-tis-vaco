@@ -13,7 +13,6 @@ import java.util.UUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -33,7 +32,6 @@ public class OrganizationControllerIntegrationTests extends SpringBootIntegratio
         Resource<ImmutableOrganization> createdOrganization = apiResponse(response, organizationResourceType);
 
         assertAll("Base fields are stored properly",
-            () -> assertThat(createdOrganization.data().publicId(), is(notNullValue())),
             () -> assertThat(createdOrganization.data().businessId(), equalTo(organization.businessId())),
             () -> assertThat(createdOrganization.data().name(), equalTo(organization.name())));
         assertThat("API endpoints should not expose internal IDs.", createdOrganization.data().id(), is(nullValue()));
@@ -73,7 +71,6 @@ public class OrganizationControllerIntegrationTests extends SpringBootIntegratio
 
         Resource<ImmutableOrganization> fetchedOrganization = apiResponse(response, organizationResourceType);
         assertAll("Base fields are fetched properly",
-            () -> assertThat(fetchedOrganization.data().publicId(), is(notNullValue())),
             () -> assertThat(fetchedOrganization.data().businessId(), equalTo(organization.businessId())),
             () -> assertThat(fetchedOrganization.data().name(), equalTo(organization.name())));
         assertThat("API endpoints should not expose internal IDs.", fetchedOrganization.data().id(), is(nullValue()));

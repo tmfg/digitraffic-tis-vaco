@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
@@ -59,7 +60,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
             .build();
     }
 
-    private ImmutableEntry createQueueEntryForTesting() {
+    private Entry createQueueEntryForTesting() {
         return queueHandlerRepository.create(TestObjects.anEntry("gtfs").build());
     }
 

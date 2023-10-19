@@ -4,13 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.conversion.ConversionService;
+import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
-import fi.digitraffic.tis.vaco.InvalidMappingException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,15 +18,9 @@ import java.util.Objects;
 public class EntryRequestMapper {
 
     private final ObjectMapper objectMapper;
-    private final ValidationService validationService;
-    private final ConversionService conversionService;
 
-    public EntryRequestMapper(ObjectMapper objectMapper,
-                              ValidationService validationService,
-                              ConversionService conversionService) {
+    public EntryRequestMapper(ObjectMapper objectMapper) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.validationService = Objects.requireNonNull(validationService);
-        this.conversionService = Objects.requireNonNull(conversionService);
     }
 
     public ImmutableEntry toEntry(ImmutableEntryRequest entryRequest) {

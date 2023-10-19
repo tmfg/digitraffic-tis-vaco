@@ -34,11 +34,9 @@ public class CooperationRepository {
         return jdbc.query("""
                 SELECT c.type AS type,
                        o_a.id as partner_a_id,
-                       o_a.public_id as partner_a_public_id,
                        o_a.business_id as partner_a_business_id,
                        o_a.name as partner_a_name,
                        o_b.id as partner_b_id,
-                       o_b.public_id as partner_b_public_id,
                        o_b.business_id as partner_b_business_id,
                        o_b.name as partner_b_name
                   FROM cooperation c

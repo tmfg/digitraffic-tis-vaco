@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void roundtrippingPackageEntityWorks() {
         ImmutableTask task = TestObjects.aTask().build();
-        ImmutableEntry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
+        Entry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
         ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
         Optional<Package> loaded = packagesService.findPackage(entry, "FAKE_RULE");
 
@@ -48,7 +48,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void providesHelperForDownloadingReferencedFile() {
         ImmutableTask task = TestObjects.aTask().build();
-        ImmutableEntry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
+        Entry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
         ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
         Optional<Path> loaded = packagesService.downloadPackage(entry, "FAKE_RULE");
 

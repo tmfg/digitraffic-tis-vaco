@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.validation;
 
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
@@ -48,7 +49,7 @@ class ValidationQueueSqsListenerTests {
     void setUp() {
         listener = new ValidationQueueSqsListener(messagingService, validationService, queueHandlerRepository);
 
-        entry = ImmutableEntry.of(TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, TestConstants.FINTRAFFIC_BUSINESS_ID);
+        entry = ImmutableEntry.of(TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, Constants.FINTRAFFIC_BUSINESS_ID);
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
         message = ImmutableValidationJobMessage.builder().entry(entry).retryStatistics(retryStatistics).build();
     }

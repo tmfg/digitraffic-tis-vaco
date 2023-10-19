@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -26,7 +27,7 @@ public class TestObjects {
             .format(format)
             .url("https://testfile")
             .publicId(NanoIdUtils.randomNanoId())
-            .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
+            .businessId(Constants.FINTRAFFIC_BUSINESS_ID);
     }
 
     public static ImmutableEntryRequest.Builder aValidationEntryRequest() {
@@ -34,7 +35,7 @@ public class TestObjects {
             .format("gtfs")
             .url("https://example.fi")
             .etag("etag")
-            .businessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
+            .businessId(Constants.FINTRAFFIC_BUSINESS_ID)
             .validations(List.of());
     }
 

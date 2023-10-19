@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
-import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
@@ -46,7 +46,7 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        fintraffic = organizationRepository.findByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID).get();
+        fintraffic = organizationRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get();
         parentOrg = organizationRepository.create(TestObjects.anOrganization().build());
         currentOrg = organizationRepository.create(TestObjects.anOrganization().build());
         otherOrg = organizationRepository.create(TestObjects.anOrganization().build());
