@@ -1,8 +1,8 @@
-package fi.digitraffic.tis.utilities;
+package fi.digitraffic.tis.exceptions;
 
-import fi.digitraffic.tis.vaco.VacoException;
+import fi.digitraffic.tis.TisException;
 
-public class UtilitiesException extends VacoException {
+public class UtilitiesException extends TisException {
     public UtilitiesException(String message) {
         super(message);
     }

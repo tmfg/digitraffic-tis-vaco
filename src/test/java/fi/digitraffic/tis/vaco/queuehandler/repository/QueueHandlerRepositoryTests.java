@@ -27,7 +27,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
+class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private QueueHandlerRepository repository;

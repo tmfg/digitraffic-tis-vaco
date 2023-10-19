@@ -23,12 +23,12 @@ public class CustomExceptionHandler {
         List<String> errors =
             Streams.map(
                 ex.getBindingResult().getFieldErrors(),
-                (e) -> "Field '%s' %s (was %s)".formatted(e.getField(), e.getDefaultMessage(), e.getRejectedValue()))
+                e -> "Field '%s' %s (was %s)".formatted(e.getField(), e.getDefaultMessage(), e.getRejectedValue()))
             .toList();
         errors.addAll(
             Streams.map(
                 ex.getBindingResult().getGlobalErrors(),
-                (e) -> "Object '%s' %s (%s %s)".formatted(e.getObjectName(), e.getDefaultMessage(), e.getCode(), e.getArguments()))
+                e -> "Object '%s' %s (%s %s)".formatted(e.getObjectName(), e.getDefaultMessage(), e.getCode(), e.getArguments()))
             .toList());
         return new ResponseEntity<>(createBody(errors), HttpStatus.BAD_REQUEST);
     }

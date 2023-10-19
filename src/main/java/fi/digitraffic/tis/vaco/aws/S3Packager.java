@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.aws;
 
+import fi.digitraffic.tis.aws.s3.AwsS3Exception;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
@@ -101,7 +102,7 @@ public class S3Packager {
                 s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3FullTargetPath, localTargetFile).join();
                 logger.info("Successfully completed packaging s3://{}/{} via {} into {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, localArtifactTemp, s3FullTargetPath);
             } catch (IOException e) {
-                throw new RuntimeException(String.format("Encountered IOException while packaging %s into %s", s3SourcePath, zipFileName), e);
+                throw new AwsS3Exception(String.format("Encountered IOException while packaging %s into %s", s3SourcePath, zipFileName), e);
             } finally {
                if (Files.exists(localArtifactTemp)) {
                    try {

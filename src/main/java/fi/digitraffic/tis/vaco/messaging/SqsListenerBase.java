@@ -27,12 +27,7 @@ public abstract class SqsListenerBase<M extends Retryable> {
                           Consumer<M> outOfRetriesHandler) {
         try {
             if (shouldTry(messageIdentifier, message.retryStatistics())) {
-                try {
-                    runTask(message);
-                } catch (VacoException e) {
-                    logger.warn("Unhandled exception during message processing, requeuing message for retrying", e);
-                    requeueMessage(message);
-                }
+                runGuarded(message);
             } else {
                 outOfRetriesHandler.accept(message);
                 logger.warn("Job for entry {} ran out of retries, skipping processing", messageIdentifier);
@@ -41,6 +36,15 @@ public abstract class SqsListenerBase<M extends Retryable> {
             logger.error("Unexpected fault caught during message bootstrapping!", e);
         } finally {
             acknowledgement.acknowledge();
+        }
+    }
+
+    private void runGuarded(M message) {
+        try {
+            runTask(message);
+        } catch (VacoException e) {
+            logger.warn("Unhandled exception during message processing, requeuing message for retrying", e);
+            requeueMessage(message);
         }
     }
 

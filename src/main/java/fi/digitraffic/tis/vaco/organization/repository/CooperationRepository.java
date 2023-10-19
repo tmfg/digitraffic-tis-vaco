@@ -18,7 +18,7 @@ public class CooperationRepository {
     }
 
     public ImmutableCooperation create(ImmutableCooperation cooperation) {
-        int success = jdbc.update("""
+        jdbc.update("""
                 INSERT INTO cooperation(type, partner_a_id, partner_b_id)
                      VALUES (?::cooperation_type, ?, ?)
                 """,

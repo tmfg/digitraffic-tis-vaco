@@ -19,7 +19,7 @@ public class JwtTokenValidator implements OAuth2TokenValidator<Jwt> {
 
     @Override
     public OAuth2TokenValidatorResult validate(Jwt token) {
-        if (validator.apply(token)) {
+        if (Boolean.TRUE.equals(validator.apply(token))) {
             return OAuth2TokenValidatorResult.success();
         } else {
             return OAuth2TokenValidatorResult.failure(errorOnFailure);

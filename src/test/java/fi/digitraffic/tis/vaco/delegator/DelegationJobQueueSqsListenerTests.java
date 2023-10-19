@@ -28,7 +28,6 @@ import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -73,8 +72,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     void runsValidationByDefault() {
         listener.listen(jobMessage, acknowledgement);
 
-        verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.START));
-        verify(messagingService).updateJobProcessingStatus(eq(jobMessage), eq(ProcessingState.UPDATE));
+        verify(messagingService).updateJobProcessingStatus(jobMessage, ProcessingState.START);
+        verify(messagingService).updateJobProcessingStatus(jobMessage, ProcessingState.UPDATE);
 
         // no tasks returned...
         verify(taskRepository).findTasks(jobMessage.entry().id());
@@ -94,7 +93,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
         listener.listen(tooManyRetries, acknowledgement);
 
-        verify(messagingService).updateJobProcessingStatus(eq(tooManyRetries), eq(ProcessingState.COMPLETE));
+        verify(messagingService).updateJobProcessingStatus(tooManyRetries, ProcessingState.COMPLETE);
     }
 
     @Test
@@ -105,7 +104,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         listener.listen(alreadyStarted, acknowledgement);
 
         // only UPDATE, no START
-        verify(messagingService).updateJobProcessingStatus(eq(alreadyStarted), eq(ProcessingState.UPDATE));
+        verify(messagingService).updateJobProcessingStatus(alreadyStarted, ProcessingState.UPDATE);
 
         // no tasks returned...
         verify(taskRepository).findTasks(alreadyStarted.entry().id());
@@ -119,6 +118,6 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
             .forEach(tc ->
                 assertThat(tc,
                     equalTo(listener.asTaskCategory(
-                        ImmutableTask.of(1L, tc.name().toLowerCase() + ".testing", tc.priority)))));
+                        ImmutableTask.of(1L, tc.name().toLowerCase() + ".testing", tc.getPriority())))));
     }
 }

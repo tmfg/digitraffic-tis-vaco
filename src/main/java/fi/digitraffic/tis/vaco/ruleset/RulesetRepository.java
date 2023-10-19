@@ -161,9 +161,8 @@ public class RulesetRepository {
     }
 
     private Cache<String, Ruleset> warmup(Cache<String, Ruleset> rulesetNameCache) {
-        jdbc.query("SELECT * FROM ruleset", RowMappers.RULESET).forEach(ruleset -> {
-            rulesetNameCache.put(ruleset.identifyingName(), ruleset);
-        });
+        jdbc.query("SELECT * FROM ruleset", RowMappers.RULESET).forEach(ruleset ->
+            rulesetNameCache.put(ruleset.identifyingName(), ruleset));
         return rulesetNameCache;
     }
 

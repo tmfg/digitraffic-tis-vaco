@@ -152,8 +152,7 @@ public class ValidationService {
 
         Map<String, ValidationInput> configs = Streams.collect(entry.validations(), ValidationInput::name, Function.identity());
 
-        List<ValidationRuleJobMessage> s = validationRulesets.parallelStream()
-            .map(r -> {
+        Streams.map(validationRulesets, r -> {
                 String identifyingName = r.identifyingName();
                 Optional<ValidationInput> configuration = Optional.ofNullable(configs.get(identifyingName));
 
@@ -174,7 +173,7 @@ public class ValidationService {
                 return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
             })
             .map(CompletableFuture::join)
-            .toList();  // this is here to terminate the stream which ensures it gets evaluated properly
+            .complete();
         // everything's done at this point because of the ::join call, complete task
         taskService.trackTask(task, ProcessingState.COMPLETE);
     }

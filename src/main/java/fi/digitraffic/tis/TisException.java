@@ -7,15 +7,15 @@ package fi.digitraffic.tis;
  */
 public abstract class TisException extends RuntimeException {
 
-    public TisException(String message) {
+    protected TisException(String message) {
         super(message);
     }
 
-    public TisException(String message, Throwable cause) {
+    protected TisException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public TisException(Throwable cause) {
+    protected TisException(Throwable cause) {
         super(cause);
     }
 

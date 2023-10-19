@@ -87,7 +87,7 @@ public class RuleListenerService {
 
     private CompletableFuture<Boolean> handleErrors(ErrorMessage errorMessage) {
         return CompletableFuture.supplyAsync(() -> {
-            logger.warn("Got ErrorMessage " + errorMessage);
+            logger.warn("Got ErrorMessage {}", errorMessage);
             errorHandlerService.reportErrors(errorMessage.errors());
             return true;
         });
@@ -100,7 +100,7 @@ public class RuleListenerService {
 
     private CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {
         return CompletableFuture.supplyAsync(() -> {
-            logger.warn("Got ResultMessage " + resultMessage);
+            logger.warn("Got ResultMessage {}", resultMessage);
             return switch (resultMessage.ruleName()) {
                 case RuleName.NETEX_ENTUR_1_0_1 -> processResultFromNetexEntur101(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical400(resultMessage);
@@ -173,7 +173,7 @@ public class RuleListenerService {
 
     private <M, R> void listen(String queueName, Class<M> cls, Function<M, CompletableFuture<R>> function) {
         try {
-            List<R> x = messagingService.readMessages(queueName)
+            List<R> ignored = messagingService.readMessages(queueName)
                 .map(m -> {
                     try {
                         logger.trace("Processing message {}", m);

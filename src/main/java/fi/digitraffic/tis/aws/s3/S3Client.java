@@ -5,7 +5,6 @@ import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
@@ -18,7 +17,6 @@ import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
-import software.amazon.awssdk.transfer.s3.model.CopyRequest;
 import software.amazon.awssdk.transfer.s3.model.DownloadDirectoryRequest;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.FileDownload;
@@ -127,13 +125,6 @@ public class S3Client {
     public Long downloadFile(String bucketName,
                              S3Path key,
                              Path downloadTargetPath) {
-        return downloadFile(bucketName, key.toString(), downloadTargetPath);
-    }
-
-    @Deprecated
-    public Long downloadFile(String bucketName,
-                             String key,
-                             Path downloadTargetPath) {
         try {
             Files.createDirectories(downloadTargetPath.getParent());
         } catch (IOException e) {
@@ -142,7 +133,7 @@ public class S3Client {
 
         DownloadFileRequest downloadFileRequest =
             DownloadFileRequest.builder()
-                .getObjectRequest(b -> b.bucket(bucketName).key(key))
+                .getObjectRequest(b -> b.bucket(bucketName).key(key.toString()))
                 .addTransferListener(LoggingTransferListener.create())
                 .destination(downloadTargetPath)
                 .build();
@@ -166,14 +157,12 @@ public class S3Client {
     public CompletableFuture<CompletedCopy> copyFile(String bucket, S3Path file, S3Path targetDirectory) {
         String targetPath = targetDirectory.resolve(file.getLast()).toString();
         logger.info("Copying object in path s3://{}/{} to s3://{}/{}", bucket, file, bucket, targetPath);
-        return s3TransferManager.copy(CopyRequest.builder()
-                .copyObjectRequest(CopyObjectRequest.builder()
-                    .sourceBucket(bucket)
-                    .sourceKey(file.toString())
-                    .destinationBucket(bucket)
-                    .destinationKey(targetPath)
-                    .build())
-                .build())
+        return s3TransferManager.copy(build ->
+                build.copyObjectRequest(copyObject ->
+                    copyObject.sourceBucket(bucket)
+                        .sourceKey(file.toString())
+                        .destinationBucket(bucket)
+                        .destinationKey(targetPath)))
             .completionFuture();
     }
 }

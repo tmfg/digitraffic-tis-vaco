@@ -42,7 +42,7 @@ public class HttpClient {
 
             return builder.build();
         } catch (URISyntaxException e) {
-            throw new HttpClientUtilityException(String.format("Provided URI %s is invalid", url), e);
+            throw new HttpClientException(String.format("Provided URI %s is invalid", url), e);
         }
     }
 }

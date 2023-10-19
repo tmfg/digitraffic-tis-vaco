@@ -147,12 +147,10 @@ public class RowMappers {
     private static Class<?> findSubtypeFromAnnotation(String name) {
         JsonSubTypes definedSubTypes = RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class);
 
-        Class<?> cc = Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
+        return Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
             .map(JsonSubTypes.Type::value)
             .findFirst()
             .orElse(null);
-
-        return cc;
     }
 
     private static <I,O> O nullable(I input, Function<I, O> i2o) {

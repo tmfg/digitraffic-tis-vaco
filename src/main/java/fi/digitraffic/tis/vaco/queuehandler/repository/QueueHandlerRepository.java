@@ -99,7 +99,7 @@ public class QueueHandlerRepository {
     }
 
     private static List<ImmutableTask> extracted(List<String> validationTasks, ImmutableEntry entry, TaskCategory category) {
-        return Streams.mapIndexed(validationTasks, (i, t) -> ImmutableTask.of(entry.id(), t, category.priority * 100 + i))
+        return Streams.mapIndexed(validationTasks, (i, t) -> ImmutableTask.of(entry.id(), t, category.getPriority() * 100 + i))
             .toList();
     }
 

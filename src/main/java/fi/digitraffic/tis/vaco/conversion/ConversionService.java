@@ -17,8 +17,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,7 +25,7 @@ import java.util.Set;
 
 @Service
 public class ConversionService {
-    public static final String PHASE = TaskCategory.CONVERSION.name;
+    public static final String PHASE = TaskCategory.CONVERSION.getName();
     public static final String RULESET_SELECTION_SUBTASK = "conversion.rulesets";
     public static final String EXECUTION_SUBTASK = "conversion.execute";
     public static final String OUTPUT_VALIDATION_SUBTASK = "conversion.outputvalidation";
@@ -36,8 +34,6 @@ public class ConversionService {
         RULESET_SELECTION_SUBTASK,
         EXECUTION_SUBTASK,
         OUTPUT_VALIDATION_SUBTASK);
-
-    Logger logger = LoggerFactory.getLogger(getClass());
 
     private final TaskService taskService;
     private final RulesetService rulesetService;
@@ -56,7 +52,7 @@ public class ConversionService {
         Entry entry = jobDescription.entry();
         TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.entry());
 
-        TaskResult<List<ConversionReport>> conversionReports = executeRules(jobDescription.entry(), conversionRulesets.result());
+        executeRules(jobDescription.entry(), conversionRulesets.result());
 
         String packageFileName = PHASE + "_results";
         s3Packager.producePackage(
@@ -75,7 +71,7 @@ public class ConversionService {
             Type.CONVERSION_SYNTAX,
             Streams.map(entry.validations(), ValidationInput::name).toSet());
 
-        task = taskService.trackTask(task, ProcessingState.COMPLETE);
+        taskService.trackTask(task, ProcessingState.COMPLETE);
 
         return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
     }
