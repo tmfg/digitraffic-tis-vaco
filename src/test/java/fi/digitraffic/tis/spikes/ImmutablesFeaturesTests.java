@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
-public class ImmutablesFeaturesTests {
+class ImmutablesFeaturesTests {
 
     /**
      * @see <a href="https://stackoverflow.com/questions/2781771/how-can-i-validate-two-or-more-fields-in-combination">StackOverflow.com: How can I validate two or more fields in combination?</a>

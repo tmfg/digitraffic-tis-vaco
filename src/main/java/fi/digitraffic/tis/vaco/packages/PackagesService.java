@@ -4,9 +4,9 @@ import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
-import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -83,7 +83,7 @@ public class PackagesService {
 
             s3Client.downloadFile(
                 vacoProperties.s3ProcessingBucket(),
-                p.path(),
+                S3Path.of(p.path()),  // reuse local path as S3 path key
                 targetPackagePath);
             return targetPackagePath;
         });

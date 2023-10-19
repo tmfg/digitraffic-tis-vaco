@@ -51,7 +51,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-public class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
+class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
 
     private Entry entry;
 

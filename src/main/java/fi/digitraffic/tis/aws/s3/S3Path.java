@@ -16,7 +16,7 @@ public abstract class S3Path {
 
     public static S3Path of(String pathLikeString) {
         if (pathLikeString.contains("s3://")) {
-            throw new RuntimeException("S3Path should not contain s3://! Given path was " + pathLikeString);
+            throw new AwsS3Exception("S3Path should not contain s3://! Given path was " + pathLikeString);
         }
         pathLikeString = pathLikeString.trim();
         if (pathLikeString.startsWith("/")) {

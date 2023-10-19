@@ -56,8 +56,9 @@ class S3ClientTests extends AwsIntegrationTestBase {
         Path inputContent = writeContent(inputs.resolve("hello.txt"), content);
         Path outputContent = outputs.resolve("hello.txt");
 
-        s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("hello.txt"), inputContent).join();
-        Long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), "hello.txt", outputContent);
+        S3Path path = ImmutableS3Path.of("hello.txt");
+        s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), path, inputContent).join();
+        Long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), path, outputContent);
 
         assertThat(contentLength.intValue(), equalTo(content.length()));
         assertThat(Files.readString(outputContent), equalTo(content));

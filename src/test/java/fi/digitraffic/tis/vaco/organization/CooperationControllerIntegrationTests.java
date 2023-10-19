@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBase {
+class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBase {
     TypeReference<Resource<ImmutableCooperation>> cooperationRequestType = new TypeReference<>() {};
     ImmutableOrganization organizationA = TestObjects.anOrganization().build();
     ImmutableOrganization organizationB = TestObjects.anOrganization().build();

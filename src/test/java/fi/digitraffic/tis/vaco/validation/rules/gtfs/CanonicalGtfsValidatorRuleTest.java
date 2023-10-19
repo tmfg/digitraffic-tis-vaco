@@ -8,8 +8,8 @@ import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.Aws;
-import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
@@ -50,7 +50,6 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -145,17 +144,17 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
         verify(rulesetRepository, times(51)).findByName(RuleName.GTFS_CANONICAL_4_0_0);
         verify(packagesService).createPackage(
-            eq(entry),
-            eq(task),
-            eq(RuleName.GTFS_CANONICAL_4_0_0),
-            eq(s3Output),
-            eq("content.zip"));
+            entry,
+            task,
+            RuleName.GTFS_CANONICAL_4_0_0,
+            s3Output,
+            "content.zip");
     }
 
     private void whenTaskStateChangesAreTracked() {
-        when(taskService.findTask(eq(entry.id()), eq(RuleName.GTFS_CANONICAL_4_0_0))).thenReturn(task);
-        when(taskService.trackTask(eq(task), eq(ProcessingState.START))).thenReturn(task);
-        when(taskService.trackTask(eq(task), eq(ProcessingState.COMPLETE))).thenReturn(task);
+        when(taskService.findTask(entry.id(), RuleName.GTFS_CANONICAL_4_0_0)).thenReturn(task);
+        when(taskService.trackTask(task, ProcessingState.START)).thenReturn(task);
+        when(taskService.trackTask(task, ProcessingState.COMPLETE)).thenReturn(task);
     }
 
     @Test

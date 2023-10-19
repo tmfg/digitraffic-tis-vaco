@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.utilities;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -32,7 +33,9 @@ import java.util.stream.StreamSupport;
  *
  * {@link Chain} contains further wrapped stream operations.
  */
-public class Streams {
+public final class Streams {
+
+    private Streams() {}
 
     /**
      * Functionally equivalent to {@link Stream#map(Function)}. Shorthand for
@@ -229,7 +232,7 @@ public class Streams {
             }
 
         public List<R> toList() {
-            return stream.collect(Collectors.toList());
+            return stream.collect(Collectors.toCollection(ArrayList::new));
         }
 
         public Chain<R> filter(Predicate<? super R> predicate) {

@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.errorhandling;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +16,9 @@ public class ErrorHandlerRepository {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbc;
 
-    public ErrorHandlerRepository(ObjectMapper objectMapper,
-                                  JdbcTemplate jdbc) {
-        this.objectMapper = objectMapper;
+    public ErrorHandlerRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
@@ -55,7 +51,7 @@ public class ErrorHandlerRepository {
     @Transactional
     public boolean createErrors(List<Error> errors) {
         try {
-            int[][] result = jdbc.batchUpdate("""
+            jdbc.batchUpdate("""
                 INSERT INTO error (entry_id, task_id, ruleset_id, source, message, raw)
                      VALUES ((SELECT id FROM entry WHERE public_id = ?), ?, ?, ?, ?, ?)
                   RETURNING id, public_id, entry_id, task_id, ruleset_id, source, message, raw

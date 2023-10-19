@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.aws;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Path;
 
-public class S3Artifact {
+public final class S3Artifact {
 
     static final String ENTRY_ROOT = "entries/%s";
 
@@ -25,8 +25,10 @@ public class S3Artifact {
 
     static final String ERROR_LOGS = ENTRY_ROOT + "/logs/errors/%s";
 
+    private S3Artifact() {}
+
     public static S3Path getEntryFolderPath(String entryPublicId) {
-        return ImmutableS3Path.of(String.format(ENTRY_ROOT, entryPublicId));
+        return S3Path.of(String.format(ENTRY_ROOT, entryPublicId));
     }
 
     /**
@@ -34,7 +36,7 @@ public class S3Artifact {
      * @return
      */
     public static S3Path getOriginalEntryPath(String entryPublicId) {
-        return ImmutableS3Path.of(String.format(ORIGINAL_ENTRY, entryPublicId));
+        return S3Path.of(String.format(ORIGINAL_ENTRY, entryPublicId));
     }
 
     /**
@@ -42,7 +44,7 @@ public class S3Artifact {
      * @return
      */
     public static S3Path getMetadataPath(String entryPublicId) {
-        return ImmutableS3Path.of(String.format(METADATA, entryPublicId));
+        return S3Path.of(String.format(METADATA, entryPublicId));
     }
 
     /**
@@ -54,7 +56,7 @@ public class S3Artifact {
      */
     public static S3Path getTaskPath(String entryPublicId,
                                      String task) {
-        return ImmutableS3Path.of(String.format(TASKS_ROOT, entryPublicId, task));
+        return S3Path.of(String.format(TASKS_ROOT, entryPublicId, task));
     }
 
     /**
@@ -67,11 +69,11 @@ public class S3Artifact {
     public static S3Path getConversionTaskPath(String entryPublicId,
                                                String subTask,
                                                String artifact) {
-        return ImmutableS3Path.of(String.format(CONVERSION_TASK, entryPublicId, subTask, artifact));
+        return S3Path.of(String.format(CONVERSION_TASK, entryPublicId, subTask, artifact));
     }
 
     public static S3Path getPackagesDirectory(String entryPublicId) {
-        return ImmutableS3Path.of(String.format(PACKAGES_ROOT, entryPublicId));
+        return S3Path.of(String.format(PACKAGES_ROOT, entryPublicId));
     }
 
     /**
@@ -96,7 +98,7 @@ public class S3Artifact {
      */
     public static S3Path getErrorLogsPath(String entryPublicId,
                                           String artifact) {
-        return ImmutableS3Path.of(String.format(ERROR_LOGS, entryPublicId, artifact));
+        return S3Path.of(String.format(ERROR_LOGS, entryPublicId, artifact));
     }
 
     public static S3Path getRuleDirectory(String entryPublicId, String taskName, String ruleName) {

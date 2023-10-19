@@ -6,13 +6,20 @@ public enum TaskCategory {
     CONVERSION(2),
     RULE(3);
 
-    public final int priority;
+    private final int priority;
 
-    public final String name;
+    private final String name;
 
     TaskCategory(int priority) {
         this.priority = priority;
         this.name = this.name().toLowerCase();
     }
 
+    public int getPriority() {
+        return priority;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

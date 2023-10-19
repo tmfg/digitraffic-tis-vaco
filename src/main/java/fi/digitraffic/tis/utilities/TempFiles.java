@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.utilities;
 
+import fi.digitraffic.tis.exceptions.UtilitiesException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -14,7 +15,9 @@ import java.util.UUID;
 /**
  * Utilities for keeping track of local temporary files. Similar in spirit to {@link fi.digitraffic.tis.vaco.aws.S3Artifact}
  */
-public class TempFiles {
+public final class TempFiles {
+
+    private TempFiles() {}
 
     public static Path getPackageDirectory(VacoProperties vacoProperties, Entry entry, String packageName) {
         return tempDir(vacoProperties,

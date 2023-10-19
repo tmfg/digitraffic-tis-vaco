@@ -25,7 +25,7 @@ public class ConversionQueueSqsListener extends SqsListenerBase<ImmutableConvers
 
     @SqsListener(QueueNames.VACO_JOBS_CONVERSION)
     public void listen(ImmutableConversionJobMessage message, Acknowledgement acknowledgement) {
-        handle(message, message.entry().publicId(), acknowledgement, (ignored) -> {});
+        handle(message, message.entry().publicId(), acknowledgement, ignored -> {});
     }
 
     @Override

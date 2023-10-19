@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 /**
  * This test is meant to show how to create variable yet typed configuration class for validations.
  */
-public class JacksonSubtypingWithImmutablesTests {
+class JacksonSubtypingWithImmutablesTests {
 
     @Test
     void subtyping() throws JsonProcessingException {

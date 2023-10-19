@@ -6,7 +6,6 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
@@ -19,22 +18,15 @@ import java.time.Duration;
 @Configuration
 public class VacoConfiguration {
 
-    @Autowired
-    private S3TransferManager s3TransferManager;
-
-    @Autowired
-    private software.amazon.awssdk.services.s3.S3Client awsS3Client;
-
-    @Autowired
-    private VacoProperties vacoProperties;
-
     @Bean
     public HttpClient httpClient() {
         return new HttpClient();
     }
 
     @Bean
-    public S3Client s3ClientUtility() {
+    public S3Client s3ClientUtility(VacoProperties vacoProperties,
+                                    software.amazon.awssdk.services.s3.S3Client awsS3Client,
+                                    S3TransferManager s3TransferManager) {
         return new S3Client(vacoProperties, s3TransferManager,awsS3Client);
     }
 

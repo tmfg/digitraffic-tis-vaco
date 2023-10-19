@@ -27,7 +27,7 @@ public class TaskRepository {
     @Transactional
     public boolean createTasks(List<ImmutableTask> tasks) {
         try {
-            int[][] result = jdbc.batchUpdate("""
+            jdbc.batchUpdate("""
                 INSERT INTO task (entry_id, name, priority)
                      VALUES (?, ?, ?)
                   RETURNING id, entry_id, name, priority, created, started, updated, completed

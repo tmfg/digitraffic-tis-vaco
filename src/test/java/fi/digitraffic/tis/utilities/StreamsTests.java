@@ -9,6 +9,7 @@ import java.util.StringTokenizer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 class StreamsTests {
 
@@ -92,6 +93,7 @@ class StreamsTests {
     void providesHelperForTerminatingStreams() {
         // tarminal operations force evaluation of the stream
         // this doesn't return anything on purpose, so testing it is rather hard
-        Streams.map(List.of(1, 2, 3), i -> i * i).complete();
+
+        assertAll(() -> Streams.map(List.of(1, 2, 3), i -> i * i).complete());
     }
 }

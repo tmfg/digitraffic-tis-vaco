@@ -40,9 +40,8 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
     @SqsListener(QueueNames.VACO_JOBS)
     public void listen(ImmutableDelegationJobMessage message, Acknowledgement acknowledgement) {
-        handle(message, message.entry().publicId(), acknowledgement, (exhaustedRetries -> {
-            messagingService.updateJobProcessingStatus(exhaustedRetries, ProcessingState.COMPLETE);
-        }));
+        handle(message, message.entry().publicId(), acknowledgement, (exhaustedRetries ->
+            messagingService.updateJobProcessingStatus(exhaustedRetries, ProcessingState.COMPLETE)));
     }
 
     @Override
@@ -52,21 +51,19 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         if (taskToRun.isPresent()) {
             logger.info("Job for entry {} next task to run {}", message.entry().publicId(), taskToRun.get());
 
-            switch (taskToRun.get()) {
-                case VALIDATION -> {
-                    ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
+            TaskCategory taskCategory = taskToRun.get();
+            if (taskCategory == TaskCategory.VALIDATION) {
+                ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
                         .entry(message.entry())
                         .retryStatistics(ImmutableRetryStatistics.of(5))
                         .build();
-                    messagingService.submitValidationJob(validationJob);
-                }
-                case CONVERSION -> {
-                    ImmutableConversionJobMessage conversionJob = ImmutableConversionJobMessage.builder()
+                messagingService.submitValidationJob(validationJob);
+            } else if (taskCategory == TaskCategory.CONVERSION) {
+                ImmutableConversionJobMessage conversionJob = ImmutableConversionJobMessage.builder()
                         .entry(message.entry())
                         .retryStatistics(ImmutableRetryStatistics.of(5))
                         .build();
-                    messagingService.submitConversionJob(conversionJob);
-                }
+                messagingService.submitConversionJob(conversionJob);
             }
         } else {
             messagingService.updateJobProcessingStatus(message, ProcessingState.COMPLETE);
@@ -76,10 +73,10 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     private Optional<TaskCategory> nextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
         Optional<TaskCategory> subtask = getNextSubtaskToRun(jobDescription);
 
-        if (subtask.isPresent()) {
-            if (subtask.get().equals(DEFAULT_TASK_CATEGORY) && jobDescription.entry().started() == null) {
-                messagingService.updateJobProcessingStatus(jobDescription, ProcessingState.START);
-            }
+        if (subtask.isPresent()
+            && subtask.get().equals(DEFAULT_TASK_CATEGORY)
+            && jobDescription.entry().started() == null) {
+            messagingService.updateJobProcessingStatus(jobDescription, ProcessingState.START);
         }
         messagingService.updateJobProcessingStatus(jobDescription, ProcessingState.UPDATE);
 
@@ -113,14 +110,10 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     @VisibleForTesting
     protected TaskCategory asTaskCategory(Task task) {
         String subtask = task.name().split("\\.")[0];
-        TaskCategory s = switch (subtask) {
+        return switch (subtask) {
             case "validation" -> TaskCategory.VALIDATION;
             case "conversion" -> TaskCategory.CONVERSION;
             default -> TaskCategory.RULE;  // XXX: Rules aren't actually convertable like this, so this might not be sensible
         };
-        if (s == null) {
-            logger.warn("Unmappable task '{}'! {}", subtask, task);
-        }
-        return s;
     }
 }
