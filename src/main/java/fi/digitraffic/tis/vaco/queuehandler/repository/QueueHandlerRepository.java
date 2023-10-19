@@ -16,8 +16,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -30,7 +28,7 @@ import java.util.Optional;
 
 @Repository
 public class QueueHandlerRepository {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
@@ -53,7 +51,7 @@ public class QueueHandlerRepository {
     }
 
     @Transactional
-    public ImmutableEntry create(Entry entry) {
+    public Entry create(Entry entry) {
         ImmutableEntry created = createEntry(entry);
         created = created
             .withValidations(createValidationInputs(created.id(), entry.validations()))

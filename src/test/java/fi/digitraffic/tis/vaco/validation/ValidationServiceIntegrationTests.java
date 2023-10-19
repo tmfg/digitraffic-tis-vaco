@@ -11,7 +11,7 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
@@ -94,7 +94,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
             .thenReturn(CompletableFuture.supplyAsync(() -> response));
         when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
 
-        ImmutableEntry entry = createEntryForTesting();
+        Entry entry = createEntryForTesting();
 
         validationService.downloadFile(entry);
 
@@ -121,7 +121,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
         Files.delete(redownload);
     }
 
-    private ImmutableEntry createEntryForTesting() {
+    private Entry createEntryForTesting() {
         return queueHandlerRepository.create(TestObjects.anEntry("gtfs").build());
     }
 
@@ -131,7 +131,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
             .thenReturn(CompletableFuture.supplyAsync(() -> response));
         when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
 
-        ImmutableEntry entry = createEntryForTesting();
+        Entry entry = createEntryForTesting();
         String testQueueName = createSqsQueue();
         S3Path downloadedFile = validationService.downloadFile(entry);
 

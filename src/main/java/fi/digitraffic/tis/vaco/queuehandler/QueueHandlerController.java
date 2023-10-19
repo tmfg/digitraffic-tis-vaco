@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -47,15 +48,15 @@ public class QueueHandlerController {
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<ImmutableEntry>> createQueueEntry(@Valid @RequestBody ImmutableEntryRequest entryRequest) {
-        ImmutableEntry entry = queueHandlerService.processQueueEntry(entryRequest);
+    public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody ImmutableEntryRequest entryRequest) {
+        Entry entry = queueHandlerService.processQueueEntry(entryRequest);
 
         return ResponseEntity.ok(asQueueHandlerResource(entry));
     }
 
     @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<List<Resource<ImmutableEntry>>> listEntries(
+    public ResponseEntity<List<Resource<Entry>>> listEntries(
         JwtAuthenticationToken token,
         @RequestParam String businessId,
         @RequestParam(required = false) boolean full) {
@@ -76,7 +77,7 @@ public class QueueHandlerController {
 
     @GetMapping(path = "/{publicId}")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<ImmutableEntry>> fetchEntry(@PathVariable("publicId") String publicId) {
+    public ResponseEntity<Resource<Entry>> fetchEntry(@PathVariable("publicId") String publicId) {
         Optional<ImmutableEntry> entry = queueHandlerService.getEntry(publicId);
 
         return entry
@@ -85,7 +86,7 @@ public class QueueHandlerController {
                 String.format("A ticket with public ID %s does not exist", publicId)));
     }
 
-    private static Resource<ImmutableEntry> asQueueHandlerResource(ImmutableEntry entry) {
+    private static Resource<Entry> asQueueHandlerResource(Entry entry) {
 
         Map<String, Link> links = new HashMap<>();
         links.put("self", linkToGetEntry(entry));
@@ -103,7 +104,7 @@ public class QueueHandlerController {
         return new Resource<>(entry, links);
     }
 
-    private static Link linkToGetEntry(ImmutableEntry entry) {
+    private static Link linkToGetEntry(Entry entry) {
         return new Link(
             MvcUriComponentsBuilder
                 .fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId()))

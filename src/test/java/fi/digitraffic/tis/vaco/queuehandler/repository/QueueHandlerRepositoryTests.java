@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
@@ -66,7 +67,7 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     @Test
     void createsCompleteEntries() {
-        ImmutableEntry result = repository.create(entry.withEtag("etag")
+        Entry result = repository.create(entry.withEtag("etag")
             .withMetadata(metadata)
             .withConversions(ImmutableConversionInput.of("bananas"))
             .withValidations(validation));
@@ -84,7 +85,7 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     @Test
     void entryWithoutValidationsAndConversionsGetsGeneratedValidationTasks() {
-        ImmutableEntry result = repository.create(entry);
+        Entry result = repository.create(entry);
 
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
@@ -93,7 +94,7 @@ public class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     @Test
     void entryWithConversionsGetsGeneratedValidationAndConversionTasks() {
-        ImmutableEntry result = repository.create(entry.withConversions(conversion));
+        Entry result = repository.create(entry.withConversions(conversion));
 
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),

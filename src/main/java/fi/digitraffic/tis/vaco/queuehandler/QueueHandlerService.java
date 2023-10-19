@@ -32,7 +32,7 @@ public class QueueHandlerService {
     }
 
     @Transactional
-    public ImmutableEntry processQueueEntry(ImmutableEntryRequest entryRequest) {
+    public Entry processQueueEntry(ImmutableEntryRequest entryRequest) {
         Entry converted = entryRequestMapper.toEntry(entryRequest);
         ImmutableEntry result = queueHandlerRepository.create(converted);
 
