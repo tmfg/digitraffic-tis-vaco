@@ -80,14 +80,14 @@ public class QueueHandlerService {
 
             if ("FINAP".equals(caller.asText())) {
                 String finapOperator = operatorName.asText();
-                logger.trace("New organization registration from FINAP: {} / {}", businessId, finapOperator);
+                logger.info("New organization registration from FINAP: {} / {}", businessId, finapOperator);
                 ImmutableOrganization operatorOrganization = ImmutableOrganization.of(businessId, finapOperator);
                 Optional<ImmutableOrganization> createdOrganization = organizationService.createOrganization(operatorOrganization);
 
                 createdOrganization.ifPresent(newOperator -> {
                     Optional<ImmutableOrganization> fintrafficOrg = organizationService.findByBusinessId(FINTRAFFIC_BUSINESS_ID);
                     fintrafficOrg.ifPresent(fintraffic -> {
-                        logger.trace("Registering cooperation between Fintraffic and FINAP originated operator {} / {}", businessId, finapOperator);
+                        logger.debug("Registering cooperation between Fintraffic ({}) and FINAP originated operator {} / {}", fintraffic.businessId(), businessId, finapOperator);
                         cooperationService.create(CooperationType.AUTHORITY_PROVIDER, fintraffic, newOperator);
                     });
                 });
