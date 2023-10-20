@@ -2,9 +2,11 @@ package fi.digitraffic.tis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.vaco.VacoApplication;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer.Service;
 import org.testcontainers.junit.jupiter.Container;
@@ -83,6 +86,14 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
         return mockMvc.perform(request.contentType(MediaType.APPLICATION_JSON));
     }
 
+    @NotNull
+    protected static Link toLink(JsonNode createResult, String linkName) {
+        JsonNode jsonNode = createResult.get("links").get(linkName);
+        return new Link(
+            jsonNode.get("href").textValue(),
+            RequestMethod.valueOf(jsonNode.get("method").textValue()));
+    }
+
     protected ResultActions apiCall(Link link) throws Exception {
         return apiCall(switch (link.method()) {
             case GET -> get(link.href());
@@ -97,5 +108,18 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
 
     protected <T> T apiResponse(MvcResult response, TypeReference<T> result) throws UnsupportedEncodingException, JsonProcessingException {
         return objectMapper.readValue(response.getResponse().getContentAsString(), result);
+    }
+
+    /**
+     * Raw JSON variant of {@link #apiResponse(MvcResult, TypeReference)}. Use when internal ids missing from response
+     * due to JSON visibility limits prevent deserialization to our model objects.
+     *
+     * @param response Spring Mvc rsponse
+     * @return Response body as JsonNode
+     * @throws UnsupportedEncodingException Thrown if Spring somehow forgets Java Strings are UTF-8/UCS-16
+     * @throws JsonProcessingException Thrown if response cannot be mapped to JSON
+     */
+    protected JsonNode apiResponse(MvcResult response) throws UnsupportedEncodingException, JsonProcessingException {
+        return objectMapper.readTree(response.getResponse().getContentAsString());
     }
 }

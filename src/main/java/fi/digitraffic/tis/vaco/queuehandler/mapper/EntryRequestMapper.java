@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -24,7 +24,7 @@ public class EntryRequestMapper {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public ImmutableEntry toEntry(ImmutableEntryRequest entryRequest) {
+    public ImmutableEntry toEntry(EntryRequest entryRequest) {
         if (entryRequest == null) {
             return null;
         }

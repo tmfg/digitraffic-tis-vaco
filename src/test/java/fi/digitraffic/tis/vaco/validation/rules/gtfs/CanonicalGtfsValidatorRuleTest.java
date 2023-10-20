@@ -116,7 +116,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
             packagesService,
             taskService);
         entry = TestObjects.anEntry("gtfs").build();
-        task = TestObjects.aTask().id(MOCK_TASK_ID).entryId(entry.id()).build();
+        task = TestObjects.aTask(entry).id(MOCK_TASK_ID).entryId(entry.id()).build();
     }
 
     @AfterEach

@@ -9,7 +9,7 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.service.CooperationService;
 import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -51,7 +51,7 @@ public class QueueHandlerService {
     }
 
     @Transactional
-    public Entry processQueueEntry(ImmutableEntryRequest entryRequest) {
+    public Entry processQueueEntry(EntryRequest entryRequest) {
         Entry converted = entryRequestMapper.toEntry(entryRequest);
 
         autoregisterOrganization(converted.metadata(), converted.businessId());
