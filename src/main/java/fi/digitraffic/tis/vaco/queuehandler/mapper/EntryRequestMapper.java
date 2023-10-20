@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -29,14 +30,48 @@ public class EntryRequestMapper {
         }
 
         return ImmutableEntry.builder()
-            .format(entryRequest.getFormat())
-            .url(entryRequest.getUrl())
-            .businessId(entryRequest.getBusinessId())
-            .etag(entryRequest.getEtag())
+            .format(safeTrim(entryRequest.getFormat()))
+            .url(safeTrim(entryRequest.getUrl()))
+            .businessId(safeTrim(entryRequest.getBusinessId()))
+            .etag(strip("\"", safeTrim(entryRequest.getEtag()), "\""))
             .metadata(entryRequest.getMetadata())
             .validations(mapValidations(entryRequest.getValidations()))
             .conversions(mapConversions(entryRequest.getConversions()))
             .build();
+    }
+
+    /**
+     * Trim given string, avoiding nulls and BOMs.
+     * @param s String to trim
+     * @return Trimmed string or null if original string was null to begin with
+     * @see Strings#stripBOM(String)
+     */
+    private static String safeTrim(String s) {
+        if (s == null) {
+            return null;
+        }
+        return Strings.stripBOM(s).trim();
+    }
+
+    /**
+     * Strip given start and end from content string if present.
+     *
+     * @param prefix Prefix to remove
+     * @param content Unaltered content
+     * @param suffix Suffix to remove
+     * @return stripped content or null if content was null to begin with
+     */
+    private static String strip(String prefix, String content, String suffix) {
+        if (content == null) {
+            return null;
+        }
+        if (content.startsWith(prefix)) {
+            content = content.substring(prefix.length());
+        }
+        if (content.endsWith(suffix)) {
+            content = content.substring(0, content.length() - suffix.length());
+        }
+        return content;
     }
 
     private Iterable<ValidationInput> mapValidations(List<JsonNode> validations) {
