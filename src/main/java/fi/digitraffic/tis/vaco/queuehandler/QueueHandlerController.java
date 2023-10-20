@@ -7,7 +7,7 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
@@ -47,7 +47,7 @@ public class QueueHandlerController {
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody ImmutableEntryRequest entryRequest) {
+    public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody EntryRequest entryRequest) {
         Entry entry = queueHandlerService.processQueueEntry(entryRequest);
 
         return ResponseEntity.ok(asQueueHandlerResource(entry));

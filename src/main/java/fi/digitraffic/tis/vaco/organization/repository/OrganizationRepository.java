@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.organization.repository;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.model.Organization;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -17,7 +17,7 @@ public class OrganizationRepository {
         this.jdbc = jdbc;
     }
 
-    public ImmutableOrganization create(ImmutableOrganization organization) {
+    public Organization create(Organization organization) {
         return jdbc.queryForObject("""
                 INSERT INTO organization(business_id, name)
                      VALUES (?, ?)
@@ -27,7 +27,7 @@ public class OrganizationRepository {
                 organization.businessId(), organization.name());
     }
 
-    public Optional<ImmutableOrganization> findByBusinessId(String businessId) {
+    public Optional<Organization> findByBusinessId(String businessId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                     SELECT *

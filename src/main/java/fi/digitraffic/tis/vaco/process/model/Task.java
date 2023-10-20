@@ -17,7 +17,6 @@ public interface Task {
     @JsonView(DataVisibility.Internal.class)
     Long id();
 
-    @Nullable  // needs to be here for the Mapstruct automated mapping to work
     @JsonView(DataVisibility.Internal.class)
     @Value.Parameter
     Long entryId();

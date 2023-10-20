@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class OrganizationControllerIntegrationTests extends SpringBootIntegrationTestBase {
+class OrganizationControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
     TypeReference<Resource<ImmutableOrganization>> organizationResourceType = new TypeReference<>() {};
 

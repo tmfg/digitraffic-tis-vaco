@@ -6,9 +6,10 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.service.CooperationService;
 import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -50,7 +51,7 @@ public class QueueHandlerService {
     }
 
     @Transactional
-    public Entry processQueueEntry(ImmutableEntryRequest entryRequest) {
+    public Entry processQueueEntry(EntryRequest entryRequest) {
         Entry converted = entryRequestMapper.toEntry(entryRequest);
 
         autoregisterOrganization(converted.metadata(), converted.businessId());
@@ -78,20 +79,26 @@ public class QueueHandlerService {
             JsonNode caller = metadata.get("caller");
             JsonNode operatorName = metadata.get("operator-name");
 
-            if ("FINAP".equals(caller.asText())) {
+            String callerName = caller.asText();
+            if ("FINAP".equals(callerName)) {
                 String finapOperator = operatorName.asText();
-                logger.info("New organization registration from FINAP: {} / {}", businessId, finapOperator);
                 ImmutableOrganization operatorOrganization = ImmutableOrganization.of(businessId, finapOperator);
-                Optional<ImmutableOrganization> createdOrganization = organizationService.createOrganization(operatorOrganization);
+                Optional<Organization> createdOrganization = organizationService.createOrganization(operatorOrganization);
 
                 createdOrganization.ifPresent(newOperator -> {
-                    Optional<ImmutableOrganization> fintrafficOrg = organizationService.findByBusinessId(FINTRAFFIC_BUSINESS_ID);
+                    logger.info("New organization registration from FINAP: {} / {}", businessId, finapOperator);
+
+                    Optional<Organization> fintrafficOrg = organizationService.findByBusinessId(FINTRAFFIC_BUSINESS_ID);
                     fintrafficOrg.ifPresent(fintraffic -> {
                         logger.debug("Registering cooperation between Fintraffic ({}) and FINAP originated operator {} / {}", fintraffic.businessId(), businessId, finapOperator);
                         cooperationService.create(CooperationType.AUTHORITY_PROVIDER, fintraffic, newOperator);
                     });
                 });
+            } else {
+                logger.debug("Unrecognized caller '{}', will not autoregister new organization", callerName);
             }
+        } else {
+            logger.debug("Metadata doesn't contain usable caller info, will not autoregister calling organization");
         }
     }
 

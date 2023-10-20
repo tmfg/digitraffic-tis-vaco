@@ -5,7 +5,7 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.Cooperation;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.service.CooperationService;
 import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
 import jakarta.validation.Valid;
@@ -13,9 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -35,12 +35,12 @@ public class CooperationController {
         this.organizationService = organizationService;
     }
 
-    @RequestMapping(method = RequestMethod.POST, path = "")
+    @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
     public ResponseEntity<Resource<Cooperation>> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
-        Optional<ImmutableOrganization> partnerA = organizationService.findByBusinessId(cooperationRequest.partnerABusinessId());
-        Optional<ImmutableOrganization> partnerB = organizationService.findByBusinessId(cooperationRequest.partnerBBusinessId());
+        Optional<Organization> partnerA = organizationService.findByBusinessId(cooperationRequest.partnerABusinessId());
+        Optional<Organization> partnerB = organizationService.findByBusinessId(cooperationRequest.partnerBBusinessId());
 
         if (partnerA.isEmpty() || partnerB.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

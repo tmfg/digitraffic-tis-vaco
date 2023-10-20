@@ -4,7 +4,7 @@ import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
@@ -34,10 +34,10 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Autowired
     RulesetService rulesetService;
 
-    private ImmutableOrganization fintraffic;
-    private ImmutableOrganization parentOrg;
-    private ImmutableOrganization currentOrg;
-    private ImmutableOrganization otherOrg;
+    private Organization fintraffic;
+    private Organization parentOrg;
+    private Organization currentOrg;
+    private Organization otherOrg;
     private Ruleset parentRuleA;
     private Ruleset parentRuleB;
     private Ruleset currentRuleC;
@@ -122,7 +122,7 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     @NotNull
-    private ImmutableCooperation partnership(ImmutableOrganization partnerA, ImmutableOrganization partnerB) {
+    private ImmutableCooperation partnership(Organization partnerA, Organization partnerB) {
         return TestObjects.aCooperation()
                 .partnerA(partnerA)
                 .partnerB(partnerB)

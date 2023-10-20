@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -24,6 +25,7 @@ public class TestObjects {
 
     public static ImmutableEntry.Builder anEntry(String format) {
         return ImmutableEntry.builder()
+            .id(new Random().nextLong())
             .format(format)
             .url("https://testfile")
             .publicId(NanoIdUtils.randomNanoId())
@@ -64,9 +66,10 @@ public class TestObjects {
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }
 
-    public static ImmutableTask.Builder aTask() {
+    public static ImmutableTask.Builder aTask(Entry entry) {
         return ImmutableTask.builder()
             .id(new Random().nextLong())
+            .entryId(entry.id())
             .name("task:name:" + UUID.randomUUID())
             .priority(new Random().nextInt());
     }

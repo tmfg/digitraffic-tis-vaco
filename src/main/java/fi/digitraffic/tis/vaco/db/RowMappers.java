@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
@@ -62,14 +63,14 @@ public class RowMappers {
         .path(rs.getString("path"))
         .build();
 
-    public static final Function<String, RowMapper<ImmutableOrganization>> ALIASED_ORGANIZATION = (alias) ->
+    public static final Function<String, RowMapper<Organization>> ALIASED_ORGANIZATION = alias ->
         (rs, rowNum) -> ImmutableOrganization.builder()
             .id(rs.getLong(alias + "id"))
             .businessId(rs.getString(alias + "business_id"))
             .name(rs.getString(alias + "name"))
             .build();
 
-    public static final RowMapper<ImmutableOrganization> ORGANIZATION = ALIASED_ORGANIZATION.apply("");
+    public static final RowMapper<Organization> ORGANIZATION = ALIASED_ORGANIZATION.apply("");
 
     public static final RowMapper<ImmutableCooperation> COOPERATION = (rs, rowNum) -> ImmutableCooperation.builder()
             .cooperationType(CooperationType.forField(rs.getString("type")))

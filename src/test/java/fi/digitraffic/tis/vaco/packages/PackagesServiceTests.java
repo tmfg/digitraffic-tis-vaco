@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -35,10 +36,11 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
     @Test
     void roundtrippingPackageEntityWorks() {
-        ImmutableTask task = TestObjects.aTask().build();
-        Entry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
-        ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
-        Optional<Package> loaded = packagesService.findPackage(entry, "FAKE_RULE");
+        ImmutableEntry entry = TestObjects.anEntry("gbfs").build();
+        ImmutableTask task = TestObjects.aTask(entry).build();
+        Entry createdEntry = queueHandlerRepository.create(entry.withTasks(task));
+        ImmutablePackage saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
+        Optional<Package> loaded = packagesService.findPackage(createdEntry, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
 
@@ -47,10 +49,11 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
     @Test
     void providesHelperForDownloadingReferencedFile() {
-        ImmutableTask task = TestObjects.aTask().build();
-        Entry entry = queueHandlerRepository.create(TestObjects.anEntry("gbfs").addTasks(task).build());
-        ImmutablePackage saved = packagesService.createPackage(entry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
-        Optional<Path> loaded = packagesService.downloadPackage(entry, "FAKE_RULE");
+        ImmutableEntry entry = TestObjects.anEntry("gbfs").build();
+        ImmutableTask task = TestObjects.aTask(entry).build();
+        Entry createdEntry = queueHandlerRepository.create(entry.withTasks(task));
+        ImmutablePackage saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip");
+        Optional<Path> loaded = packagesService.downloadPackage(createdEntry, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
 

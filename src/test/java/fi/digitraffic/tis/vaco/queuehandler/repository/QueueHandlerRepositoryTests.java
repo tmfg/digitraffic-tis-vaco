@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,9 +41,9 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
     private ImmutableValidationInput validation;
     private ImmutableConversionInput conversion;
 
-    private List<ImmutableTask> validationTasks;
-    private List<ImmutableTask> conversionTasks;
-    private List<ImmutableTask> conversionRuleTasks;
+    private Function<Long, List<ImmutableTask>> validationTasks;
+    private Function<Long, List<ImmutableTask>> conversionTasks;
+    private Function<Long, List<ImmutableTask>> conversionRuleTasks;
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
@@ -51,17 +52,17 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         validation = ImmutableValidationInput.of("ananas");
         conversion = ImmutableConversionInput.of("bananas");
 
-        validationTasks = Streams.mapIndexed(
+        validationTasks = entryId -> Streams.mapIndexed(
                 ValidationService.ALL_SUBTASKS,
-                (i, p) -> ImmutableTask.of(null, p, 100 + i))
+                (i, p) -> ImmutableTask.of(entryId, p, 100 + i))
             .toList();
-        conversionTasks = Streams.mapIndexed(
+        conversionTasks = entryId -> Streams.mapIndexed(
                 ConversionService.ALL_SUBTASKS,
-                (i, p) -> ImmutableTask.of(null, p, 200 + i))
+                (i, p) -> ImmutableTask.of(entryId, p, 200 + i))
             .toList();
-        conversionRuleTasks = Streams.mapIndexed(
+        conversionRuleTasks = entryId -> Streams.mapIndexed(
                 List.of(conversion),
-                (i, p) -> ImmutableTask.of(null, p.name(), 300 + i))
+                (i, p) -> ImmutableTask.of(entryId, p.name(), 300 + i))
             .toList();
     }
 
@@ -89,7 +90,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
-            equalTo(validationTasks));
+            equalTo(validationTasks.apply(result.id())));
     }
 
     @Test
@@ -98,11 +99,14 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
-            equalTo(Streams.concat(validationTasks, conversionTasks, conversionRuleTasks).toList()));
+            equalTo(Streams.concat(validationTasks.apply(result.id()),
+                    conversionTasks.apply(result.id()),
+                    conversionRuleTasks.apply(result.id()))
+                .toList()));
     }
 
     @NotNull
     private ImmutableTask withoutGeneratedValues(Task p) {
-        return ImmutableTask.copyOf(p).withId(null).withEntryId(null).withCreated(null);
+        return ImmutableTask.copyOf(p).withId(null).withCreated(null);
     }
 }
