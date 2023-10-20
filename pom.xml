@@ -3,13 +3,6 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.2</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
-
     <groupId>fi.digitraffic.tis</groupId>
     <artifactId>vaco</artifactId>
     <version>0</version>
@@ -37,6 +30,7 @@
         <java.version>17</java.version>
         <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
                    avoid conflicts -->
+        <springframework.boot-version>3.1.2</springframework.boot-version>
         <junit5.version>5.9.2</junit5.version>
         <testcontainers.version>1.19.0</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
@@ -61,12 +55,18 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
-        <springframework.boot-version>3.1.2</springframework.boot-version>
         <jib-maven-plugin.image-name>${project.groupId}.${project.name}:${project.version}:${project.version}</jib-maven-plugin.image-name>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${springframework.boot-version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
