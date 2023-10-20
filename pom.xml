@@ -242,7 +242,7 @@
             <exclusions>
                 <exclusion>
                     <groupId>org.assertj</groupId>
-                    <artifactId>assertj-parent</artifactId>
+                    <artifactId>assertj-core</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
