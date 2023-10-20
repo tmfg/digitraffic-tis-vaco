@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.organization.service;
 
-import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,15 +15,15 @@ public class OrganizationService {
         this.organizationRepository = organizationRepository;
     }
 
-    public Optional<ImmutableOrganization> createOrganization(ImmutableOrganization organization) {
-        Optional<ImmutableOrganization> existing = organizationRepository.findByBusinessId(organization.businessId());
-        if(existing.isPresent()) {
+    public Optional<Organization> createOrganization(Organization organization) {
+        Optional<Organization> existing = organizationRepository.findByBusinessId(organization.businessId());
+        if (existing.isPresent()) {
             return Optional.empty();
         }
         return Optional.of(organizationRepository.create(organization));
     }
 
-    public Optional<ImmutableOrganization> findByBusinessId(String businessId) {
+    public Optional<Organization> findByBusinessId(String businessId) {
         return organizationRepository.findByBusinessId(businessId);
     }
 }
