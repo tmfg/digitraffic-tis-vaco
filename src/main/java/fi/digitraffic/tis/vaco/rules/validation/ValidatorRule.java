@@ -116,9 +116,10 @@ public abstract class ValidatorRule implements Rule<ValidationReport> {
 
     private Path downloadFiles(Path inputTempDir, S3Path inputDirectory) {
         CompletedDirectoryDownload x = s3Client.downloadDirectory(
-            vacoProperties.s3ProcessingBucket(),
-            inputDirectory,
-            inputTempDir
+                vacoProperties.s3ProcessingBucket(),
+                inputDirectory,
+                inputTempDir,
+                p -> true
         ).join();
         return inputTempDir;
     }
@@ -133,7 +134,7 @@ public abstract class ValidatorRule implements Rule<ValidationReport> {
                 s3TargetPath)
             .join();
         // package and publish all of it
-        packagesService.createPackage(entry, task, getIdentifyingName(), s3TargetPath, "content.zip");
+        packagesService.createPackage(entry, task, getIdentifyingName(), s3TargetPath, "content.zip", p -> true);
 
         // record failures if any
         Streams.map(ud.failedTransfers(), failure -> {

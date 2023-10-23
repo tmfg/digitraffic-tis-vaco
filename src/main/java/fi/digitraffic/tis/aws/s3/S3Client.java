@@ -11,7 +11,6 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.config.DownloadFilter;
 import software.amazon.awssdk.transfer.s3.model.CompletedCopy;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
@@ -27,10 +26,10 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class S3Client {
 
@@ -82,16 +81,14 @@ public class S3Client {
     public CompletableFuture<CompletedDirectoryDownload> downloadDirectory(String s3Bucket,
                                                                            S3Path s3SourcePath,
                                                                            Path targetPath,
-                                                                           String... filterKeys) {
+                                                                           Predicate<String> filter) {
         DownloadDirectoryRequest ddr = DownloadDirectoryRequest.builder()
             .bucket(s3Bucket)
             .listObjectsV2RequestTransformer(l -> l.prefix(s3SourcePath.toString()))
-            .filter(filterKeys != null && filterKeys.length > 0
-                ? s3Object -> Arrays.stream(filterKeys).noneMatch(filterKey -> s3Object.key().matches(filterKey))
-                : DownloadFilter.allObjects())
+            .filter(s3Object -> filter.test(s3Object.key()))
             .destination(targetPath)
             .build();
-        logger.info("Downloading directory from s3://{}{} to {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, targetPath);
+        logger.info("Downloading directory from s3://{}/{} to {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, targetPath);
         return s3TransferManager
             .downloadDirectory(ddr)
             .completionFuture();

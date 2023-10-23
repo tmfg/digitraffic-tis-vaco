@@ -56,10 +56,11 @@ public class ConversionService {
 
         String packageFileName = PHASE + "_results";
         s3Packager.producePackage(
-            entry,
-            S3Artifact.getTaskPath(entry.publicId(), PHASE),
-            S3Artifact.getPackagePath(entry.publicId(), packageFileName),
-            packageFileName).join();
+                entry,
+                S3Artifact.getTaskPath(entry.publicId(), PHASE),
+                S3Artifact.getPackagePath(entry.publicId(), packageFileName),
+                packageFileName,
+                p -> true).join();
     }
 
     @VisibleForTesting

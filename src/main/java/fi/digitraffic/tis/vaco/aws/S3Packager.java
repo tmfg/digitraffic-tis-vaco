@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -86,13 +87,13 @@ public class S3Packager {
                                                   S3Path s3SourcePath,
                                                   S3Path s3TargetPath,
                                                   String zipFileName,
-                                                  String... filterKeys) {
+                                                  Predicate<String> filter) {
         return CompletableFuture.runAsync(() -> {
             Path localArtifactTemp = TempFiles.getArtifactDownloadDirectory(vacoProperties, entry);
             Path localTargetFile = TempFiles.getArtifactPackagingFile(vacoProperties, entry, zipFileName);
             logger.info("Starting to package s3://{}/{} into {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, localTargetFile);
             try {
-                s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), s3SourcePath, localArtifactTemp, filterKeys).join();
+                s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), s3SourcePath, localArtifactTemp, filter).join();
                 createZip(localArtifactTemp, localTargetFile);
                 S3Path
                     s3FullTargetPath = ImmutableS3Path.builder()
