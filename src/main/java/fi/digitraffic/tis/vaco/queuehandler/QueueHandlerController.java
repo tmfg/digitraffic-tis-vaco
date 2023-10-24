@@ -7,6 +7,8 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
+import fi.digitraffic.tis.vaco.packages.model.Package;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -29,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
@@ -86,18 +89,24 @@ public class QueueHandlerController {
     }
 
     private static Resource<Entry> asQueueHandlerResource(Entry entry) {
+        Map<String, Map<String, Link>> links = new HashMap<>();
+        links.put("refs", Map.of("self", linkToGetEntry(entry)));
 
-        Map<String, Link> links = new HashMap<>();
-        links.put("self", linkToGetEntry(entry));
+        Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
 
         if (entry.packages() != null) {
-            links.putAll(Streams.collect(entry.packages(),
-                p -> "package." + p.name(),
-                p -> new Link(
-                    MvcUriComponentsBuilder
-                        .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), p.name(), null))
-                        .toUriString(),
-                    RequestMethod.GET)));
+            Map<String, Link> packageLinks = Streams.collect(entry.packages(),
+                    Package::name,
+                    p -> {
+                        String taskName = tasks.get(p.taskId()).name();
+                        return new Link(
+                                taskName,
+                                MvcUriComponentsBuilder
+                                        .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), p.name(), taskName, null))
+                                        .toUriString(),
+                                RequestMethod.GET);
+                    });
+            links.put("packages", packageLinks);
         }
 
         return new Resource<>(entry, links);
@@ -105,9 +114,10 @@ public class QueueHandlerController {
 
     private static Link linkToGetEntry(Entry entry) {
         return new Link(
-            MvcUriComponentsBuilder
-                .fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId()))
-                .toUriString(),
-            RequestMethod.GET);
+                null,
+                MvcUriComponentsBuilder
+                        .fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId()))
+                        .toUriString(),
+                RequestMethod.GET);
     }
 }

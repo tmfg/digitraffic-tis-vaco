@@ -9,8 +9,8 @@ import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.process.model.TaskResult;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -65,7 +65,7 @@ public class ConversionService {
 
     @VisibleForTesting
     TaskResult<Set<Ruleset>> selectRulesets(Entry entry) {
-        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
+        Task task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
 
         Set<Ruleset> rulesets = rulesetService.selectRulesets(
             entry.businessId(),

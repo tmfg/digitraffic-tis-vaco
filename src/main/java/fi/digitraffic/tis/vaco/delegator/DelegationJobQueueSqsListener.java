@@ -11,7 +11,6 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
@@ -84,7 +83,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     }
 
     private Optional<TaskCategory> getNextSubtaskToRun(ImmutableDelegationJobMessage jobDescription) {
-        List<ImmutableTask> allTasks = taskRepository.findTasks(jobDescription.entry().id());
+        List<Task> allTasks = taskRepository.findTasks(jobDescription.entry().id());
 
         Set<TaskCategory> completedTaskCategories =
             Streams.filter(allTasks, (task -> task.completed() != null))

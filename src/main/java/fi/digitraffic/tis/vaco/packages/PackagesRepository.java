@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.packages;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -19,16 +20,16 @@ public class PackagesRepository {
         this.jdbc = jdbc;
     }
 
-    public Optional<Package> findPackage(String entryPublicId, String packageName) {
+    public Optional<Package> findPackage(Task task, String packageName) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                     SELECT *
                       FROM package
-                     WHERE entry_id = (SELECT id FROM entry WHERE public_id = ?)
+                     WHERE task_id = ?
                        AND name = ?
                     """,
                 RowMappers.PACKAGE,
-                entryPublicId, packageName));
+                task.id(), packageName));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }
@@ -36,23 +37,23 @@ public class PackagesRepository {
 
     public ImmutablePackage createPackage(ImmutablePackage p) {
         return jdbc.queryForObject("""
-                INSERT INTO package(entry_id, path, name)
+                INSERT INTO package(task_id, path, name)
                      VALUES (?, ?, ?)
-                  RETURNING id, entry_id, name, path
+                  RETURNING id, task_id, name, path
                 """,
             RowMappers.PACKAGE,
-            p.entryId(), p.path(), p.name());
+            p.taskId(), p.path(), p.name());
     }
 
-    public List<ImmutablePackage> findPackages(Long entryId) {
+    public List<ImmutablePackage> findPackages(Task task) {
         try {
             return jdbc.query("""
                 SELECT *
                   FROM package
-                 WHERE entry_id = ?
+                 WHERE task_id = ?
                 """,
                 RowMappers.PACKAGE,
-                entryId);
+                task.id());
         } catch (EmptyResultDataAccessException e) {
             return List.of();
         }

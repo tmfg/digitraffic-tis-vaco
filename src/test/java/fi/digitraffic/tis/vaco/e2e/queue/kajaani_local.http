@@ -17,18 +17,15 @@ Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
 {
-  "url": "https://tvv.fra1.digitaloceanspaces.com/211_netex.zip",
-  "format": "netex",
+  "url": "https://tvv.fra1.digitaloceanspaces.com/203.zip",
+  "format": "gtfs",
   "businessId": "2942108-7",
   "etag": "etagg",
-  "validations": [
-    {
-      "name": "netex.entur.v1_0_1",
+  "validations": [{
+      "name": "gtfs.canonical.v4_1_0",
       "config": {
-        "codespace": "FIN",
-        "reportId": "NO_REPORT_ID",
-        "ignorableNetexElements": ["SiteFrame"],
-        "maximumErrors": 128
+        "lol": "apua",
+        "muumi": "pappa"
       }
     }
   ],
@@ -36,8 +33,8 @@ Authorization: Bearer {{tis_token}}
   ],
   "metadata": {
     "brewingEquipment": "teapot",
-    "capacity (ml)": 700,
-    "tea": "Twinings Gold"
+    "capacity (ml)": 1500,
+    "tea": "Yorkshire Tea"
   }
 }
 
