@@ -19,6 +19,7 @@ import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
@@ -43,6 +44,7 @@ public class RowMappers {
         .description(rs.getString("description"))
         .category(Category.forField(rs.getString("category")))
         .type(Type.forField(rs.getString("type")))
+        .format(TransitDataFormat.forField(rs.getString("format")))
         .build();
 
     public static final RowMapper<ImmutableTask> TASK = (rs, rowNum) -> ImmutableTask.builder()

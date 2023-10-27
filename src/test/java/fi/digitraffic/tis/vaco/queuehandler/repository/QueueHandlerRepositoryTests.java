@@ -7,6 +7,8 @@ import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
+import fi.digitraffic.tis.vaco.organization.model.Organization;
+import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -15,6 +17,12 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.ruleset.model.Category;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -35,6 +44,12 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private RulesetService rulesetService;
+
+    @Autowired
+    private OrganizationService organizationService;
 
     private ImmutableEntry entry;
     private JsonNode metadata;
@@ -95,7 +110,20 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     @Test
     void entryWithConversionsGetsGeneratedValidationAndConversionTasks() {
+        // matching Ruleset must exist for the task to be generated
+        Optional<Organization> org = organizationService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID);
+        assertThat(org.isPresent(), equalTo(true));
+        Ruleset bananasRule = rulesetService.createRuleset(
+            ImmutableRuleset.of(
+                org.get().id(),
+                conversion.name(),
+                "This test data is bananas!",
+                Category.GENERIC,
+                Type.CONVERSION_SYNTAX,
+                TransitDataFormat.forField(entry.format())));
+
         Entry result = repository.create(entry.withConversions(conversion));
+
 
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),

@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.queuehandler.repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.exceptions.PersistenceException;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
@@ -16,7 +17,13 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -24,28 +31,35 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 
 @Repository
 public class QueueHandlerRepository {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final ErrorHandlerRepository errorHandlerRepository;
     private final TaskService taskService;
     private final PackagesService packagesService;
+    private final RulesetService rulesetService;
 
     public QueueHandlerRepository(JdbcTemplate jdbc,
                                   ObjectMapper objectMapper,
                                   ErrorHandlerRepository errorHandlerRepository,
                                   TaskService taskService,
-                                  PackagesService packagesService) {
+                                  PackagesService packagesService, RulesetService rulesetService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
         this.taskService = Objects.requireNonNull(taskService);
         this.packagesService = Objects.requireNonNull(packagesService);
+        this.rulesetService = rulesetService;
     }
 
     @Transactional
@@ -70,6 +84,8 @@ public class QueueHandlerRepository {
 
     /**
      * Resolves which tasks should be executed for given entry based on requested validations and configurations.
+     * Will also filter list of generated tasks for rules based on given format to prevent running incompatible tasks.
+     *
      * @param entry Persisted entry root to which the tasks should be created for
      * @return List of created tasks
      */
@@ -78,18 +94,28 @@ public class QueueHandlerRepository {
 
         if (entry.conversions() != null && !entry.conversions().isEmpty()) {
             List<String> conversionTasks = ConversionService.ALL_SUBTASKS;
-            allTasks.addAll(extracted(conversionTasks, entry, TaskCategory.CONVERSION));
+            allTasks.addAll(resolvePriority(conversionTasks, entry, TaskCategory.CONVERSION));
         }
 
         // validation tasks are always included
         List<String> validationTasks = ValidationService.ALL_SUBTASKS;
-        allTasks.addAll(extracted(validationTasks, entry, TaskCategory.VALIDATION));
+        allTasks.addAll(resolvePriority(validationTasks, entry, TaskCategory.VALIDATION));
 
-        // create task for each rule by rule name
-        List<String> rules = new ArrayList<>();
-        rules.addAll(entry.validations().stream().map(ValidationInput::name).toList());
-        rules.addAll(entry.conversions().stream().map(ConversionInput::name).toList());
-        allTasks.addAll(extracted(rules, entry, TaskCategory.RULE));
+        try {
+            logger.info("Generating rule tasks for entry {} based on input format '{}'", entry.publicId(), entry.format());
+            TransitDataFormat entryFormat = TransitDataFormat.forField(entry.format());
+
+            List<String> validationRuleTasks = resolveRuleTasks(entry, Type.VALIDATION_SYNTAX, entryFormat, entry.validations().stream().map(ValidationInput::name).toList());
+            List<String> conversionRuleTasks = resolveRuleTasks(entry, Type.CONVERSION_SYNTAX, entryFormat, entry.conversions().stream().map(ConversionInput::name).toList());
+            // create task for each rule by rule name
+            List<String> rules = new ArrayList<>();
+            rules.addAll(validationRuleTasks);
+            rules.addAll(conversionRuleTasks);
+
+            allTasks.addAll(resolvePriority(rules, entry, TaskCategory.RULE));
+        } catch (InvalidMappingException ime) {
+            logger.warn("Entry {} is requesting operations for unknown input format '{}', skipping rule task generation", entry.publicId(), entry.format());
+        }
 
         if (!taskService.createTasks(allTasks)) {
             throw new PersistenceException("Failed to create all tasks for entry " + entry);
@@ -98,7 +124,23 @@ public class QueueHandlerRepository {
         return taskService.findTasks(entry);
     }
 
-    private static List<ImmutableTask> extracted(List<String> validationTasks, ImmutableEntry entry, TaskCategory category) {
+    private List<String> resolveRuleTasks(ImmutableEntry entry, Type ruleType, TransitDataFormat entryFormat, List<String> requestedRuleTasks) {
+        Set<Ruleset> allAccessibleRulesets = rulesetService.selectRulesets(entry.businessId(), ruleType, entryFormat, Set.of());
+        Map<String, Ruleset> rulesetsByName = Streams
+            .filter(allAccessibleRulesets, r -> r.format().equals(entryFormat))
+            .collect(Ruleset::identifyingName, Function.identity());
+
+        List<String> allowedRuleTasks = Streams.filter(requestedRuleTasks, rulesetsByName::containsKey).toList();
+        logger.debug("Task generation for entry {}: available {} rules {} / requested {} / allowed {}",
+            entry.publicId(),
+            ruleType,
+            rulesetsByName.keySet(),
+            requestedRuleTasks,
+            allowedRuleTasks);
+        return allowedRuleTasks;
+    }
+
+    private static List<ImmutableTask> resolvePriority(List<String> validationTasks, ImmutableEntry entry, TaskCategory category) {
         return Streams.mapIndexed(validationTasks, (i, t) -> ImmutableTask.of(entry.id(), t, category.getPriority() * 100 + i))
             .toList();
     }

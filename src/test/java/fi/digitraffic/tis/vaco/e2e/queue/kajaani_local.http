@@ -18,7 +18,7 @@ Authorization: Bearer {{tis_token}}
 
 {
   "url": "https://tvv.fra1.digitaloceanspaces.com/211_netex.zip",
-  "format": "netex",
+  "format": "muumilimsa",
   "businessId": "2942108-7",
   "etag": "etagg",
   "validations": [

@@ -8,6 +8,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
+import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -22,6 +23,7 @@ import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
@@ -127,11 +129,20 @@ public class ValidationService {
     Set<Ruleset> selectRulesets(Entry entry) {
         ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
 
+        TransitDataFormat format;
+        try {
+            format = TransitDataFormat.forField(entry.format());
+        } catch (InvalidMappingException ime) {
+            logger.warn("Cannot select rulesets for entry {}: Unknown format '{}'", entry.publicId(), entry.format(), ime);
+            return Set.of();
+        }
+
         // find all possible rulesets to execute
         Set<Ruleset> rulesets = Streams.filter(
             rulesetService.selectRulesets(
                 entry.businessId(),
                 Type.VALIDATION_SYNTAX,
+                format,
                 Streams.map(entry.validations(), ValidationInput::name).toSet()),
             // filter to contain only format compatible rulesets
             r -> r.identifyingName().startsWith(entry.format() + "."))
