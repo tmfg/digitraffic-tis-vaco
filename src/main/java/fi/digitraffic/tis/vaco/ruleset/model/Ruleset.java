@@ -40,4 +40,9 @@ public interface Ruleset {
     @NotBlank
     @Value.Parameter
     Type type();
+
+    @NotBlank
+    @Value.Parameter
+    TransitDataFormat format();
+
 }

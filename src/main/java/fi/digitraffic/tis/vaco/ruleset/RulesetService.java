@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.ruleset;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,12 +26,12 @@ public class RulesetService {
         return rulesetRepository.findRulesets(businessId);
     }
 
-    public Set<Ruleset> selectRulesets(String businessId, Type type, Set<String> names) {
+    public Set<Ruleset> selectRulesets(String businessId, Type type, TransitDataFormat format, Set<String> names) {
         Set<Ruleset> rulesets;
         if (names.isEmpty()) {
-            rulesets = rulesetRepository.findRulesets(businessId, type);
+            rulesets = rulesetRepository.findRulesets(businessId, format, type);
         } else {
-            rulesets = rulesetRepository.findRulesets(businessId, type, names);
+            rulesets = rulesetRepository.findRulesets(businessId, type, format, names);
         }
 
         logger.info("Selected {} rulesets for {} are {}", type, businessId, Streams.collect(rulesets, Ruleset::identifyingName));
@@ -50,11 +51,4 @@ public class RulesetService {
         return rulesetRepository.findByName(rulesetName);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, Type type) {
-        return rulesetRepository.findRulesets(businessId, type);
-    }
-
-    public Set<Ruleset> findRulesets(String businessId, Type type, Set<String> rulesetNames) {
-        return rulesetRepository.findRulesets(businessId, type, rulesetNames);
-    }
 }

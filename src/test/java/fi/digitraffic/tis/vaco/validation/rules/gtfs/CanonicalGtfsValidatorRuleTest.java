@@ -25,6 +25,7 @@ import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.validation.model.ValidationReport;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -203,10 +204,11 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     @NotNull
     private static ImmutableRuleset mockValidationRule() {
         return TestObjects.aRuleset()
-                .id(MOCK_VALIDATION_RULE_ID)
-                .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
-                .description("injected mock version of the rule")
-                .build();
+            .id(MOCK_VALIDATION_RULE_ID)
+            .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
+            .description("injected mock version of the rule")
+            .format(TransitDataFormat.GTFS)
+            .build();
     }
 
     @NotNull

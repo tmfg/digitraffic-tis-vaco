@@ -155,7 +155,7 @@ public final class Streams {
         Collection<I> objects,
         Function<? super I, K> keyMapper,
         Function<? super I, ? extends V> valueMapper) {
-        return objects.stream().collect(Collectors.toMap(keyMapper, valueMapper));
+        return new Chain<>(objects.stream()).collect(keyMapper, valueMapper);
     }
 
     /**
@@ -254,6 +254,12 @@ public final class Streams {
          */
         public void complete() {
             stream.forEach(action -> {});
+        }
+
+        public <K, V> Map<K, V> collect(
+            Function<? super R, K> keyMapper,
+            Function<? super R, ? extends V> valueMapper) {
+            return stream.collect(Collectors.toMap(keyMapper, valueMapper));
         }
     }
 }

@@ -16,6 +16,7 @@ import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -142,6 +143,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
                     .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
                     .description("running hello rule from tests")
                     .category(Category.SPECIFIC)
+                    .format(TransitDataFormat.GTFS)
                     .build()));
 
         List<ValidationRuleJobMessage> messages = messagingService.readMessages(testQueueName).map(m -> {

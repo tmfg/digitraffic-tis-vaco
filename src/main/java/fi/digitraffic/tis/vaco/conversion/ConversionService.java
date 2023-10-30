@@ -16,6 +16,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.springframework.stereotype.Service;
 
@@ -70,6 +71,7 @@ public class ConversionService {
         Set<Ruleset> rulesets = rulesetService.selectRulesets(
             entry.businessId(),
             Type.CONVERSION_SYNTAX,
+            TransitDataFormat.forField(entry.format()),
             Streams.map(entry.validations(), ValidationInput::name).toSet());
 
         taskService.trackTask(task, ProcessingState.COMPLETE);
