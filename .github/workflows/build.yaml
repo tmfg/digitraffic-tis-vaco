@@ -40,7 +40,7 @@ jobs:
   sonar:
     name: Run SonarCloud Analysis
     runs-on: ubuntu-latest
-
+    if: ${{ github.actor != 'dependabot[bot]' }} # GHA doesn't expose tokens to PRs from forks
     defaults:
       run:
         working-directory: ./digitraffic-tis-vaco
