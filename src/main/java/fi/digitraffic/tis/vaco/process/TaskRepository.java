@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.process;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,7 @@ public class TaskRepository {
     }
 
     @Transactional
-    public boolean createTasks(List<ImmutableTask> tasks) {
+    public boolean createTasks(List<Task> tasks) {
         try {
             jdbc.batchUpdate("""
                 INSERT INTO task (entry_id, name, priority)
@@ -47,7 +46,7 @@ public class TaskRepository {
         }
     }
 
-    public ImmutableTask startTask(Task task) {
+    public Task startTask(Task task) {
         return jdbc.queryForObject("""
                  UPDATE task
                     SET started = NOW()
@@ -58,7 +57,7 @@ public class TaskRepository {
             task.id());
     }
 
-    public ImmutableTask updateTask(Task task) {
+    public Task updateTask(Task task) {
         return jdbc.queryForObject("""
                  UPDATE task
                     SET updated = NOW()
@@ -70,7 +69,7 @@ public class TaskRepository {
 
     }
 
-    public ImmutableTask completeTask(Task task) {
+    public Task completeTask(Task task) {
         return jdbc.queryForObject("""
                  UPDATE task
                     SET updated = NOW(),
@@ -90,7 +89,7 @@ public class TaskRepository {
      * @param entryId Entry id reference for finding the tasks.
      * @return Ordered list of tasks or empty list if none found.
      */
-    public List<ImmutableTask> findTasks(long entryId) {
+    public List<Task> findTasks(long entryId) {
         try {
             return jdbc.query("""
                 SELECT *
@@ -105,7 +104,7 @@ public class TaskRepository {
         }
     }
 
-    public ImmutableTask findTask(Long entryId, String taskName) {
+    public Task findTask(Long entryId, String taskName) {
         return jdbc.queryForObject(
             "SELECT * FROM task WHERE entry_id = ? AND name = ?",
             RowMappers.TASK,

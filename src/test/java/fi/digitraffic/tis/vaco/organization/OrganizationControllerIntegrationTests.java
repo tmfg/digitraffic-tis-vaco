@@ -37,7 +37,7 @@ class OrganizationControllerIntegrationTests extends SpringBootIntegrationTestBa
         assertThat("API endpoints should not expose internal IDs.", createdOrganization.data().id(), is(nullValue()));
 
         // follow the self-reference link from previous response
-        MvcResult fetchResponse = apiCall(createdOrganization.links().get("self"))
+        MvcResult fetchResponse = apiCall(createdOrganization.links().get("refs").get("self"))
             .andExpect(status().isOk())
             .andReturn();
         var fetchResult = apiResponse(fetchResponse, organizationResourceType);

@@ -8,5 +8,5 @@ public record Resource<D>(
     D data,
 
     @Nullable
-    Map<String, Link> links) {
+    Map<String, Map<String, Link>> links) {
 }

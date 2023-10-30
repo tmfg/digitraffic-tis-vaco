@@ -45,10 +45,6 @@ public interface Entry {
     @Nullable
     List<Task> tasks();
 
-    // XXX: Mapstruct doesn't support Optional type natively at the moment so prefer `@Nullable`, see
-    //      https://techlab.bol.com/en/blog/mapstruct-optional-fields/
-    //      https://github.com/mapstruct/mapstruct/issues/674
-
     @Nullable
     List<ValidationInput> validations();
 
@@ -56,6 +52,7 @@ public interface Entry {
     List<ConversionInput> conversions();
 
     @Nullable
+    @JsonView(DataVisibility.Internal.class)
     List<Package> packages();
 
     @Nullable

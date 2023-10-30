@@ -134,7 +134,7 @@ class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testPackageAllFiles() throws ExecutionException, InterruptedException, IOException {
        String packageFileName = UUID.randomUUID().toString();
-       s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory, packageFileName)
+       s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory, packageFileName, p -> true)
            .get();
 
        ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
@@ -146,7 +146,7 @@ class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     void testPackageWithFilteredDirectory() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
         s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory,
-                packageFileName, ".*" + directoryToIgnore + ".*").get();
+                packageFileName, p -> !p.matches(".*" + directoryToIgnore + ".*")).get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
         List<String> filteredFiles = new ArrayList<>(List.copyOf(allFiles));
@@ -159,7 +159,7 @@ class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     void testPackageWithFilteredFile() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
         s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory,
-            packageFileName, ".*" + fileToIgnoreInSubDirectoryName).get();
+            packageFileName, p -> !p.matches(".*" + fileToIgnoreInSubDirectoryName)).get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
         List<String> filteredFiles = new ArrayList<>(List.copyOf(allFiles));
@@ -173,8 +173,8 @@ class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
         String packageFileName = UUID.randomUUID().toString();
         s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory,
             packageFileName,
-            ".*" + fileToIgnoreInSubDirectoryName,
-            ".*" + directoryToIgnore + ".*").get();
+            p -> !p.matches(".*" + fileToIgnoreInSubDirectoryName) && !p.matches(".*" + directoryToIgnore + ".*"))
+                .get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);
         List<String> filteredFiles = new ArrayList<>(List.copyOf(allFiles));
@@ -188,9 +188,9 @@ class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
     void testPackageWithFilteredFilesByExtension() throws IOException, ExecutionException, InterruptedException {
         String packageFileName = UUID.randomUUID().toString();
         s3Packager.producePackage(entry, TestData.s3InputRootDirectory, TestData.s3OutputDirectory,
-            packageFileName,
-            ".*\\.java", // all Java files
-            ".*/subDirectory/.*\\.py" // all Python files under subDirectory
+                packageFileName,
+                p -> !p.endsWith(".java") // all Java files
+                        && !p.matches(".*/subDirectory/.*\\.py") // all Python files under subDirectory
         ).get();
 
         ZipFile producedPackageZip = downloadProducedZipPackage(packageFileName);

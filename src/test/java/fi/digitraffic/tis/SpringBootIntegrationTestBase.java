@@ -87,11 +87,11 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
     }
 
     @NotNull
-    protected static Link toLink(JsonNode createResult, String linkName) {
-        JsonNode jsonNode = createResult.get("links").get(linkName);
+    protected static Link toLink(JsonNode jsonNode) {
         return new Link(
-            jsonNode.get("href").textValue(),
-            RequestMethod.valueOf(jsonNode.get("method").textValue()));
+                jsonNode.get("source").asText(null),
+                jsonNode.get("href").textValue(),
+                RequestMethod.valueOf(jsonNode.get("method").textValue()));
     }
 
     protected ResultActions apiCall(Link link) throws Exception {

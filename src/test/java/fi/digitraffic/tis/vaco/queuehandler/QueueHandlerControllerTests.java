@@ -25,14 +25,13 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
             .andReturn();
         JsonNode createResult = apiResponse(response);
 
-        Link self = toLink(createResult, "self");
+        Link self = toLink((createResult.get("links").get("refs").get("self")));
         // follow the self-reference link from previous response
         MvcResult fetchResponse = apiCall(self)
             .andExpect(status().isOk())
             .andReturn();
         JsonNode fetchResult = apiResponse(fetchResponse);
 
-        System.out.println("fetchResult = " + fetchResult);
         // assert provided data has stayed the same
         assertAll("Base fields are stored properly",
             () -> assertThat(fetchResult.get("data").get("url").textValue(), equalTo(request.getUrl())),

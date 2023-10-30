@@ -4,14 +4,17 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.packages.model.Package;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableTask.class)
 @JsonDeserialize(as = ImmutableTask.class)
+@Value.Style(defaultAsDefault = true)
 public interface Task {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
@@ -38,4 +41,8 @@ public interface Task {
 
     @Nullable
     LocalDateTime completed();
+
+    default List<Package> packages() {
+        return List.of();
+    }
 }

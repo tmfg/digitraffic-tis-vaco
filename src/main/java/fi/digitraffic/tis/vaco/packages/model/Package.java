@@ -18,7 +18,7 @@ public interface Package {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
     @Value.Parameter
-    Long entryId();
+    Long taskId();
 
     @Value.Parameter
     String name();
