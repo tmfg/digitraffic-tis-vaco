@@ -12,6 +12,7 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
@@ -47,7 +48,7 @@ public class RowMappers {
         .format(TransitDataFormat.forField(rs.getString("format")))
         .build();
 
-    public static final RowMapper<ImmutableTask> TASK = (rs, rowNum) -> ImmutableTask.builder()
+    public static final RowMapper<Task> TASK = (rs, rowNum) -> ImmutableTask.builder()
             .id(rs.getLong("id"))
             .entryId(rs.getLong("entry_id"))
             .name(rs.getString("name"))
@@ -60,7 +61,7 @@ public class RowMappers {
 
     public static final RowMapper<ImmutablePackage> PACKAGE = (rs, rowNum) -> ImmutablePackage.builder()
         .id(rs.getLong("id"))
-        .entryId(rs.getLong("entry_id"))
+        .taskId(rs.getLong("task_id"))
         .name(rs.getString("name"))
         .path(rs.getString("path"))
         .build();

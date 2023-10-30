@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
@@ -89,8 +90,8 @@ public class QueueHandlerRepository {
      * @param entry Persisted entry root to which the tasks should be created for
      * @return List of created tasks
      */
-    private List<ImmutableTask> createTasks(ImmutableEntry entry) {
-        List<ImmutableTask> allTasks = new ArrayList<>();
+    private List<Task> createTasks(ImmutableEntry entry) {
+        List<Task> allTasks = new ArrayList<>();
 
         if (entry.conversions() != null && !entry.conversions().isEmpty()) {
             List<String> conversionTasks = ConversionService.ALL_SUBTASKS;
@@ -258,8 +259,7 @@ public class QueueHandlerRepository {
             .withTasks(taskService.findTasks(entry))
             .withValidations(findValidationInputs(entry.id()))
             .withConversions(findConversionInputs(entry.id()))
-            .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()))
-            .withPackages(packagesService.findPackages(entry.id()));
+            .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));
     }
 
 }

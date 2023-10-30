@@ -19,12 +19,13 @@ public final class TempFiles {
 
     private TempFiles() {}
 
-    public static Path getPackageDirectory(VacoProperties vacoProperties, Entry entry, String packageName) {
+    public static Path getPackageDirectory(VacoProperties vacoProperties, Entry entry, Task task, String packageName) {
         return tempDir(vacoProperties,
             Paths.get(
                 "entries",
                 entry.publicId(),
                 "packages",
+                task.name(),
                 packageName
             ));
     }

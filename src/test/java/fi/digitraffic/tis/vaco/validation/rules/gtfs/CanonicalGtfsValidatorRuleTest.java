@@ -48,9 +48,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -145,11 +148,12 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
 
         verify(rulesetRepository, times(51)).findByName(RuleName.GTFS_CANONICAL_4_0_0);
         verify(packagesService).createPackage(
-            entry,
-            task,
-            RuleName.GTFS_CANONICAL_4_0_0,
-            s3Output,
-            "content.zip");
+                eq(entry),
+                eq(task),
+                eq(RuleName.GTFS_CANONICAL_4_0_0),
+                eq(s3Output),
+                eq("content.zip"),
+                isA(Predicate.class));
     }
 
     private void whenTaskStateChangesAreTracked() {

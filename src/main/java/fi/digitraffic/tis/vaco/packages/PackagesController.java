@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.packages;
 
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.io.FileSystemResource;
@@ -28,13 +29,18 @@ public class PackagesController {
         this.queueHandlerService = queueHandlerService;
     }
 
-    @GetMapping(path = "/{entryId}/{packageName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(path = "/{entryId}/{taskName}/{packageName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public FileSystemResource fetchPackage(
         @PathVariable("entryId") String entryPublicId,
+        @PathVariable("taskName") String taskName,
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
         return queueHandlerService.getEntry(entryPublicId)
-            .flatMap(e -> packagesService.downloadPackage(e, packageName))
+            .flatMap(e -> {
+                return Streams.filter(e.tasks(), t -> t.name().equals(taskName))
+                        .findFirst()
+                        .flatMap(t -> packagesService.downloadPackage(e, t, packageName));
+            })
             .map(filePath -> {
                 ContentDisposition contentDisposition = ContentDisposition.builder("inline")
                     .filename(packageName + ".zip")

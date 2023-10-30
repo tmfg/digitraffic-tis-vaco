@@ -9,12 +9,12 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
-import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -85,7 +85,7 @@ public class ValidationService {
 
     @VisibleForTesting
     S3Path downloadFile(Entry entry) {
-        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
+        Task task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
         Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".zip");
 
         try {
@@ -103,7 +103,7 @@ public class ValidationService {
         }
     }
 
-    private <T> Function<T, T> track(ImmutableTask task, ProcessingState state) {
+    private <T> Function<T, T> track(Task task, ProcessingState state) {
         return t -> {
             taskService.trackTask(task, state);
             return t;
@@ -111,7 +111,7 @@ public class ValidationService {
     }
 
     private Function<HttpResponse<Path>, CompletableFuture<S3Path>> uploadToS3(Entry entry,
-                                                                               ImmutableTask task) {
+                                                                               Task task) {
         return response -> {
             ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
             S3Path s3TargetPath = ImmutableS3Path.builder()
@@ -127,7 +127,7 @@ public class ValidationService {
 
     @VisibleForTesting
     Set<Ruleset> selectRulesets(Entry entry) {
-        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
+        Task task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
 
         TransitDataFormat format;
         try {
@@ -159,7 +159,7 @@ public class ValidationService {
     void executeRules(Entry entry,
                       S3Path downloadedFile,
                       Set<Ruleset> validationRulesets) {
-        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), EXECUTION_SUBTASK), ProcessingState.START);
+        Task task = taskService.trackTask(taskService.findTask(entry.id(), EXECUTION_SUBTASK), ProcessingState.START);
 
         Map<String, ValidationInput> configs = Streams.collect(entry.validations(), ValidationInput::name, Function.identity());
 

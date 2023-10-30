@@ -66,18 +66,34 @@ class S3ClientTests extends AwsIntegrationTestBase {
 
     @Test
     void canRoundtripEntireDirectory() throws IOException {
-        Path inputManyFiles = Files.createDirectories(outputs.resolve("manyFiles"));
+        Path inputManyFiles = Files.createDirectories(inputs.resolve("manyFiles"));
         writeContent(inputManyFiles.resolve("a.txt"), "a");
         writeContent(inputManyFiles.resolve("b.txt"), "b");
         writeContent(inputManyFiles.resolve("c.txt"), "c");
         Path outputManyFiles = Files.createDirectories(outputs.resolve("manyFiles"));
 
         s3Client.uploadDirectory(inputManyFiles, vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles")).join();
-        s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles"), outputManyFiles).join();
+        s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("bunchOfFiles"), outputManyFiles, p -> true).join();
 
         assertThat(Files.readString(outputManyFiles.resolve("a.txt")), equalTo("a"));
         assertThat(Files.readString(outputManyFiles.resolve("b.txt")), equalTo("b"));
         assertThat(Files.readString(outputManyFiles.resolve("c.txt")), equalTo("c"));
+    }
+
+    @Test
+    void canSelectivelyDownloadSpecificFiles() throws IOException {
+        Path inputSpecificFiles = Files.createDirectories(inputs.resolve("specificFiles"));
+        writeContent(inputSpecificFiles.resolve("x.txt"), "x");
+        writeContent(inputSpecificFiles.resolve("y.txt"), "y");
+        writeContent(inputSpecificFiles.resolve("z.txt"), "z");
+        Path outputSpecificFiles = Files.createDirectories(outputs.resolve("specificFiles"));
+
+        s3Client.uploadDirectory(inputSpecificFiles, vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("someFiles")).join();
+        s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("someFiles"), outputSpecificFiles, p -> p.matches(".*/[xy].txt")).join();
+
+        assertThat(Files.readString(outputSpecificFiles.resolve("x.txt")), equalTo("x"));
+        assertThat(Files.readString(outputSpecificFiles.resolve("y.txt")), equalTo("y"));
+        assertThat(Files.exists(outputSpecificFiles.resolve("z.txt")), equalTo(false));
     }
 
     @NotNull

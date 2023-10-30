@@ -58,14 +58,15 @@ public class OrganizationController {
     }
 
     private static Resource<Organization> asOrganizationResource(Organization organization) {
-        return new Resource<>(organization, Map.of("self", linkToGetOrganization(organization)));
+        return new Resource<>(organization, Map.of("refs", Map.of("self", linkToGetOrganization(organization))));
     }
 
     private static Link linkToGetOrganization(Organization organization) {
         return new Link(
-            MvcUriComponentsBuilder
-                .fromMethodCall(on(OrganizationController.class).getOrganizationByBusinessId(organization.businessId()))
-                .toUriString(),
-            RequestMethod.GET);
+                null,
+                MvcUriComponentsBuilder
+                        .fromMethodCall(on(OrganizationController.class).getOrganizationByBusinessId(organization.businessId()))
+                        .toUriString(),
+                RequestMethod.GET);
     }
 }

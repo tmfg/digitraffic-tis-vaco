@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import org.immutables.value.Value;
 
 import java.util.List;
+import java.util.Map;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableResultMessage.class)
@@ -30,6 +31,6 @@ public interface ResultMessage {
     String outputs();
 
     @Value.Parameter
-    List<String> uploadedFiles();
+    Map<String, List<String>> uploadedFiles();
 
 }

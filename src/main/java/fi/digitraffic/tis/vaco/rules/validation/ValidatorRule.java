@@ -11,7 +11,6 @@ import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -64,7 +63,7 @@ public abstract class ValidatorRule implements Rule<ValidationReport> {
     @Override
     public CompletableFuture<ValidationReport> execute(ValidationRuleJobMessage message) {
         Entry entry = message.entry();
-        ImmutableTask task = taskService.trackTask(taskService.findTask(entry.id(), getIdentifyingName()), ProcessingState.START);
+        Task task = taskService.trackTask(taskService.findTask(entry.id(), getIdentifyingName()), ProcessingState.START);
         // TODO: this is rudimentary path handling and slightly lossy, we should use other parts of the message's S3
         //       paths to also resolve the buckets eventually
         S3Path inputsDirectory = S3Path.of(URI.create(message.inputs()).getPath());
@@ -116,9 +115,10 @@ public abstract class ValidatorRule implements Rule<ValidationReport> {
 
     private Path downloadFiles(Path inputTempDir, S3Path inputDirectory) {
         CompletedDirectoryDownload x = s3Client.downloadDirectory(
-            vacoProperties.s3ProcessingBucket(),
-            inputDirectory,
-            inputTempDir
+                vacoProperties.s3ProcessingBucket(),
+                inputDirectory,
+                inputTempDir,
+                p -> true
         ).join();
         return inputTempDir;
     }
@@ -133,7 +133,7 @@ public abstract class ValidatorRule implements Rule<ValidationReport> {
                 s3TargetPath)
             .join();
         // package and publish all of it
-        packagesService.createPackage(entry, task, getIdentifyingName(), s3TargetPath, "content.zip");
+        packagesService.createPackage(entry, task, getIdentifyingName(), s3TargetPath, "content.zip", p -> true);
 
         // record failures if any
         Streams.map(ud.failedTransfers(), failure -> {

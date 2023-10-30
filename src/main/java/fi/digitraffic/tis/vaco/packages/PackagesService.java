@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 @Service
 public class PackagesService {
@@ -40,25 +41,38 @@ public class PackagesService {
         this.packagesRepository = Objects.requireNonNull(packagesRepository);
     }
 
+    /**
+     * Produces a packages from given S3 coordinates relating to specifinc entry+task combination.
+     *
+     * @param entry Entry this package relates to.
+     * @param task Task from which this package originates from.
+     * @param packageName Package name to produce. This should be unique per task.
+     * @param packageContentsS3Path Where in S3 the package contents are stored before packaging.
+     * @param fileName Final file name for the package.
+     * @return Created package
+     * @see S3Packager#producePackage(Entry, S3Path, S3Path, String, Predicate[])
+     */
     public ImmutablePackage createPackage(Entry entry,
                                           Task task,
-                                          String ruleName,
+                                          String packageName,
                                           S3Path packageContentsS3Path,
-                                          String fileName) {
+                                          String fileName,
+                                          Predicate<String> contentFilter) {
         // TODO: error handling?
         // upload package file to S3
         s3Packager.producePackage(
-                entry,
-                S3Artifact.getRuleDirectory(entry.publicId(), task.name(), ruleName),
-                packageContentsS3Path,
-                fileName)
+                        entry,
+                        S3Artifact.getRuleDirectory(entry.publicId(), task.name(), packageName),
+                        packageContentsS3Path,
+                        fileName,
+                        contentFilter)
             .join();
 
         // store database reference
         return packagesRepository.createPackage(
             ImmutablePackage.of(
-                entry.id(),
-                ruleName,  // TODO: This assumes same rule can be executed only once per job
+                task.id(),
+                packageName,
                 ImmutableS3Path.builder()
                     .from(packageContentsS3Path)
                     .addPath(fileName)
@@ -66,17 +80,17 @@ public class PackagesService {
                     .toString()));
     }
 
-    public List<ImmutablePackage> findPackages(Long entryId) {
-        return packagesRepository.findPackages(entryId);
+    public List<ImmutablePackage> findPackages(Task task) {
+        return packagesRepository.findPackages(task);
     }
 
-    public Optional<Package> findPackage(Entry entry, String packageName) {
-        return packagesRepository.findPackage(entry.publicId(), packageName);
+    public Optional<Package> findPackage(Task task, String packageName) {
+        return packagesRepository.findPackage(task, packageName);
     }
 
-    public Optional<Path> downloadPackage(Entry entry, String packageName) {
-        return findPackage(entry, packageName).map(p -> {
-            Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, packageName)
+    public Optional<Path> downloadPackage(Entry entry, Task task, String packageName) {
+        return findPackage(task, packageName).map(p -> {
+            Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, task, packageName)
                 .resolve(Path.of(p.path()).getFileName());
 
             logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
