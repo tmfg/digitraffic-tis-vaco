@@ -15,7 +15,7 @@ import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 /**
@@ -119,71 +120,22 @@ public class RuleListenerService {
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
-        Optional<ImmutableEntry> e = queueHandlerService.getEntry(resultMessage.entryId());
-
-        if (e.isPresent()) {
-            ImmutableEntry entry = e.get();
-            Task task = taskService.trackTask(taskService.findTask(entry.id(), resultMessage.ruleName()), ProcessingState.START);
-
-            packagesService.createPackage(entry, task, resultMessage.ruleName(), S3Path.of(URI.create(resultMessage.outputs()).getPath()), "content.zip", p -> true);
-            taskService.trackTask(task, ProcessingState.COMPLETE);
+        return processExternalRule(resultMessage, (entry, task) -> {
+            createOutputPackages(resultMessage, entry, task);
             return true;
-        } else {
-            return false;
-        }
+        });
     }
 
     private boolean processResultFromGtfsCanonical400(ResultMessage resultMessage) {
-        // this is just an example right now
-        return false;
+        // there's no difference in processing between Canonical GTFS Validator's point releases
+        return processResultFromGtfsCanonical410(resultMessage);
     }
 
-    /*
-ResultMessage{entryId=zAeEpPeMYQ8YdMsOI13jp
- taskId=1100002
- ruleName=gtfs.canonical.v4_1_0
- inputs=s3://digitraffic-tis-processing-local/entries/zAeEpPeMYQ8YdMsOI13jp/tasks/gtfs.canonical.v4_1_0/rules/gtfs.canonical.v4_1_0/input
- outputs=s3://digitraffic-tis-processing-local/entries/zAeEpPeMYQ8YdMsOI13jp/tasks/gtfs.canonical.v4_1_0/rules/gtfs.canonical.v4_1_0/output
- uploadedFiles={s3://digitraffic-tis-processing-local/entries/zAeEpPeMYQ8YdMsOI13jp/tasks/gtfs.canonical.v4_1_0/rules/gtfs.canonical.v4_1_0/output/report.html=[report
- all]
- s3://digitraffic-tis-processing-local/entries/zAeEpPeMYQ8YdMsOI13jp/tasks/gtfs.canonical.v4_1_0/rules/gtfs.canonical.v4_1_0/output/system_errors.json=[all]
- s3://digitraffic-tis-processing-local/entries/zAeEpPeMYQ8YdMsOI13jp/tasks/gtfs.canonical.v4_1_0/rules/gtfs.canonical.v4_1_0/output/report.json=[report
- all]
- s3://digitraffic-tis-processing-local/entries/zAeEpPeMYQ8YdMsOI13jp/tasks/gtfs.canonical.v4_1_0/rules/gtfs.canonical.v4_1_0/output/stdout.log=[debug
- all]
- s3://digitraffic-tis-processing-local/entries/zAeEpPeMYQ8YdMsOI13jp/tasks/gtfs.canonical.v4_1_0/rules/gtfs.canonical.v4_1_0/output/stderr.log=[debug
- all]}}
-
-
-     */
-
     private boolean processResultFromGtfsCanonical410(ResultMessage resultMessage) {
+        return processExternalRule(resultMessage, (entry, task) -> {
+            createOutputPackages(resultMessage, entry, task);
 
-        Optional<ImmutableEntry> e = queueHandlerService.getEntry(resultMessage.entryId());
-
-        if (e.isPresent()) {
-            ImmutableEntry entry = e.get();
-            Task task = taskService.trackTask(taskService.findTask(entry.id(), resultMessage.ruleName()), ProcessingState.START);
-
-            Map<String, String> fileNames = Streams.collect(
-                    resultMessage.uploadedFiles().keySet(),
-                    m -> m.substring(m.lastIndexOf('/') + 1),
-                    Function.identity());
-
-            ConcurrentMap<String, List<String>> packagesToCreate = new ConcurrentHashMap<>();
-            resultMessage.uploadedFiles().forEach((file, packages) -> {
-                for (String p : packages) {
-                    packagesToCreate.computeIfAbsent(p, k -> new ArrayList<>()).add(file);
-                }
-            });
-
-            // package generation based on rule outputs
-            packagesToCreate.forEach((packageName, files) -> packagesService.createPackage(
-                    entry,
-                    task,
-                    packageName,
-                    S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
-                    p -> files.stream().anyMatch(p::endsWith)));
+            Map<String, String> fileNames = collectOutputFileNames(resultMessage);
 
             // file specific handling
             if (fileNames.containsKey("report.json")) {
@@ -198,12 +150,56 @@ ResultMessage{entryId=zAeEpPeMYQ8YdMsOI13jp
             } else {
                 logger.warn("Expected file 'report.json' missing from output for message {}", resultMessage);
             }
-            taskService.trackTask(task, ProcessingState.COMPLETE);
             return true;
+        });
+    }
+
+    private boolean processExternalRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
+        Optional<Entry> e = queueHandlerService.getEntry(resultMessage.entryId());
+        if (e.isPresent()) {
+            Entry entry = e.get();
+            Task task = taskService.trackTask(taskService.findTask(entry.id(), resultMessage.ruleName()), ProcessingState.UPDATE);
+            try {
+                return processingHandler.test(entry, task);
+            } finally {
+                taskService.trackTask(task, ProcessingState.COMPLETE);
+            }
         } else {
-            logger.error("Unknown entry id in message {}", resultMessage);
             return false;
         }
+    }
+
+    /**
+     * Truncate output filenames to contain only the file name without path. Assumes results are in flat directory.
+     *
+     * @param resultMessage Message to get the file names from.
+     * @return Map of file names without directory prefixes to full file name.
+     */
+    private static Map<String, String> collectOutputFileNames(ResultMessage resultMessage) {
+        return Streams.collect(
+            resultMessage.uploadedFiles().keySet(),
+            m -> m.substring(m.lastIndexOf('/') + 1),
+            Function.identity());
+    }
+
+    private void createOutputPackages(ResultMessage resultMessage, Entry entry, Task task) {
+        // package generation based on rule outputs
+        ConcurrentMap<String, List<String>> packagesToCreate = new ConcurrentHashMap<>();
+        resultMessage.uploadedFiles().forEach((file, packages) -> {
+            for (String p : packages) {
+                packagesToCreate.computeIfAbsent(p, k -> new ArrayList<>()).add(file);
+            }
+        });
+
+        packagesToCreate.forEach((packageName, files) -> {
+            logger.info("Creating package '{}' with files {}", packageName, files);
+            packagesService.createPackage(
+                entry,
+                task,
+                packageName,
+                S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
+                p -> files.stream().anyMatch(p::endsWith));
+        });
     }
 
     private <M, R> void listen(String queueName, Class<M> cls, Function<M, CompletableFuture<R>> function) {
