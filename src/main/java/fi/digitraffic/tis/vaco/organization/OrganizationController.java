@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
@@ -53,12 +54,11 @@ public class OrganizationController {
         Optional<Organization> organization = organizationService.findByBusinessId(businessId);
         return organization
             .map(o -> ResponseEntity.ok(asOrganizationResource(o)))
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                String.format("An organization with business ID %s does not exist", businessId)));
+            .orElse(Responses.notFound(String.format("An organization with business ID %s does not exist", businessId)));
     }
 
     private static Resource<Organization> asOrganizationResource(Organization organization) {
-        return new Resource<>(organization, Map.of("refs", Map.of("self", linkToGetOrganization(organization))));
+        return new Resource<>(organization, null, Map.of("refs", Map.of("self", linkToGetOrganization(organization))));
     }
 
     private static Link linkToGetOrganization(Organization organization) {

@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.organization;
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.Cooperation;
 import fi.digitraffic.tis.vaco.organization.model.Organization;
@@ -50,12 +51,9 @@ public class CooperationController {
 
         Optional<Cooperation> cooperation = cooperationService.create(cooperationRequest.cooperationType(), partnerA.get(), partnerB.get());
 
-        if (cooperation.isPresent()) {
-            return ResponseEntity.ok(new Resource<>(cooperation.get(), Map.of()));
-        } else {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                String.format("A cooperation between provided business ID (%s, %s) already exists",
-                    cooperationRequest.partnerABusinessId(), cooperationRequest.partnerBBusinessId()));
-        }
+        return cooperation
+            .map(value -> ResponseEntity.ok(new Resource<>(value, null, Map.of())))
+            .orElse(Responses.conflict(String.format("A cooperation between provided business ID (%s, %s) already exists",
+                cooperationRequest.partnerABusinessId(), cooperationRequest.partnerBBusinessId())));
     }
 }
