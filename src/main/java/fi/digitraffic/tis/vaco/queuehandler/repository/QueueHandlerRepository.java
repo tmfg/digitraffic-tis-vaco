@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -255,11 +256,14 @@ public class QueueHandlerRepository {
      * @return Fully completed entry.
      */
     private ImmutableEntry buildCompleteEntry(ImmutableEntry entry) {
+        List<Task> tasks = taskService.findTasks(entry);
+        List<Package> packages = Streams.flatten(tasks, packagesService::findPackages).toList();
         return entry
-            .withTasks(taskService.findTasks(entry))
+            .withTasks(tasks)
             .withValidations(findValidationInputs(entry.id()))
             .withConversions(findConversionInputs(entry.id()))
-            .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));
+            .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()))
+            .withPackages(packages);
     }
 
 }

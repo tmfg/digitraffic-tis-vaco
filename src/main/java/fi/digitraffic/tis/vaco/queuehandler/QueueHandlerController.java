@@ -7,7 +7,6 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
-import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -30,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
@@ -94,18 +95,18 @@ public class QueueHandlerController {
         Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
 
         if (entry.packages() != null) {
-            Map<String, Link> packageLinks = Streams.collect(entry.packages(),
-                    Package::name,
-                    p -> {
-                        String taskName = tasks.get(p.taskId()).name();
-                        return new Link(
-                                taskName,
-                                MvcUriComponentsBuilder
-                                        .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), p.name(), taskName, null))
-                                        .toUriString(),
-                                RequestMethod.GET);
-                    });
-            links.put("packages", packageLinks);
+            ConcurrentMap<String, Map<String, Link>> packageLinks = new ConcurrentHashMap<>();
+            entry.packages().forEach(p -> {
+                String taskName = tasks.get(p.taskId()).name();
+                packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), new Link(
+                    taskName,
+                    MvcUriComponentsBuilder
+                        .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), p.name(), taskName, null))
+                        .toUriString(),
+                    RequestMethod.GET));
+            });
+
+            links.putAll(packageLinks);
         }
 
         return new Resource<>(entry, links);
