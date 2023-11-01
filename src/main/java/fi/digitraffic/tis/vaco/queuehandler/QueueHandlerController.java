@@ -11,7 +11,6 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -80,7 +79,7 @@ public class QueueHandlerController {
     @GetMapping(path = "/{publicId}")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Entry>> fetchEntry(@PathVariable("publicId") String publicId) {
-        Optional<ImmutableEntry> entry = queueHandlerService.getEntry(publicId);
+        Optional<Entry> entry = queueHandlerService.getEntry(publicId);
 
         return entry
             .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))

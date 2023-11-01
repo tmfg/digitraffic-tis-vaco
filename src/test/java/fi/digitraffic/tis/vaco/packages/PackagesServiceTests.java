@@ -4,7 +4,6 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -39,7 +38,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
         ImmutableEntry entry = TestObjects.anEntry("gbfs").build();
         Entry createdEntry = queueHandlerRepository.create(entry.withTasks(TestObjects.aTask(entry).build()));
         Task task = createdEntry.tasks().get(0);
-        ImmutablePackage saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
+        Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Package> loaded = packagesService.findPackage(task, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
@@ -52,7 +51,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
         ImmutableEntry entry = TestObjects.anEntry("gbfs").build();
         Entry createdEntry = queueHandlerRepository.create(entry.withTasks(TestObjects.aTask(entry).build()));
         Task task = createdEntry.tasks().get(0);
-        ImmutablePackage saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
+        Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Path> loaded = packagesService.downloadPackage(entry, task, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));

@@ -6,7 +6,6 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
@@ -48,7 +47,7 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
         messagingService.submitProcessingJob(job);
     }
 
-    private ImmutableEntry reloadEntry(Entry entry) {
+    private Entry reloadEntry(Entry entry) {
         return queueHandlerRepository.findByPublicId(entry.publicId())
             .orElseThrow(() -> new RuleExecutionException("Failed to reload entry with public id " + entry.publicId() + " from database, corrupt entry?"));
     }

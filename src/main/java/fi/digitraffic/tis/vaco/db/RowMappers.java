@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
 import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
+import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
@@ -59,7 +60,7 @@ public class RowMappers {
             .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
             .build();
 
-    public static final RowMapper<ImmutablePackage> PACKAGE = (rs, rowNum) -> ImmutablePackage.builder()
+    public static final RowMapper<Package> PACKAGE = (rs, rowNum) -> (Package) ImmutablePackage.builder()
         .id(rs.getLong("id"))
         .taskId(rs.getLong("task_id"))
         .name(rs.getString("name"))

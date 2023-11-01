@@ -169,7 +169,7 @@ public class QueueHandlerRepository {
     }
 
     @Transactional
-    public Optional<ImmutableEntry> findByPublicId(String publicId) {
+    public Optional<Entry> findByPublicId(String publicId) {
         return findEntry(publicId).map(this::buildCompleteEntry);
     }
 
