@@ -1,8 +1,6 @@
 package fi.digitraffic.tis.vaco.delegator;
 
-import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -61,7 +59,6 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 }
             });
         }
-
     }
 
     private void validationJob(Entry entry) {
@@ -78,15 +75,5 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         return availableForExecuting.isEmpty()
             ? Optional.empty()
             : Optional.of(availableForExecuting);
-    }
-
-    @VisibleForTesting
-    protected TaskCategory asTaskCategory(Task task) {
-        String subtask = task.name().split("\\.")[0];
-        return switch (subtask) {
-            case "validation" -> TaskCategory.VALIDATION;
-            case "conversion" -> TaskCategory.CONVERSION;
-            default -> TaskCategory.RULE;  // XXX: Rules aren't actually convertable like this, so this might not be sensible
-        };
     }
 }

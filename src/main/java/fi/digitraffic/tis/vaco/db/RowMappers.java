@@ -111,6 +111,7 @@ public class RowMappers {
                 .build();
     }
 
+    @SuppressWarnings("unchecked")
     private static RowMapper<ImmutableValidationInput> mapValidationInput(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
             String name = rs.getString("name");
@@ -125,6 +126,7 @@ public class RowMappers {
         };
     }
 
+    @SuppressWarnings("unchecked")
     private static RowMapper<ImmutableConversionInput> mapConversionInput(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
             String name = rs.getString("name");
@@ -148,7 +150,6 @@ public class RowMappers {
      * @param name Name of the rule
      * @return Matching configuration class reference or null if one couldn't be found.
      */
-    @SuppressWarnings("unchecked")
     private static Class<?> findSubtypeFromAnnotation(String name) {
         JsonSubTypes definedSubTypes = RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class);
 

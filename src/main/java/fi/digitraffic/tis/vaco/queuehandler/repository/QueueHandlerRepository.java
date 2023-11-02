@@ -14,7 +14,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -36,19 +35,17 @@ public class QueueHandlerRepository {
     private final ErrorHandlerRepository errorHandlerRepository;
     private final TaskService taskService;
     private final PackagesService packagesService;
-    private final RulesetService rulesetService;
 
     public QueueHandlerRepository(JdbcTemplate jdbc,
                                   ObjectMapper objectMapper,
                                   ErrorHandlerRepository errorHandlerRepository,
                                   TaskService taskService,
-                                  PackagesService packagesService, RulesetService rulesetService) {
+                                  PackagesService packagesService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
         this.taskService = Objects.requireNonNull(taskService);
         this.packagesService = Objects.requireNonNull(packagesService);
-        this.rulesetService = rulesetService;
     }
 
     @Transactional

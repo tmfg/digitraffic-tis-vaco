@@ -9,8 +9,7 @@ public enum MessageQueue {
     JOBS_CONVERSION(QueueNames.VACO_JOBS_CONVERSION),
     RULE_RESULTS_INGEST(QueueNames.VACO_RULES_RESULTS),
     RULE_PROCESSING(QueueNames.VACO_RULES_PROCESSING_TEMPLATE),
-    ERRORS(QueueNames.VACO_ERRORS),
-    DEAD_LETTERS(QueueNames.VACO_DEAD_LETTERS);
+    ERRORS(QueueNames.VACO_ERRORS);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 

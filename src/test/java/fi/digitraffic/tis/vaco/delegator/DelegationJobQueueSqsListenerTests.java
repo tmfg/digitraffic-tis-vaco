@@ -3,14 +3,12 @@ package fi.digitraffic.tis.vaco.delegator;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
@@ -25,10 +23,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -100,14 +95,5 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         listener.listen(alreadyStarted, acknowledgement);
 
         verify(messagingService).submitValidationJob(validationJob.capture());
-    }
-
-    @Test
-    void canDetectAllKnownTaskCategoriesFromTasks() {
-        Arrays.stream(TaskCategory.values())
-            .forEach(tc ->
-                assertThat(tc,
-                    equalTo(listener.asTaskCategory(
-                        ImmutableTask.of(1L, tc.name().toLowerCase() + ".testing", tc.getPriority())))));
     }
 }

@@ -9,7 +9,6 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
-import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -31,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -40,12 +40,14 @@ public class TaskService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final TaskRepository taskRepository;
     private final PackagesService packagesService;
-    private RulesetService rulesetService;
+    private final RulesetService rulesetService;
 
-    public TaskService(TaskRepository taskRepository, PackagesService packagesService, RulesetService rulesetService) {
-        this.taskRepository = taskRepository;
-        this.packagesService = packagesService;
-        this.rulesetService = rulesetService;
+    public TaskService(TaskRepository taskRepository,
+                       PackagesService packagesService,
+                       RulesetService rulesetService) {
+        this.taskRepository = Objects.requireNonNull(taskRepository);
+        this.packagesService = Objects.requireNonNull(packagesService);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
     }
 
     public Task trackTask(Task task, ProcessingState state) {
@@ -211,19 +213,8 @@ public class TaskService {
         return createTasks(allowedRuleTasks, entry);
     }
 
-    private static List<ImmutableTask> resolvePriority(List<String> validationTasks,
-                                                       Entry entry,
-                                                       TaskCategory category) {
-        return Streams.mapIndexed(validationTasks, (i, t) -> ImmutableTask.of(entry.id(), t, category.getPriority() * 100 + i))
-            .toList();
-    }
-
-
-
     private static List<ImmutableTask> createTasks(List<String> taskNames,
                                                    Entry entry) {
         return Streams.map(taskNames, t -> ImmutableTask.of(entry.id(), t, -1)).toList();
     }
-
-
 }

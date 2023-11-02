@@ -89,8 +89,7 @@ public final class TempFiles {
     private static Path tempDir(VacoProperties vacoProperties, Path path) {
         try {
             Path root = Paths.get(vacoProperties.temporaryDirectory());
-            Path result = Files.createDirectories(root.resolve(path));
-            return result;
+            return Files.createDirectories(root.resolve(path));
         } catch (IOException e) {
             throw new UtilitiesException("Failed to create temp file, check application runtime permissions", e);
         }
