@@ -1,14 +1,10 @@
 package fi.digitraffic.tis.vaco.validation;
 
-import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
-import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -19,25 +15,19 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
+import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.rules.internal.SelectRulesetsRule;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
-import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -54,106 +44,36 @@ public class ValidationService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final TaskService taskService;
-    private final RulesetService rulesetService;
-    private final HttpClient httpClient;
     private final S3Client s3Client;
     private final VacoProperties vacoProperties;
     private final MessagingService messagingService;
 
+    // code migration split, these are temporary
+    private final DownloadRule downloadRule;
+    private final SelectRulesetsRule selectRulesetsRule;
+
     public ValidationService(TaskService taskService,
-                             RulesetService rulesetService,
-                             HttpClient httpClient,
                              S3Client s3Client,
                              VacoProperties vacoProperties,
-                             MessagingService messagingService) {
-        this.taskService = taskService;
-        this.rulesetService = rulesetService;
-        this.httpClient = httpClient;
-        this.s3Client = s3Client;
-        this.vacoProperties = vacoProperties;
-        this.messagingService = messagingService;
+                             MessagingService messagingService,
+                             DownloadRule downloadRule,
+                             SelectRulesetsRule selectRulesetsRule) {
+        this.taskService = Objects.requireNonNull(taskService);
+        this.s3Client = Objects.requireNonNull(s3Client);
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.messagingService = Objects.requireNonNull(messagingService);
+        this.downloadRule = Objects.requireNonNull(downloadRule);
+        this.selectRulesetsRule = Objects.requireNonNull(selectRulesetsRule);
     }
 
     public void validate(ValidationJobMessage message) throws RuleExecutionException {
         Entry entry = message.entry();
 
-        S3Path downloadedFile = downloadFile(entry);
+        S3Path downloadedFile = downloadRule.execute(entry).join();
 
-        Set<Ruleset> validationRulesets = selectRulesets(entry);
+        Set<Ruleset> validationRulesets = selectRulesetsRule.execute(entry).join();
 
         executeRules(entry, downloadedFile, validationRulesets);
-    }
-
-    @VisibleForTesting
-    S3Path downloadFile(Entry entry) {
-        Task task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
-        Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".zip");
-
-        try {
-            return httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
-                .thenApply(track(task, ProcessingState.UPDATE))
-                .thenCompose(uploadToS3(entry, task))
-                .thenApply(track(task, ProcessingState.COMPLETE))
-                .join();
-        } finally {
-            try {
-                Files.deleteIfExists(tempFilePath);
-            } catch (IOException ignored) {
-                // NOTE: ignored exception on purpose, although we could re-throw
-            }
-        }
-    }
-
-    private <T> Function<T, T> track(Task task, ProcessingState state) {
-        return t -> {
-            taskService.trackTask(task, state);
-            return t;
-        };
-    }
-
-    private Function<HttpResponse<Path>, CompletableFuture<S3Path>> uploadToS3(Entry entry,
-                                                                               Task task) {
-        return response -> {
-            ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
-            S3Path s3TargetPath = ImmutableS3Path.builder()
-                .from(S3Artifact.getTaskPath(entry.publicId(), DOWNLOAD_SUBTASK))
-                .addPath(entry.format() + ".zip")
-                .build();
-
-            return s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3TargetPath, refs.localPath())
-                .thenApply(track(task, ProcessingState.UPDATE))
-                .thenApply(u -> s3TargetPath);  // NOTE: There's probably something useful in the `u` parameter
-        };
-    }
-
-    @VisibleForTesting
-    Set<Ruleset> selectRulesets(Entry entry) {
-        Task task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
-
-        TransitDataFormat format;
-        try {
-            format = TransitDataFormat.forField(entry.format());
-        } catch (InvalidMappingException ime) {
-            logger.warn("Cannot select rulesets for entry {}: Unknown format '{}'", entry.publicId(), entry.format(), ime);
-            return Set.of();
-        }
-
-        // find all possible rulesets to execute
-        Set<Ruleset> rulesets = Streams.filter(
-            rulesetService.selectRulesets(
-                entry.businessId(),
-                Type.VALIDATION_SYNTAX,
-                format,
-                Streams.map(entry.validations(), ValidationInput::name).toSet()),
-            // filter to contain only format compatible rulesets
-            r -> r.identifyingName().startsWith(entry.format() + "."))
-            .toSet();
-
-        taskService.trackTask(task, ProcessingState.COMPLETE);
-
-        logger.info("Selected rulesets for {} are {}", entry.publicId(), Streams.collect(rulesets, Ruleset::identifyingName));
-
-        return rulesets;
     }
 
     @VisibleForTesting
@@ -167,35 +87,44 @@ public class ValidationService {
         Streams.map(validationRulesets, r -> {
                 String identifyingName = r.identifyingName();
                 Optional<ValidationInput> configuration = Optional.ofNullable(configs.get(identifyingName));
-
-                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), r.identifyingName(), identifyingName);
-                S3Path ruleS3Input = ruleBasePath.resolve("input");
-                S3Path ruleS3Output = ruleBasePath.resolve("output");
-
-                s3Client.copyFile(vacoProperties.s3ProcessingBucket(), downloadedFile, ruleS3Input).join();
-
-                ValidationRuleJobMessage ruleMessage = ImmutableValidationRuleJobMessage.builder()
-                    .entry(ImmutableEntry.copyOf(entry).withTasks())
-                    .task(task)
-                    .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
-                    .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
-                    .configuration(configuration.orElse(null))
-                    .retryStatistics(ImmutableRetryStatistics.of(5))
-                    .build();
-
+                ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
+                    entry,
+                    downloadedFile,
+                    configuration,
+                    identifyingName,
+                    task);
                 // mark the processing of matching task as started
-                Streams.filter(
-                    Optional.ofNullable(entry.tasks()).orElse(Collections.emptyList()),
-                    t -> t.name().equals(r.identifyingName()))
-                    .findFirst()
-                    .ifPresent(ruleTask -> taskService.trackTask(task, ProcessingState.START));
-
+                // 1) shows in API response that the processing has started
+                // 2) this prevents unintended retrying of the task
+                taskService.trackTask(taskService.findTask(entry.id(), identifyingName), ProcessingState.START);
                 return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
             })
             .map(CompletableFuture::join)
             .complete();
         // everything's done at this point because of the ::join call, complete task
         taskService.trackTask(task, ProcessingState.COMPLETE);
+    }
+
+    private ValidationRuleJobMessage convertToValidationRuleJobMessage(
+        Entry entry,
+        S3Path downloadedFile,
+        Optional<ValidationInput> configuration,
+        String identifyingName,
+        Task task) {
+        S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), identifyingName, identifyingName);
+        S3Path ruleS3Input = ruleBasePath.resolve("input");
+        S3Path ruleS3Output = ruleBasePath.resolve("output");
+
+        s3Client.copyFile(vacoProperties.s3ProcessingBucket(), downloadedFile, ruleS3Input).join();
+
+        return ImmutableValidationRuleJobMessage.builder()
+            .entry(ImmutableEntry.copyOf(entry).withTasks())
+            .task(task)
+            .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
+            .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
+            .configuration(configuration.orElse(null))
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
     }
 
 }

@@ -1,6 +1,18 @@
 package fi.digitraffic.tis.vaco;
 
-public class DataVisibility {
+/**
+ * Define visibility scopes for JSON fields. See uses of the subinterfaces.
+ */
+public final class DataVisibility {
+    private DataVisibility() {}
+
+    /**
+     * Public/stable data which can be exposed to users.
+     */
     public interface External {}
+
+    /**
+     * Private/internal data, such as database id:s, which we do not want to expose.
+     */
     public interface Internal {}
 }

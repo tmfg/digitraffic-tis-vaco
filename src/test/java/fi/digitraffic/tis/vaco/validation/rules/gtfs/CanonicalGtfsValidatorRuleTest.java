@@ -109,6 +109,7 @@ class CanonicalGtfsValidatorRuleTest extends AwsIntegrationTestBase {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
+        objectMapper.findAndRegisterModules();
         s3Client = new S3Client(vacoProperties, s3TransferManager, awsS3Client);
 
         rule = new CanonicalGtfsValidatorRule(

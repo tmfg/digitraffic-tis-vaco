@@ -42,6 +42,7 @@
         <jackson.version>2.15.3</jackson.version>
         <mockito.version>5.6.0</mockito.version>
         <caffeine.version>3.1.8</caffeine.version>
+        <guava.version>32.1.3-jre</guava.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
@@ -227,6 +228,18 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
             <version>${oauth2server.version}</version>
+        </dependency>
+
+        <!-- Topological sorting for ruleset selection and execution. Also requires Jackson module as Spring Boot
+             sniffes the classes from classpath yet doesn't do this on its own causing deep breakage otherwise. -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-guava</artifactId>
         </dependency>
 
         <!-- Testing libraries -->

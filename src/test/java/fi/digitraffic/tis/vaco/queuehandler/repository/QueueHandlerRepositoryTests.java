@@ -60,6 +60,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
     private Function<Long, List<ImmutableTask>> conversionTasks;
     private Function<Long, List<ImmutableTask>> conversionRuleTasks;
 
+
     @BeforeEach
     void setUp() throws JsonProcessingException {
         entry = ImmutableEntry.of("gtfs", "www.example.fi", Constants.FINTRAFFIC_BUSINESS_ID);
@@ -67,18 +68,18 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         validation = ImmutableValidationInput.of("ananas");
         conversion = ImmutableConversionInput.of("bananas");
 
-        validationTasks = entryId -> Streams.mapIndexed(
-                ValidationService.ALL_SUBTASKS,
-                (i, p) -> ImmutableTask.of(entryId, p, 100 + i))
-            .toList();
+        // NOTE: These priorities were originally set when current priority ordering didn't exist, which is why they're
+        //       misordered. Move along, nothing to see here.
+        validationTasks = entryId -> List.of(
+            ImmutableTask.of(entryId, ValidationService.DOWNLOAD_SUBTASK, 100),
+            ImmutableTask.of(entryId, ValidationService.RULESET_SELECTION_SUBTASK, 200),
+            ImmutableTask.of(entryId, ValidationService.EXECUTION_SUBTASK, 300)
+        );
         conversionTasks = entryId -> Streams.mapIndexed(
                 ConversionService.ALL_SUBTASKS,
                 (i, p) -> ImmutableTask.of(entryId, p, 200 + i))
             .toList();
-        conversionRuleTasks = entryId -> Streams.mapIndexed(
-                List.of(conversion),
-                (i, p) -> ImmutableTask.of(entryId, p.name(), 300 + i))
-            .toList();
+        conversionRuleTasks = entryId -> List.of(ImmutableTask.of(entryId, conversion.name(), 101));
     }
 
     @Test
@@ -124,13 +125,14 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
         Entry result = repository.create(entry.withConversions(conversion));
 
-
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
-            equalTo(Streams.concat(validationTasks.apply(result.id()),
-                    conversionTasks.apply(result.id()),
-                    conversionRuleTasks.apply(result.id()))
-                .toList()));
+            equalTo(List.of(
+                ImmutableTask.of(result.id(), ValidationService.DOWNLOAD_SUBTASK, 100),
+                ImmutableTask.of(result.id(), "bananas", 101),
+                ImmutableTask.of(result.id(), ValidationService.RULESET_SELECTION_SUBTASK, 200),
+                ImmutableTask.of(result.id(), ValidationService.EXECUTION_SUBTASK, 300)
+            )));
     }
 
     @NotNull

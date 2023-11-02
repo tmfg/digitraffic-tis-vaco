@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public abstract class ValidatorRule implements Rule<ValidationReport> {
+public abstract class ValidatorRule implements Rule<ValidationRuleJobMessage, ValidationReport> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 

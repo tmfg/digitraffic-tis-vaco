@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -43,6 +44,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @Mock
     private MessagingService messagingService;
+    @Autowired
+    private TaskService taskService;
     @Mock
     private TaskRepository taskRepository;
     @Mock
@@ -52,7 +55,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, taskRepository);
+        listener = new DelegationJobQueueSqsListener(messagingService, taskService);
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(createQueueEntryForTesting())
             .retryStatistics(ImmutableRetryStatistics.of(5))
@@ -71,13 +74,6 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     @Test
     void runsValidationByDefault() {
         listener.listen(jobMessage, acknowledgement);
-
-        verify(messagingService).updateJobProcessingStatus(jobMessage, ProcessingState.START);
-        verify(messagingService).updateJobProcessingStatus(jobMessage, ProcessingState.UPDATE);
-
-        // no tasks returned...
-        verify(taskRepository).findTasks(jobMessage.entry().id());
-        /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
     }
 
@@ -103,12 +99,6 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         ImmutableDelegationJobMessage alreadyStarted = jobMessage.withEntry(startedEntry);
         listener.listen(alreadyStarted, acknowledgement);
 
-        // only UPDATE, no START
-        verify(messagingService).updateJobProcessingStatus(alreadyStarted, ProcessingState.UPDATE);
-
-        // no tasks returned...
-        verify(taskRepository).findTasks(alreadyStarted.entry().id());
-        /// ...so validation is run as default
         verify(messagingService).submitValidationJob(validationJob.capture());
     }
 

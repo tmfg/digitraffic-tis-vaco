@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
-import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -12,8 +11,10 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
+import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -28,19 +29,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
-import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpResponse;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -49,10 +44,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.when;
 
-public class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
-
-    @Autowired
-    private VacoProperties vacoProperties;
+class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private QueueHandlerRepository queueHandlerRepository;
@@ -62,9 +54,6 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
 
     @Autowired
     private MessagingService messagingService;
-
-    @Autowired
-    private S3Client s3Client;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -83,47 +72,16 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
 
     @Mock
     HttpResponse<Path> response;
+    @Autowired
+    private DownloadRule downloadRule;
 
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
         awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
     }
 
-    @Test
-    void uploadsDownloadedFileToS3() throws URISyntaxException, IOException {
-        when(httpClientUtility.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
-            .thenReturn(CompletableFuture.supplyAsync(() -> response));
-        when(response.body()).thenReturn(Path.of(ClassLoader.getSystemResource("integration/validation/smallfile.txt").toURI()));
-
-        Entry entry = createEntryForTesting();
-
-        validationService.downloadFile(entry);
-
-        assertThat(entryUrl.getValue(), equalTo("https://testfile"));
-
-        List<S3Object> uploadedFiles = awsS3Client.listObjectsV2(ListObjectsV2Request.builder()
-                        .bucket(vacoProperties.s3ProcessingBucket())
-                        .prefix("entries/" + entry.publicId())
-                        .build())
-                .contents();
-
-        assertThat(uploadedFiles.size(), equalTo(1));
-
-        String key = uploadedFiles.get(0).key();
-        Path redownload = Paths.get(vacoProperties.temporaryDirectory(), "testfile");
-        s3TransferManager.downloadFile(DownloadFileRequest.builder()
-                        .getObjectRequest(req -> req.bucket(vacoProperties.s3ProcessingBucket()).key(key))
-                        .destination(redownload)
-                        .build())
-                .completionFuture()
-                .join();
-        assertThat(Files.readString(redownload), equalTo("I'm smol :3\n"));
-
-        Files.delete(redownload);
-    }
-
     private Entry createEntryForTesting() {
-        return queueHandlerRepository.create(TestObjects.anEntry("gtfs").build());
+        return queueHandlerRepository.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL_4_0_0)).build());
     }
 
     @Test
@@ -134,7 +92,7 @@ public class ValidationServiceIntegrationTests extends SpringBootIntegrationTest
 
         Entry entry = createEntryForTesting();
         String testQueueName = createSqsQueue();
-        S3Path downloadedFile = validationService.downloadFile(entry);
+        S3Path downloadedFile = downloadRule.execute(entry).join();
 
         validationService.executeRules(
             entry,
