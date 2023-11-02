@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.rules.validation.netex;
+package fi.digitraffic.tis.vaco.rules.model.netex;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

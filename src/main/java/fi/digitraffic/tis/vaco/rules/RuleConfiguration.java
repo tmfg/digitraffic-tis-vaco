@@ -4,8 +4,8 @@ package fi.digitraffic.tis.vaco.rules;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import fi.digitraffic.tis.vaco.rules.conversion.echo.EchoConverterConfiguration;
 import fi.digitraffic.tis.vaco.rules.conversion.echo.EchoConverterRule;
-import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorConfiguration;
-import fi.digitraffic.tis.vaco.rules.validation.netex.EnturNetexValidatorConfiguration;
+import fi.digitraffic.tis.vaco.rules.model.gtfs.CanonicalGtfsValidatorConfiguration;
+import fi.digitraffic.tis.vaco.rules.model.netex.EnturNetexValidatorConfiguration;
 
 /**
  * Marker interface for validation and conversion rule configurations. Used mainly to instruct Jackson how to properly

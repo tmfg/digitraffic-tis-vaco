@@ -9,6 +9,7 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -18,14 +19,15 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
-import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
-import fi.digitraffic.tis.vaco.rules.validation.gtfs.CanonicalGtfsValidatorRule;
+import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
+import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,35 +54,30 @@ public class RuleListenerService {
 
     private final ObjectMapper objectMapper;
     private final S3Client s3Client;
-    private final CanonicalGtfsValidatorRule canonicalGtfsValidatorRule;
     private final VacoProperties vacoProperties;
     private final QueueHandlerService queueHandlerService;
     private final PackagesService packagesService;
     private final TaskService taskService;
+    private final RulesetRepository rulesetRepository;
 
     public RuleListenerService(MessagingService messagingService,
                                ErrorHandlerService errorHandlerService,
                                ObjectMapper objectMapper,
                                S3Client s3Client,
-                               CanonicalGtfsValidatorRule canonicalGtfsValidatorRule,
                                VacoProperties vacoProperties,
                                QueueHandlerService queueHandlerService,
                                PackagesService packagesService,
-                               TaskService taskService) {
+                               TaskService taskService,
+                               RulesetRepository rulesetRepository) {
         this.messagingService = Objects.requireNonNull(messagingService);
         this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.s3Client = Objects.requireNonNull(s3Client);
-        this.canonicalGtfsValidatorRule = Objects.requireNonNull(canonicalGtfsValidatorRule);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.taskService = Objects.requireNonNull(taskService);
-    }
-
-    @Scheduled(fixedRateString = "${vaco.scheduling.canonical-gtfs-validation-rule.poll-rate}")
-    public void handleCanonicalGtfsQueue() {
-        listen(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL_4_0_0), ValidationRuleJobMessage.class, canonicalGtfsValidatorRule::execute);
+        this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.errors.poll-rate}")
@@ -146,12 +143,41 @@ public class RuleListenerService {
                 URI s3Uri = URI.create(fileNames.get("report.json"));
                 s3Client.downloadFile(s3Uri.getHost(), S3Path.of(s3Uri.getPath()), reportFile);
 
-                errorHandlerService.reportErrors(new ArrayList<>(canonicalGtfsValidatorRule.scanReportFile(entry, task, resultMessage.ruleName(), reportFile)));
+                errorHandlerService.reportErrors(new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile)));
             } else {
                 logger.warn("Expected file 'report.json' missing from output for message {}", resultMessage);
             }
             return true;
         });
+    }
+
+    private List<ImmutableError> scanReportFile(Entry entry, Task task, String ruleName, Path reportFile) {
+        try {
+            Report report = objectMapper.readValue(reportFile.toFile(), Report.class);
+            return report.notices()
+                .stream()
+                .flatMap(notice -> notice.sampleNotices()
+                    .stream()
+                    .map(sn -> {
+                        try {
+                            return ImmutableError.of(
+                                    entry.publicId(),
+                                    task.id(),
+                                    rulesetRepository.findByName(ruleName).orElseThrow().id(),
+                                    ruleName,
+                                    notice.code())
+                                .withRaw(objectMapper.writeValueAsBytes(sn));
+                        } catch (JsonProcessingException e) {
+                            logger.warn("Failed to convert tree to bytes", e);
+                            return null;
+                        }
+                    }))
+                .filter(Objects::nonNull)
+                .toList();
+        } catch (IOException e) {
+            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
+            return List.of();
+        }
     }
 
     private boolean processExternalRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
