@@ -35,7 +35,7 @@ public class PackagesRepository {
         }
     }
 
-    public ImmutablePackage createPackage(ImmutablePackage p) {
+    public Package createPackage(ImmutablePackage p) {
         return jdbc.queryForObject("""
                 INSERT INTO package(task_id, path, name)
                      VALUES (?, ?, ?)
@@ -45,7 +45,7 @@ public class PackagesRepository {
             p.taskId(), p.path(), p.name());
     }
 
-    public List<ImmutablePackage> findPackages(Task task) {
+    public List<Package> findPackages(Task task) {
         try {
             return jdbc.query("""
                 SELECT *

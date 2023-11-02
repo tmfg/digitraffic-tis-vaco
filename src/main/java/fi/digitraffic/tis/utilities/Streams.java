@@ -98,6 +98,22 @@ public final class Streams {
     }
 
     /**
+     * Functionally equivalent to {@link Stream#flatMap(Function)}. Shorthand for
+     *
+     * <pre>
+     *     objects.stream().flatMap(o -> mapper.apply(o).stream())
+     * </pre>
+     * @param objects Objects to process.
+     * @param mapper Mapper which converts single object to a collections of derived objects.
+     * @return Chain of flattened derived objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for derived output objects.
+     */
+    public static <I,O> Chain<O> flatten(Collection<I> objects, Function<? super I, ? extends Collection<O>> mapper) {
+        return new Chain<>(objects.stream().flatMap(i -> mapper.apply(i).stream()));
+    }
+
+    /**
      * Functionally equivalent to {@link Stream#filter(Predicate)}. Shorthand for
      * <pre>
      *     objects.stream().filter(predicate)
@@ -260,6 +276,10 @@ public final class Streams {
             Function<? super R, K> keyMapper,
             Function<? super R, ? extends V> valueMapper) {
             return stream.collect(Collectors.toMap(keyMapper, valueMapper));
+        }
+
+        public <O> Map<O, List<R>> groupBy(Function<? super R, O> classifier) {
+            return stream.collect(Collectors.groupingBy(classifier));
         }
     }
 }

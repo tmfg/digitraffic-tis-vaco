@@ -102,7 +102,7 @@ public class QueueHandlerService {
         }
     }
 
-    public Optional<ImmutableEntry> getEntry(String publicId) {
+    public Optional<Entry> getEntry(String publicId) {
         return queueHandlerRepository.findByPublicId(publicId);
     }
 

@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -181,6 +182,14 @@ public class ValidationService {
                     .configuration(configuration.orElse(null))
                     .retryStatistics(ImmutableRetryStatistics.of(5))
                     .build();
+
+                // mark the processing of matching task as started
+                Streams.filter(
+                    Optional.ofNullable(entry.tasks()).orElse(Collections.emptyList()),
+                    t -> t.name().equals(r.identifyingName()))
+                    .findFirst()
+                    .ifPresent(ruleTask -> taskService.trackTask(task, ProcessingState.START));
+
                 return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
             })
             .map(CompletableFuture::join)

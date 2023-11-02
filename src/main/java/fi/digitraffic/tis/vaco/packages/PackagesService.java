@@ -50,14 +50,14 @@ public class PackagesService {
      * @param packageContentsS3Path Where in S3 the package contents are stored before packaging.
      * @param fileName Final file name for the package.
      * @return Created package
-     * @see S3Packager#producePackage(Entry, S3Path, S3Path, String, Predicate[])
+     * @see S3Packager#producePackage(Entry, S3Path, S3Path, String, Predicate)
      */
-    public ImmutablePackage createPackage(Entry entry,
-                                          Task task,
-                                          String packageName,
-                                          S3Path packageContentsS3Path,
-                                          String fileName,
-                                          Predicate<String> contentFilter) {
+    public Package createPackage(Entry entry,
+                                 Task task,
+                                 String packageName,
+                                 S3Path packageContentsS3Path,
+                                 String fileName,
+                                 Predicate<String> contentFilter) {
         // TODO: error handling?
         // upload package file to S3
         s3Packager.producePackage(
@@ -80,7 +80,7 @@ public class PackagesService {
                     .toString()));
     }
 
-    public List<ImmutablePackage> findPackages(Task task) {
+    public List<Package> findPackages(Task task) {
         return packagesRepository.findPackages(task);
     }
 
