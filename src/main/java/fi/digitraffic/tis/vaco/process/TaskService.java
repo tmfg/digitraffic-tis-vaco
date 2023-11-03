@@ -15,7 +15,6 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -94,17 +93,10 @@ public class TaskService {
     @VisibleForTesting
     protected List<Task> resolveTasks(Entry entry) {
 
-        /*
-            1) resolve all tasks which should be part of this entry
-            2) toposort + priorization
-         */
-
         List<Task> allTasks = new ArrayList<>();
 
         List<String> validationTasks = ValidationService.ALL_SUBTASKS;
         allTasks.addAll(createTasks(validationTasks, entry));
-
-        ///
 
         try {
             logger.info("Generating rule tasks for entry {} based on input format '{}'", entry.publicId(), entry.format());
@@ -139,16 +131,14 @@ public class TaskService {
         return allTasks;
     }
 
-    // TODO: this is currently hardcoded to move on, should be dynamic
+    // these hardcoded values represent the dependencies which don't have a Ruleset in database and thus there isn't a
+    // better place for declaring them
     private static final Map<String, List<String>> ruleDeps = ruleDeps();
 
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
         deps.put(ValidationService.EXECUTION_SUBTASK, List.of(ValidationService.RULESET_SELECTION_SUBTASK));
         deps.put(ValidationService.RULESET_SELECTION_SUBTASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
-        deps.put(RuleName.GTFS_CANONICAL_4_0_0, List.of(DownloadRule.DOWNLOAD_SUBTASK));
-        deps.put(RuleName.GTFS_CANONICAL_4_1_0, List.of(DownloadRule.DOWNLOAD_SUBTASK));
-        deps.put(RuleName.NETEX_ENTUR_1_0_1, List.of(DownloadRule.DOWNLOAD_SUBTASK));
         return deps;
     }
 
@@ -159,8 +149,8 @@ public class TaskService {
      * Priority group is represented by a multiple of 100, each task in same group is given a sequential index mainly
      * for convenience.
      *
-     * @param tasks
-     * @return
+     * @param tasks Tasks to prioritize and group.
+     * @return New list with a copy of tasks updated with priorities.
      */
     @SuppressWarnings("UnstableApiUsage")
     private List<Task> resolvePrioritiesBasedOnTopology(List<Task> tasks) {
@@ -171,6 +161,9 @@ public class TaskService {
         tasks.forEach(task -> {
             if (ruleDeps.containsKey(task.name())) {
                 ruleDeps.get(task.name()).forEach(dep -> g.putEdge(tasksByName.get(dep), task));
+            } else {
+                rulesetService.findByName(task.name()).ifPresent(ruleset ->
+                    ruleset.dependencies().forEach(dep -> g.putEdge(tasksByName.get(dep), task)));
             }
         });
         // 2) do the topological ordering

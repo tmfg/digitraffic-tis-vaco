@@ -32,9 +32,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
-public class RowMappers {
+public final class RowMappers {
+    private RowMappers() {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RowMappers.class);
 
@@ -47,6 +49,7 @@ public class RowMappers {
         .category(Category.forField(rs.getString("category")))
         .type(Type.forField(rs.getString("type")))
         .format(TransitDataFormat.forField(rs.getString("format")))
+        .dependencies(Set.of(ArraySqlValue.read(rs, "dependencies")))
         .build();
 
     public static final RowMapper<Task> TASK = (rs, rowNum) -> ImmutableTask.builder()
