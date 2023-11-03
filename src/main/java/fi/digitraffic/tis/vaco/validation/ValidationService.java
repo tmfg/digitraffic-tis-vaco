@@ -35,11 +35,10 @@ import java.util.function.Function;
 
 @Service
 public class ValidationService {
-    public static final String DOWNLOAD_SUBTASK = "validation.download";
     public static final String RULESET_SELECTION_SUBTASK = "validation.rulesets";
     public static final String EXECUTION_SUBTASK = "validation.execute";
 
-    public static final List<String> ALL_SUBTASKS = List.of(DOWNLOAD_SUBTASK, RULESET_SELECTION_SUBTASK, EXECUTION_SUBTASK);
+    public static final List<String> ALL_SUBTASKS = List.of(DownloadRule.DOWNLOAD_SUBTASK, RULESET_SELECTION_SUBTASK, EXECUTION_SUBTASK);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 

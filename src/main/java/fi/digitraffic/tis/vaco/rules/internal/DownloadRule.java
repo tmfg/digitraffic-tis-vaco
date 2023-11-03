@@ -12,7 +12,6 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.Rule;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableFileReferences;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +25,7 @@ import java.util.function.Function;
 
 @Component
 public class DownloadRule implements Rule<Entry, S3Path> {
+    public static final String DOWNLOAD_SUBTASK = "prepare.download";
     private final TaskService taskService;
     private final VacoProperties vacoProperties;
     private final HttpClient httpClient;
@@ -43,13 +43,13 @@ public class DownloadRule implements Rule<Entry, S3Path> {
 
     @Override
     public String getIdentifyingName() {
-        return ValidationService.DOWNLOAD_SUBTASK;
+        return DOWNLOAD_SUBTASK;
     }
 
     @Override
     public CompletableFuture<S3Path> execute(Entry entry) {
         return CompletableFuture.supplyAsync(() -> {
-            Task task = taskService.trackTask(taskService.findTask(entry.id(), ValidationService.DOWNLOAD_SUBTASK), ProcessingState.START);
+            Task task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
             Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".zip");
 
             try {
@@ -81,7 +81,7 @@ public class DownloadRule implements Rule<Entry, S3Path> {
         return response -> {
             ImmutableFileReferences refs = ImmutableFileReferences.of(response.body());
             S3Path s3TargetPath = ImmutableS3Path.builder()
-                .from(S3Artifact.getTaskPath(entry.publicId(), ValidationService.DOWNLOAD_SUBTASK))
+                .from(S3Artifact.getTaskPath(entry.publicId(), DOWNLOAD_SUBTASK))
                 .addPath(entry.format() + ".zip")
                 .build();
 

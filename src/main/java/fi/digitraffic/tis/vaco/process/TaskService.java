@@ -16,6 +16,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleName;
+import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -144,10 +145,10 @@ public class TaskService {
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
         deps.put(ValidationService.EXECUTION_SUBTASK, List.of(ValidationService.RULESET_SELECTION_SUBTASK));
-        deps.put(ValidationService.RULESET_SELECTION_SUBTASK, List.of(ValidationService.DOWNLOAD_SUBTASK));
-        deps.put(RuleName.GTFS_CANONICAL_4_0_0, List.of(ValidationService.DOWNLOAD_SUBTASK));
-        deps.put(RuleName.GTFS_CANONICAL_4_1_0, List.of(ValidationService.DOWNLOAD_SUBTASK));
-        deps.put(RuleName.NETEX_ENTUR_1_0_1, List.of(ValidationService.DOWNLOAD_SUBTASK));
+        deps.put(ValidationService.RULESET_SELECTION_SUBTASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
+        deps.put(RuleName.GTFS_CANONICAL_4_0_0, List.of(DownloadRule.DOWNLOAD_SUBTASK));
+        deps.put(RuleName.GTFS_CANONICAL_4_1_0, List.of(DownloadRule.DOWNLOAD_SUBTASK));
+        deps.put(RuleName.NETEX_ENTUR_1_0_1, List.of(DownloadRule.DOWNLOAD_SUBTASK));
         return deps;
     }
 

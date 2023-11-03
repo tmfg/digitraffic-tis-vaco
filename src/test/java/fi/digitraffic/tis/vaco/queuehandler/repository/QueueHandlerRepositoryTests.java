@@ -17,6 +17,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -71,7 +72,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         // NOTE: These priorities were originally set when current priority ordering didn't exist, which is why they're
         //       misordered. Move along, nothing to see here.
         validationTasks = entryId -> List.of(
-            ImmutableTask.of(entryId, ValidationService.DOWNLOAD_SUBTASK, 100),
+            ImmutableTask.of(entryId, DownloadRule.DOWNLOAD_SUBTASK, 100),
             ImmutableTask.of(entryId, ValidationService.RULESET_SELECTION_SUBTASK, 200),
             ImmutableTask.of(entryId, ValidationService.EXECUTION_SUBTASK, 300)
         );
@@ -128,7 +129,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
             equalTo(List.of(
-                ImmutableTask.of(result.id(), ValidationService.DOWNLOAD_SUBTASK, 100),
+                ImmutableTask.of(result.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
                 ImmutableTask.of(result.id(), "bananas", 101),
                 ImmutableTask.of(result.id(), ValidationService.RULESET_SELECTION_SUBTASK, 200),
                 ImmutableTask.of(result.id(), ValidationService.EXECUTION_SUBTASK, 300)

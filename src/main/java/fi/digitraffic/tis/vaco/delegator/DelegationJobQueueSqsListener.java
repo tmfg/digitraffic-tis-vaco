@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
@@ -50,7 +51,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 logger.info("Running task {}", task);
                 String name = task.name();
                 // is rule internal?
-                if (name.equals(ValidationService.DOWNLOAD_SUBTASK)
+                if (name.equals(DownloadRule.DOWNLOAD_SUBTASK)
                     || name.equals(ValidationService.RULESET_SELECTION_SUBTASK)
                     || name.equals(ValidationService.EXECUTION_SUBTASK)) {
                     validationJob(entry);
