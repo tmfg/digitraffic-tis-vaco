@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -144,9 +145,9 @@ public class RulesetRepository {
 
     public Ruleset createRuleset(Ruleset ruleset) {
         return jdbc.queryForObject("""
-                INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format)
-                     VALUES (?, ?::ruleset_category, ?, ?, ?, ?::transit_data_format)
-                  RETURNING id, public_id, owner_id, category, identifying_name, description, "type", format;
+                INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format, dependencies)
+                     VALUES (?, ?::ruleset_category, ?, ?, ?, ?::transit_data_format, ?)
+                  RETURNING id, public_id, owner_id, category, identifying_name, description, "type", format, dependencies;
                 """,
             RowMappers.RULESET,
             ruleset.ownerId(),
@@ -154,13 +155,14 @@ public class RulesetRepository {
             ruleset.identifyingName(),
             ruleset.description(),
             ruleset.type().fieldName(),
-            ruleset.format().fieldName());
+            ruleset.format().fieldName(),
+            ArraySqlValue.create(ruleset.dependencies().toArray(new String[0])));
     }
 
     public Optional<Ruleset> findByName(String rulesetName) {
         try {
             return Optional.ofNullable(rulesetNameCache.get(rulesetName, r -> jdbc.queryForObject("""
-                    SELECT id, public_id, owner_id, category, identifying_name, description, "type", format
+                    SELECT id, public_id, owner_id, category, identifying_name, description, "type", format, dependencies
                       FROM ruleset
                      WHERE identifying_name = ?
                     """,

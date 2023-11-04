@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
@@ -11,7 +12,6 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.util.HashMap;
@@ -84,8 +83,7 @@ public class QueueHandlerController {
 
         return entry
             .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                String.format("A ticket with public ID %s does not exist", publicId)));
+            .orElse(Responses.notFound(String.format("A ticket with public ID %s does not exist", publicId)));
     }
 
     private static Resource<Entry> asQueueHandlerResource(Entry entry) {
@@ -109,7 +107,7 @@ public class QueueHandlerController {
             links.putAll(packageLinks);
         }
 
-        return new Resource<>(entry, links);
+        return new Resource<>(entry, null, links);
     }
 
     private static Link linkToGetEntry(Entry entry) {

@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.rules.validation.gtfs;
+package fi.digitraffic.tis.vaco.rules.model.gtfs;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

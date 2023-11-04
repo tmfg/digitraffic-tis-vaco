@@ -7,7 +7,6 @@ import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.conversion.model.ConversionReport;
 import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
-import fi.digitraffic.tis.vaco.delegator.model.TaskCategory;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -26,7 +25,7 @@ import java.util.Set;
 
 @Service
 public class ConversionService {
-    public static final String PHASE = TaskCategory.CONVERSION.getName();
+    public static final String PHASE = "conversion";
     public static final String RULESET_SELECTION_SUBTASK = "conversion.rulesets";
     public static final String EXECUTION_SUBTASK = "conversion.execute";
     public static final String OUTPUT_VALIDATION_SUBTASK = "conversion.outputvalidation";

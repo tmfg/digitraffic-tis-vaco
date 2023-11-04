@@ -8,6 +8,8 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import org.immutables.value.Value;
 
+import java.util.Set;
+
 // TODO: probably in wrong subsystem package
 @Value.Immutable
 @JsonSerialize(as = ImmutableRuleset.class)
@@ -45,4 +47,8 @@ public interface Ruleset {
     @Value.Parameter
     TransitDataFormat format();
 
+    @Value.Default
+    default Set<String> dependencies() {
+        return Set.of();
+    }
 }

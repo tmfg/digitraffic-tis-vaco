@@ -7,7 +7,6 @@ import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.operations.MessagingOperationFailedException;
@@ -61,8 +60,8 @@ public class MessagingService {
     public CompletableFuture<ValidationJobMessage> submitValidationJob(ValidationJobMessage jobDescription) {
         return sendMessage(MessageQueue.JOBS_VALIDATION.getQueueName(), jobDescription);
     }
-    // TODO: reduce scopes of return values
-   public CompletableFuture<ConversionJobMessage> submitConversionJob(ConversionJobMessage jobDescription) {
+
+    public CompletableFuture<ConversionJobMessage> submitConversionJob(ConversionJobMessage jobDescription) {
         return sendMessage(MessageQueue.JOBS_CONVERSION.getQueueName(), jobDescription);
     }
 
@@ -76,10 +75,6 @@ public class MessagingService {
 
     public CompletableFuture<ValidationRuleJobMessage> submitRuleExecutionJob(String ruleName, ValidationRuleJobMessage ruleMessage) {
         return sendMessage(MessageQueue.RULE_PROCESSING.munge(ruleName), ruleMessage);
-    }
-
-    public CompletableFuture<ImmutableErrorMessage> submitErrors(ImmutableErrorMessage message) {
-        return sendMessage(MessageQueue.ERRORS.getQueueName(), message);
     }
 
     public void deleteMessage(String queueName, Message m) {

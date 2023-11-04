@@ -12,7 +12,6 @@ public final class QueueNames {
     public static final String VACO_JOBS_CONVERSION = VACO_JOBS + "-conversion";
     public static final String VACO_RULES_RESULTS = "rules-results";
     public static final String VACO_RULES_PROCESSING_TEMPLATE = "rules-processing-{ruleName}";
-    public static final String VACO_DEAD_LETTERS = "vaco-deadletters";
     public static final String VACO_ERRORS = "vaco-errors";
 
     private QueueNames() {}

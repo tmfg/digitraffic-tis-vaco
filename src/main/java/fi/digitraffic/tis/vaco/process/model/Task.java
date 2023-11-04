@@ -42,6 +42,7 @@ public interface Task {
     @Nullable
     LocalDateTime completed();
 
+    @JsonView(DataVisibility.Internal.class)
     default List<Package> packages() {
         return List.of();
     }

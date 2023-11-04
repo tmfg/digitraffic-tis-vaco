@@ -277,9 +277,5 @@ public final class Streams {
             Function<? super R, ? extends V> valueMapper) {
             return stream.collect(Collectors.toMap(keyMapper, valueMapper));
         }
-
-        public <O> Map<O, List<R>> groupBy(Function<? super R, O> classifier) {
-            return stream.collect(Collectors.groupingBy(classifier));
-        }
     }
 }

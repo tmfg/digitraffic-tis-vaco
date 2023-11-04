@@ -36,11 +36,9 @@ public class PackagesController {
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
         return queueHandlerService.getEntry(entryPublicId)
-            .flatMap(e -> {
-                return Streams.filter(e.tasks(), t -> t.name().equals(taskName))
-                        .findFirst()
-                        .flatMap(t -> packagesService.downloadPackage(e, t, packageName));
-            })
+            .flatMap(e -> Streams.filter(e.tasks(), t -> t.name().equals(taskName))
+                    .findFirst()
+                    .flatMap(t -> packagesService.downloadPackage(e, t, packageName)))
             .map(filePath -> {
                 ContentDisposition contentDisposition = ContentDisposition.builder("inline")
                     .filename(packageName + ".zip")

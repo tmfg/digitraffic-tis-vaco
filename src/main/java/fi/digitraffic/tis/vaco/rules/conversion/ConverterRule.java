@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 
 import java.util.concurrent.CompletableFuture;
 
-public abstract class ConverterRule implements Rule<ConversionReport> {
+public abstract class ConverterRule implements Rule<ValidationRuleJobMessage, ConversionReport> {
     @Override
     public CompletableFuture<ConversionReport> execute(
         ValidationRuleJobMessage message) {

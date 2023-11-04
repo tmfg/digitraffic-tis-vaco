@@ -13,10 +13,6 @@ public final class S3Artifact {
 
     static final String TASKS_ROOT = ENTRY_ROOT + "/tasks/%s";
 
-    static final String DOWNLOAD_TASK = ENTRY_ROOT + "/tasks/download/%s";
-
-    static final String VALIDATION_TASK = ENTRY_ROOT + "/tasks/validation/%s/%s";
-
     static final String CONVERSION_TASK = ENTRY_ROOT + "/tasks/conversion/%s/%s";
 
     static final String PACKAGES_ROOT = ENTRY_ROOT + "/packages";

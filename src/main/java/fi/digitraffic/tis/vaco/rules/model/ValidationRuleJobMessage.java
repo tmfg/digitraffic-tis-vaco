@@ -18,6 +18,8 @@ public interface ValidationRuleJobMessage extends JobMessage, Retryable {
     String inputs();
     String outputs();
 
+    // TODO: ValidationInput should be faded away from this, it is unnecessary wrapping between RuleConfiguration and
+    //       this message
     @Nullable
     ValidationInput configuration();
 }
