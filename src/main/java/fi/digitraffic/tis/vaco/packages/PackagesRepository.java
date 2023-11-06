@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.packages;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -35,7 +34,7 @@ public class PackagesRepository {
         }
     }
 
-    public Package createPackage(ImmutablePackage p) {
+    public Package createPackage(Package p) {
         return jdbc.queryForObject("""
                 INSERT INTO package(task_id, path, name)
                      VALUES (?, ?, ?)

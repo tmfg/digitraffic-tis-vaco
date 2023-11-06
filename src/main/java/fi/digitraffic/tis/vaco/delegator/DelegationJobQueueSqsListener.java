@@ -25,12 +25,15 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
     private final MessagingService messagingService;
     private final TaskService taskService;
+    private final DownloadRule downloadRule;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
-                                         TaskService taskService) {
+                                         TaskService taskService,
+                                         DownloadRule downloadRule) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = Objects.requireNonNull(messagingService);
         this.taskService = Objects.requireNonNull(taskService);
+        this.downloadRule = downloadRule;
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -50,10 +53,10 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
             tasksToRun.forEach(task -> {
                 logger.info("Running task {}", task);
                 String name = task.name();
-                // is rule internal?
-                if (name.equals(DownloadRule.DOWNLOAD_SUBTASK)
-                    || name.equals(ValidationService.RULESET_SELECTION_SUBTASK)
-                    || name.equals(ValidationService.EXECUTION_SUBTASK)) {
+
+                if (name.equals(DownloadRule.DOWNLOAD_SUBTASK)) {
+                    messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, downloadRule.execute(entry).join());
+                } else if (name.equals(ValidationService.VALIDATE_TASK)) {
                     validationJob(entry);
                 } else {
                     logger.info("Unknown task {}", message);

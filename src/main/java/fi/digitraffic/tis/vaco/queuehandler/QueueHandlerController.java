@@ -99,7 +99,7 @@ public class QueueHandlerController {
                 packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), new Link(
                     taskName,
                     MvcUriComponentsBuilder
-                        .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), p.name(), taskName, null))
+                        .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))
                         .toUriString(),
                     RequestMethod.GET));
             });

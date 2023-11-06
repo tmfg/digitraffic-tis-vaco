@@ -35,7 +35,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
     @Test
     void roundtrippingPackageEntityWorks() {
-        ImmutableEntry entry = TestObjects.anEntry("gbfs").build();
+        ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
         Entry createdEntry = queueHandlerRepository.create(entry.withTasks(TestObjects.aTask(entry).build()));
         Task task = createdEntry.tasks().get(0);
         Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
@@ -48,7 +48,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
     @Test
     void providesHelperForDownloadingReferencedFile() {
-        ImmutableEntry entry = TestObjects.anEntry("gbfs").build();
+        ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
         Entry createdEntry = queueHandlerRepository.create(entry.withTasks(TestObjects.aTask(entry).build()));
         Task task = createdEntry.tasks().get(0);
         Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
