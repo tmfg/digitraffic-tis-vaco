@@ -9,6 +9,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
+import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -59,7 +60,7 @@ public class TaskService {
         };
     }
 
-    public Task findTask(Long entryId, String taskName) {
+    public Optional<Task> findTask(Long entryId, String taskName) {
         return taskRepository.findTask(entryId, taskName);
     }
 
@@ -134,6 +135,7 @@ public class TaskService {
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
         deps.put(ValidationService.VALIDATE_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
+        deps.put(ConversionService.CONVERT_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK, ValidationService.VALIDATE_TASK));
         return deps;
     }
 
@@ -213,5 +215,10 @@ public class TaskService {
     private static List<ImmutableTask> createTasks(List<String> taskNames,
                                                    Entry entry) {
         return Streams.map(taskNames, t -> ImmutableTask.of(entry.id(), t, -1)).toList();
+    }
+
+    public AutoCloseable track(Task t) {
+        Task started = trackTask(t, ProcessingState.START);
+        return () -> trackTask(started, ProcessingState.COMPLETE);
     }
 }

@@ -9,13 +9,16 @@ import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidationJobMessage> {
 
-    private final MessagingService messagingService;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private final MessagingService messagingService;
     private final ValidationService validationService;
     private final QueueHandlerRepository queueHandlerRepository;
 
@@ -36,6 +39,8 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
     @Override
     protected void runTask(ImmutableValidationJobMessage message) {
         validationService.validate(message);
+
+        logger.debug("Validation complete for {}, resubmitting to delegation", message.entry().publicId());
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
             // refresh entry to avoid repeating same message over and over and over...and over again

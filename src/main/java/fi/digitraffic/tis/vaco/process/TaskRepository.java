@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class TaskRepository {
@@ -109,11 +110,15 @@ public class TaskRepository {
         }
     }
 
-    public Task findTask(Long entryId, String taskName) {
-        return jdbc.queryForObject(
-            "SELECT * FROM task WHERE entry_id = ? AND name = ?",
-            RowMappers.TASK,
-            entryId, taskName);
+    public Optional<Task> findTask(Long entryId, String taskName) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                "SELECT * FROM task WHERE entry_id = ? AND name = ?",
+                RowMappers.TASK,
+                entryId, taskName));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     /**

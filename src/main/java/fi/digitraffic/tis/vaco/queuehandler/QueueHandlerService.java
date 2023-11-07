@@ -30,11 +30,8 @@ public class QueueHandlerService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
-
     private final OrganizationService organizationService;
-
     private final QueueHandlerRepository queueHandlerRepository;
-
     private final EntryRequestMapper entryRequestMapper;
     private final CooperationService cooperationService;
 
@@ -57,6 +54,8 @@ public class QueueHandlerService {
         autoregisterOrganization(converted.metadata(), converted.businessId());
 
         Entry result = queueHandlerRepository.create(converted);
+
+        logger.debug("Processing done for entry request and new entry created as {}, submitting to delegation", result.publicId());
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
             .entry(result)

@@ -11,7 +11,6 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
-import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -50,7 +49,6 @@ public class ValidationService {
     private final MessagingService messagingService;
 
     // code migration split, these are temporary
-    private final DownloadRule downloadRule;
     private final RulesetService rulesetService;
     private final PackagesService packagesService;
 
@@ -58,13 +56,12 @@ public class ValidationService {
                              S3Client s3Client,
                              VacoProperties vacoProperties,
                              MessagingService messagingService,
-                             DownloadRule downloadRule,
-                             RulesetService rulesetService, PackagesService packagesService) {
+                             RulesetService rulesetService,
+                             PackagesService packagesService) {
         this.taskService = Objects.requireNonNull(taskService);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messagingService = Objects.requireNonNull(messagingService);
-        this.downloadRule = Objects.requireNonNull(downloadRule);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.packagesService = packagesService;
     }
@@ -72,22 +69,25 @@ public class ValidationService {
     public void validate(ValidationJobMessage message) throws RuleExecutionException {
         Entry entry = message.entry();
 
-        Task task = taskService.trackTask(taskService.findTask(entry.id(), ValidationService.VALIDATE_TASK), ProcessingState.START);
+        taskService.findTask(entry.id(), ValidationService.VALIDATE_TASK)
+            .map(task -> {
+                Task tracked = taskService.trackTask(task, ProcessingState.START);
 
-        S3Path downloadedFile = lookupDownloadedFile(entry);
+                S3Path downloadedFile = lookupDownloadedFile(entry);
 
-        Set<Ruleset> validationRulesets = selectRulesets(entry);
+                Set<Ruleset> validationRulesets = selectRulesets(entry);
 
-        executeRules(entry, task, downloadedFile, validationRulesets);
+                executeRules(entry, task, downloadedFile, validationRulesets);
 
-        taskService.trackTask(task, ProcessingState.COMPLETE);
+                return taskService.trackTask(tracked, ProcessingState.COMPLETE);
+            }).orElseThrow();
     }
 
     private S3Path lookupDownloadedFile(Entry entry) {
-        Task downloadTask = taskService.findTask(entry.id(), DownloadRule.DOWNLOAD_SUBTASK);
-        Package downloadResult = packagesService.findPackage(downloadTask, "result")
-            .orElseThrow(() -> new RuleExecutionException("No download.rule/result package available for entry " + entry.publicId()));
-        return S3Path.of(URI.create(downloadResult.path()).getPath());
+        return taskService.findTask(entry.id(), DownloadRule.DOWNLOAD_SUBTASK)
+            .flatMap(downloadTask -> packagesService.findPackage(downloadTask, "result"))
+            .map(downloadResult -> S3Path.of(URI.create(downloadResult.path()).getPath()))
+            .orElseThrow(() -> new RuleExecutionException("No " + DownloadRule.DOWNLOAD_SUBTASK + "/result package available for entry " + entry.publicId()));
     }
 
     private Set<Ruleset> selectRulesets(Entry entry) {
@@ -134,7 +134,9 @@ public class ValidationService {
                 // mark the processing of matching task as started
                 // 1) shows in API response that the processing has started
                 // 2) this prevents unintended retrying of the task
-                taskService.trackTask(taskService.findTask(entry.id(), identifyingName), ProcessingState.START);
+                Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
+                ruleTask.map(t -> taskService.trackTask(t, ProcessingState.START))
+                    .orElseThrow();
                 return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
             })
             .map(CompletableFuture::join)

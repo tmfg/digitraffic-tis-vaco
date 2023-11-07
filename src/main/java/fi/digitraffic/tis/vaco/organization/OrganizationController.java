@@ -63,7 +63,6 @@ public class OrganizationController {
 
     private static Link linkToGetOrganization(Organization organization) {
         return new Link(
-                null,
                 MvcUriComponentsBuilder
                         .fromMethodCall(on(OrganizationController.class).getOrganizationByBusinessId(organization.businessId()))
                         .toUriString(),

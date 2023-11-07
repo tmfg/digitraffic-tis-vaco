@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.utilities.model.ProcessingState;
+import fi.digitraffic.tis.vaco.conversion.ConversionService;
+import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -10,6 +12,7 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.validation.ValidationService;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDelegationJobMessage> {
@@ -26,14 +30,17 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     private final MessagingService messagingService;
     private final TaskService taskService;
     private final DownloadRule downloadRule;
+    private final Set<String> knownExternalRules;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
                                          TaskService taskService,
-                                         DownloadRule downloadRule) {
+                                         DownloadRule downloadRule,
+                                         RulesetService rulesetService) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = Objects.requireNonNull(messagingService);
         this.taskService = Objects.requireNonNull(taskService);
-        this.downloadRule = downloadRule;
+        this.downloadRule = Objects.requireNonNull(downloadRule);
+        this.knownExternalRules = Objects.requireNonNull(rulesetService).listAllNames();
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -58,10 +65,21 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, downloadRule.execute(entry).join());
                 } else if (name.equals(ValidationService.VALIDATE_TASK)) {
                     validationJob(entry);
+                } else if (name.equals(ConversionService.CONVERT_TASK)) {
+                    conversionJob(entry);
+                } else if (knownExternalRules.contains(name)) {
+                    // these are currently submitted delegatively elsewhere
+                    logger.debug("External rule {} detected, skipping...", name);
                 } else {
-                    logger.info("Unknown task {}", message);
+                    logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
+                    // TODO: we could have explicit canceling detection+handling as well
+                    taskService.trackTask(task, ProcessingState.START);
+                    taskService.trackTask(task, ProcessingState.COMPLETE);
                 }
             });
+        } else {
+            // nothing to run, we're done
+
         }
     }
 
@@ -71,6 +89,14 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         messagingService.submitValidationJob(validationJob);
+    }
+
+    private void conversionJob(Entry entry) {
+        ImmutableConversionJobMessage conversionJob = ImmutableConversionJobMessage.builder()
+            .entry(entry)
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
+        messagingService.submitConversionJob(conversionJob);
     }
 
     private Optional<List<Task>> nextTaskGroupToRun(ImmutableDelegationJobMessage jobDescription) {

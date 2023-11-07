@@ -51,4 +51,14 @@ public class RulesetService {
         return rulesetRepository.findByName(rulesetName);
     }
 
+    /**
+     * Returns all ruleset names in no particular order. This method should be treated as internal only as it exposes
+     * every single external rule registered in database without filters.
+     *
+     * @return Set of known rulesets.
+     */
+    public Set<String> listAllNames() {
+        return rulesetRepository.listAllNames();
+    }
+
 }

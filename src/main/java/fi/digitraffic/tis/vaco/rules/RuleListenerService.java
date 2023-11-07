@@ -140,6 +140,7 @@ public class RuleListenerService {
                 dlFile.toString()));
 
             // this is an intermediate step which needs to trigger more work, so submit a new delegation job
+            logger.debug("Download complete for {}, resubmitting to delegation", entry.publicId());
             ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
                 .entry(queueHandlerRepository.reload(entry))
                 .retryStatistics(ImmutableRetryStatistics.of(5))
@@ -217,12 +218,15 @@ public class RuleListenerService {
         Optional<Entry> e = queueHandlerService.getEntry(resultMessage.entryId());
         if (e.isPresent()) {
             Entry entry = e.get();
-            Task task = taskService.trackTask(taskService.findTask(entry.id(), resultMessage.ruleName()), ProcessingState.UPDATE);
-            try {
-                return processingHandler.test(entry, task);
-            } finally {
-                taskService.trackTask(task, ProcessingState.COMPLETE);
-            }
+            Optional<Task> task = taskService.findTask(entry.id(), resultMessage.ruleName());
+            return task.map(t -> {
+                Task tracked = taskService.trackTask(t, ProcessingState.UPDATE);
+                try {
+                    return processingHandler.test(entry, tracked);
+                } finally {
+                    taskService.trackTask(tracked, ProcessingState.COMPLETE);
+                }
+            }).orElse(false);
         } else {
             return false;
         }

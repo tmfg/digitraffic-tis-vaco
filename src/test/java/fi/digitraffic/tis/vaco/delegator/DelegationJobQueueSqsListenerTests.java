@@ -16,6 +16,7 @@ import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,11 +46,13 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private QueueHandlerRepository queueHandlerRepository;
+    @Autowired
+    private TaskService taskService;
+    @Autowired
+    private RulesetService rulesetService;
 
     @Mock
     private MessagingService messagingService;
-    @Autowired
-    private TaskService taskService;
     @Mock
     private TaskRepository taskRepository;
     @Mock
@@ -61,7 +64,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, taskService, downloadRule);
+        listener = new DelegationJobQueueSqsListener(messagingService, taskService, downloadRule, rulesetService);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)

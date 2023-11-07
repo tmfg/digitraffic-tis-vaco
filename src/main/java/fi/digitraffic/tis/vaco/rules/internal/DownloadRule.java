@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -51,8 +52,10 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     @Override
     public CompletableFuture<ResultMessage> execute(Entry entry) {
         return CompletableFuture.supplyAsync(() -> {
-            Task task = taskService.trackTask(taskService.findTask(entry.id(), DOWNLOAD_SUBTASK), ProcessingState.START);
-            Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, task, entry.format() + ".zip");
+            Optional<Task> task = taskService.findTask(entry.id(), DOWNLOAD_SUBTASK);
+            return task.map(t -> {
+                Task tracked = taskService.trackTask(t, ProcessingState.START);
+                Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, tracked, entry.format() + ".zip");
 
             /*
             Message(
@@ -76,36 +79,36 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             )
              */
 
-            try {
-                // TODO: this is copypaste, refactor
-
-                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), DOWNLOAD_SUBTASK, DOWNLOAD_SUBTASK);
-                S3Path ruleS3Input = ruleBasePath.resolve("input");
-                S3Path ruleS3Output = ruleBasePath.resolve("output");
-
-                S3Path result = httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
-                    .thenApply(track(task, ProcessingState.UPDATE))
-                    .thenCompose(uploadToS3(entry, ruleS3Output, task))
-                    .thenApply(track(task, ProcessingState.COMPLETE))
-                    .join();
-                String downloadedFilePackage = "result";
-
-                return ImmutableResultMessage.builder()
-                    .entryId(entry.publicId())
-                    .taskId(task.id())
-                    .ruleName(DOWNLOAD_SUBTASK)
-                    .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
-                    .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
-                    .uploadedFiles(Map.of(result.asUri(vacoProperties.s3ProcessingBucket()), List.of(downloadedFilePackage)))
-                    .build();
-            } finally {
                 try {
-                    Files.deleteIfExists(tempFilePath);
-                } catch (IOException ignored) {
-                    // NOTE: ignored exception on purpose, although we could re-throw
-                }
-            }
+                    // TODO: this is copypaste, refactor
 
+                    S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), DOWNLOAD_SUBTASK, DOWNLOAD_SUBTASK);
+                    S3Path ruleS3Input = ruleBasePath.resolve("input");
+                    S3Path ruleS3Output = ruleBasePath.resolve("output");
+
+                    S3Path result = httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
+                        .thenApply(track(tracked, ProcessingState.UPDATE))
+                        .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
+                        .thenApply(track(tracked, ProcessingState.COMPLETE))
+                        .join();
+                    String downloadedFilePackage = "result";
+
+                    return ImmutableResultMessage.builder()
+                        .entryId(entry.publicId())
+                        .taskId(tracked.id())
+                        .ruleName(DOWNLOAD_SUBTASK)
+                        .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
+                        .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
+                        .uploadedFiles(Map.of(result.asUri(vacoProperties.s3ProcessingBucket()), List.of(downloadedFilePackage)))
+                        .build();
+                } finally {
+                    try {
+                        Files.deleteIfExists(tempFilePath);
+                    } catch (IOException ignored) {
+                        // NOTE: ignored exception on purpose, although we could re-throw
+                    }
+                }
+            }).orElseThrow();
         });
     }
 

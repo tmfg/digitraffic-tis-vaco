@@ -100,7 +100,7 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         String testQueueName = createSqsQueue();
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
-        Task task = taskService.findTask(entry.id(), ValidationService.VALIDATE_TASK);
+        Task task = taskService.findTask(entry.id(), ValidationService.VALIDATE_TASK).get();
         validationService.executeRules(
             entry,
             task,
