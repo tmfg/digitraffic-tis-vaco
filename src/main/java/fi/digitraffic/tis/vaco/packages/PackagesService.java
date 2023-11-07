@@ -42,13 +42,15 @@ public class PackagesService {
     }
 
     /**
-     * Produces a packages from given S3 coordinates relating to specifinc entry+task combination.
+     * Produces a packages from given S3 coordinates relating to specific entry+task combination.
      *
      * @param entry Entry this package relates to.
      * @param task Task from which this package originates from.
      * @param packageName Package name to produce. This should be unique per task.
      * @param packageContentsS3Path Where in S3 the package contents are stored before packaging.
      * @param fileName Final file name for the package.
+     * @param contentFilter Filter predicate for matching each file name for inclusion. Allows finegrained control over
+     *                      package contents.
      * @return Created package
      * @see S3Packager#producePackage(Entry, S3Path, S3Path, String, Predicate)
      */
@@ -62,15 +64,14 @@ public class PackagesService {
         // upload package file to S3
         s3Packager.producePackage(
                         entry,
-                        S3Artifact.getRuleDirectory(entry.publicId(), task.name(), packageName),
+                        S3Artifact.getRuleDirectory(entry.publicId(), task.name(), task.name()),
                         packageContentsS3Path,
                         fileName,
                         contentFilter)
             .join();
 
         // store database reference
-        return packagesRepository.createPackage(
-            ImmutablePackage.of(
+        return registerPackage(ImmutablePackage.of(
                 task.id(),
                 packageName,
                 ImmutableS3Path.builder()
@@ -78,6 +79,17 @@ public class PackagesService {
                     .addPath(fileName)
                     .build()
                     .toString()));
+    }
+
+    /**
+     * Creates new package using provided {@link Package} information as is. Useful for generating ZIPs in rules and
+     * publishing them directly.
+     *
+     * @param p Package to save.
+     * @return
+     */
+    public Package registerPackage(Package p) {
+        return packagesRepository.createPackage(p);
     }
 
     public List<Package> findPackages(Task task) {

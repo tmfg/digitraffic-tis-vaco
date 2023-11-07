@@ -93,10 +93,7 @@ public class TaskService {
     @VisibleForTesting
     protected List<Task> resolveTasks(Entry entry) {
 
-        List<Task> allTasks = new ArrayList<>();
-
-        List<String> validationTasks = ValidationService.ALL_SUBTASKS;
-        allTasks.addAll(createTasks(validationTasks, entry));
+        Set<Task> allTasks = new HashSet<>();
 
         try {
             logger.info("Generating rule tasks for entry {} based on input format '{}'", entry.publicId(), entry.format());
@@ -110,6 +107,8 @@ public class TaskService {
                     .orElse(List.of())
                     .stream().map(ValidationInput::name)
                     .toList());
+            allTasks.addAll(validationRuleTasks);
+
             List<ImmutableTask> conversionRuleTasks = resolveRuleTasks(
                 entry,
                 Type.CONVERSION_SYNTAX,
@@ -119,16 +118,13 @@ public class TaskService {
                     .stream()
                     .map(ConversionInput::name)
                     .toList());
-
-            allTasks.addAll(validationRuleTasks);
             allTasks.addAll(conversionRuleTasks);
 
-            return resolvePrioritiesBasedOnTopology(allTasks);
-
+            return resolvePrioritiesBasedOnTopology(List.copyOf(allTasks));
         } catch (InvalidMappingException ime) {
-            logger.warn("Entry {} is requesting operations for unknown input format '{}', skipping rule task generation", entry.publicId(), entry.format());
+            logger.warn("Entry {} is requesting operations for unsupported input format '{}', skipping rule task generation", entry.publicId(), entry.format(), ime);
         }
-        return allTasks;
+        return List.of();
     }
 
     // these hardcoded values represent the dependencies which don't have a Ruleset in database and thus there isn't a
@@ -137,8 +133,7 @@ public class TaskService {
 
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
-        deps.put(ValidationService.EXECUTION_SUBTASK, List.of(ValidationService.RULESET_SELECTION_SUBTASK));
-        deps.put(ValidationService.RULESET_SELECTION_SUBTASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
+        deps.put(ValidationService.VALIDATE_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
         return deps;
     }
 
@@ -164,8 +159,7 @@ public class TaskService {
             } else {
                 rulesetService.findByName(task.name()).ifPresent(ruleset ->
                     ruleset.dependencies().forEach(dep -> g.putEdge(tasksByName.get(dep), task)));
-            }
-        });
+            }});
         // 2) do the topological ordering
         ImmutableList<Task> order = MoreGraphs.topologicalOrdering(g);
 
@@ -198,13 +192,22 @@ public class TaskService {
             .collect(Ruleset::identifyingName, Function.identity());
 
         List<String> allowedRuleTasks = Streams.filter(requestedRuleTasks, rulesetsByName::containsKey).toList();
-        logger.debug("Task generation for entry {}: available {} rules {} / requested {} / allowed {}",
+
+        // include ruleset dependencies to list of resolved tasks
+        Set<String> dependencies = Streams.flatten(allAccessibleRulesets, Ruleset::dependencies)
+                .toSet();
+        allowedRuleTasks.forEach(dependencies::remove);
+
+        logger.debug("Task generation for entry {}: available {} rules {} / requested {} / allowed {} / dependencies {}",
             entry.publicId(),
             ruleType,
             rulesetsByName.keySet(),
             requestedRuleTasks,
-            allowedRuleTasks);
-        return createTasks(allowedRuleTasks, entry);
+            allowedRuleTasks,
+            dependencies);
+        List<String> completeTasks = new ArrayList<>(allowedRuleTasks);
+        completeTasks.addAll(dependencies);
+        return createTasks(completeTasks, entry);
     }
 
     private static List<ImmutableTask> createTasks(List<String> taskNames,

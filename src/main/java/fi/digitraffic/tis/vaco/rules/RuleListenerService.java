@@ -11,12 +11,17 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
@@ -59,6 +64,7 @@ public class RuleListenerService {
     private final PackagesService packagesService;
     private final TaskService taskService;
     private final RulesetRepository rulesetRepository;
+    private final QueueHandlerRepository queueHandlerRepository;
 
     public RuleListenerService(MessagingService messagingService,
                                ErrorHandlerService errorHandlerService,
@@ -68,7 +74,8 @@ public class RuleListenerService {
                                QueueHandlerService queueHandlerService,
                                PackagesService packagesService,
                                TaskService taskService,
-                               RulesetRepository rulesetRepository) {
+                               RulesetRepository rulesetRepository,
+                               QueueHandlerRepository queueHandlerRepository) {
         this.messagingService = Objects.requireNonNull(messagingService);
         this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -78,6 +85,7 @@ public class RuleListenerService {
         this.packagesService = Objects.requireNonNull(packagesService);
         this.taskService = Objects.requireNonNull(taskService);
         this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
+        this.queueHandlerRepository = Objects.requireNonNull(queueHandlerRepository);
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.errors.poll-rate}")
@@ -102,6 +110,7 @@ public class RuleListenerService {
         return CompletableFuture.supplyAsync(() -> {
             logger.warn("Got ResultMessage {}", resultMessage);
             return switch (resultMessage.ruleName()) {
+                case DownloadRule.DOWNLOAD_SUBTASK -> processDownloadRuleResults(resultMessage);
                 case RuleName.NETEX_ENTUR_1_0_1 -> processResultFromNetexEntur101(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical400(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical410(resultMessage);
@@ -116,8 +125,32 @@ public class RuleListenerService {
         });
     }
 
+    private Boolean processDownloadRuleResults(ResultMessage resultMessage) {
+        return processRule(resultMessage, (entry, task) -> {
+            // use downloaded result file as is instead of repackaging the zip
+            ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
+            if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
+                throw new RuleExecutionException("Entry " + resultMessage.entryId() + " prepare.download did not succeed in downloading result.");
+            }
+            String sourceFile = packages.get("result").get(0);
+            S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
+            packagesService.registerPackage(ImmutablePackage.of(
+                task.id(),
+                "result",
+                dlFile.toString()));
+
+            // this is an intermediate step which needs to trigger more work, so submit a new delegation job
+            ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
+                .entry(queueHandlerRepository.reload(entry))
+                .retryStatistics(ImmutableRetryStatistics.of(5))
+                .build();
+            messagingService.submitProcessingJob(job);
+            return true;
+        });
+    }
+
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
-        return processExternalRule(resultMessage, (entry, task) -> {
+        return processRule(resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
@@ -129,7 +162,7 @@ public class RuleListenerService {
     }
 
     private boolean processResultFromGtfsCanonical410(ResultMessage resultMessage) {
-        return processExternalRule(resultMessage, (entry, task) -> {
+        return processRule(resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
 
             Map<String, String> fileNames = collectOutputFileNames(resultMessage);
@@ -180,7 +213,7 @@ public class RuleListenerService {
         }
     }
 
-    private boolean processExternalRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
+    private boolean processRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
         Optional<Entry> e = queueHandlerService.getEntry(resultMessage.entryId());
         if (e.isPresent()) {
             Entry entry = e.get();
@@ -210,12 +243,7 @@ public class RuleListenerService {
 
     private void createOutputPackages(ResultMessage resultMessage, Entry entry, Task task) {
         // package generation based on rule outputs
-        ConcurrentMap<String, List<String>> packagesToCreate = new ConcurrentHashMap<>();
-        resultMessage.uploadedFiles().forEach((file, packages) -> {
-            for (String p : packages) {
-                packagesToCreate.computeIfAbsent(p, k -> new ArrayList<>()).add(file);
-            }
-        });
+        ConcurrentMap<String, List<String>> packagesToCreate = collectPackageContents(resultMessage.uploadedFiles());
 
         packagesToCreate.forEach((packageName, files) -> {
             logger.info("Creating package '{}' with files {}", packageName, files);
@@ -224,8 +252,22 @@ public class RuleListenerService {
                 task,
                 packageName,
                 S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
-                p -> files.stream().anyMatch(p::endsWith));
+                file -> {
+                    boolean match = files.stream().anyMatch(content -> content.endsWith(file));
+                    logger.info("Matching {}/{}", file, match);
+                    return match;
+                });
         });
+    }
+
+    private static ConcurrentMap<String, List<String>> collectPackageContents(Map<String, List<String>> uploadedFiles) {
+        ConcurrentMap<String, List<String>> packagesToCreate = new ConcurrentHashMap<>();
+        uploadedFiles.forEach((file, packages) -> {
+            for (String p : packages) {
+                packagesToCreate.computeIfAbsent(p, k -> new ArrayList<>()).add(file);
+            }
+        });
+        return packagesToCreate;
     }
 
     private <M, R> void listen(String queueName, Class<M> cls, Function<M, CompletableFuture<R>> function) {

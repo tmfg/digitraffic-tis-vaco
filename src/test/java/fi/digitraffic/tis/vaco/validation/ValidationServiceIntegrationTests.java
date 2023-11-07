@@ -10,11 +10,14 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
+import fi.digitraffic.tis.vaco.process.TaskService;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -58,6 +61,9 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private TaskService taskService;
+
     @MockBean
     private HttpClient httpClientUtility;
 
@@ -92,17 +98,21 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
         Entry entry = createEntryForTesting();
         String testQueueName = createSqsQueue();
-        S3Path downloadedFile = downloadRule.execute(entry).join();
+        ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
+        Task task = taskService.findTask(entry.id(), ValidationService.VALIDATE_TASK);
         validationService.executeRules(
             entry,
-            downloadedFile,
+            task,
+            // DownloadRule procudes just a single file so this is OK
+            S3Path.of(URI.create(List.copyOf(downloadedFile.uploadedFiles().keySet()).get(0)).getPath()),
             Set.of(TestObjects.aRuleset()
-                    .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
-                    .description("running hello rule from tests")
-                    .category(Category.SPECIFIC)
-                    .format(TransitDataFormat.GTFS)
-                    .build()));
+                .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
+                .description("running hello rule from tests")
+                .category(Category.SPECIFIC)
+                .format(TransitDataFormat.GTFS)
+                .build()));
+
 
         List<ValidationRuleJobMessage> messages = messagingService.readMessages(testQueueName).map(m -> {
             try {
@@ -121,7 +131,8 @@ class ValidationServiceIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL_4_0_0 + "/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/output"));
         // downloaded file is copied to inputs
         URI inputUri = URI.create(message.inputs());
-        S3Path expectedPath = ImmutableS3Path.of(inputUri.getPath() + "/" + downloadedFile.getLast());
+        // TODO: fails on purpose, breakpoint + refactor
+        S3Path expectedPath = ImmutableS3Path.of(inputUri.getPath() + "/gtfs.zip");
 
         HeadObjectResponse r = awsS3Client.headObject(HeadObjectRequest.builder()
             .bucket(inputUri.getHost())

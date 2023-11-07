@@ -8,7 +8,6 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleName;
-import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -76,7 +75,6 @@ class TaskServiceTests {
         BDDMockito.given(rulesetService.selectRulesets(entry.businessId(), Type.CONVERSION_SYNTAX, TransitDataFormat.GTFS, Set.of()))
             .willReturn(Set.of());
 
-        BDDMockito.given(rulesetService.findByName(DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.empty());
         BDDMockito.given(rulesetService.findByName(RuleName.GTFS_CANONICAL_4_1_0)).willReturn(Optional.of(gtfsCanonicalRuleset));
 
         List<Task> tasks = taskService.resolveTasks(entry);

@@ -1,12 +1,12 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
-import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -71,7 +71,7 @@ class DownloadRuleTests extends SpringBootIntegrationTestBase {
 
         Entry entry = createEntryForTesting();
 
-        S3Path result = rule.execute(entry).join();
+        ResultMessage result = rule.execute(entry).join();
 
         assertThat(entryUrl.getValue(), equalTo("https://testfile"));
 

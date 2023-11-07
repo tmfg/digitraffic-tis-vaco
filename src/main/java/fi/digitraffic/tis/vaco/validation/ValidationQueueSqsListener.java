@@ -5,9 +5,7 @@ import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
-import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -41,14 +39,9 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
             // refresh entry to avoid repeating same message over and over and over...and over again
-            .entry(reloadEntry(message.entry()))
+            .entry(queueHandlerRepository.reload(message.entry()))
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         messagingService.submitProcessingJob(job);
-    }
-
-    private Entry reloadEntry(Entry entry) {
-        return queueHandlerRepository.findByPublicId(entry.publicId())
-            .orElseThrow(() -> new RuleExecutionException("Failed to reload entry with public id " + entry.publicId() + " from database, corrupt entry?"));
     }
 }

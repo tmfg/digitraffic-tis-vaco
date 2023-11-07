@@ -43,7 +43,7 @@ public class MessagingService {
         this.queueHandlerRepository = queueHandlerRepository;
     }
 
-    private <P> CompletableFuture<P> sendMessage(String queueName, P payload) {
+    public <P> CompletableFuture<P> sendMessage(String queueName, P payload) {
         try {
             logger.debug("send {} <- {}", queueName, payload);
             return sqsTemplate.sendAsync(queueName, payload).thenApply(sr -> sr.message().getPayload());

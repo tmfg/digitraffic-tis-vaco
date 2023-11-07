@@ -73,8 +73,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         //       misordered. Move along, nothing to see here.
         validationTasks = entryId -> List.of(
             ImmutableTask.of(entryId, DownloadRule.DOWNLOAD_SUBTASK, 100),
-            ImmutableTask.of(entryId, ValidationService.RULESET_SELECTION_SUBTASK, 200),
-            ImmutableTask.of(entryId, ValidationService.EXECUTION_SUBTASK, 300)
+            ImmutableTask.of(entryId, ValidationService.VALIDATE_TASK, 200)
         );
         conversionTasks = entryId -> Streams.mapIndexed(
                 ConversionService.ALL_SUBTASKS,
@@ -117,12 +116,13 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         assertThat(org.isPresent(), equalTo(true));
         Ruleset bananasRule = rulesetService.createRuleset(
             ImmutableRuleset.of(
-                org.get().id(),
-                conversion.name(),
-                "This test data is bananas!",
-                Category.GENERIC,
-                Type.CONVERSION_SYNTAX,
-                TransitDataFormat.forField(entry.format())));
+                    org.get().id(),
+                    conversion.name(),
+                    "This test data is bananas!",
+                    Category.GENERIC,
+                    Type.CONVERSION_SYNTAX,
+                    TransitDataFormat.forField(entry.format()))
+                .withDependencies(DownloadRule.DOWNLOAD_SUBTASK));
 
         Entry result = repository.create(entry.withConversions(conversion));
 
@@ -130,9 +130,10 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
             equalTo(List.of(
                 ImmutableTask.of(result.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
-                ImmutableTask.of(result.id(), "bananas", 101),
-                ImmutableTask.of(result.id(), ValidationService.RULESET_SELECTION_SUBTASK, 200),
-                ImmutableTask.of(result.id(), ValidationService.EXECUTION_SUBTASK, 300)
+                // NOTE: validate included for conversion as it does generic rule submission, will change in the future
+                ImmutableTask.of(result.id(), ValidationService.VALIDATE_TASK, 200),
+                // NOTE: priority is wrong because there's no real conversion support yet
+                ImmutableTask.of(result.id(), "bananas", 201)
             )));
     }
 

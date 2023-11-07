@@ -19,8 +19,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -61,8 +59,7 @@ class ValidationQueueSqsListenerTests {
 
     @Test
     void submitsItselfBackToDelegationQueueAndAcknowledgesOriginalMessageOnCompletion() {
-        when(queueHandlerRepository.findByPublicId(entry.publicId()))
-            .thenReturn(Optional.of(entry));
+        when(queueHandlerRepository.reload(entry)).thenReturn(entry);
 
         listener.listen(message, acknowledgement);
 
