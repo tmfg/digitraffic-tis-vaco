@@ -110,7 +110,7 @@ public final class Streams {
      * @param <O> Type for derived output objects.
      */
     public static <I,O> Chain<O> flatten(Collection<I> objects, Function<? super I, ? extends Collection<O>> mapper) {
-        return new Chain<>(objects.stream().flatMap(i -> mapper.apply(i).stream()));
+        return new Chain<>(objects.stream()).flatten(mapper);
     }
 
     /**
@@ -276,6 +276,10 @@ public final class Streams {
             Function<? super R, K> keyMapper,
             Function<? super R, ? extends V> valueMapper) {
             return stream.collect(Collectors.toMap(keyMapper, valueMapper));
+        }
+
+        public <O> Chain<O> flatten(Function<? super R, ? extends Collection<O>> mapper) {
+            return new Chain<>(stream.flatMap(r -> mapper.apply(r).stream()));
         }
     }
 }

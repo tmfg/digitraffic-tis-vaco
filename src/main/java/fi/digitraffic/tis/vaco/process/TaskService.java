@@ -21,7 +21,7 @@ import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
+import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -97,7 +97,7 @@ public class TaskService {
         Set<Task> allTasks = new HashSet<>();
 
         try {
-            logger.info("Generating rule tasks for entry {} based on input format '{}'", entry.publicId(), entry.format());
+            logger.debug("Generating rule tasks for entry {} based on input format '{}'", entry.publicId(), entry.format());
             TransitDataFormat entryFormat = TransitDataFormat.forField(entry.format());
 
             List<ImmutableTask> validationRuleTasks = resolveRuleTasks(
@@ -121,7 +121,9 @@ public class TaskService {
                     .toList());
             allTasks.addAll(conversionRuleTasks);
 
-            return resolvePrioritiesBasedOnTopology(List.copyOf(allTasks));
+            List<Task> prioritizedTasks = resolvePrioritiesBasedOnTopology(List.copyOf(allTasks));
+            logger.info("Generated tasks for entry {}: {}", entry.publicId(), prioritizedTasks);
+            return prioritizedTasks;
         } catch (InvalidMappingException ime) {
             logger.warn("Entry {} is requesting operations for unsupported input format '{}', skipping rule task generation", entry.publicId(), entry.format(), ime);
         }
@@ -134,8 +136,9 @@ public class TaskService {
 
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
-        deps.put(ValidationService.VALIDATE_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
-        deps.put(ConversionService.CONVERT_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK, ValidationService.VALIDATE_TASK));
+        deps.put(DownloadRule.DOWNLOAD_SUBTASK, List.of());
+        deps.put(RulesetSubmissionService.VALIDATE_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
+        deps.put(ConversionService.CONVERT_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.VALIDATE_TASK));
         return deps;
     }
 
@@ -156,11 +159,20 @@ public class TaskService {
         MutableGraph<Task> g = GraphBuilder.directed().build();
         tasks.forEach(g::addNode);
         tasks.forEach(task -> {
+
             if (ruleDeps.containsKey(task.name())) {
-                ruleDeps.get(task.name()).forEach(dep -> g.putEdge(tasksByName.get(dep), task));
+                ruleDeps.get(task.name()).forEach(dep -> {
+                    if (tasksByName.containsKey(dep)) {
+                        g.putEdge(tasksByName.get(dep), task);
+                    }
+                });
             } else {
                 rulesetService.findByName(task.name()).ifPresent(ruleset ->
-                    ruleset.dependencies().forEach(dep -> g.putEdge(tasksByName.get(dep), task)));
+                    ruleset.dependencies().forEach(dep -> {
+                        if (tasksByName.containsKey(dep)) {
+                            g.putEdge(tasksByName.get(dep), task);
+                        }
+                    }));
             }});
         // 2) do the topological ordering
         ImmutableList<Task> order = MoreGraphs.topologicalOrdering(g);
@@ -193,12 +205,12 @@ public class TaskService {
             .filter(allAccessibleRulesets, r -> r.format().equals(entryFormat))
             .collect(Ruleset::identifyingName, Function.identity());
 
-        List<String> allowedRuleTasks = Streams.filter(requestedRuleTasks, rulesetsByName::containsKey).toList();
+        Set<String> allowedRuleTasks = Streams.filter(requestedRuleTasks, rulesetsByName::containsKey).toSet();
 
         // include ruleset dependencies to list of resolved tasks
-        Set<String> dependencies = Streams.flatten(allAccessibleRulesets, Ruleset::dependencies)
-                .toSet();
-        allowedRuleTasks.forEach(dependencies::remove);
+        Set<String> dependencies = Streams.filter(allAccessibleRulesets, ruleset -> allowedRuleTasks.contains(ruleset.identifyingName()))
+            .flatten(Ruleset::dependencies)
+            .toSet();
 
         logger.debug("Task generation for entry {}: available {} rules {} / requested {} / allowed {} / dependencies {}",
             entry.publicId(),
@@ -217,8 +229,4 @@ public class TaskService {
         return Streams.map(taskNames, t -> ImmutableTask.of(entry.id(), t, -1)).toList();
     }
 
-    public AutoCloseable track(Task t) {
-        Task started = trackTask(t, ProcessingState.START);
-        return () -> trackTask(started, ProcessingState.COMPLETE);
-    }
 }

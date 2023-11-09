@@ -13,7 +13,9 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableRulesetSubmissionConfiguration;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -63,7 +65,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
                 if (name.equals(DownloadRule.DOWNLOAD_SUBTASK)) {
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, downloadRule.execute(entry).join());
-                } else if (name.equals(ValidationService.VALIDATE_TASK)) {
+                } else if (name.equals(RulesetSubmissionService.VALIDATE_TASK)) {
                     validationJob(entry);
                 } else if (name.equals(ConversionService.CONVERT_TASK)) {
                     conversionJob(entry);
@@ -86,6 +88,11 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     private void validationJob(Entry entry) {
         ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
             .entry(entry)
+            .configuration(ImmutableRulesetSubmissionConfiguration
+                .builder()
+                .submissionTask(RulesetSubmissionService.VALIDATE_TASK)
+                .type(Type.VALIDATION_SYNTAX)
+                .build())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         messagingService.submitValidationJob(validationJob);

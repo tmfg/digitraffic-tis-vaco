@@ -96,4 +96,5 @@ class StreamsTests {
 
         assertAll(() -> Streams.map(List.of(1, 2, 3), i -> i * i).complete());
     }
+
 }

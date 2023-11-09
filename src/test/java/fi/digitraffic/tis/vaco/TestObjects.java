@@ -66,6 +66,10 @@ public class TestObjects {
             .cooperationType(CooperationType.AUTHORITY_PROVIDER);
     }
 
+    /**
+     * @deprecated Arbitrary tasks cannot be created directly anymore
+     */
+    @Deprecated
     public static ImmutableTask.Builder aTask(Entry entry) {
         return ImmutableTask.builder()
             .id(new Random().nextLong())
@@ -88,4 +92,5 @@ public class TestObjects {
         AzureAd azureAd = new AzureAd("tenantId", "clientId");
         return new VacoProperties("unittests-" + randomSeed, null, "unittests-" + randomSeed + "-processing-bucket", "localhost:5173", "biz", aws, azureAd);
     }
+
 }

@@ -5,6 +5,9 @@ import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.model.Package;
+import fi.digitraffic.tis.vaco.process.TaskRepository;
+import fi.digitraffic.tis.vaco.process.TaskService;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,6 +31,10 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     QueueHandlerRepository queueHandlerRepository;
+    @Autowired
+    private TaskRepository taskRepository;
+    @Autowired
+    private TaskService taskService;
 
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
@@ -36,8 +44,8 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void roundtrippingPackageEntityWorks() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
-        Entry createdEntry = queueHandlerRepository.create(entry.withTasks(TestObjects.aTask(entry).build()));
-        Task task = createdEntry.tasks().get(0);
+        Entry createdEntry = queueHandlerRepository.create(entry);
+        Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
         Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Package> loaded = packagesService.findPackage(task, "FAKE_RULE");
 
@@ -49,8 +57,8 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void providesHelperForDownloadingReferencedFile() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
-        Entry createdEntry = queueHandlerRepository.create(entry.withTasks(TestObjects.aTask(entry).build()));
-        Task task = createdEntry.tasks().get(0);
+        Entry createdEntry = queueHandlerRepository.create(entry);
+        Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
         Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Path> loaded = packagesService.downloadPackage(entry, task, "FAKE_RULE");
 
@@ -58,5 +66,17 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
         Path file = loaded.get();
         assertThat(file.getFileName(), equalTo(Path.of("resulting.zip")));
+    }
+
+    /**
+     * XXX: This bypasses task dependency resolution and DOES NOT match with production code! This exists only to allow
+     *     for testing of PackagesService more easily.
+     * @param createdEntry
+     * @param task
+     * @return
+     */
+    private Task forceTaskCreation(Entry createdEntry, Task task) {
+        taskRepository.createTasks(List.of(task));
+        return taskService.findTask(createdEntry.id(), task.name()).get();
     }
 }

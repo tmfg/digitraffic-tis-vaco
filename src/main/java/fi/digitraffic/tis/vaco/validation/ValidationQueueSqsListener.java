@@ -19,15 +19,15 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
-    private final ValidationService validationService;
+    private final RulesetSubmissionService rulesetSubmissionService;
     private final QueueHandlerRepository queueHandlerRepository;
 
     public ValidationQueueSqsListener(MessagingService messagingService,
-                                      ValidationService validationService,
+                                      RulesetSubmissionService rulesetSubmissionService,
                                       QueueHandlerRepository queueHandlerRepository) {
         super((message, stats) -> messagingService.submitValidationJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
-        this.validationService = validationService;
+        this.rulesetSubmissionService = rulesetSubmissionService;
         this.queueHandlerRepository = queueHandlerRepository;
     }
 
@@ -38,7 +38,7 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
 
     @Override
     protected void runTask(ImmutableValidationJobMessage message) {
-        validationService.validate(message);
+        rulesetSubmissionService.validate(message);
 
         logger.debug("Validation complete for {}, resubmitting to delegation", message.entry().publicId());
 

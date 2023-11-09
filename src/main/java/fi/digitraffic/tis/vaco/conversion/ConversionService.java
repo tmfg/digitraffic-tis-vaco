@@ -51,6 +51,7 @@ public class ConversionService {
 
     public void convert(ImmutableConversionJobMessage jobDescription) {
         Entry entry = jobDescription.entry();
+        Task task = taskService.trackTask(taskService.findTask(entry.id(), CONVERT_TASK).get(), ProcessingState.START);
         TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.entry());
 
         executeRules(jobDescription.entry(), conversionRulesets.result());
@@ -62,6 +63,8 @@ public class ConversionService {
                 S3Artifact.getPackagePath(entry.publicId(), packageFileName),
                 packageFileName,
                 p -> true).join();
+
+        taskService.trackTask(task, ProcessingState.COMPLETE);
     }
 
     @VisibleForTesting
