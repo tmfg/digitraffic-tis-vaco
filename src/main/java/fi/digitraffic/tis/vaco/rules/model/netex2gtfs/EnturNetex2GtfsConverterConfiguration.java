@@ -10,6 +10,4 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableEnturNetex2GtfsConverterConfiguration.class)
 public interface EnturNetex2GtfsConverterConfiguration extends RuleConfiguration {
     String namespace();
-    String timetableDataset();
-    String stopsAndQuaysDataset();
 }

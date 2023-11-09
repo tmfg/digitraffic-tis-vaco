@@ -152,6 +152,7 @@ public class RuleListenerService {
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
         return processRule(resultMessage, (entry, task) -> {
+            logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR_1_0_1, entry.publicId(), task.name());
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
@@ -258,7 +259,7 @@ public class RuleListenerService {
                 S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
                 file -> {
                     boolean match = files.stream().anyMatch(content -> content.endsWith(file));
-                    logger.info("Matching {}/{}", file, match);
+                    logger.trace("Matching {} / {}", file, match);
                     return match;
                 });
         });
