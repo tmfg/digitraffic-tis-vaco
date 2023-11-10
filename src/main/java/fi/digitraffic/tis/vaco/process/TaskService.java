@@ -21,8 +21,6 @@ import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Service
 public class TaskService {
@@ -100,28 +99,15 @@ public class TaskService {
 
         try {
             logger.debug("Generating rule tasks for entry {} based on input format '{}'", entry.publicId(), entry.format());
-            TransitDataFormat entryFormat = TransitDataFormat.forField(entry.format());
 
-            List<ImmutableTask> validationRuleTasks = resolveRuleTasks(
+            List<ImmutableTask> ruleTasks = resolveRuleTasks(
                 entry,
-                Type.VALIDATION_SYNTAX,
-                entryFormat,
-                Optional.ofNullable(entry.validations())
-                    .orElse(List.of())
-                    .stream().map(ValidationInput::name)
-                    .toList());
-            allTasks.addAll(validationRuleTasks);
+                Stream.concat(
+                    Optional.ofNullable(entry.validations()).orElse(List.of()).stream().map(ValidationInput::name),
+                    Optional.ofNullable(entry.conversions()).orElse(List.of()).stream().map(ConversionInput::name))
+                .toList());
 
-            List<ImmutableTask> conversionRuleTasks = resolveRuleTasks(
-                entry,
-                Type.CONVERSION_SYNTAX,
-                entryFormat,
-                Optional.ofNullable(entry.conversions())
-                    .orElse(List.of())
-                    .stream()
-                    .map(ConversionInput::name)
-                    .toList());
-            allTasks.addAll(conversionRuleTasks);
+            allTasks.addAll(ruleTasks);
 
             List<Task> prioritizedTasks = resolvePrioritiesBasedOnTopology(List.copyOf(allTasks));
             logger.info("Generated tasks for entry {}: {}", entry.publicId(), prioritizedTasks);
@@ -215,8 +201,6 @@ public class TaskService {
     }
 
     private List<ImmutableTask> resolveRuleTasks(Entry entry,
-                                                 Type ruleType,
-                                                 TransitDataFormat entryFormat,
                                                  List<String> requestedRuleTasks) {
         Set<Ruleset> allAccessibleRulesets = rulesetService.selectRulesets(entry.businessId());
         Map<String, Ruleset> rulesetsByName = Streams
@@ -233,9 +217,8 @@ public class TaskService {
             .flatten(d -> rulesetsByName.get(d).dependencies())
                 .toSet());
 
-        logger.debug("Task generation for entry {}: available {} rules {} / requested {} / allowed {} / dependencies {}",
+        logger.debug("Task generation for entry {}: available rules {} / requested {} / allowed {} / dependencies {}",
             entry.publicId(),
-            ruleType,
             rulesetsByName.keySet(),
             requestedRuleTasks,
             allowedRuleTasks,

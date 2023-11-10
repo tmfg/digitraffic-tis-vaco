@@ -78,7 +78,6 @@ class TaskServiceTests {
         entry = entry.withValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL_4_1_0));
 
         givenAvailableRulesets(Type.VALIDATION_SYNTAX, TransitDataFormat.GTFS, Set.of(gtfsCanonicalRuleset));
-        givenAvailableRulesets(Type.CONVERSION_SYNTAX, TransitDataFormat.GTFS, Set.of());
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL_4_1_0)).willReturn(Optional.of(gtfsCanonicalRuleset));
 
         List<Task> tasks = taskService.resolveTasks(entry);
@@ -93,7 +92,7 @@ class TaskServiceTests {
     }
 
     private void givenAvailableRulesets(Type type, TransitDataFormat transitDataFormat, Set<Ruleset> gtfsCanonicalRuleset) {
-        given(rulesetService.selectRulesets(entry.businessId(), type, transitDataFormat, Set.of()))
+        given(rulesetService.selectRulesets(entry.businessId()))
             .willReturn(gtfsCanonicalRuleset);
     }
 }

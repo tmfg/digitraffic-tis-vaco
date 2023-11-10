@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -123,30 +124,36 @@ public class RulesetSubmissionService {
                      RulesetSubmissionConfiguration configurationx,
                      Set<Ruleset> rulesets) {
 
+        Map<String, RuleConfiguration> configs = new HashMap<>();
         List<ValidationInput> validations = entry.validations();
         if (validations != null) {
-            Map<String, RuleConfiguration> configs = Streams.filter(validations, v -> v.config() != null)
-                .collect(ValidationInput::name, ValidationInput::config);
-
-            Streams.map(rulesets, r -> {
-                    String identifyingName = r.identifyingName();
-                    Optional<RuleConfiguration> configuration = Optional.ofNullable(configs.get(identifyingName));
-                    ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
-                        entry,
-                        task,
-                        configuration,
-                        identifyingName);
-                    // mark the processing of matching task as started
-                    // 1) shows in API response that the processing has started
-                    // 2) this prevents unintended retrying of the task
-                    Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
-                    ruleTask.map(t -> taskService.trackTask(t, ProcessingState.START))
-                        .orElseThrow();
-                    return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
-                })
-                .map(CompletableFuture::join)
-                .complete();
+            configs.putAll(Streams.filter(validations, v -> v.config() != null)
+                .collect(ValidationInput::name, ValidationInput::config));
         }
+        List<ConversionInput> conversions = entry.conversions();
+        if (conversions != null) {
+            configs.putAll(Streams.filter(conversions, v -> v.config() != null)
+                .collect(ConversionInput::name, ConversionInput::config));
+        }
+
+        Streams.map(rulesets, r -> {
+                String identifyingName = r.identifyingName();
+                Optional<RuleConfiguration> configuration = Optional.ofNullable(configs.get(identifyingName));
+                ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
+                    entry,
+                    task,
+                    configuration,
+                    identifyingName);
+                // mark the processing of matching task as started
+                // 1) shows in API response that the processing has started
+                // 2) this prevents unintended retrying of the task
+                Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
+                ruleTask.map(t -> taskService.trackTask(t, ProcessingState.START))
+                    .orElseThrow();
+                return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
+            })
+            .map(CompletableFuture::join)
+            .complete();
     }
 
     private ValidationRuleJobMessage convertToValidationRuleJobMessage(
@@ -191,7 +198,7 @@ public class RulesetSubmissionService {
 
     private Optional<S3Path> lookupDownloadedFile(Entry entry, String taskName) {
         return taskService.findTask(entry.id(), taskName)
-            .flatMap(downloadTask -> packagesService.findPackage(downloadTask, "result"))
+            .flatMap(task -> packagesService.findPackage(task, "result"))
             .map(downloadResult -> S3Path.of(URI.create(downloadResult.path()).getPath()));
     }
 }
