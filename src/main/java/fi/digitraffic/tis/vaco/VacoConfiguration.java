@@ -61,6 +61,7 @@ public class VacoConfiguration {
         public SdkHttpClient httpClient() {
             return ApacheHttpClient.builder()
                 .connectionTimeout(Duration.ofSeconds(15))
+                .socketTimeout(Duration.ofSeconds(15))
                 .build();
         }
 
