@@ -22,6 +22,7 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
@@ -108,9 +109,10 @@ public class RuleListenerService {
 
     private CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {
         return CompletableFuture.supplyAsync(() -> {
-            logger.warn("Got ResultMessage {}", resultMessage);
+            logger.debug("Got ResultMessage {}", resultMessage);
             return switch (resultMessage.ruleName()) {
                 case DownloadRule.DOWNLOAD_SUBTASK -> processDownloadRuleResults(resultMessage);
+                case StopsAndQuaysRule.STOPS_AND_QUAYS_TASK -> processStopsAndQuaysResults(resultMessage);
                 case RuleName.NETEX_ENTUR_1_0_1 -> processResultFromNetexEntur101(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical400(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical410(resultMessage);
@@ -143,11 +145,19 @@ public class RuleListenerService {
     }
 
     private Boolean processDownloadRuleResults(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
+        return processRule(resultMessage, handleInternalRuleResults(resultMessage));
+    }
+
+    private Boolean processStopsAndQuaysResults(ResultMessage resultMessage) {
+        return processRule(resultMessage, handleInternalRuleResults(resultMessage));
+    }
+
+    private BiPredicate<Entry, Task> handleInternalRuleResults(ResultMessage resultMessage) {
+        return (entry, task) -> {
             // use downloaded result file as is instead of repackaging the zip
             ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
             if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
-                throw new RuleExecutionException("Entry " + resultMessage.entryId() + " prepare.download did not succeed in downloading result.");
+                throw new RuleExecutionException("Entry " + resultMessage.entryId() + " internal task " + task.name() + " does not contain 'result' package.");
             }
             String sourceFile = packages.get("result").get(0);
             S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
@@ -155,16 +165,8 @@ public class RuleListenerService {
                 task.id(),
                 "result",
                 dlFile.toString()));
-
-            // this is an intermediate step which needs to trigger more work, so submit a new delegation job
-            logger.debug("Download complete for {}, resubmitting to delegation", entry.publicId());
-            ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
-                .entry(queueHandlerRepository.reload(entry))
-                .retryStatistics(ImmutableRetryStatistics.of(5))
-                .build();
-            messagingService.submitProcessingJob(job);
             return true;
-        });
+        };
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {

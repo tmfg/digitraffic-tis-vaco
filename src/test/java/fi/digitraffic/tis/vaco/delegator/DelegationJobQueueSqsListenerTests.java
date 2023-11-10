@@ -12,14 +12,12 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
-import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -43,19 +41,20 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     private RulesetService rulesetService;
 
     @Mock
+    private Acknowledgement acknowledgement;
+
+    @Mock
     private MessagingService messagingService;
     @Mock
     private TaskRepository taskRepository;
     @Mock
     private DownloadRule downloadRule;
     @Mock
-    private Acknowledgement acknowledgement;
-    @Captor
-    private ArgumentCaptor<ResultMessage> resultMessage;
+    private StopsAndQuaysRule stopsAndQuaysRule;
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, taskService, downloadRule, rulesetService);
+        listener = new DelegationJobQueueSqsListener(messagingService, taskService, rulesetService, downloadRule, stopsAndQuaysRule);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)
@@ -69,7 +68,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(messagingService, taskRepository, downloadRule);
+        verifyNoMoreInteractions(messagingService, taskRepository, downloadRule, stopsAndQuaysRule);
     }
 
     @Test

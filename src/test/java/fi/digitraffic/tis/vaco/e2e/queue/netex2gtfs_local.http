@@ -25,7 +25,7 @@ Authorization: Bearer {{tis_token}}
   "conversions": [{
     "name": "netex2gtfs.entur.v2_0_6",
     "config": {
-      "namespace": "FTR"
+      "codespace": "FTR"
     }
   }],
   "metadata": {

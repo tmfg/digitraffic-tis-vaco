@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
@@ -30,18 +31,22 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
 
     private final MessagingService messagingService;
     private final TaskService taskService;
-    private final DownloadRule downloadRule;
     private final Set<String> knownExternalRules;
+    // internal tasks are direct dependencies
+    private final DownloadRule downloadRule;
+    private final StopsAndQuaysRule stopsAndQuaysRule;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
                                          TaskService taskService,
+                                         RulesetService rulesetService,
                                          DownloadRule downloadRule,
-                                         RulesetService rulesetService) {
+                                         StopsAndQuaysRule stopsAndQuaysRule) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = Objects.requireNonNull(messagingService);
         this.taskService = Objects.requireNonNull(taskService);
         this.downloadRule = Objects.requireNonNull(downloadRule);
         this.knownExternalRules = Objects.requireNonNull(rulesetService).listAllNames();
+        this.stopsAndQuaysRule = Objects.requireNonNull(stopsAndQuaysRule);
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -65,6 +70,9 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 if (name.equals(DownloadRule.DOWNLOAD_SUBTASK)) {
                     logger.debug("Internal rule {} detected, delegating...", name);
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, downloadRule.execute(entry).join());
+                } else if (name.equals(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK)) {
+                    logger.debug("Internal rule {} detected, delegating...", name);
+                    messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, stopsAndQuaysRule.execute(entry).join());
                 } else if (name.equals(RulesetSubmissionService.VALIDATE_TASK)) {
                     logger.debug("Internal category {} detected, delegating...", name);
                     taskService.findTask(entry.id(), name)

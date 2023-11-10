@@ -16,7 +16,9 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -137,8 +139,24 @@ public class TaskService {
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
         deps.put(DownloadRule.DOWNLOAD_SUBTASK, List.of());
-        deps.put(RulesetSubmissionService.VALIDATE_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
-        deps.put(ConversionService.CONVERT_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.VALIDATE_TASK));
+        deps.put(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, List.of());
+        deps.put(RulesetSubmissionService.VALIDATE_TASK,
+            List.of(
+                DownloadRule.DOWNLOAD_SUBTASK,
+                StopsAndQuaysRule.STOPS_AND_QUAYS_TASK));
+        deps.put(ConversionService.CONVERT_TASK, conversionDeps());
+        return deps;
+    }
+
+    private static List<String> conversionDeps() {
+        List<String> deps = new ArrayList<>();
+        // conversion rules may declare validations as dependencies, thus they need to be executed before running the
+        // conversion rule itself
+        deps.addAll(RuleName.ALL_EXTERNAL_VALIDATION_RULES);
+        deps.addAll(List.of(
+            DownloadRule.DOWNLOAD_SUBTASK,
+            StopsAndQuaysRule.STOPS_AND_QUAYS_TASK,
+            RulesetSubmissionService.VALIDATE_TASK));
         return deps;
     }
 
@@ -200,10 +218,9 @@ public class TaskService {
                                                  Type ruleType,
                                                  TransitDataFormat entryFormat,
                                                  List<String> requestedRuleTasks) {
-        Set<Ruleset> allAccessibleRulesets = rulesetService.selectRulesets(entry.businessId(), ruleType, entryFormat, Set.of());
+        Set<Ruleset> allAccessibleRulesets = rulesetService.selectRulesets(entry.businessId());
         Map<String, Ruleset> rulesetsByName = Streams
-            .filter(allAccessibleRulesets, r -> r.format().equals(entryFormat))
-            .collect(Ruleset::identifyingName, Function.identity());
+            .collect(allAccessibleRulesets, Ruleset::identifyingName, Function.identity());
 
         Set<String> allowedRuleTasks = Streams.filter(requestedRuleTasks, rulesetsByName::containsKey).toSet();
 
@@ -211,6 +228,10 @@ public class TaskService {
         Set<String> dependencies = Streams.filter(allAccessibleRulesets, ruleset -> allowedRuleTasks.contains(ruleset.identifyingName()))
             .flatten(Ruleset::dependencies)
             .toSet();
+        // include transitive dependencies as well
+        dependencies.addAll(Streams.filter(dependencies, rulesetsByName::containsKey)
+            .flatten(d -> rulesetsByName.get(d).dependencies())
+                .toSet());
 
         logger.debug("Task generation for entry {}: available {} rules {} / requested {} / allowed {} / dependencies {}",
             entry.publicId(),

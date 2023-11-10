@@ -9,5 +9,5 @@ import org.immutables.value.Value;
 @JsonSerialize(as = ImmutableEnturNetex2GtfsConverterConfiguration.class)
 @JsonDeserialize(as = ImmutableEnturNetex2GtfsConverterConfiguration.class)
 public interface EnturNetex2GtfsConverterConfiguration extends RuleConfiguration {
-    String namespace();
+    String codespace();
 }

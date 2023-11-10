@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.rules.internal;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
-import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -26,29 +25,22 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
-class DownloadRuleTests {
+class StopsAndQuaysRuleTests {
 
-    private DownloadRule rule;
-
+    private StopsAndQuaysRule rule;
     private VacoProperties vacoProperties;
 
     @Mock
     private TaskService taskService;
-
-    @Mock
-    private HttpClient httpClient;
     @Mock
     private S3Client s3Client;
 
-    @Captor
-    private ArgumentCaptor<Path> tempFilePath;
     @Captor
     private ArgumentCaptor<S3Path> targetPath;
     @Captor
@@ -57,32 +49,29 @@ class DownloadRuleTests {
     @BeforeEach
     void setUp() {
         vacoProperties = TestObjects.vacoProperties();
-        rule = new DownloadRule(taskService, vacoProperties, httpClient, s3Client);
+        rule = new StopsAndQuaysRule(taskService, vacoProperties, s3Client);
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(taskService, httpClient, s3Client);
+        verifyNoMoreInteractions(taskService, s3Client);
     }
 
     @Test
-    void ruleExecution() {
+    void copiesStaticFileToOutputs() {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs").id(9500000L);
-        Task dlTask = ImmutableTask.of(-1L, DownloadRule.DOWNLOAD_SUBTASK, -1).withId(5000000L);
-        Entry entry = entryBuilder.addTasks(dlTask).build();
+        Task saqTask = ImmutableTask.of(-1L, StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, -1).withId(5000000L);
+        Entry entry = entryBuilder.addTasks(saqTask).build();
 
-        given(taskService.findTask(entry.id(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
-        given(taskService.trackTask(dlTask, ProcessingState.START)).willReturn(dlTask);
-        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(a.getArgument(0)));
-        given(taskService.trackTask(dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
+        given(taskService.findTask(entry.id(), StopsAndQuaysRule.STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));
+        given(taskService.trackTask(saqTask, ProcessingState.START)).willReturn(saqTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
-        given(taskService.trackTask(dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
+        given(taskService.trackTask(saqTask, ProcessingState.COMPLETE)).willReturn(saqTask);
 
         ResultMessage result = rule.execute(entry).join();
 
-        assertThat(result.ruleName(), equalTo(DownloadRule.DOWNLOAD_SUBTASK));
+        assertThat(result.ruleName(), equalTo(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK));
 
-        assertThat(tempFilePath.getValue().toString(), endsWith("entries/" + entry.publicId() + "/tasks/prepare.download/gtfs.zip"));
-        assertThat(targetPath.getValue().toString(), equalTo("entries/" + entry.publicId() + "/tasks/prepare.download/rules/prepare.download/output/gtfs.zip"));
+        assertThat(targetPath.getValue().toString(), equalTo("entries/" + entry.publicId() + "/tasks/prepare.stopsAndQuays/rules/prepare.stopsAndQuays/output/stopsAndQuays.zip"));
     }
 }
