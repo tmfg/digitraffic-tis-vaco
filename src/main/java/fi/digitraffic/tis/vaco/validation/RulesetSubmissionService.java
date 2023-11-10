@@ -8,11 +8,13 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -73,13 +75,11 @@ public class RulesetSubmissionService {
 
         taskService.findTask(entry.id(), configuration.submissionTask())
             .map(task -> {
-                Task tracked = taskService.trackTask(task, ProcessingState.START);
-
                 Set<Ruleset> validationRulesets = selectRulesets(entry, configuration);
 
                 submitRules(entry, task, configuration, validationRulesets);
 
-                return taskService.trackTask(tracked, ProcessingState.COMPLETE);
+                return taskService.trackTask(task, ProcessingState.COMPLETE);
             }).orElseThrow();
     }
 
@@ -95,6 +95,8 @@ public class RulesetSubmissionService {
         Set<String> rulesetNames;
         if (RulesetSubmissionService.VALIDATE_TASK.equals(configuration.submissionTask())) {
             rulesetNames = Streams.map(entry.validations(), ValidationInput::name).toSet();
+        } else if (ConversionService.CONVERT_TASK.equals(configuration.submissionTask())) {
+            rulesetNames = Streams.map(entry.conversions(), ConversionInput::name).toSet();
         } else {
             rulesetNames = Set.of();
         }
@@ -110,7 +112,7 @@ public class RulesetSubmissionService {
                 r -> r.identifyingName().startsWith(entry.format()))
             .toSet();
 
-        logger.info("Selected rulesets for {} are {}", entry.publicId(), Streams.collect(rulesets, Ruleset::identifyingName));
+        logger.info("Selected {} rulesets for {} are {}", configuration.type(), entry.publicId(), Streams.collect(rulesets, Ruleset::identifyingName));
 
         return rulesets;
     }

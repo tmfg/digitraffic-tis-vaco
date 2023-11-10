@@ -51,7 +51,7 @@ public class ConversionService {
 
     public void convert(ImmutableConversionJobMessage jobDescription) {
         Entry entry = jobDescription.entry();
-        Task task = taskService.trackTask(taskService.findTask(entry.id(), CONVERT_TASK).get(), ProcessingState.START);
+        Task task = taskService.findTask(entry.id(), CONVERT_TASK).get();
         TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.entry());
 
         executeRules(jobDescription.entry(), conversionRulesets.result());

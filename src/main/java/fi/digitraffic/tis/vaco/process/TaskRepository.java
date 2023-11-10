@@ -160,6 +160,7 @@ public class TaskRepository {
              WHERE FLOOR(t.priority / 100) = first_available.priority_group
                AND FLOOR(t.priority / 100) = first_incomplete.priority_group
                AND t.entry_id = :entryId
+               AND t.started IS NULL
              ORDER BY priority ASC
             """,
 

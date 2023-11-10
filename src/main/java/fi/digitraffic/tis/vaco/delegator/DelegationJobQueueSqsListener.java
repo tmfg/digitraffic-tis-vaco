@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
-import fi.digitraffic.tis.vaco.conversion.model.ImmutableConversionJobMessage;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -64,14 +63,26 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 String name = task.name();
 
                 if (name.equals(DownloadRule.DOWNLOAD_SUBTASK)) {
+                    logger.debug("Internal rule {} detected, delegating...", name);
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, downloadRule.execute(entry).join());
                 } else if (name.equals(RulesetSubmissionService.VALIDATE_TASK)) {
-                    validationJob(entry);
+                    logger.debug("Internal category {} detected, delegating...", name);
+                    taskService.findTask(entry.id(), name)
+                        .ifPresent(t -> {
+                            taskService.trackTask(t, ProcessingState.START);
+                            validationJob(entry);
+                        });
                 } else if (name.equals(ConversionService.CONVERT_TASK)) {
-                    conversionJob(entry);
+                    logger.debug("Internal category {} detected, delegating...", name);
+                    taskService.findTask(entry.id(), name)
+                        .ifPresent(t -> {
+                            taskService.trackTask(t, ProcessingState.START);
+                            conversionJob(entry);
+                        });
                 } else if (knownExternalRules.contains(name)) {
                     // these are currently submitted delegatively elsewhere
                     logger.debug("External rule {} detected, skipping...", name);
+                    taskService.trackTask(task, ProcessingState.START);
                 } else {
                     logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
                     // TODO: we could have explicit canceling detection+handling as well
@@ -99,11 +110,16 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     }
 
     private void conversionJob(Entry entry) {
-        ImmutableConversionJobMessage conversionJob = ImmutableConversionJobMessage.builder()
+        ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
             .entry(entry)
+            .configuration(ImmutableRulesetSubmissionConfiguration
+                .builder()
+                .submissionTask(ConversionService.CONVERT_TASK)
+                .type(Type.CONVERSION_SYNTAX)
+                .build())
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
-        messagingService.submitConversionJob(conversionJob);
+        messagingService.submitValidationJob(validationJob);
     }
 
     private Optional<List<Task>> nextTaskGroupToRun(ImmutableDelegationJobMessage jobDescription) {

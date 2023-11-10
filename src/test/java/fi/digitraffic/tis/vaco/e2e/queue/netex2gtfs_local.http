@@ -24,7 +24,9 @@ Authorization: Bearer {{tis_token}}
   "validations": [],
   "conversions": [{
     "name": "netex2gtfs.entur.v2_0_6",
-    "config": {}
+    "config": {
+      "namespace": "FTR"
+    }
   }],
   "metadata": {
     "brewingEquipment": "concave piece of copper",
