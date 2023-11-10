@@ -183,4 +183,7 @@ public class RulesetRepository {
         return rulesetNameCache;
     }
 
+    public Set<String> listAllNames() {
+        return Set.copyOf(jdbc.queryForList("SELECT DISTINCT identifying_name FROM ruleset", String.class));
+    }
 }

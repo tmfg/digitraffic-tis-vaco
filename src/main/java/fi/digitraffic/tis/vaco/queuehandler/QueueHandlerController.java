@@ -97,7 +97,6 @@ public class QueueHandlerController {
             entry.packages().forEach(p -> {
                 String taskName = tasks.get(p.taskId()).name();
                 packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), new Link(
-                    taskName,
                     MvcUriComponentsBuilder
                         .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))
                         .toUriString(),
@@ -112,7 +111,6 @@ public class QueueHandlerController {
 
     private static Link linkToGetEntry(Entry entry) {
         return new Link(
-                null,
                 MvcUriComponentsBuilder
                         .fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId()))
                         .toUriString(),

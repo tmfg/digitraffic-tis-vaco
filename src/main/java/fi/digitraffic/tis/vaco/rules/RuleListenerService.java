@@ -22,6 +22,7 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
@@ -108,12 +109,14 @@ public class RuleListenerService {
 
     private CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {
         return CompletableFuture.supplyAsync(() -> {
-            logger.warn("Got ResultMessage {}", resultMessage);
+            logger.debug("Got ResultMessage {}", resultMessage);
             return switch (resultMessage.ruleName()) {
                 case DownloadRule.DOWNLOAD_SUBTASK -> processDownloadRuleResults(resultMessage);
+                case StopsAndQuaysRule.STOPS_AND_QUAYS_TASK -> processStopsAndQuaysResults(resultMessage);
                 case RuleName.NETEX_ENTUR_1_0_1 -> processResultFromNetexEntur101(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical400(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical410(resultMessage);
+                case RuleName.NETEX2GTFS_ENTUR_2_0_6 -> processNetex2GtfsEntur206(resultMessage);
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -122,15 +125,39 @@ public class RuleListenerService {
                     yield false;
                 }
             };
+        }).thenApply(ruleProcessingSuccess -> {
+            if (ruleProcessingSuccess) {
+                Optional<Entry> entry = queueHandlerRepository.findByPublicId(resultMessage.entryId());
+                if (entry.isPresent()) {
+                    messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
+                        .entry(entry.get())
+                        .retryStatistics(ImmutableRetryStatistics.of(5))
+                        .build());
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                // could fork logic at this point for non-successful rule runs
+                return false;
+            }
         });
     }
 
     private Boolean processDownloadRuleResults(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
+        return processRule(resultMessage, handleInternalRuleResults(resultMessage));
+    }
+
+    private Boolean processStopsAndQuaysResults(ResultMessage resultMessage) {
+        return processRule(resultMessage, handleInternalRuleResults(resultMessage));
+    }
+
+    private BiPredicate<Entry, Task> handleInternalRuleResults(ResultMessage resultMessage) {
+        return (entry, task) -> {
             // use downloaded result file as is instead of repackaging the zip
             ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
             if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
-                throw new RuleExecutionException("Entry " + resultMessage.entryId() + " prepare.download did not succeed in downloading result.");
+                throw new RuleExecutionException("Entry " + resultMessage.entryId() + " internal task " + task.name() + " does not contain 'result' package.");
             }
             String sourceFile = packages.get("result").get(0);
             S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
@@ -138,19 +165,13 @@ public class RuleListenerService {
                 task.id(),
                 "result",
                 dlFile.toString()));
-
-            // this is an intermediate step which needs to trigger more work, so submit a new delegation job
-            ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
-                .entry(queueHandlerRepository.reload(entry))
-                .retryStatistics(ImmutableRetryStatistics.of(5))
-                .build();
-            messagingService.submitProcessingJob(job);
             return true;
-        });
+        };
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
         return processRule(resultMessage, (entry, task) -> {
+            logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR_1_0_1, entry.publicId(), task.name());
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
@@ -213,16 +234,27 @@ public class RuleListenerService {
         }
     }
 
+    private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
+        return processRule(resultMessage, (entry, task) -> {
+            logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX2GTFS_ENTUR_2_0_6, entry.publicId(), task.name());
+            createOutputPackages(resultMessage, entry, task);
+            return true;
+        });
+    }
+
     private boolean processRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
         Optional<Entry> e = queueHandlerService.getEntry(resultMessage.entryId());
         if (e.isPresent()) {
             Entry entry = e.get();
-            Task task = taskService.trackTask(taskService.findTask(entry.id(), resultMessage.ruleName()), ProcessingState.UPDATE);
-            try {
-                return processingHandler.test(entry, task);
-            } finally {
-                taskService.trackTask(task, ProcessingState.COMPLETE);
-            }
+            Optional<Task> task = taskService.findTask(entry.id(), resultMessage.ruleName());
+            return task.map(t -> {
+                Task tracked = taskService.trackTask(t, ProcessingState.UPDATE);
+                try {
+                    return processingHandler.test(entry, tracked);
+                } finally {
+                    taskService.trackTask(tracked, ProcessingState.COMPLETE);
+                }
+            }).orElse(false);
         } else {
             return false;
         }
@@ -254,7 +286,7 @@ public class RuleListenerService {
                 S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
                 file -> {
                     boolean match = files.stream().anyMatch(content -> content.endsWith(file));
-                    logger.info("Matching {}/{}", file, match);
+                    logger.trace("Matching {} / {}", file, match);
                     return match;
                 });
         });

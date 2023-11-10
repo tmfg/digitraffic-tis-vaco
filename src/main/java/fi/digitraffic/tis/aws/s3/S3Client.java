@@ -9,18 +9,18 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedCopy;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryUpload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
-import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
 import software.amazon.awssdk.transfer.s3.model.DownloadDirectoryRequest;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.FileDownload;
 import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
-import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
 import java.io.IOException;
@@ -49,16 +49,15 @@ public class S3Client {
         this.awsS3Client = Objects.requireNonNull(awsS3Client);
     }
 
-    public CompletableFuture<CompletedFileUpload> uploadFile(String bucketName, S3Path targetPath, Path sourcePath) {
-        UploadFileRequest ufr = UploadFileRequest.builder()
-            .putObjectRequest(req -> req.bucket(bucketName).key(targetPath.toString()))
-            .addTransferListener(LoggingTransferListener.create())
-            .source(sourcePath)
-            .build();
-        logger.info("Uploading file from {} to s3://{}/{}", sourcePath, bucketName, targetPath);
-        return s3TransferManager
-            .uploadFile(ufr)
-            .completionFuture();
+    public CompletableFuture<PutObjectResponse> uploadFile(String bucketName, S3Path targetPath, Path sourcePath) {
+        return CompletableFuture.supplyAsync(() -> {
+            logger.info("Uploading file from {} to s3://{}/{}", sourcePath, bucketName, targetPath);
+            PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(targetPath.toString())
+                .build();
+            return awsS3Client.putObject(request, sourcePath);
+        });
     }
 
     public CompletableFuture<CompletedDirectoryUpload> uploadDirectory(Path localSourcePath, String bucketName, S3Path s3TargetPath) {

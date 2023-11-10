@@ -11,8 +11,8 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTaskResult;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.process.model.TaskResult;
+import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -25,6 +25,7 @@ import java.util.Set;
 
 @Service
 public class ConversionService {
+    public static final String CONVERT_TASK = "convert";
     public static final String PHASE = "conversion";
     public static final String RULESET_SELECTION_SUBTASK = "conversion.rulesets";
     public static final String EXECUTION_SUBTASK = "conversion.execute";
@@ -50,6 +51,7 @@ public class ConversionService {
 
     public void convert(ImmutableConversionJobMessage jobDescription) {
         Entry entry = jobDescription.entry();
+        Task task = taskService.findTask(entry.id(), CONVERT_TASK).get();
         TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.entry());
 
         executeRules(jobDescription.entry(), conversionRulesets.result());
@@ -61,27 +63,32 @@ public class ConversionService {
                 S3Artifact.getPackagePath(entry.publicId(), packageFileName),
                 packageFileName,
                 p -> true).join();
+
+        taskService.trackTask(task, ProcessingState.COMPLETE);
     }
 
     @VisibleForTesting
     TaskResult<Set<Ruleset>> selectRulesets(Entry entry) {
-        Task task = taskService.trackTask(taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK), ProcessingState.START);
+        return taskService.findTask(entry.id(), RULESET_SELECTION_SUBTASK)
+            .map(task -> {
+                Task tracked = taskService.trackTask(task, ProcessingState.START);
 
-        Set<Ruleset> rulesets = rulesetService.selectRulesets(
-            entry.businessId(),
-            Type.CONVERSION_SYNTAX,
-            TransitDataFormat.forField(entry.format()),
-            Streams.map(entry.validations(), ValidationInput::name).toSet());
+                Set<Ruleset> rulesets = rulesetService.selectRulesets(
+                    entry.businessId(),
+                    Type.CONVERSION_SYNTAX,
+                    TransitDataFormat.forField(entry.format()),
+                    Streams.map(entry.conversions(), ConversionInput::name).toSet());
 
-        taskService.trackTask(task, ProcessingState.COMPLETE);
+                taskService.trackTask(tracked, ProcessingState.COMPLETE);
 
-        return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
+                return ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, rulesets);
+            }).orElseGet(() -> ImmutableTaskResult.of(RULESET_SELECTION_SUBTASK, Set.of()));
     }
 
     @VisibleForTesting
     ImmutableTaskResult<List<ConversionReport>> executeRules(Entry queueEntry, Set<Ruleset> conversionRulesets) {
         // TODO: when exact conversion implementations will be made, they will be executed here
-        return ImmutableTaskResult.of(EXECUTION_SUBTASK, null);
+        return ImmutableTaskResult.of(EXECUTION_SUBTASK, List.of());
     }
 
 }

@@ -42,7 +42,7 @@ Authorization: Bearer {{tis_token}}
 }
 
 > {%
-    client.global.set("entry_details_link", response.body.links.self.href)
+    client.global.set("entry_details_link", response.body.links.refs.self.href)
 %}
 
 ###

@@ -9,18 +9,19 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
+import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
+import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Service
 public class TaskService {
@@ -59,7 +61,7 @@ public class TaskService {
         };
     }
 
-    public Task findTask(Long entryId, String taskName) {
+    public Optional<Task> findTask(Long entryId, String taskName) {
         return taskRepository.findTask(entryId, taskName);
     }
 
@@ -96,31 +98,20 @@ public class TaskService {
         Set<Task> allTasks = new HashSet<>();
 
         try {
-            logger.info("Generating rule tasks for entry {} based on input format '{}'", entry.publicId(), entry.format());
-            TransitDataFormat entryFormat = TransitDataFormat.forField(entry.format());
+            logger.debug("Generating rule tasks for entry {} based on input format '{}'", entry.publicId(), entry.format());
 
-            List<ImmutableTask> validationRuleTasks = resolveRuleTasks(
+            List<ImmutableTask> ruleTasks = resolveRuleTasks(
                 entry,
-                Type.VALIDATION_SYNTAX,
-                entryFormat,
-                Optional.ofNullable(entry.validations())
-                    .orElse(List.of())
-                    .stream().map(ValidationInput::name)
-                    .toList());
-            allTasks.addAll(validationRuleTasks);
+                Stream.concat(
+                    Optional.ofNullable(entry.validations()).orElse(List.of()).stream().map(ValidationInput::name),
+                    Optional.ofNullable(entry.conversions()).orElse(List.of()).stream().map(ConversionInput::name))
+                .toList());
 
-            List<ImmutableTask> conversionRuleTasks = resolveRuleTasks(
-                entry,
-                Type.CONVERSION_SYNTAX,
-                entryFormat,
-                Optional.ofNullable(entry.conversions())
-                    .orElse(List.of())
-                    .stream()
-                    .map(ConversionInput::name)
-                    .toList());
-            allTasks.addAll(conversionRuleTasks);
+            allTasks.addAll(ruleTasks);
 
-            return resolvePrioritiesBasedOnTopology(List.copyOf(allTasks));
+            List<Task> prioritizedTasks = resolvePrioritiesBasedOnTopology(List.copyOf(allTasks));
+            logger.info("Generated tasks for entry {}: {}", entry.publicId(), prioritizedTasks);
+            return prioritizedTasks;
         } catch (InvalidMappingException ime) {
             logger.warn("Entry {} is requesting operations for unsupported input format '{}', skipping rule task generation", entry.publicId(), entry.format(), ime);
         }
@@ -133,7 +124,25 @@ public class TaskService {
 
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
-        deps.put(ValidationService.VALIDATE_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
+        deps.put(DownloadRule.DOWNLOAD_SUBTASK, List.of());
+        deps.put(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, List.of());
+        deps.put(RulesetSubmissionService.VALIDATE_TASK,
+            List.of(
+                DownloadRule.DOWNLOAD_SUBTASK,
+                StopsAndQuaysRule.STOPS_AND_QUAYS_TASK));
+        deps.put(ConversionService.CONVERT_TASK, conversionDeps());
+        return deps;
+    }
+
+    private static List<String> conversionDeps() {
+        List<String> deps = new ArrayList<>();
+        // conversion rules may declare validations as dependencies, thus they need to be executed before running the
+        // conversion rule itself
+        deps.addAll(RuleName.ALL_EXTERNAL_VALIDATION_RULES);
+        deps.addAll(List.of(
+            DownloadRule.DOWNLOAD_SUBTASK,
+            StopsAndQuaysRule.STOPS_AND_QUAYS_TASK,
+            RulesetSubmissionService.VALIDATE_TASK));
         return deps;
     }
 
@@ -154,11 +163,20 @@ public class TaskService {
         MutableGraph<Task> g = GraphBuilder.directed().build();
         tasks.forEach(g::addNode);
         tasks.forEach(task -> {
+
             if (ruleDeps.containsKey(task.name())) {
-                ruleDeps.get(task.name()).forEach(dep -> g.putEdge(tasksByName.get(dep), task));
+                ruleDeps.get(task.name()).forEach(dep -> {
+                    if (tasksByName.containsKey(dep)) {
+                        g.putEdge(tasksByName.get(dep), task);
+                    }
+                });
             } else {
                 rulesetService.findByName(task.name()).ifPresent(ruleset ->
-                    ruleset.dependencies().forEach(dep -> g.putEdge(tasksByName.get(dep), task)));
+                    ruleset.dependencies().forEach(dep -> {
+                        if (tasksByName.containsKey(dep)) {
+                            g.putEdge(tasksByName.get(dep), task);
+                        }
+                    }));
             }});
         // 2) do the topological ordering
         ImmutableList<Task> order = MoreGraphs.topologicalOrdering(g);
@@ -183,24 +201,24 @@ public class TaskService {
     }
 
     private List<ImmutableTask> resolveRuleTasks(Entry entry,
-                                                 Type ruleType,
-                                                 TransitDataFormat entryFormat,
                                                  List<String> requestedRuleTasks) {
-        Set<Ruleset> allAccessibleRulesets = rulesetService.selectRulesets(entry.businessId(), ruleType, entryFormat, Set.of());
+        Set<Ruleset> allAccessibleRulesets = rulesetService.selectRulesets(entry.businessId());
         Map<String, Ruleset> rulesetsByName = Streams
-            .filter(allAccessibleRulesets, r -> r.format().equals(entryFormat))
-            .collect(Ruleset::identifyingName, Function.identity());
+            .collect(allAccessibleRulesets, Ruleset::identifyingName, Function.identity());
 
-        List<String> allowedRuleTasks = Streams.filter(requestedRuleTasks, rulesetsByName::containsKey).toList();
+        Set<String> allowedRuleTasks = Streams.filter(requestedRuleTasks, rulesetsByName::containsKey).toSet();
 
         // include ruleset dependencies to list of resolved tasks
-        Set<String> dependencies = Streams.flatten(allAccessibleRulesets, Ruleset::dependencies)
-                .toSet();
-        allowedRuleTasks.forEach(dependencies::remove);
+        Set<String> dependencies = Streams.filter(allAccessibleRulesets, ruleset -> allowedRuleTasks.contains(ruleset.identifyingName()))
+            .flatten(Ruleset::dependencies)
+            .toSet();
+        // include transitive dependencies as well
+        dependencies.addAll(Streams.filter(dependencies, rulesetsByName::containsKey)
+            .flatten(d -> rulesetsByName.get(d).dependencies())
+                .toSet());
 
-        logger.debug("Task generation for entry {}: available {} rules {} / requested {} / allowed {} / dependencies {}",
+        logger.debug("Task generation for entry {}: available rules {} / requested {} / allowed {} / dependencies {}",
             entry.publicId(),
-            ruleType,
             rulesetsByName.keySet(),
             requestedRuleTasks,
             allowedRuleTasks,
@@ -214,4 +232,5 @@ public class TaskService {
                                                    Entry entry) {
         return Streams.map(taskNames, t -> ImmutableTask.of(entry.id(), t, -1)).toList();
     }
+
 }

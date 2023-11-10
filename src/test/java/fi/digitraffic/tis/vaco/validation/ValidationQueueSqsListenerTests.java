@@ -8,6 +8,8 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableRulesetSubmissionConfiguration;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
@@ -37,7 +39,7 @@ class ValidationQueueSqsListenerTests {
     @Mock
     private MessagingService messagingService;
     @Mock
-    private ValidationService validationService;
+    private RulesetSubmissionService rulesetSubmissionService;
     @Mock
     private QueueHandlerRepository queueHandlerRepository;
     @Captor
@@ -45,16 +47,20 @@ class ValidationQueueSqsListenerTests {
 
     @BeforeEach
     void setUp() {
-        listener = new ValidationQueueSqsListener(messagingService, validationService, queueHandlerRepository);
+        listener = new ValidationQueueSqsListener(messagingService, rulesetSubmissionService, queueHandlerRepository);
 
         entry = ImmutableEntry.of(TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, Constants.FINTRAFFIC_BUSINESS_ID);
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
-        message = ImmutableValidationJobMessage.builder().entry(entry).retryStatistics(retryStatistics).build();
+        message = ImmutableValidationJobMessage.builder()
+            .entry(entry)
+            .retryStatistics(retryStatistics)
+            .configuration(ImmutableRulesetSubmissionConfiguration.of(RulesetSubmissionService.VALIDATE_TASK, Type.VALIDATION_SYNTAX))
+            .build();
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(acknowledgement, messagingService, validationService);
+        verifyNoMoreInteractions(acknowledgement, messagingService, rulesetSubmissionService);
     }
 
     @Test
@@ -63,7 +69,7 @@ class ValidationQueueSqsListenerTests {
 
         listener.listen(message, acknowledgement);
 
-        verify(validationService).validate(message);
+        verify(rulesetSubmissionService).validate(message);
         verify(messagingService).submitProcessingJob(delegationJobMessage.capture());
         verify(acknowledgement).acknowledge();
     }

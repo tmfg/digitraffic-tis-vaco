@@ -20,13 +20,13 @@ public class HttpClient {
         this.javaHttpClient = java.net.http.HttpClient.newBuilder().build();
     }
 
-    public CompletableFuture<HttpResponse<Path>> downloadFile(Path targetFilePath,
-                                                              String url,
-                                                              String etag) {
+    public CompletableFuture<Path> downloadFile(Path targetFilePath,
+                                                String url,
+                                                String etag) {
         logger.info("Downloading file to {} from {} (eTag {})", targetFilePath, url, etag);
         HttpRequest request = buildGetRequest(url, etag);
         HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
-        return javaHttpClient.sendAsync(request, bodyHandler);
+        return javaHttpClient.sendAsync(request, bodyHandler).thenApply(HttpResponse::body);
     }
 
     private HttpRequest buildGetRequest(String url, String etag) {

@@ -91,7 +91,7 @@ public class S3Packager {
         return CompletableFuture.runAsync(() -> {
             Path localArtifactTemp = TempFiles.getArtifactDownloadDirectory(vacoProperties, entry);
             Path localTargetFile = TempFiles.getArtifactPackagingFile(vacoProperties, entry, zipFileName);
-            logger.info("Starting to package s3://{}/{} into {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, localTargetFile);
+            logger.debug("Starting to package s3://{}/{} into {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, localTargetFile);
             try {
                 s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), s3SourcePath, localArtifactTemp, filter).join();
                 createZip(localArtifactTemp, localTargetFile);

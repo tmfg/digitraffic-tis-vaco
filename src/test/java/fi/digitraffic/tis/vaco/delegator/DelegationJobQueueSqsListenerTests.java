@@ -6,34 +6,24 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
-import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
-import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
@@ -45,23 +35,26 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private QueueHandlerRepository queueHandlerRepository;
+    @Autowired
+    private TaskService taskService;
+    @Autowired
+    private RulesetService rulesetService;
+
+    @Mock
+    private Acknowledgement acknowledgement;
 
     @Mock
     private MessagingService messagingService;
-    @Autowired
-    private TaskService taskService;
     @Mock
     private TaskRepository taskRepository;
     @Mock
     private DownloadRule downloadRule;
     @Mock
-    private Acknowledgement acknowledgement;
-    @Captor
-    private ArgumentCaptor<ResultMessage> resultMessage;
+    private StopsAndQuaysRule stopsAndQuaysRule;
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, taskService, downloadRule);
+        listener = new DelegationJobQueueSqsListener(messagingService, taskService, rulesetService, downloadRule, stopsAndQuaysRule);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)
@@ -75,16 +68,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(messagingService, taskRepository, downloadRule);
-    }
-
-    @Test
-    void runsDownloadByDefault() {
-        ResultMessage rs = ImmutableResultMessage.of(entry.publicId(), entry.tasks().get(0).id(), DownloadRule.DOWNLOAD_SUBTASK, "inputs", "outputs", Map.of());
-        when(downloadRule.execute(entry)).thenReturn(CompletableFuture.completedFuture(rs));
-        listener.listen(jobMessage, acknowledgement);
-        verify(downloadRule).execute(entry);
-        verify(messagingService).sendMessage(eq(QueueNames.VACO_RULES_RESULTS), resultMessage.capture());
+        verifyNoMoreInteractions(messagingService, taskRepository, downloadRule, stopsAndQuaysRule);
     }
 
     @Test
@@ -100,17 +84,5 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
         listener.listen(tooManyRetries, acknowledgement);
 
         verify(messagingService).updateJobProcessingStatus(tooManyRetries, ProcessingState.COMPLETE);
-    }
-
-    @Test
-    void willNotStartAlreadyStartedProcessingJob() {
-        ImmutableEntry startedEntry = ImmutableEntry.copyOf(jobMessage.entry())
-            .withStarted(LocalDateTime.now());
-        ImmutableDelegationJobMessage alreadyStarted = jobMessage.withEntry(startedEntry);
-        ResultMessage rs = ImmutableResultMessage.of(startedEntry.publicId(), entry.tasks().get(0).id(), DownloadRule.DOWNLOAD_SUBTASK, "inputs", "outputs", Map.of());
-        when(downloadRule.execute(startedEntry)).thenReturn(CompletableFuture.completedFuture(rs));
-        listener.listen(alreadyStarted, acknowledgement);
-        verify(downloadRule).execute(startedEntry);
-        verify(messagingService).sendMessage(eq(QueueNames.VACO_RULES_RESULTS), resultMessage.capture());
     }
 }

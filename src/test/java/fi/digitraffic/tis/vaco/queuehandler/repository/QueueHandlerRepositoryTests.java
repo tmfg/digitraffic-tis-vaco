@@ -24,7 +24,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.ValidationService;
+import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +73,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
         //       misordered. Move along, nothing to see here.
         validationTasks = entryId -> List.of(
             ImmutableTask.of(entryId, DownloadRule.DOWNLOAD_SUBTASK, 100),
-            ImmutableTask.of(entryId, ValidationService.VALIDATE_TASK, 200)
+            ImmutableTask.of(entryId, RulesetSubmissionService.VALIDATE_TASK, 200)
         );
         conversionTasks = entryId -> Streams.mapIndexed(
                 ConversionService.ALL_SUBTASKS,
@@ -101,12 +101,12 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
-    void entryWithoutValidationsAndConversionsGetsGeneratedValidationTasks() {
+    void entryWithoutValidationsAndConversionsGetsNoTasks() {
         Entry result = repository.create(entry);
 
         assertThat(
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
-            equalTo(validationTasks.apply(result.id())));
+            equalTo(List.of()));
     }
 
     @Test
@@ -122,7 +122,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
                     Category.GENERIC,
                     Type.CONVERSION_SYNTAX,
                     TransitDataFormat.forField(entry.format()))
-                .withDependencies(DownloadRule.DOWNLOAD_SUBTASK));
+                .withDependencies(DownloadRule.DOWNLOAD_SUBTASK, ConversionService.CONVERT_TASK));
 
         Entry result = repository.create(entry.withConversions(conversion));
 
@@ -130,9 +130,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
             equalTo(List.of(
                 ImmutableTask.of(result.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
-                // NOTE: validate included for conversion as it does generic rule submission, will change in the future
-                ImmutableTask.of(result.id(), ValidationService.VALIDATE_TASK, 200),
-                // NOTE: priority is wrong because there's no real conversion support yet
+                ImmutableTask.of(result.id(), ConversionService.CONVERT_TASK, 200),
                 ImmutableTask.of(result.id(), "bananas", 201)
             )));
     }

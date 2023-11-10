@@ -5,18 +5,22 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class S3ClientTests extends AwsIntegrationTestBase {
 
@@ -96,19 +100,33 @@ class S3ClientTests extends AwsIntegrationTestBase {
         assertThat(Files.exists(outputSpecificFiles.resolve("z.txt")), equalTo(false));
     }
 
+    @Test
+    void wontTryToUploadNonexistentDirectory() {
+        // the test here is that underlying AWS client won't throw an exception
+        assertDoesNotThrow(() -> s3Client.uploadDirectory(
+                testDirectory.resolve("definitely/does/not/exist"),
+                "nonexistent-bucket",
+                ImmutableS3Path.of("irrelevant"))
+            .join());
+    }
+
+    @Test
+    void canWriteBinaryContent() throws URISyntaxException, IOException {
+        //String zipName = "vekka_liikenne.zip";
+        String zipName = "waltti_netex_nordic.zip";
+        Path inputContent = Path.of(Thread.currentThread().getContextClassLoader().getResource("public/testfiles/" + zipName).toURI());
+        Path outputContent = outputs.resolve(zipName);
+
+        S3Path path = ImmutableS3Path.of(zipName);
+        PutObjectResponse r = s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), path, inputContent).join();
+        Long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), path, outputContent);
+
+        Assertions.assertArrayEquals(Files.readAllBytes(inputContent), Files.readAllBytes(outputContent));
+    }
+
     @NotNull
     private static Path writeContent(Path path, String content) throws IOException {
         Path sourcePath = testDirectory.resolve(path);
         return Files.writeString(Files.createFile(sourcePath), content);
-    }
-
-    @Test
-    void wontTryToUploadNonexistentDirectory() {
-        // the test here is that underlying AWS client won't throw an exception
-        s3Client.uploadDirectory(
-                testDirectory.resolve("definitely/does/not/exist"),
-                "nonexistent-bucket",
-                ImmutableS3Path.of("irrelevant"))
-            .join();
     }
 }

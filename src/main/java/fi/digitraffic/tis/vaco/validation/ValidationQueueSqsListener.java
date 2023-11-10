@@ -9,22 +9,25 @@ import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidationJobMessage> {
 
-    private final MessagingService messagingService;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final ValidationService validationService;
+    private final MessagingService messagingService;
+    private final RulesetSubmissionService rulesetSubmissionService;
     private final QueueHandlerRepository queueHandlerRepository;
 
     public ValidationQueueSqsListener(MessagingService messagingService,
-                                      ValidationService validationService,
+                                      RulesetSubmissionService rulesetSubmissionService,
                                       QueueHandlerRepository queueHandlerRepository) {
         super((message, stats) -> messagingService.submitValidationJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
-        this.validationService = validationService;
+        this.rulesetSubmissionService = rulesetSubmissionService;
         this.queueHandlerRepository = queueHandlerRepository;
     }
 
@@ -35,7 +38,9 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
 
     @Override
     protected void runTask(ImmutableValidationJobMessage message) {
-        validationService.validate(message);
+        rulesetSubmissionService.validate(message);
+
+        logger.debug("Validation complete for {}, resubmitting to delegation", message.entry().publicId());
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
             // refresh entry to avoid repeating same message over and over and over...and over again
