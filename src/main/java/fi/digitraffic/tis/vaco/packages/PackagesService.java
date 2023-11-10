@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.packages;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
@@ -13,6 +14,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
@@ -30,15 +32,18 @@ public class PackagesService {
     private final S3Client s3Client;
     private final S3Packager s3Packager;
     private final PackagesRepository packagesRepository;
+    private final Cache<Path, Path> packageCache;
 
     public PackagesService(VacoProperties vacoProperties,
                            S3Client s3Client,
                            S3Packager s3Packager,
-                           PackagesRepository packagesRepository) {
+                           PackagesRepository packagesRepository,
+                           @Qualifier("packagesCache") Cache<Path, Path> packageCache) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.s3Packager = Objects.requireNonNull(s3Packager);
         this.packagesRepository = Objects.requireNonNull(packagesRepository);
+        this.packageCache = Objects.requireNonNull(packageCache);
     }
 
     /**
@@ -60,7 +65,6 @@ public class PackagesService {
                                  S3Path packageContentsS3Path,
                                  String fileName,
                                  Predicate<String> contentFilter) {
-        // TODO: error handling?
         // upload package file to S3
         s3Packager.producePackage(
                         entry,
@@ -86,7 +90,7 @@ public class PackagesService {
      * publishing them directly.
      *
      * @param p Package to save.
-     * @return
+     * @return Saved Package with updated ids, references etc.
      */
     public Package registerPackage(Package p) {
         return packagesRepository.createPackage(p);
@@ -105,13 +109,15 @@ public class PackagesService {
             Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, task, packageName)
                 .resolve(Path.of(p.path()).getFileName());
 
-            logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
+            return packageCache.get(targetPackagePath, tpp -> {
+                logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
 
-            s3Client.downloadFile(
-                vacoProperties.s3ProcessingBucket(),
-                S3Path.of(p.path()),  // reuse local path as S3 path key
-                targetPackagePath);
-            return targetPackagePath;
+                s3Client.downloadFile(
+                    vacoProperties.s3ProcessingBucket(),
+                    S3Path.of(p.path()),  // reuse local path as S3 path key
+                    targetPackagePath);
+                return targetPackagePath;
+            });
         });
     }
 }
