@@ -211,6 +211,18 @@
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-starter-secrets-manager</artifactId>
         </dependency>
+        <!--
+        including this allows for configuring the underlying HTTP client
+        see https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/http-configuration-apache.html
+        -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>netty-nio-client</artifactId>
+        </dependency>
 
         <!-- All potentially publicly exposed id:s are nanoids. -->
         <dependency>
