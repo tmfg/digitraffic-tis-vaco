@@ -114,6 +114,7 @@ public class RuleListenerService {
                 case RuleName.NETEX_ENTUR_1_0_1 -> processResultFromNetexEntur101(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical400(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical410(resultMessage);
+                case RuleName.NETEX2GTFS_ENTUR_2_0_6 -> processNetex2GtfsEntur206(resultMessage);
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -122,6 +123,22 @@ public class RuleListenerService {
                     yield false;
                 }
             };
+        }).thenApply(ruleProcessingSuccess -> {
+            if (ruleProcessingSuccess) {
+                Optional<Entry> entry = queueHandlerRepository.findByPublicId(resultMessage.entryId());
+                if (entry.isPresent()) {
+                    messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
+                        .entry(entry.get())
+                        .retryStatistics(ImmutableRetryStatistics.of(5))
+                        .build());
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                // could fork logic at this point for non-successful rule runs
+                return false;
+            }
         });
     }
 
@@ -213,6 +230,14 @@ public class RuleListenerService {
             logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
             return List.of();
         }
+    }
+
+    private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
+        return processRule(resultMessage, (entry, task) -> {
+            logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX2GTFS_ENTUR_2_0_6, entry.publicId(), task.name());
+            createOutputPackages(resultMessage, entry, task);
+            return true;
+        });
     }
 
     private boolean processRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
