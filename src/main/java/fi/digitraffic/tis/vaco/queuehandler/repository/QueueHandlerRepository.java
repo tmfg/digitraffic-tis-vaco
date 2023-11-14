@@ -61,12 +61,12 @@ public class QueueHandlerRepository {
 
     private ImmutableEntry createEntry(Entry entry) {
         return jdbc.queryForObject("""
-                INSERT INTO entry(business_id, format, url, etag, metadata)
-                     VALUES (?, ?, ?, ?, ?)
-                  RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
+                INSERT INTO entry(business_id, format, url, etag, metadata, name)
+                     VALUES (?, ?, ?, ?, ?, ?)
+                  RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name
                 """,
             RowMappers.QUEUE_ENTRY.apply(objectMapper),
-            entry.businessId(), entry.format(), entry.url(), entry.etag(), RowMappers.writeJson(objectMapper, entry.metadata()));
+            entry.businessId(), entry.format(), entry.url(), entry.etag(), RowMappers.writeJson(objectMapper, entry.metadata()), entry.name());
     }
 
     private List<ImmutableValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {
@@ -99,7 +99,7 @@ public class QueueHandlerRepository {
     private Optional<ImmutableEntry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
-                        SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed
+                        SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name
                           FROM entry qe
                          WHERE qe.public_id = ?
                         """,

@@ -103,6 +103,7 @@ public final class RowMappers {
                 .id(rs.getLong("id"))
                 .publicId(rs.getString("public_id"))
                 .businessId(rs.getString("business_id"))
+                .name(rs.getString("name"))
                 .format(rs.getString("format"))
                 .url(rs.getString("url"))
                 .etag(rs.getString("etag"))

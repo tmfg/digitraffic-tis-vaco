@@ -30,6 +30,7 @@ public class EntryRequestMapper {
         }
 
         return ImmutableEntry.builder()
+            .name(entryRequest.getName())
             .format(safeTrim(entryRequest.getFormat()))
             .url(safeTrim(entryRequest.getUrl()))
             .businessId(safeTrim(entryRequest.getBusinessId()))
