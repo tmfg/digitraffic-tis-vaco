@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
@@ -64,7 +65,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
-        entry = ImmutableEntry.of("gtfs", "www.example.fi", Constants.FINTRAFFIC_BUSINESS_ID);
+        entry = TestObjects.anEntry().build();
         metadata = objectMapper.readTree("{\"metadata\":true}");
         validation = ImmutableValidationInput.of("ananas");
         conversion = ImmutableConversionInput.of("bananas");
@@ -93,7 +94,7 @@ class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
             () -> assertThat(result.format(), equalTo("gtfs")),
             () -> assertThat(result.etag(), equalTo("etag")),
             () -> assertThat(result.metadata(), equalTo(metadata)),
-            () -> assertThat(result.url(), equalTo("www.example.fi")),
+            () -> assertThat(result.url(), equalTo("https://example.fi")),
             () -> assertThat(result.businessId(), equalTo(Constants.FINTRAFFIC_BUSINESS_ID)),
             () -> assertThat(Streams.collect(result.validations(), ValidationInput::name), equalTo(List.of(validation.name()))),
             () -> assertThat(Streams.collect(result.conversions(), ConversionInput::name), equalTo(List.of(conversion.name())))
