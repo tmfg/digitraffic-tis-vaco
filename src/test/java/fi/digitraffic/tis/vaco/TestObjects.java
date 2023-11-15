@@ -26,6 +26,7 @@ public class TestObjects {
     public static ImmutableEntry.Builder anEntry(String format) {
         return ImmutableEntry.builder()
             .id(new Random().nextLong())
+            .name("testName")
             .format(format)
             .url("https://testfile")
             .publicId(NanoIdUtils.randomNanoId())
