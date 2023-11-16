@@ -26,6 +26,7 @@ public class TestObjects {
     public static ImmutableEntry.Builder anEntry(String format) {
         return ImmutableEntry.builder()
             .id(new Random().nextLong())
+            .name("testName")
             .format(format)
             .url("https://testfile")
             .publicId(NanoIdUtils.randomNanoId())
@@ -35,10 +36,20 @@ public class TestObjects {
     public static ImmutableEntryRequest.Builder aValidationEntryRequest() {
         return ImmutableEntryRequest.builder()
             .format("gtfs")
+            .name("fileName")
             .url("https://example.fi")
             .etag("etag")
             .businessId(Constants.FINTRAFFIC_BUSINESS_ID)
             .validations(List.of());
+    }
+
+    public static ImmutableEntry.Builder anEntry() {
+        return ImmutableEntry.builder()
+            .format("gtfs")
+            .name("fileName")
+            .url("https://example.fi")
+            .etag("etag")
+            .businessId(Constants.FINTRAFFIC_BUSINESS_ID);
     }
 
     public static ImmutableOrganization.Builder anOrganization() {
