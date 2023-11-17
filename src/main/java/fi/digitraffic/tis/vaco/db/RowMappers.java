@@ -31,6 +31,7 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -75,6 +76,7 @@ public final class RowMappers {
             .id(rs.getLong(alias + "id"))
             .businessId(rs.getString(alias + "business_id"))
             .name(rs.getString(alias + "name"))
+            .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
             .build();
 
     public static final RowMapper<Organization> ORGANIZATION = ALIASED_ORGANIZATION.apply("");

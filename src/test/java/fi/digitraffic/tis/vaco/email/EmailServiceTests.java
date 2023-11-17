@@ -10,7 +10,9 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
+import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import io.burt.jmespath.jackson.JacksonRuntime;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.function.Executable;
+import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -29,6 +32,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -51,7 +55,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         jmesPath = new JacksonRuntime();
         vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null));
 
-        emailService = new EmailService(new MessageMapper(vacoProperties), sesClient, emailRepository, organizationService);
+        emailService = new EmailService(vacoProperties, new MessageMapper(vacoProperties), sesClient, emailRepository, organizationService);
     }
 
     @AfterEach
@@ -94,13 +98,6 @@ class EmailServiceTests extends AwsIntegrationTestBase {
                 path(messages, "messages[0].Body.html_part").textValue(),
                 equalTo("I hereby decree that you are all free from my reign."))
         );
-    }
-
-    @NotNull
-    private Executable messagesSent(JsonNode messages, int count) {
-        return () -> assertThat(
-            path(messages, "length(messages)").intValue(),
-            equalTo(count));
     }
 
     @Test
@@ -152,6 +149,34 @@ class EmailServiceTests extends AwsIntegrationTestBase {
                 list(path(messages, "messages[3].Destination.BccAddresses"), JsonNode::textValue),
                 equalTo(militia.subList(30, 70)))
         );
+    }
+
+
+    @Test
+    void weeklyStatusEmailIsSentToRelatedOrganizationContacts() throws IOException, InterruptedException {
+        Organization org = TestObjects.anOrganization().addContactEmails("organ@izati.on").build();
+        ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
+
+        BDDMockito.given(emailRepository.findLatestEntries(org)).willReturn(List.of(entry));
+
+        emailService.sendFeedStatusEmail(org);
+        JsonNode messages = readReceivedMessages();
+
+        assertAll(
+            messagesSent(messages, 1),
+            () -> assertThat(
+                list(path(messages, "messages[*].Destination[].CcAddresses[]"), JsonNode::textValue),
+                equalTo(org.contactEmails()))
+            );
+        String message = list(path(messages, "messages[].Body.html_part"), JsonNode::textValue).get(0);
+        assertThat(message, containsString("<title>Viikkoraportti</title>"));
+    }
+
+    @NotNull
+    private Executable messagesSent(JsonNode messages, int count) {
+        return () -> assertThat(
+            path(messages, "length(messages)").intValue(),
+            equalTo(count));
     }
 
     private List<? extends String> list(JsonNode node, Function<JsonNode, String> mapper) {

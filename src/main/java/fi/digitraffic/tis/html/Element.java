@@ -86,6 +86,11 @@ public final class Element implements HtmlContent {
         return this;
     }
 
+    public Element children(List<HtmlContent> c) {
+        children.addAll(c);
+        return this;
+    }
+
     public Element attributes(Map<String, String> attributes) {
         this.attributes.putAll(attributes);
         return this;
