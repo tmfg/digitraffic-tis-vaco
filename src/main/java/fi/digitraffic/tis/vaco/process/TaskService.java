@@ -1,12 +1,12 @@
 package fi.digitraffic.tis.vaco.process;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import fi.digitraffic.tis.exceptions.PersistenceException;
 import fi.digitraffic.tis.utilities.MoreGraphs;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;

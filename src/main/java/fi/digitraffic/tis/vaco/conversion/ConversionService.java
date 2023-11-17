@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.conversion;
 
+import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;

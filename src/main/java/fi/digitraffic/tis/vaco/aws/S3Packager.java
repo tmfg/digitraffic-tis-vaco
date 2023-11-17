@@ -1,11 +1,11 @@
 package fi.digitraffic.tis.vaco.aws;
 
+import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.aws.s3.AwsS3Exception;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
-import fi.digitraffic.tis.utilities.VisibleForTesting;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
