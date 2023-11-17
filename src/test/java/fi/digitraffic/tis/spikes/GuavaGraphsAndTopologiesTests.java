@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import fi.digitraffic.tis.utilities.MoreGraphs;
+import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.Set;
 class GuavaGraphsAndTopologiesTests {
 
     @Test
+    @Ignore("testing out how the API works and looks, no asserts -> no point running this in automation")
     void topologicalSorting() {
         MutableGraph<Node> g = GraphBuilder.directed().build();
         Node dl = new Node("download", -1, List.of());

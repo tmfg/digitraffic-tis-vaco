@@ -81,8 +81,6 @@ class HtmlBuilderTests {
                             .children(c.element("h1").text("Hello World!"))))
             .build(new HtmlBuildOptions(0, true));
 
-        System.out.println("html = " + html);
-
         String entirePage = """
            <!DOCTYPE html>
            <html lang="en"
