@@ -97,7 +97,7 @@ public class EmailService {
 
         builder.html5doctype()
             .content(c -> html5EmailTemplate(c,
-                translations.getString("email.title"),
+                translations.getString("email.subject"),
                 c.element("body")
                     .children(
                         c.element("div")
