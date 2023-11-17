@@ -4,6 +4,7 @@ import fi.digitraffic.tis.vaco.organization.model.Organization;
 import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -25,5 +26,9 @@ public class OrganizationService {
 
     public Optional<Organization> findByBusinessId(String businessId) {
         return organizationRepository.findByBusinessId(businessId);
+    }
+
+    public List<Organization> listAllWithEntries() {
+        return organizationRepository.listAllWithEntries();
     }
 }

@@ -1,5 +1,7 @@
 package fi.digitraffic.tis.utilities;
 
+import jakarta.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,9 +40,14 @@ public final class Streams {
     private Streams() {}
 
     /**
-     * Functionally equivalent to {@link Stream#map(Function)}. Shorthand for
+     * Functionally equivalent to {@link Stream#map(Function)}. Null safe. Shorthand for
      * <pre>
-     *     objects.stream().map(mapper)
+     *     Stream&lt;O&gt; result;
+     *     if (objects == null) {
+     *         result = Stream.&lt;O&gt;empty().map(mapper);
+     *     } else {
+     *         result = objects.stream().map(mapper);
+     *     }
      * </pre>
      * @param objects Objects to process.
      * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
@@ -48,8 +55,12 @@ public final class Streams {
      * @param <I> Type for input objects.
      * @param <O> Type for output objects.
      */
-    public static <I, O> Chain<O> map(Collection<I> objects, Function<? super I, ? extends O> mapper) {
-        return new Chain<>(objects.stream().map(mapper));
+    public static <I, O> Chain<O> map(@Nullable Collection<I> objects, Function<? super I, ? extends O> mapper) {
+        if (objects == null) {
+            return new Chain<>(Stream.<I>empty().map(mapper));
+        } else {
+            return new Chain<>(objects.stream().map(mapper));
+        }
     }
 
     /**
@@ -186,7 +197,7 @@ public final class Streams {
      * @param <I> Type for input objects.
      * @param <O> Type for output objects.
      */
-    public static <I, O> List<? extends O> collect(Collection<I> objects, Function<? super I, ? extends O> mapper) {
+    public static <I, O> List<O> collect(Collection<I> objects, Function<? super I, O> mapper) {
         return map(objects, mapper).toList();
     }
 
@@ -210,6 +221,26 @@ public final class Streams {
     }
 
     /**
+     * Similar to {@link #concat(Collection, Collection[])} but for {@link Stream Streams}. See javadoc of that method
+     * for more in-depth explanation.
+     *
+     * @param first First stream to concatenate.
+     * @param more Remaining streams.
+     * @return Concatenated streams.
+     * @param <T> Common type for contained objects.
+     */
+    @SafeVarargs
+    public static <T> Chain<T> concat(Stream<T> first, Stream<T>... more) {
+        Stream<T> merged = first;
+
+        for (Stream<T> extra : more) {
+            merged = Stream.concat(merged, extra);
+        }
+
+        return new Chain<>(merged);
+    }
+
+    /**
      * Custom {@link Spliterator} wrapping for legacy type {@link Enumeration} to provide a bridge to Java
      * {@link Stream} with {@link StreamSupport}.
      * @param objects Objects to process.
@@ -221,6 +252,24 @@ public final class Streams {
             Spliterators.spliteratorUnknownSize(objects.asIterator(), Spliterator.ORDERED),
             false
         );
+    }
+
+    /**
+     * Group given collection using the provided classifier function. Shorthand for
+     * <pre>
+     *     objects.stream()
+     *         .collect(Collectors.groupingBy(classifier));
+     * </pre>
+     * @param objects Objects to process.
+     * @param classifier Classifier to use when grouping.
+     * @return Map of grouped objects by classifier.
+     * @param <C> Classifier type.
+     * @param <I> Input object type.
+     */
+    public static <C, I> Map<C, List<I>> groupBy(Collection<I> objects, Function<? super I, ? extends C> classifier) {
+        return objects
+            .stream()
+            .collect(Collectors.groupingBy(classifier));
     }
 
     /**

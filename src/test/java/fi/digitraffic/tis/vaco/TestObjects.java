@@ -4,6 +4,7 @@ import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
+import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
 import fi.digitraffic.tis.vaco.organization.model.CooperationType;
@@ -98,10 +99,23 @@ public class TestObjects {
     }
 
     public static VacoProperties vacoProperties() {
-        String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
-        Aws aws = new Aws("eu-north-1", null, null, null);
-        AzureAd azureAd = new AzureAd("tenantId", "clientId");
-        return new VacoProperties("unittests-" + randomSeed, null, "unittests-" + randomSeed + "-processing-bucket", "localhost:5173", "biz", aws, azureAd);
+        return vacoProperties(null, null, null);
     }
 
+    /**
+     * Override specific configuration subtypes. Provide nulls for those values which should use defaults.
+     */
+    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email) {
+        String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
+
+        return new VacoProperties(
+            "unittests-" + randomSeed,
+            null,
+            "unittests-" + randomSeed + "-processing-bucket",
+            "localhost:5173",
+            "biz",
+            aws != null ? aws : new Aws("eu-north-1", null, null, null),
+            azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
+            email != null ? email : new Email("king@commonwealth", null));
+    }
 }

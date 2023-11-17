@@ -16,6 +16,8 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ses.SesClient;
+import software.amazon.awssdk.services.ses.SesClientBuilder;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
@@ -43,6 +45,18 @@ public class AwsConfiguration {
     public SqsClient amazonSQSClient(VacoProperties vacoProperties,
                                      AwsCredentialsProvider credentialsProvider) {
         SqsClientBuilder b = SqsClient.builder()
+            .region(Region.of(vacoProperties.aws().region()))
+            .credentialsProvider(credentialsProvider);
+        if (vacoProperties.aws().endpoint() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        }
+        return b.build();
+    }
+
+    @Bean
+    public SesClient sesClient(VacoProperties vacoProperties,
+                               AwsCredentialsProvider credentialsProvider) {
+        SesClientBuilder b = SesClient.builder()
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider);
         if (vacoProperties.aws().endpoint() != null) {
