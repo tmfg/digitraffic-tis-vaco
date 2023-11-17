@@ -11,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
@@ -19,12 +20,16 @@ public abstract class AwsIntegrationTestBase {
 
     @Container
     protected static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.0.2"))
-        .withServices(LocalStackContainer.Service.SQS, LocalStackContainer.Service.S3)
+        .withServices(
+            LocalStackContainer.Service.SQS,
+            LocalStackContainer.Service.S3,
+            LocalStackContainer.Service.SES)
         .withEnv("DEFAULT_REGION", Region.EU_NORTH_1.id());
     protected static S3Client awsS3Client;
     protected static S3AsyncClient s3AsyncClient;
     protected static S3TransferManager s3TransferManager;
     protected static SqsClient sqsClient;
+    protected static SesClient sesClient;
 
     @BeforeAll
     static void awsBeforeAll() {
@@ -52,6 +57,11 @@ public abstract class AwsIntegrationTestBase {
             .region(region)
             .credentialsProvider(credentialsProvider)
             .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.SQS))
+            .build();
+        sesClient = SesClient.builder()
+            .region(region)
+            .credentialsProvider(credentialsProvider)
+            .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.SES))
             .build();
     }
 

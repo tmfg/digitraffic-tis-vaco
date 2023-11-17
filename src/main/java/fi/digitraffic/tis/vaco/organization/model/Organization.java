@@ -7,6 +7,8 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
+import java.util.List;
+
 @Value.Immutable
 @JsonSerialize(as = ImmutableOrganization.class)
 @JsonDeserialize(as = ImmutableOrganization.class)
@@ -21,4 +23,14 @@ public interface Organization {
 
     @Value.Parameter
     String name();
+
+    @Value.Default
+    default List<String> contactEmails() {
+        return List.of();
+    }
+
+    @Value.Default
+    default String language() {
+        return "fi";
+    }
 }

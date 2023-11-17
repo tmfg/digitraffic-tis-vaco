@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.aws;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import io.awspring.cloud.autoconfigure.core.AwsClientCustomizer;
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
 import io.awspring.cloud.sqs.listener.acknowledgement.AcknowledgementOrdering;
 import io.awspring.cloud.sqs.listener.acknowledgement.handler.AcknowledgementMode;
@@ -15,7 +16,15 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.http.SdkHttpClient;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
+import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.ses.SesClient;
+import software.amazon.awssdk.services.ses.SesClientBuilder;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
@@ -43,6 +52,18 @@ public class AwsConfiguration {
     public SqsClient amazonSQSClient(VacoProperties vacoProperties,
                                      AwsCredentialsProvider credentialsProvider) {
         SqsClientBuilder b = SqsClient.builder()
+            .region(Region.of(vacoProperties.aws().region()))
+            .credentialsProvider(credentialsProvider);
+        if (vacoProperties.aws().endpoint() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        }
+        return b.build();
+    }
+
+    @Bean
+    public SesClient sesClient(VacoProperties vacoProperties,
+                               AwsCredentialsProvider credentialsProvider) {
+        SesClientBuilder b = SesClient.builder()
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider);
         if (vacoProperties.aws().endpoint() != null) {
@@ -95,5 +116,38 @@ public class AwsConfiguration {
         actualConverter.setObjectMapper(objectMapper);
         converter.setPayloadMessageConverter(actualConverter);
         return converter;
+    }
+
+    @Bean
+    AwsClientCustomizer<S3ClientBuilder> s3ClientBuilderAwsClientConfigurer() {
+        return new S3AwsClientClientConfigurer();
+    }
+
+    static class S3AwsClientClientConfigurer implements AwsClientCustomizer<S3ClientBuilder> {
+        @Override
+        public ClientOverrideConfiguration overrideConfiguration() {
+            return ClientOverrideConfiguration.builder()
+                .apiCallAttemptTimeout(Duration.ofSeconds(15))
+                .apiCallTimeout(Duration.ofSeconds(15))
+                .build();
+        }
+
+        @Override
+        public SdkHttpClient httpClient() {
+            return ApacheHttpClient.builder()
+                .connectionTimeout(Duration.ofSeconds(15))
+                .socketTimeout(Duration.ofSeconds(15))
+                .connectionAcquisitionTimeout(Duration.ofSeconds(15))
+                .connectionMaxIdleTime(Duration.ofSeconds(60))
+                .build();
+        }
+
+        @Override
+        public SdkAsyncHttpClient asyncHttpClient() {
+            return NettyNioAsyncHttpClient.builder()
+                .connectionTimeout(Duration.ofSeconds(15))
+                .writeTimeout(Duration.ofSeconds(15))
+                .build();
+        }
     }
 }

@@ -36,9 +36,11 @@ public class CooperationRepository {
                        o_a.id as partner_a_id,
                        o_a.business_id as partner_a_business_id,
                        o_a.name as partner_a_name,
+                       o_a.contact_emails as partner_a_contact_emails,
                        o_b.id as partner_b_id,
                        o_b.business_id as partner_b_business_id,
-                       o_b.name as partner_b_name
+                       o_b.name as partner_b_name,
+                       o_b.contact_emails as partner_b_contact_emails
                   FROM cooperation c
                   JOIN organization o_a ON c.partner_a_id = o_a.id
                   JOIN organization o_b ON c.partner_b_id = o_b.id

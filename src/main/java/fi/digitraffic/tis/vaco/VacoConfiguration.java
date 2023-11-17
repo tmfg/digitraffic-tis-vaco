@@ -44,36 +44,6 @@ public class VacoConfiguration {
         return new S3Client(vacoProperties, s3TransferManager,awsS3Client);
     }
 
-    @Bean
-    AwsClientCustomizer<S3ClientBuilder> s3ClientBuilderAwsClientConfigurer() {
-        return new S3AwsClientClientConfigurer();
-    }
-
-    static class S3AwsClientClientConfigurer implements AwsClientCustomizer<S3ClientBuilder> {
-        @Override
-        public ClientOverrideConfiguration overrideConfiguration() {
-            return ClientOverrideConfiguration.builder()
-                .apiCallTimeout(Duration.ofSeconds(15))
-                .build();
-        }
-
-        @Override
-        public SdkHttpClient httpClient() {
-            return ApacheHttpClient.builder()
-                .connectionTimeout(Duration.ofSeconds(15))
-                .socketTimeout(Duration.ofSeconds(15))
-                .build();
-        }
-
-        @Override
-        public SdkAsyncHttpClient asyncHttpClient() {
-            return NettyNioAsyncHttpClient.builder()
-                .connectionTimeout(Duration.ofSeconds(15))
-                .writeTimeout(Duration.ofSeconds(15))
-                .build();
-        }
-    }
-
     @Bean(name = "rulesetNameCache")
     public Cache<String, Ruleset> rulesetNameCache() {
         return Caffeine.newBuilder()
