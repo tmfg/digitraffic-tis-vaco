@@ -21,9 +21,9 @@ public @interface UniquePartners {
 
     Class<? extends Payload>[] payload() default {};
 
-    class Validator implements ConstraintValidator<UniquePartners, CooperationRequest> {
+    class Validator implements ConstraintValidator<UniquePartners, PartnershipRequest> {
         @Override
-        public boolean isValid(CooperationRequest value, ConstraintValidatorContext context) {
+        public boolean isValid(PartnershipRequest value, ConstraintValidatorContext context) {
             return !value.partnerABusinessId().equals(value.partnerBBusinessId());
         }
     }

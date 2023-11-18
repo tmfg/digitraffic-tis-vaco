@@ -129,6 +129,7 @@ public class AwsConfiguration {
             return ClientOverrideConfiguration.builder()
                 .apiCallAttemptTimeout(Duration.ofSeconds(15))
                 .apiCallTimeout(Duration.ofSeconds(15))
+                .retryPolicy(retryPolicy -> retryPolicy.numRetries(5))
                 .build();
         }
 

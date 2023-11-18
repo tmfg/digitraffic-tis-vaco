@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.company.dto.ImmutableCooperationRequest;
+import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBase {
-    TypeReference<Resource<ImmutableCooperation>> cooperationRequestType = new TypeReference<>() {};
+class PartnershipControllerIntegrationTests extends SpringBootIntegrationTestBase {
+    TypeReference<Resource<ImmutablePartnership>> partnershipRequestType = new TypeReference<>() {};
     ImmutableCompany companyA = TestObjects.aCompany().build();
     ImmutableCompany companyB = TestObjects.aCompany().build();
 
@@ -35,63 +35,63 @@ class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBas
     }
 
     @Test
-    void canCreateCooperation() throws Exception {
-        ImmutableCooperationRequest cooperationRequest = TestObjects.aCooperationRequest()
+    void canCreatePartnership() throws Exception {
+        ImmutablePartnershipRequest partnershipRequest = TestObjects.aPartnershipRequest()
             .partnerABusinessId(companyA.businessId())
             .partnerBBusinessId(companyB.businessId())
             .build();
-        MvcResult response = apiCall(post("/cooperation").content(toJson(cooperationRequest)))
+        MvcResult response = apiCall(post("/partnership").content(toJson(partnershipRequest)))
             .andExpect(status().isOk())
             .andReturn();
 
-        ImmutableCooperation createdCooperationRequest = apiResponse(response, cooperationRequestType).data();
+        ImmutablePartnership createdPartnershipRequest = apiResponse(response, partnershipRequestType).data();
 
         assertAll("Base fields are stored properly",
-            () -> assertThat(createdCooperationRequest.cooperationType(), equalTo(cooperationRequest.cooperationType())),
-            () -> assertThat(createdCooperationRequest.partnerA().businessId(), equalTo(cooperationRequest.partnerABusinessId())),
-            () -> assertThat(createdCooperationRequest.partnerB().businessId(), equalTo(cooperationRequest.partnerBBusinessId())));
+            () -> assertThat(createdPartnershipRequest.type(), equalTo(partnershipRequest.type())),
+            () -> assertThat(createdPartnershipRequest.partnerA().businessId(), equalTo(partnershipRequest.partnerABusinessId())),
+            () -> assertThat(createdPartnershipRequest.partnerB().businessId(), equalTo(partnershipRequest.partnerBBusinessId())));
     }
 
     @Test
-    void duplicateCooperationCreationFails() throws Exception {
-        ImmutableCooperationRequest cooperationRequest = TestObjects.aCooperationRequest()
+    void duplicatePartnershipCreationFails() throws Exception {
+        ImmutablePartnershipRequest partnershipRequest = TestObjects.aPartnershipRequest()
             .partnerABusinessId(companyA.businessId())
             .partnerBBusinessId(companyB.businessId())
             .build();
-        apiCall(post("/cooperation").content(toJson(cooperationRequest)))
+        apiCall(post("/partnership").content(toJson(partnershipRequest)))
             .andExpect(status().isOk())
             .andReturn();
-        apiCall(post("/cooperation").content(toJson(cooperationRequest)))
+        apiCall(post("/partnership").content(toJson(partnershipRequest)))
             .andExpect(status().isConflict())
             .andReturn();
     }
 
     @Test
-    void cooperationCreationBetweenSamePartnersFails() throws Exception {
-        ImmutableCooperationRequest cooperationRequest = TestObjects.aCooperationRequest()
+    void partnershipCreationBetweenSamePartnersFails() throws Exception {
+        ImmutablePartnershipRequest partnershipRequest = TestObjects.aPartnershipRequest()
             .partnerABusinessId(companyA.businessId())
             .partnerBBusinessId(companyA.businessId())
             .build();
-        apiCall(post("/cooperation").content(toJson(cooperationRequest)))
+        apiCall(post("/partnership").content(toJson(partnershipRequest)))
             .andExpect(status().isBadRequest())
             .andReturn();
     }
 
     @Test
-    void cooperationCreationBetweenNonExistingPartnersFails() throws Exception {
-        ImmutableCooperationRequest cooperationRequest = TestObjects.aCooperationRequest()
+    void partnershipCreationBetweenNonExistingPartnersFails() throws Exception {
+        ImmutablePartnershipRequest partnershipRequest = TestObjects.aPartnershipRequest()
             .partnerABusinessId(UUID.randomUUID().toString())
             .partnerBBusinessId(companyB.businessId())
             .build();
-        apiCall(post("/cooperation").content(toJson(cooperationRequest)))
+        apiCall(post("/partnership").content(toJson(partnershipRequest)))
             .andExpect(status().isBadRequest())
             .andReturn();
 
-        ImmutableCooperationRequest cooperationRequest2 = TestObjects.aCooperationRequest()
+        ImmutablePartnershipRequest partnershipRequest2 = TestObjects.aPartnershipRequest()
             .partnerABusinessId(companyA.businessId())
             .partnerBBusinessId(UUID.randomUUID().toString())
             .build();
-        apiCall(post("/cooperation").content(toJson(cooperationRequest2)))
+        apiCall(post("/partnership").content(toJson(partnershipRequest2)))
             .andExpect(status().isBadRequest())
             .andReturn();
     }

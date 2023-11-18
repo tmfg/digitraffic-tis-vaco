@@ -2,14 +2,14 @@ package fi.digitraffic.tis.vaco;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.company.dto.ImmutableCooperationRequest;
-import fi.digitraffic.tis.vaco.company.model.CooperationType;
+import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -68,14 +68,14 @@ public class TestObjects {
         return sb.append("-").append(r.nextInt(10)).toString();
     }
 
-    public static ImmutableCooperation.Builder aCooperation() {
-        return ImmutableCooperation.builder()
-            .cooperationType(CooperationType.AUTHORITY_PROVIDER);
+    public static ImmutablePartnership.Builder aPartnership() {
+        return ImmutablePartnership.builder()
+            .type(PartnershipType.AUTHORITY_PROVIDER);
     }
 
-    public static ImmutableCooperationRequest.Builder aCooperationRequest() {
-        return ImmutableCooperationRequest.builder()
-            .cooperationType(CooperationType.AUTHORITY_PROVIDER);
+    public static ImmutablePartnershipRequest.Builder aPartnershipRequest() {
+        return ImmutablePartnershipRequest.builder()
+            .type(PartnershipType.AUTHORITY_PROVIDER);
     }
 
     /**
