@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableCooperation.class)
-@JsonDeserialize(as = ImmutableCooperation.class)
-public interface Cooperation {
+@JsonSerialize(as = ImmutablePartnership.class)
+@JsonDeserialize(as = ImmutablePartnership.class)
+public interface Partnership {
 
     @Value.Parameter
-    CooperationType cooperationType();
+    PartnershipType type();
 
     @Value.Parameter
     Company partnerA();

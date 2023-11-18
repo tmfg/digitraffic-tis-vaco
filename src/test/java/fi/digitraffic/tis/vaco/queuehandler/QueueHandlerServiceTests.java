@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
-import fi.digitraffic.tis.vaco.company.model.CooperationType;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.service.CooperationService;
+import fi.digitraffic.tis.vaco.company.service.PartnershipService;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
@@ -53,7 +53,7 @@ class QueueHandlerServiceTests {
     private QueueHandlerRepository queueHandlerRepository;
 
     @Mock
-    private CooperationService cooperationService;
+    private PartnershipService partnershipService;
 
     @Captor
     private ArgumentCaptor<DelegationJobMessage> delegationJobCaptor;
@@ -78,7 +78,7 @@ class QueueHandlerServiceTests {
             messagingService,
             companyService,
             queueHandlerRepository,
-            cooperationService);
+            partnershipService);
 
         operatorBusinessId = "123-4";
         operatorName = "Oppypop Oy";
@@ -103,7 +103,7 @@ class QueueHandlerServiceTests {
             messagingService,
             companyService,
             queueHandlerRepository,
-            cooperationService);
+            partnershipService);
     }
 
     private <T> Answer<T> withArg(int i) {
@@ -130,7 +130,7 @@ class QueueHandlerServiceTests {
         assertThat(operator.businessId(), equalTo(operatorBusinessId));
         assertThat(operator.name(), equalTo(operatorName));
 
-        then(cooperationService).should().create(eq(CooperationType.AUTHORITY_PROVIDER), eq(fintrafficCompany), eq(operator));
+        then(partnershipService).should().create(eq(PartnershipType.AUTHORITY_PROVIDER), eq(fintrafficCompany), eq(operator));
 
         thenSubmitProcessingJob(result);
     }

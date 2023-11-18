@@ -1,13 +1,13 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.CooperationType;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.service.CooperationService;
+import fi.digitraffic.tis.vaco.company.service.PartnershipService;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
@@ -33,18 +33,18 @@ public class QueueHandlerService {
     private final CompanyService companyService;
     private final QueueHandlerRepository queueHandlerRepository;
     private final EntryRequestMapper entryRequestMapper;
-    private final CooperationService cooperationService;
+    private final PartnershipService partnershipService;
 
     public QueueHandlerService(EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
                                CompanyService companyService,
                                QueueHandlerRepository queueHandlerRepository,
-                               CooperationService cooperationService) {
+                               PartnershipService partnershipService) {
         this.entryRequestMapper = entryRequestMapper;
         this.messagingService = messagingService;
         this.companyService = companyService;
         this.queueHandlerRepository = queueHandlerRepository;
-        this.cooperationService = cooperationService;
+        this.partnershipService = partnershipService;
     }
 
     @Transactional
@@ -68,7 +68,7 @@ public class QueueHandlerService {
 
     /**
      * Autoregister referenced company if metadata contains necessary information and originates from a reliable
-     * source. Also links the company as cooperation under Fintraffic.
+     * source. Also links the company as {@link fi.digitraffic.tis.vaco.company.model.Partnership} under Fintraffic.
      *
      * @param metadata Entry metadata, if available
      * @param businessId Business id of the company to potentially create.
@@ -89,8 +89,8 @@ public class QueueHandlerService {
 
                     Optional<Company> fintrafficOrg = companyService.findByBusinessId(FINTRAFFIC_BUSINESS_ID);
                     fintrafficOrg.ifPresent(fintraffic -> {
-                        logger.debug("Registering cooperation between Fintraffic ({}) and FINAP originated operator {} / {}", fintraffic.businessId(), businessId, finapOperator);
-                        cooperationService.create(CooperationType.AUTHORITY_PROVIDER, fintraffic, newOperator);
+                        logger.debug("Registering partnership between Fintraffic ({}) and FINAP originated operator {} / {}", fintraffic.businessId(), businessId, finapOperator);
+                        partnershipService.create(PartnershipType.AUTHORITY_PROVIDER, fintraffic, newOperator);
                     });
                 });
             } else {

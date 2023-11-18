@@ -4,8 +4,8 @@ import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.company.repository.CooperationRepository;
+import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
+import fi.digitraffic.tis.vaco.company.repository.PartnershipRepository;
 import fi.digitraffic.tis.vaco.company.repository.CompanyRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.equalTo;
 class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
-    CooperationRepository cooperationRepository;
+    PartnershipRepository partnershipRepository;
 
     @Autowired
     CompanyRepository companyRepository;
@@ -56,8 +56,8 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         parentOrg = companyRepository.create(TestObjects.aCompany().build());
         currentOrg = companyRepository.create(TestObjects.aCompany().build());
         otherOrg = companyRepository.create(TestObjects.aCompany().build());
-        cooperationRepository.create(partnership(parentOrg, currentOrg));
-        cooperationRepository.create(partnership(parentOrg, otherOrg));
+        partnershipRepository.create(partnership(parentOrg, currentOrg));
+        partnershipRepository.create(partnership(parentOrg, otherOrg));
 
         parentRuleA = rulesetService.createRuleset(
             ImmutableRuleset.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC, Type.VALIDATION_SYNTAX, testFormat));
@@ -130,8 +130,8 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     @NotNull
-    private ImmutableCooperation partnership(Company partnerA, Company partnerB) {
-        return TestObjects.aCooperation()
+    private ImmutablePartnership partnership(Company partnerA, Company partnerB) {
+        return TestObjects.aPartnership()
                 .partnerA(partnerA)
                 .partnerB(partnerB)
                 .build();

@@ -45,7 +45,7 @@ public class RulesetRepository {
                 ),
                 parents AS (
                     SELECT partner_a_id AS id
-                      FROM cooperation, current_id
+                      FROM partnership, current_id
                      WHERE partner_b_id = current_id.id
                 )
                 SELECT DISTINCT r.*
@@ -73,7 +73,7 @@ public class RulesetRepository {
                 ),
                 parents AS (
                     SELECT partner_a_id AS id
-                      FROM cooperation, current_id
+                      FROM partnership, current_id
                      WHERE partner_b_id = current_id.id
                 )
                 SELECT DISTINCT r.*
@@ -117,7 +117,7 @@ public class RulesetRepository {
                 ),
                 parents AS (
                     SELECT partner_a_id AS id
-                      FROM cooperation, current_id
+                      FROM partnership, current_id
                      WHERE partner_b_id = current_id.id
                 )
                 SELECT DISTINCT r.*

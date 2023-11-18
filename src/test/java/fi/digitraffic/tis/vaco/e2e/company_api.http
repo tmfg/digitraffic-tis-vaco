@@ -32,11 +32,11 @@ Content-Type: application/json
 
 ###
 
-POST localhost:8080/api/cooperation
+POST localhost:8080/api/partnership
 Content-Type: application/json
 
 {
-  "cooperationType": "AUTHORITY_PROVIDER",
+  "type": "AUTHORITY_PROVIDER",
   "partnerABusinessId": "1111111-1",
   "partnerBBusinessId": "2222222-2"
 }

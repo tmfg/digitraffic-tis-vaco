@@ -5,11 +5,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.CooperationType;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -81,8 +81,8 @@ public final class RowMappers {
 
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
-    public static final RowMapper<ImmutableCooperation> COOPERATION = (rs, rowNum) -> ImmutableCooperation.builder()
-            .cooperationType(CooperationType.forField(rs.getString("type")))
+    public static final RowMapper<ImmutablePartnership> PARTNERSHIP = (rs, rowNum) -> ImmutablePartnership.builder()
+            .type(PartnershipType.forField(rs.getString("type")))
             .partnerA(ALIASED_COMPANY.apply("partner_a_").mapRow(rs, rowNum))
             .partnerB(ALIASED_COMPANY.apply("partner_b_").mapRow(rs, rowNum))
             .build();
