@@ -22,12 +22,16 @@ import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.SesClientBuilder;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 import java.net.URI;
 import java.time.Duration;
@@ -48,31 +52,114 @@ public class AwsConfiguration {
         return DefaultCredentialsProvider.create();
     }
 
+
+    /**
+     * Default timeouts and retries for all service clients
+     */
+    @Bean
+    public ClientOverrideConfiguration clientOverrideConfiguration() {
+        return ClientOverrideConfiguration.builder()
+            .apiCallAttemptTimeout(Duration.ofSeconds(15))
+            .apiCallTimeout(Duration.ofSeconds(15))
+            .retryPolicy(retryPolicy -> retryPolicy.numRetries(5))
+            .build();
+    }
+
+    /**
+     * Shared SdkHttpClient for all service clients with default configurations.
+     * <p>
+     * As per AWS best practices the builder should be shared with unique HTTP client instances being created for each
+     * service client.
+     */
+    @Bean
+    public ApacheHttpClient.Builder sdkHttpClientBuilder() {
+        return ApacheHttpClient.builder()
+            .maxConnections(100)
+            .connectionTimeout(Duration.ofSeconds(15))
+            .socketTimeout(Duration.ofSeconds(15))
+            .connectionAcquisitionTimeout(Duration.ofSeconds(15))
+            .connectionMaxIdleTime(Duration.ofSeconds(60));
+    }
+
+    /**
+     * Shared SdkAsyncHttpClient for all service clients with default configurations.
+     */
+    @Bean
+    public SdkAsyncHttpClient sdkAsyncHttpClient() {
+        return NettyNioAsyncHttpClient.builder()
+            .connectionTimeout(Duration.ofSeconds(15))
+            .build();
+    }
+
     @Bean
     public SqsClient amazonSQSClient(VacoProperties vacoProperties,
-                                     AwsCredentialsProvider credentialsProvider) {
+                                     AwsCredentialsProvider credentialsProvider,
+                                     ClientOverrideConfiguration overrideConfiguration,
+                                     ApacheHttpClient.Builder sdkHttpClientBuilder) {
         SqsClientBuilder b = SqsClient.builder()
             .region(Region.of(vacoProperties.aws().region()))
-            .credentialsProvider(credentialsProvider);
+            .credentialsProvider(credentialsProvider)
+            .overrideConfiguration(overrideConfiguration);
         if (vacoProperties.aws().endpoint() != null) {
             b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
         }
-        return b.build();
+        return b.httpClientBuilder(sdkHttpClientBuilder).build();
     }
 
     @Bean
     public SesClient sesClient(VacoProperties vacoProperties,
-                               AwsCredentialsProvider credentialsProvider) {
+                               AwsCredentialsProvider credentialsProvider,
+                               ClientOverrideConfiguration overrideConfiguration,
+                               ApacheHttpClient.Builder sdkHttpClientBuilder) {
         SesClientBuilder b = SesClient.builder()
             .region(Region.of(vacoProperties.aws().region()))
-            .credentialsProvider(credentialsProvider);
+            .credentialsProvider(credentialsProvider)
+            .overrideConfiguration(overrideConfiguration);
         if (vacoProperties.aws().endpoint() != null) {
             b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
         }
-        return b.build();
+        return b.httpClientBuilder(sdkHttpClientBuilder).build();
     }
 
-    /////// AWSpring config below
+    @Bean
+    public S3Client amazonS3Client(VacoProperties vacoProperties,
+                                   AwsCredentialsProvider credentialsProvider,
+                                   ClientOverrideConfiguration overrideConfiguration,
+                                   ApacheHttpClient.Builder sdkHttpClientBuilder) {
+        S3ClientBuilder b = S3Client.builder()
+            .region(Region.of(vacoProperties.aws().region()))
+            .credentialsProvider(credentialsProvider)
+            .overrideConfiguration(overrideConfiguration);
+        if (vacoProperties.aws().endpoint() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        }
+        return b.httpClientBuilder(sdkHttpClientBuilder).build();
+    }
+
+    @Bean
+    public S3AsyncClient s3AsyncClient(VacoProperties vacoProperties,
+                                       AwsCredentialsProvider credentialsProvider,
+                                       ClientOverrideConfiguration overrideConfiguration,
+                                       SdkAsyncHttpClient sdkAsyncHttpClient) {
+        S3AsyncClientBuilder b = S3AsyncClient.builder()
+            .region(Region.of(vacoProperties.aws().region()))
+            .credentialsProvider(credentialsProvider)
+            .overrideConfiguration(overrideConfiguration);
+        if (vacoProperties.aws().endpoint() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        }
+        return b.httpClient(sdkAsyncHttpClient).build();
+    }
+
+    @Bean
+    public S3TransferManager s3TransferManager(S3AsyncClient s3AsyncClient) {
+        S3TransferManager.Builder b = S3TransferManager.builder();
+        return b.s3Client(s3AsyncClient)
+            .uploadDirectoryFollowSymbolicLinks(false)
+            .build();
+    }
+
+    /////// AWSpring config below. These are bound to be deprecated eventually, prefer client configurations above.
 
     /**
      * This slight delay is used to avoid logspam caused by Spring Cloud AWS' internal logic interpreting zero seconds
@@ -123,6 +210,7 @@ public class AwsConfiguration {
         return new S3AwsClientClientConfigurer();
     }
 
+    // NOTE: These are actually/probably not use, but should not be removed until entire AWSpring is removed
     static class S3AwsClientClientConfigurer implements AwsClientCustomizer<S3ClientBuilder> {
         @Override
         public ClientOverrideConfiguration overrideConfiguration() {

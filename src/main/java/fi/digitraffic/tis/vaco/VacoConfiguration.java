@@ -6,17 +6,10 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import io.awspring.cloud.autoconfigure.core.AwsClientCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
-import software.amazon.awssdk.http.SdkHttpClient;
-import software.amazon.awssdk.http.apache.ApacheHttpClient;
-import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
-import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
-import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 import java.io.IOException;
