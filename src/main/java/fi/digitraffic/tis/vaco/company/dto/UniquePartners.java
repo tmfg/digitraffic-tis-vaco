@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.organization.dto;
+package fi.digitraffic.tis.vaco.company.dto;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;

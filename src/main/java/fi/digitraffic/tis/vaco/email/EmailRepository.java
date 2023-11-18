@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.email;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.organization.model.Organization;
+import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -22,7 +22,7 @@ public class EmailRepository {
     }
 
     // TODO: reduce scope
-    public List<ImmutableEntry> findLatestEntries(Organization organization) {
+    public List<ImmutableEntry> findLatestEntries(Company company) {
         return jdbc.query("""
             SELECT e.*
               FROM (SELECT e.*, ROW_NUMBER() OVER (PARTITION BY format ORDER BY created DESC) r
@@ -31,6 +31,6 @@ public class EmailRepository {
              WHERE e.r = 1
             """,
             RowMappers.QUEUE_ENTRY.apply(objectMapper),
-            organization.businessId());
+            company.businessId());
     }
 }

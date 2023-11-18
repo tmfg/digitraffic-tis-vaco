@@ -6,10 +6,10 @@ import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
-import fi.digitraffic.tis.vaco.organization.model.CooperationType;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.company.dto.ImmutableCooperationRequest;
+import fi.digitraffic.tis.vaco.company.model.CooperationType;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -53,10 +53,10 @@ public class TestObjects {
             .businessId(Constants.FINTRAFFIC_BUSINESS_ID);
     }
 
-    public static ImmutableOrganization.Builder anOrganization() {
-        return ImmutableOrganization.builder()
+    public static ImmutableCompany.Builder aCompany() {
+        return ImmutableCompany.builder()
             .businessId(randomBusinessId())
-            .name("organization:name:" + UUID.randomUUID());
+            .name("company:name:" + UUID.randomUUID());
     }
 
     private static String randomBusinessId() {

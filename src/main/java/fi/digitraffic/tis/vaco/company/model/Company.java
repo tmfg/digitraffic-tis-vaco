@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.organization.model;
+package fi.digitraffic.tis.vaco.company.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,9 +10,9 @@ import org.immutables.value.Value;
 import java.util.List;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableOrganization.class)
-@JsonDeserialize(as = ImmutableOrganization.class)
-public interface Organization {
+@JsonSerialize(as = ImmutableCompany.class)
+@JsonDeserialize(as = ImmutableCompany.class)
+public interface Company {
 
     @Nullable
     @JsonView(DataVisibility.Internal.class)

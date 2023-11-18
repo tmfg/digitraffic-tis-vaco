@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.utilities;
 
 import fi.digitraffic.tis.utilities.dto.Resource;
-import fi.digitraffic.tis.vaco.organization.model.Cooperation;
+import fi.digitraffic.tis.vaco.company.model.Cooperation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 

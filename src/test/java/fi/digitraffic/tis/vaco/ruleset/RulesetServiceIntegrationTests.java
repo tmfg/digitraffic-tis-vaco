@@ -3,10 +3,10 @@ package fi.digitraffic.tis.vaco.ruleset;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.organization.model.Organization;
-import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
-import fi.digitraffic.tis.vaco.organization.repository.OrganizationRepository;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.company.repository.CooperationRepository;
+import fi.digitraffic.tis.vaco.company.repository.CompanyRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -30,15 +30,15 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     CooperationRepository cooperationRepository;
 
     @Autowired
-    OrganizationRepository organizationRepository;
+    CompanyRepository companyRepository;
 
     @Autowired
     RulesetService rulesetService;
 
-    private Organization fintraffic;
-    private Organization parentOrg;
-    private Organization currentOrg;
-    private Organization otherOrg;
+    private Company fintraffic;
+    private Company parentOrg;
+    private Company currentOrg;
+    private Company otherOrg;
     private Ruleset parentRuleA;
     private Ruleset parentRuleB;
     private Ruleset currentRuleC;
@@ -52,10 +52,10 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        fintraffic = organizationRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get();
-        parentOrg = organizationRepository.create(TestObjects.anOrganization().build());
-        currentOrg = organizationRepository.create(TestObjects.anOrganization().build());
-        otherOrg = organizationRepository.create(TestObjects.anOrganization().build());
+        fintraffic = companyRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get();
+        parentOrg = companyRepository.create(TestObjects.aCompany().build());
+        currentOrg = companyRepository.create(TestObjects.aCompany().build());
+        otherOrg = companyRepository.create(TestObjects.aCompany().build());
         cooperationRepository.create(partnership(parentOrg, currentOrg));
         cooperationRepository.create(partnership(parentOrg, otherOrg));
 
@@ -73,9 +73,9 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        organizationRepository.delete(parentOrg.businessId());
-        organizationRepository.delete(currentOrg.businessId());
-        organizationRepository.delete(otherOrg.businessId());
+        companyRepository.delete(parentOrg.businessId());
+        companyRepository.delete(currentOrg.businessId());
+        companyRepository.delete(otherOrg.businessId());
         rulesetService.deleteRuleset(parentRuleA);
         rulesetService.deleteRuleset(parentRuleB);
         rulesetService.deleteRuleset(currentRuleC);
@@ -130,7 +130,7 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     @NotNull
-    private ImmutableCooperation partnership(Organization partnerA, Organization partnerB) {
+    private ImmutableCooperation partnership(Company partnerA, Company partnerB) {
         return TestObjects.aCooperation()
                 .partnerA(partnerA)
                 .partnerB(partnerB)

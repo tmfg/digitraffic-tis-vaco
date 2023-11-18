@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.organization.model;
+package fi.digitraffic.tis.vaco.company.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -13,8 +13,8 @@ public interface Cooperation {
     CooperationType cooperationType();
 
     @Value.Parameter
-    Organization partnerA();
+    Company partnerA();
 
     @Value.Parameter
-    Organization partnerB();
+    Company partnerB();
 }

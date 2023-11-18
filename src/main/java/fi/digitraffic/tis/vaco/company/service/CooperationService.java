@@ -1,10 +1,10 @@
-package fi.digitraffic.tis.vaco.organization.service;
+package fi.digitraffic.tis.vaco.company.service;
 
-import fi.digitraffic.tis.vaco.organization.model.Cooperation;
-import fi.digitraffic.tis.vaco.organization.model.CooperationType;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.organization.model.Organization;
-import fi.digitraffic.tis.vaco.organization.repository.CooperationRepository;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.Cooperation;
+import fi.digitraffic.tis.vaco.company.model.CooperationType;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.company.repository.CooperationRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -18,7 +18,7 @@ public class CooperationService {
         this.cooperationRepository = cooperationRepository;
     }
 
-    public Optional<Cooperation> create(CooperationType cooperationType, Organization partnerA, Organization partnerB) {
+    public Optional<Cooperation> create(CooperationType cooperationType, Company partnerA, Company partnerB) {
         if(cooperationRepository.findByIds(cooperationType, partnerA.id(), partnerB.id()).isPresent()) {
             return Optional.empty();
         }

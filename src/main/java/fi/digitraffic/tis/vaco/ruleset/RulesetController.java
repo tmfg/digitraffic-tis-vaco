@@ -37,8 +37,8 @@ public class RulesetController {
     }
 
 
-    private static Resource<Ruleset> asRulesetResources(Ruleset organization) {
-        return new Resource<>(organization, null, Map.of());
+    private static Resource<Ruleset> asRulesetResources(Ruleset ruleset) {
+        return new Resource<>(ruleset, null, Map.of());
     }
 
 }

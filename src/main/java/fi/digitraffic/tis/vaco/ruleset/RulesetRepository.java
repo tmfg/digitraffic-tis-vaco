@@ -40,7 +40,7 @@ public class RulesetRepository {
         List<Ruleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
-                      FROM organization
+                      FROM company
                      WHERE business_id = :businessId
                 ),
                 parents AS (
@@ -68,7 +68,7 @@ public class RulesetRepository {
         List<Ruleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
-                      FROM organization
+                      FROM company
                      WHERE business_id = :businessId
                 ),
                 parents AS (
@@ -105,7 +105,7 @@ public class RulesetRepository {
         List<Ruleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
-                      FROM organization
+                      FROM company
                      WHERE business_id = :businessId
                 ),
                 specific_rulesets AS (
