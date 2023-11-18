@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.organization.model;
+package fi.digitraffic.tis.vaco.company.model;
 
 
 import fi.digitraffic.tis.utilities.model.PersistableEnum;

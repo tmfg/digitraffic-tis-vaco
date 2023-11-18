@@ -13,8 +13,8 @@ import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.email.model.Message;
 import fi.digitraffic.tis.vaco.email.model.Recipients;
-import fi.digitraffic.tis.vaco.organization.model.Organization;
-import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.slf4j.Logger;
@@ -35,18 +35,18 @@ public class EmailService {
     private final MessageMapper messageMapper;
     private final SesClient sesClient;
     private final EmailRepository emailRepository;
-    private final OrganizationService organizationService;
+    private final CompanyService companyService;
 
     public EmailService(VacoProperties vacoProperties,
                         MessageMapper messageMapper,
                         SesClient sesClient,
                         EmailRepository emailRepository,
-                        OrganizationService organizationService) {
+                        CompanyService companyService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
         this.emailRepository = Objects.requireNonNull(emailRepository);
-        this.organizationService = Objects.requireNonNull(organizationService);
+        this.companyService = Objects.requireNonNull(companyService);
     }
 
     public void sendMessage(Recipients recipients, Message message) {
@@ -61,27 +61,27 @@ public class EmailService {
 
     @Scheduled(cron = "${vaco.scheduling.weekly-feed-status.cron}")
     public void weeklyFeedStatus() {
-        List<Organization> organizations = organizationService.listAllWithEntries();
-        organizations.forEach(this::sendFeedStatusEmail);
+        List<Company> companies = companyService.listAllWithEntries();
+        companies.forEach(this::sendFeedStatusEmail);
     }
 
     @VisibleForTesting
-    protected void sendFeedStatusEmail(Organization organization) {
+    protected void sendFeedStatusEmail(Company company) {
         if (logger.isInfoEnabled()) {
             logger.info("Processing weekly feed summary email for {} ({}) contact list {}",
-                organization.name(),
-                organization.businessId(),
-                organization.contactEmails());
+                company.name(),
+                company.businessId(),
+                company.contactEmails());
         }
-        List<ImmutableEntry> latestEntries = emailRepository.findLatestEntries(organization);
+        List<ImmutableEntry> latestEntries = emailRepository.findLatestEntries(company);
         if (latestEntries.isEmpty()) {
 
         } else {
-            Locale locale = new Locale(organization.language());
+            Locale locale = new Locale(company.language());
             ResourceBundle translations = ResourceBundle.getBundle("emails/feedStatusEmail", locale);
 
             Recipients recipients = ImmutableRecipients.builder()
-                .addAllCc(organization.contactEmails())
+                .addAllCc(company.contactEmails())
                 .build();
             Message message = ImmutableMessage.builder()
                 .subject(translations.getString("email.subject"))

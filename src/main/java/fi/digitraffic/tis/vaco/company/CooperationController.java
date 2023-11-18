@@ -1,14 +1,14 @@
-package fi.digitraffic.tis.vaco.organization;
+package fi.digitraffic.tis.vaco.company;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.utilities.Responses;
-import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
-import fi.digitraffic.tis.vaco.organization.model.Cooperation;
-import fi.digitraffic.tis.vaco.organization.model.Organization;
-import fi.digitraffic.tis.vaco.organization.service.CooperationService;
-import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
+import fi.digitraffic.tis.vaco.company.dto.ImmutableCooperationRequest;
+import fi.digitraffic.tis.vaco.company.model.Cooperation;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.service.CooperationService;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,23 +29,23 @@ import java.util.Optional;
 public class CooperationController {
 
     private final CooperationService cooperationService;
-    private final OrganizationService organizationService;
+    private final CompanyService companyService;
 
-    public CooperationController(CooperationService cooperationService, OrganizationService organizationService) {
+    public CooperationController(CooperationService cooperationService, CompanyService companyService) {
         this.cooperationService = cooperationService;
-        this.organizationService = organizationService;
+        this.companyService = companyService;
     }
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
     public ResponseEntity<Resource<Cooperation>> createCooperation(@Valid @RequestBody ImmutableCooperationRequest cooperationRequest) {
-        Optional<Organization> partnerA = organizationService.findByBusinessId(cooperationRequest.partnerABusinessId());
-        Optional<Organization> partnerB = organizationService.findByBusinessId(cooperationRequest.partnerBBusinessId());
+        Optional<Company> partnerA = companyService.findByBusinessId(cooperationRequest.partnerABusinessId());
+        Optional<Company> partnerB = companyService.findByBusinessId(cooperationRequest.partnerBBusinessId());
 
         if (partnerA.isEmpty() || partnerB.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                String.format("Either of the provided organizations' business ID (%s, %s) does not exist",
+                String.format("Either of the provided company' business ID (%s, %s) does not exist",
                     cooperationRequest.partnerABusinessId(), cooperationRequest.partnerBBusinessId()));
         }
 

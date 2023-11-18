@@ -12,7 +12,7 @@ client_id={{clientId}}&grant_type=client_credentials&scope= {{clientId}}/.defaul
 
 ###
 
-POST localhost:8080/api/organization
+POST localhost:8080/api/company
 Content-Type: application/json
 
 {
@@ -22,7 +22,7 @@ Content-Type: application/json
 
 ###
 
-POST localhost:8080/api/organization
+POST localhost:8080/api/company
 Content-Type: application/json
 
 {

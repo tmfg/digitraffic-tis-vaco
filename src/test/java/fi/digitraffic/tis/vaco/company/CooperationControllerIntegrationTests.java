@@ -1,12 +1,12 @@
-package fi.digitraffic.tis.vaco.organization;
+package fi.digitraffic.tis.vaco.company;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.organization.dto.ImmutableCooperationRequest;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
+import fi.digitraffic.tis.vaco.company.dto.ImmutableCooperationRequest;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
@@ -21,15 +21,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBase {
     TypeReference<Resource<ImmutableCooperation>> cooperationRequestType = new TypeReference<>() {};
-    ImmutableOrganization organizationA = TestObjects.anOrganization().build();
-    ImmutableOrganization organizationB = TestObjects.anOrganization().build();
+    ImmutableCompany companyA = TestObjects.aCompany().build();
+    ImmutableCompany companyB = TestObjects.aCompany().build();
 
     @BeforeEach
     void init() throws Exception {
-        apiCall(post("/organization").content(toJson(organizationA)))
+        apiCall(post("/company").content(toJson(companyA)))
             .andExpect(status().isOk())
             .andReturn();
-        apiCall(post("/organization").content(toJson(organizationB)))
+        apiCall(post("/company").content(toJson(companyB)))
             .andExpect(status().isOk())
             .andReturn();
     }
@@ -37,8 +37,8 @@ class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBas
     @Test
     void canCreateCooperation() throws Exception {
         ImmutableCooperationRequest cooperationRequest = TestObjects.aCooperationRequest()
-            .partnerABusinessId(organizationA.businessId())
-            .partnerBBusinessId(organizationB.businessId())
+            .partnerABusinessId(companyA.businessId())
+            .partnerBBusinessId(companyB.businessId())
             .build();
         MvcResult response = apiCall(post("/cooperation").content(toJson(cooperationRequest)))
             .andExpect(status().isOk())
@@ -55,8 +55,8 @@ class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBas
     @Test
     void duplicateCooperationCreationFails() throws Exception {
         ImmutableCooperationRequest cooperationRequest = TestObjects.aCooperationRequest()
-            .partnerABusinessId(organizationA.businessId())
-            .partnerBBusinessId(organizationB.businessId())
+            .partnerABusinessId(companyA.businessId())
+            .partnerBBusinessId(companyB.businessId())
             .build();
         apiCall(post("/cooperation").content(toJson(cooperationRequest)))
             .andExpect(status().isOk())
@@ -69,8 +69,8 @@ class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBas
     @Test
     void cooperationCreationBetweenSamePartnersFails() throws Exception {
         ImmutableCooperationRequest cooperationRequest = TestObjects.aCooperationRequest()
-            .partnerABusinessId(organizationA.businessId())
-            .partnerBBusinessId(organizationA.businessId())
+            .partnerABusinessId(companyA.businessId())
+            .partnerBBusinessId(companyA.businessId())
             .build();
         apiCall(post("/cooperation").content(toJson(cooperationRequest)))
             .andExpect(status().isBadRequest())
@@ -81,14 +81,14 @@ class CooperationControllerIntegrationTests extends SpringBootIntegrationTestBas
     void cooperationCreationBetweenNonExistingPartnersFails() throws Exception {
         ImmutableCooperationRequest cooperationRequest = TestObjects.aCooperationRequest()
             .partnerABusinessId(UUID.randomUUID().toString())
-            .partnerBBusinessId(organizationB.businessId())
+            .partnerBBusinessId(companyB.businessId())
             .build();
         apiCall(post("/cooperation").content(toJson(cooperationRequest)))
             .andExpect(status().isBadRequest())
             .andReturn();
 
         ImmutableCooperationRequest cooperationRequest2 = TestObjects.aCooperationRequest()
-            .partnerABusinessId(organizationA.businessId())
+            .partnerABusinessId(companyA.businessId())
             .partnerBBusinessId(UUID.randomUUID().toString())
             .build();
         apiCall(post("/cooperation").content(toJson(cooperationRequest2)))

@@ -6,10 +6,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.organization.model.CooperationType;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.organization.model.Organization;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.CooperationType;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -71,20 +71,20 @@ public final class RowMappers {
         .path(rs.getString("path"))
         .build();
 
-    public static final Function<String, RowMapper<Organization>> ALIASED_ORGANIZATION = alias ->
-        (rs, rowNum) -> ImmutableOrganization.builder()
+    public static final Function<String, RowMapper<Company>> ALIASED_COMPANY = alias ->
+        (rs, rowNum) -> ImmutableCompany.builder()
             .id(rs.getLong(alias + "id"))
             .businessId(rs.getString(alias + "business_id"))
             .name(rs.getString(alias + "name"))
             .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
             .build();
 
-    public static final RowMapper<Organization> ORGANIZATION = ALIASED_ORGANIZATION.apply("");
+    public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
     public static final RowMapper<ImmutableCooperation> COOPERATION = (rs, rowNum) -> ImmutableCooperation.builder()
             .cooperationType(CooperationType.forField(rs.getString("type")))
-            .partnerA(ALIASED_ORGANIZATION.apply("partner_a_").mapRow(rs, rowNum))
-            .partnerB(ALIASED_ORGANIZATION.apply("partner_b_").mapRow(rs, rowNum))
+            .partnerA(ALIASED_COMPANY.apply("partner_a_").mapRow(rs, rowNum))
+            .partnerB(ALIASED_COMPANY.apply("partner_b_").mapRow(rs, rowNum))
             .build();
 
     public static final Function<ObjectMapper, RowMapper<ImmutableEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;

@@ -10,8 +10,8 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
-import fi.digitraffic.tis.vaco.organization.model.Organization;
-import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import io.burt.jmespath.jackson.JacksonRuntime;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     @Mock
     private EmailRepository emailRepository;
     @Mock
-    private OrganizationService organizationService;
+    private CompanyService companyService;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +55,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         jmesPath = new JacksonRuntime();
         vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null));
 
-        emailService = new EmailService(vacoProperties, new MessageMapper(vacoProperties), sesClient, emailRepository, organizationService);
+        emailService = new EmailService(vacoProperties, new MessageMapper(vacoProperties), sesClient, emailRepository, companyService);
     }
 
     @AfterEach
@@ -63,7 +63,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         // clear all received messages
         localstack.execInContainer("curl", "-X", "DELETE", "localhost.localstack.cloud:4566/_aws/ses");
 
-        verifyNoMoreInteractions(emailRepository, organizationService);
+        verifyNoMoreInteractions(emailRepository, companyService);
     }
 
     @BeforeAll
@@ -153,8 +153,8 @@ class EmailServiceTests extends AwsIntegrationTestBase {
 
 
     @Test
-    void weeklyStatusEmailIsSentToRelatedOrganizationContacts() throws IOException, InterruptedException {
-        Organization org = TestObjects.anOrganization().addContactEmails("organ@izati.on").build();
+    void weeklyStatusEmailIsSentToRelatedCompanyContacts() throws IOException, InterruptedException {
+        Company org = TestObjects.aCompany().addContactEmails("organ@izati.on").build();
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
 
         BDDMockito.given(emailRepository.findLatestEntries(org)).willReturn(List.of(entry));

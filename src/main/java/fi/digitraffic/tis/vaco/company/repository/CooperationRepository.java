@@ -1,8 +1,8 @@
-package fi.digitraffic.tis.vaco.organization.repository;
+package fi.digitraffic.tis.vaco.company.repository;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.organization.model.CooperationType;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableCooperation;
+import fi.digitraffic.tis.vaco.company.model.CooperationType;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCooperation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -42,8 +42,8 @@ public class CooperationRepository {
                        o_b.name as partner_b_name,
                        o_b.contact_emails as partner_b_contact_emails
                   FROM cooperation c
-                  JOIN organization o_a ON c.partner_a_id = o_a.id
-                  JOIN organization o_b ON c.partner_b_id = o_b.id
+                  JOIN company o_a ON c.partner_a_id = o_a.id
+                  JOIN company o_b ON c.partner_b_id = o_b.id
                  WHERE c.type = ?::cooperation_type AND c.partner_a_id = ? AND c.partner_b_id = ?
                 """,
             RowMappers.COOPERATION,

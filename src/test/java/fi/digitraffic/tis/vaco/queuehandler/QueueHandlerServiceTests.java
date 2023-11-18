@@ -6,10 +6,10 @@ import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
-import fi.digitraffic.tis.vaco.organization.model.CooperationType;
-import fi.digitraffic.tis.vaco.organization.model.ImmutableOrganization;
-import fi.digitraffic.tis.vaco.organization.service.CooperationService;
-import fi.digitraffic.tis.vaco.organization.service.OrganizationService;
+import fi.digitraffic.tis.vaco.company.model.CooperationType;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.service.CooperationService;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -47,7 +47,7 @@ class QueueHandlerServiceTests {
     private MessagingService messagingService;
 
     @Mock
-    private OrganizationService organizationService;
+    private CompanyService companyService;
 
     @Mock
     private QueueHandlerRepository queueHandlerRepository;
@@ -59,13 +59,13 @@ class QueueHandlerServiceTests {
     private ArgumentCaptor<DelegationJobMessage> delegationJobCaptor;
 
     @Captor
-    private ArgumentCaptor<ImmutableOrganization> organizationCaptor;
+    private ArgumentCaptor<ImmutableCompany> companyCaptor;
 
     private String operatorBusinessId;
     private String operatorName;
     private ObjectNode metadata;
     private ImmutableEntryRequest entryRequest;
-    private ImmutableOrganization fintrafficOrg;
+    private ImmutableCompany fintrafficCompany;
 
     @BeforeEach
     void setUp() {
@@ -76,7 +76,7 @@ class QueueHandlerServiceTests {
         queueHandlerService = new QueueHandlerService(
             entryRequestMapper,
             messagingService,
-            organizationService,
+            companyService,
             queueHandlerRepository,
             cooperationService);
 
@@ -94,14 +94,14 @@ class QueueHandlerServiceTests {
             .metadata(metadata)
             .build();
 
-        fintrafficOrg = ImmutableOrganization.of(Constants.FINTRAFFIC_BUSINESS_ID, TestConstants.FINTRAFFIC_ORGANIZATION_NAME);
+        fintrafficCompany = ImmutableCompany.of(Constants.FINTRAFFIC_BUSINESS_ID, TestConstants.FINTRAFFIC_COMPANY_NAME);
     }
 
     @AfterEach
     void tearDown() {
         verifyNoMoreInteractions(
             messagingService,
-            organizationService,
+            companyService,
             queueHandlerRepository,
             cooperationService);
     }
@@ -115,28 +115,28 @@ class QueueHandlerServiceTests {
     }
 
     @Test
-    void autocreatesOrganizationOnNewEntryIfSourceIsFinap() {
+    void autocreatesCompanyOnNewEntryIfSourceIsFinap() {
         // given
         given(queueHandlerRepository.create(any(Entry.class))).willAnswer(withArg(0));
-        given(organizationService.createOrganization(any(ImmutableOrganization.class))).willAnswer(withArgInOptional(0));
-        given(organizationService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID)).willReturn(Optional.of(fintrafficOrg));
+        given(companyService.createCompany(any(ImmutableCompany.class))).willAnswer(withArgInOptional(0));
+        given(companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID)).willReturn(Optional.of(fintrafficCompany));
 
         // when
         Entry result = queueHandlerService.processQueueEntry(entryRequest);
 
         // then
-        then(organizationService).should().createOrganization(organizationCaptor.capture());
-        ImmutableOrganization operator = organizationCaptor.getValue();
+        then(companyService).should().createCompany(companyCaptor.capture());
+        ImmutableCompany operator = companyCaptor.getValue();
         assertThat(operator.businessId(), equalTo(operatorBusinessId));
         assertThat(operator.name(), equalTo(operatorName));
 
-        then(cooperationService).should().create(eq(CooperationType.AUTHORITY_PROVIDER), eq(fintrafficOrg), eq(operator));
+        then(cooperationService).should().create(eq(CooperationType.AUTHORITY_PROVIDER), eq(fintrafficCompany), eq(operator));
 
         thenSubmitProcessingJob(result);
     }
 
     @Test
-    void wontAutocreateOrganizationIfCallerIsNotFinap() {
+    void wontAutocreateCompanyIfCallerIsNotFinap() {
         // given
         given(queueHandlerRepository.create(any(Entry.class))).willAnswer(withArg(0));
 
@@ -149,7 +149,7 @@ class QueueHandlerServiceTests {
     }
 
     @Test
-    void wontAutocreateOrganizationIfOperatorNameIsMissing() {
+    void wontAutocreateCompanyIfOperatorNameIsMissing() {
         // given
         given(queueHandlerRepository.create(any(Entry.class))).willAnswer(withArg(0));
 

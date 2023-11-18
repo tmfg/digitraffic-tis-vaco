@@ -1,8 +1,8 @@
-package fi.digitraffic.tis.vaco.organization.repository;
+package fi.digitraffic.tis.vaco.company.repository;
 
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.organization.model.Organization;
+import fi.digitraffic.tis.vaco.company.model.Company;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -11,34 +11,34 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class OrganizationRepository {
+public class CompanyRepository {
 
     private final JdbcTemplate jdbc;
 
-    public OrganizationRepository(JdbcTemplate jdbc) {
+    public CompanyRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    public Organization create(Organization organization) {
+    public Company create(Company company) {
         return jdbc.queryForObject("""
-                INSERT INTO organization(business_id, name, contact_emails)
+                INSERT INTO company(business_id, name, contact_emails)
                      VALUES (?, ?, ?)
                   RETURNING id, business_id, name, contact_emails
                 """,
-                RowMappers.ORGANIZATION,
-                organization.businessId(),
-            organization.name(),
-            ArraySqlValue.create(organization.contactEmails().toArray(new String[0])));
+                RowMappers.COMPANY,
+                company.businessId(),
+            company.name(),
+            ArraySqlValue.create(company.contactEmails().toArray(new String[0])));
     }
 
-    public Optional<Organization> findByBusinessId(String businessId) {
+    public Optional<Company> findByBusinessId(String businessId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                     SELECT *
-                      FROM organization
+                      FROM company
                      WHERE business_id = ?
                     """,
-                RowMappers.ORGANIZATION,
+                RowMappers.COMPANY,
                 businessId));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
@@ -46,16 +46,16 @@ public class OrganizationRepository {
     }
 
     public void delete(String businessId) {
-        jdbc.update("DELETE FROM organization WHERE business_id = ?", businessId);
+        jdbc.update("DELETE FROM company WHERE business_id = ?", businessId);
     }
 
-    public List<Organization> listAllWithEntries() {
+    public List<Company> listAllWithEntries() {
         return jdbc.query("""
             SELECT *
-              FROM organization o
+              FROM company o
              WHERE o.business_id IN (SELECT DISTINCT e.business_id
                                        FROM entry e)
             """,
-            RowMappers.ORGANIZATION);
+            RowMappers.COMPANY);
     }
 }
