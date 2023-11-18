@@ -183,26 +183,40 @@
         <!-- Clients are listed separately to keep the underlying clients up-to-date independently of AWS Spring.
              Also CRT based higher level S3 transfer manager is used to simplify and speed up transfers.
              See https://docs.awspring.io/spring-cloud-aws/docs/3.0.1/reference/html/index.html#using-s3transfermanager-and-crt-based-s3-client
-         -->
+
+            Including the client implementations directly allows for configuring the underlying HTTP clients.
+            See https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/http-configuration-apache.html
+       -->
+        <!-- synchronous HTTP client for all service clients -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache-client</artifactId>
+        </dependency>
+        <!-- asynchronous HTTP client for all service clients -->
+        <!-- synchronous asynchronous HTTP client for all service clients -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>netty-nio-client</artifactId>
+        </dependency>
+        <!-- AWS Simple Storage Service service client -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
         </dependency>
+        <!-- AWS Simple Storage Service transfer manager provider specialized implementations of common operations -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3-transfer-manager</artifactId>
         </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk.crt</groupId>
-            <artifactId>aws-crt</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.awspring.cloud</groupId>
-            <artifactId>spring-cloud-aws-starter-s3</artifactId>
-        </dependency>
+        <!-- AWS Simple Queue Service service client -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sqs</artifactId>
+        </dependency>
+        <!-- AWSpring starters for AWS services -->
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-s3</artifactId>
         </dependency>
         <dependency>
             <groupId>io.awspring.cloud</groupId>
@@ -211,18 +225,6 @@
         <dependency>
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-starter-secrets-manager</artifactId>
-        </dependency>
-        <!--
-        including this allows for configuring the underlying HTTP client
-        see https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/http-configuration-apache.html
-        -->
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>apache-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>netty-nio-client</artifactId>
         </dependency>
 
         <!-- All potentially publicly exposed id:s are nanoids. -->
