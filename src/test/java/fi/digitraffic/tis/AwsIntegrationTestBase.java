@@ -3,6 +3,7 @@ package fi.digitraffic.tis;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.aws.AwsConfiguration;
 import fi.digitraffic.tis.vaco.configuration.Aws;
+import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.localstack.LocalStackContainer;
@@ -45,7 +46,8 @@ public abstract class AwsIntegrationTestBase {
             new Aws(localstack.getRegion(),
                 localstack.getEndpoint().toString(),
                 localstack.getAccessKey(),
-                localstack.getSecretKey()),
+                localstack.getSecretKey(),
+                new S3(localstack.getEndpointOverride(LocalStackContainer.Service.S3).toString())),
             null,
             null);
         // reuse Spring beans without Spring to keep implementations consistent

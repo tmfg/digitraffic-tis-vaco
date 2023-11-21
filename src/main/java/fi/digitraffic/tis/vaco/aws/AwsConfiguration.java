@@ -130,8 +130,8 @@ public class AwsConfiguration {
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
             .overrideConfiguration(overrideConfiguration);
-        if (vacoProperties.aws().endpoint() != null) {
-            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        if (vacoProperties.aws().s3() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().s3().endpoint()));
         }
         return b.httpClientBuilder(sdkHttpClientBuilder).build();
     }
@@ -145,8 +145,8 @@ public class AwsConfiguration {
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
             .overrideConfiguration(overrideConfiguration);
-        if (vacoProperties.aws().endpoint() != null) {
-            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        if (vacoProperties.aws().s3() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().s3().endpoint()));
         }
         return b.httpClient(sdkAsyncHttpClient).build();
     }

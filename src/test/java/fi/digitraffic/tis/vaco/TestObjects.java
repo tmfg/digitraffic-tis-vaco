@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Email;
+import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
@@ -114,7 +115,7 @@ public class TestObjects {
             "unittests-" + randomSeed + "-processing-bucket",
             "http://localhost:5173",
             "biz",
-            aws != null ? aws : new Aws("eu-north-1", null, null, null),
+            aws != null ? aws : new Aws("eu-north-1", null, null, null, new S3(null)),
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
             email != null ? email : new Email("king@commonwealth", null));
     }

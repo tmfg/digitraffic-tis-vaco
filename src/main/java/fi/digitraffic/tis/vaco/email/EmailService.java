@@ -20,6 +20,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.SesException;
 
@@ -28,6 +29,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
+@Service
 public class EmailService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
