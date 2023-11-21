@@ -22,3 +22,6 @@ echo $(awslocal s3api create-bucket --bucket 'digitraffic-tis-processing-local' 
 
 # --> List S3 buckets
 echo $(awslocal s3api list-buckets)
+
+# --> Verify SES fake email identity
+echo $(awslocal ses verify-email-identity --email-address 'no-reply@mail.localhost')
