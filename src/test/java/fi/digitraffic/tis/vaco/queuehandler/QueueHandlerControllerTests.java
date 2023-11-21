@@ -34,6 +34,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
 
         // assert provided data has stayed the same
         assertAll("Base fields are stored properly",
+            () -> assertThat(fetchResult.get("data").get("name").textValue(), equalTo(request.getName())),
             () -> assertThat(fetchResult.get("data").get("url").textValue(), equalTo(request.getUrl())),
             () -> assertThat(fetchResult.get("data").get("etag").textValue(), equalTo(request.getEtag())),
             () -> assertThat(fetchResult.get("data").get("format").textValue(), equalTo(request.getFormat())));
