@@ -114,6 +114,7 @@ public final class RowMappers {
                 .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
                 .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
                 .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
+                .notifications(List.of(ArraySqlValue.read(rs, "notifications")))
                 .build();
     }
 

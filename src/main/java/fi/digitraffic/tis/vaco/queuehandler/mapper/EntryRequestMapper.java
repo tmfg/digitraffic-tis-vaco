@@ -38,6 +38,7 @@ public class EntryRequestMapper {
             .metadata(entryRequest.getMetadata())
             .validations(mapValidations(entryRequest.getValidations()))
             .conversions(mapConversions(entryRequest.getConversions()))
+            .notifications(entryRequest.notifications())
             .build();
     }
 

@@ -23,7 +23,7 @@ public class HttpClient {
     public CompletableFuture<Path> downloadFile(Path targetFilePath,
                                                 String url,
                                                 String etag) {
-        logger.info("Downloading file to {} from {} (eTag {})", targetFilePath, url, etag);
+        logger.info("Downloading file from {} to {} (eTag {})", url, targetFilePath, etag);
         HttpRequest request = buildGetRequest(url, etag);
         HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
         return javaHttpClient.sendAsync(request, bodyHandler).thenApply(HttpResponse::body);

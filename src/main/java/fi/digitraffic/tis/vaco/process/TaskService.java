@@ -233,4 +233,7 @@ public class TaskService {
         return Streams.map(taskNames, t -> ImmutableTask.of(entry.id(), t, -1)).toList();
     }
 
+    public boolean areAllTasksCompleted(Entry entry) {
+        return taskRepository.areAllTasksCompleted(entry);
+    }
 }

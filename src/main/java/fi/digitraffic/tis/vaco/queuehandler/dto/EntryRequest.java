@@ -33,4 +33,8 @@ public interface EntryRequest {
     @Nullable
     List<JsonNode> getConversions();
 
+    @Value.Default
+    default List<String> notifications() {
+        return List.of();
+    }
 }

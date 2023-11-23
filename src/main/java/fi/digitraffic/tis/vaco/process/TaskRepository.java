@@ -168,4 +168,15 @@ public class TaskRepository {
                 .addValue("entryId", entry.id()),
         RowMappers.TASK);
     }
+
+    public boolean areAllTasksCompleted(Entry entry) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("""
+            SELECT NOT EXISTS(SELECT 1
+                            FROM task
+                           WHERE entry_id = ?
+                             AND completed IS NULL);
+            """,
+            Boolean.class,
+            entry.id()));
+    }
 }
