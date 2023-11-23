@@ -21,6 +21,7 @@ Authorization: Bearer {{tis_token}}
   "format": "gtfs",
   "businessId": "2942108-7",
   "etag": "etagg",
+  "name": "GTFS Hämeenlinna dev",
   "validations": [
     {
       "name": "gtfs.canonical.v4_0_0",
