@@ -27,7 +27,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 
@@ -70,13 +70,15 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     @Captor
     private ArgumentCaptor<String> entryEtag;
 
-    Path response;
     @Autowired
     private DownloadRule downloadRule;
 
+    Path response;
+
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
+        CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
+        System.out.println("r = " + r);
     }
 
     @BeforeEach
@@ -102,7 +104,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
             entry,
             task,
             null,
-            // DownloadRule procudes just a single file so this is OK
+            // DownloadRule produces just a single file so this is OK
             Set.of(TestObjects.aRuleset()
                 .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
                 .description("running rule from tests")

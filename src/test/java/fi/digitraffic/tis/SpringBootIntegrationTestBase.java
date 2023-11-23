@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -44,6 +45,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 )
 @AutoConfigureMockMvc(addFilters = false)
 @DirtiesContext
+@ContextConfiguration(classes = OverridesConfiguration.class)
 public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBase {
 
     @Container
@@ -121,4 +123,5 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
     protected JsonNode apiResponse(MvcResult response) throws UnsupportedEncodingException, JsonProcessingException {
         return objectMapper.readTree(response.getResponse().getContentAsString());
     }
+
 }

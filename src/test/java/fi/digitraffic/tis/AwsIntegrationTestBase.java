@@ -18,12 +18,15 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 @Testcontainers
 public abstract class AwsIntegrationTestBase {
+
+    protected static VacoProperties vacoProperties;
 
     @Container
     protected static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.0.2"))
@@ -42,7 +45,7 @@ public abstract class AwsIntegrationTestBase {
     static void awsBeforeAll() {
         Region region = Region.of(localstack.getRegion());
 
-        VacoProperties vacoProperties = TestObjects.vacoProperties(
+        vacoProperties = TestObjects.vacoProperties(
             new Aws(localstack.getRegion(),
                 localstack.getEndpoint().toString(),
                 localstack.getAccessKey(),
@@ -58,24 +61,21 @@ public abstract class AwsIntegrationTestBase {
         ClientOverrideConfiguration overrideConfiguration = awsConfiguration.clientOverrideConfiguration();
         ApacheHttpClient.Builder sdkHttpClientBuilder = awsConfiguration.sdkHttpClientBuilder();
 
-        awsS3Client = awsConfiguration.amazonS3Client(
-            vacoProperties,
-            credentialsProvider,
-            overrideConfiguration,
-            sdkHttpClientBuilder);
-
+        // S3 clients are special cases because their custom endpoint need when used with Localstack
         awsS3Client = software.amazon.awssdk.services.s3.S3Client.builder()
             .region(region)
-            .credentialsProvider(
-                credentialsProvider)
+            .credentialsProvider(credentialsProvider)
+            .overrideConfiguration(overrideConfiguration)
             .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.S3))
             .build();
 
-        s3AsyncClient = awsConfiguration.s3AsyncClient(
-            vacoProperties,
-            credentialsProvider,
-            overrideConfiguration,
-            sdkAsyncHttpClient);
+        s3AsyncClient = S3AsyncClient.builder()
+            .region(region)
+            .credentialsProvider(credentialsProvider)
+            .overrideConfiguration(overrideConfiguration)
+            .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.S3))
+            .httpClient(sdkAsyncHttpClient)
+            .build();
 
         s3TransferManager = awsConfiguration.s3TransferManager(s3AsyncClient);
 
@@ -93,7 +93,7 @@ public abstract class AwsIntegrationTestBase {
 
     }
 
-    protected static void createBucket(String bucketName) {
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
+    protected static CreateBucketResponse createBucket(String bucketName) {
+        return awsS3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
     }
 }
