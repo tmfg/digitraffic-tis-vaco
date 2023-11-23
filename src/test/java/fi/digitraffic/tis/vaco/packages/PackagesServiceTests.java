@@ -15,7 +15,7 @@ import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -38,7 +38,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
-        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
+        CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
     }
 
     @Test

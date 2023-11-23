@@ -127,10 +127,10 @@ public class RuleListenerService {
             };
         }).thenApply(ruleProcessingSuccess -> {
             if (ruleProcessingSuccess) {
-                Optional<Entry> entry = queueHandlerRepository.findByPublicId(resultMessage.entryId());
+                Optional<Entry> entry = queueHandlerRepository.findByPublicId(resultMessage.entryId(), false);
                 if (entry.isPresent()) {
                     messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
-                        .entry(entry.get())
+                        .entry(queueHandlerRepository.reload(entry.get()))
                         .retryStatistics(ImmutableRetryStatistics.of(5))
                         .build());
                     return true;

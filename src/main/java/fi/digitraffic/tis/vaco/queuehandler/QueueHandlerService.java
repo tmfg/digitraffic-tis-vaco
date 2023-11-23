@@ -102,7 +102,7 @@ public class QueueHandlerService {
     }
 
     public Optional<Entry> getEntry(String publicId) {
-        return queueHandlerRepository.findByPublicId(publicId);
+        return queueHandlerRepository.findByPublicId(publicId, false);
     }
 
     public List<ImmutableEntry> getAllQueueEntriesFor(String businessId, boolean full) {

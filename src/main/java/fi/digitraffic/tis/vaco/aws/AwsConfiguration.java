@@ -39,14 +39,14 @@ import java.time.Duration;
 @Configuration
 public class AwsConfiguration {
 
-    @Profile("local | tests")
+    @Profile("local | tests | itest")
     @Bean
     public AwsCredentialsProvider localCredentials(VacoProperties vacoProperties) {
         Aws aws = vacoProperties.aws();
         return StaticCredentialsProvider.create(AwsBasicCredentials.create(aws.accessKeyId(), aws.secretKey()));
     }
 
-    @Profile("!local & !tests")
+    @Profile("!local & !tests & !itest")
     @Bean
     public AwsCredentialsProvider cloudCredentials() {
         return DefaultCredentialsProvider.create();
@@ -130,8 +130,8 @@ public class AwsConfiguration {
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
             .overrideConfiguration(overrideConfiguration);
-        if (vacoProperties.aws().endpoint() != null) {
-            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        if (vacoProperties.aws().s3() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().s3().endpoint()));
         }
         return b.httpClientBuilder(sdkHttpClientBuilder).build();
     }
@@ -145,8 +145,8 @@ public class AwsConfiguration {
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
             .overrideConfiguration(overrideConfiguration);
-        if (vacoProperties.aws().endpoint() != null) {
-            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        if (vacoProperties.aws().s3() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().s3().endpoint()));
         }
         return b.httpClient(sdkAsyncHttpClient).build();
     }

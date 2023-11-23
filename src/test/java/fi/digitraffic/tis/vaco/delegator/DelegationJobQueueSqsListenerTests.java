@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.delegator;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.email.EmailService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -39,6 +40,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     private TaskService taskService;
     @Autowired
     private RulesetService rulesetService;
+    @Autowired
+    private EmailService emailService;
 
     @Mock
     private Acknowledgement acknowledgement;
@@ -54,7 +57,13 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        listener = new DelegationJobQueueSqsListener(messagingService, taskService, rulesetService, downloadRule, stopsAndQuaysRule);
+        listener = new DelegationJobQueueSqsListener(
+            messagingService,
+            taskService,
+            rulesetService,
+            downloadRule,
+            stopsAndQuaysRule,
+            emailService);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)

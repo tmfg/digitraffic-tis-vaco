@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.email.model;
 
-import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -8,12 +7,18 @@ import java.util.List;
 @Value.Immutable
 public interface Recipients {
 
-    @Nullable
-    List<String> to();
+    @Value.Default
+    default List<String> to() {
+        return List.of();
+    }
 
-    @Nullable
-    List<String> cc();
+    @Value.Default
+    default List<String> cc() {
+        return List.of();
+    }
 
-    @Nullable
-    List<String> bcc();
+    @Value.Default
+    default List<String> bcc() {
+        return List.of();
+    }
 }

@@ -21,6 +21,7 @@ Authorization: Bearer {{tis_token}}
   "format": "netex",
   "businessId": "2942108-7",
   "etag": "etagg",
+  "name": "NeTEx Kajaani local",
   "validations": [
     {
       "name": "netex.entur.v1_0_1",

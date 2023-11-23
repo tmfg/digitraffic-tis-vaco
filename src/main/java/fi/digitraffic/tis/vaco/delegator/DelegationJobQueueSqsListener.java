@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
+import fi.digitraffic.tis.vaco.email.EmailService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -35,18 +36,21 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     // internal tasks are direct dependencies
     private final DownloadRule downloadRule;
     private final StopsAndQuaysRule stopsAndQuaysRule;
+    private final EmailService emailService;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
                                          TaskService taskService,
                                          RulesetService rulesetService,
                                          DownloadRule downloadRule,
-                                         StopsAndQuaysRule stopsAndQuaysRule) {
+                                         StopsAndQuaysRule stopsAndQuaysRule,
+                                         EmailService emailService) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = Objects.requireNonNull(messagingService);
         this.taskService = Objects.requireNonNull(taskService);
         this.downloadRule = Objects.requireNonNull(downloadRule);
         this.knownExternalRules = Objects.requireNonNull(rulesetService).listAllNames();
         this.stopsAndQuaysRule = Objects.requireNonNull(stopsAndQuaysRule);
+        this.emailService = Objects.requireNonNull(emailService);
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -99,8 +103,12 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 }
             });
         } else {
-            // nothing to run, we're done
-
+            if (taskService.areAllTasksCompleted(entry)) {
+                logger.debug("Job for entry {} complete!", entry.publicId());
+                emailService.notifyEntryComplete(entry);
+            } else {
+                // some kind of limbo/crash
+            }
         }
     }
 

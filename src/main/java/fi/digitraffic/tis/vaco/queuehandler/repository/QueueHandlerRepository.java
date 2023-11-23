@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -61,12 +62,18 @@ public class QueueHandlerRepository {
 
     private ImmutableEntry createEntry(Entry entry) {
         return jdbc.queryForObject("""
-                INSERT INTO entry(business_id, format, url, etag, metadata, name)
-                     VALUES (?, ?, ?, ?, ?, ?)
-                  RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name
+                INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)
+                  RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications
                 """,
             RowMappers.QUEUE_ENTRY.apply(objectMapper),
-            entry.businessId(), entry.format(), entry.url(), entry.etag(), RowMappers.writeJson(objectMapper, entry.metadata()), entry.name());
+            entry.businessId(),
+            entry.format(),
+            entry.url(),
+            entry.etag(),
+            RowMappers.writeJson(objectMapper, entry.metadata()),
+            entry.name(),
+            ArraySqlValue.create(entry.notifications().toArray(new String[0])));
     }
 
     private List<ImmutableValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {
@@ -92,14 +99,14 @@ public class QueueHandlerRepository {
     }
 
     @Transactional
-    public Optional<Entry> findByPublicId(String publicId) {
-        return findEntry(publicId).map(this::buildCompleteEntry);
+    public Optional<Entry> findByPublicId(String publicId, boolean skipErrors) {
+        return findEntry(publicId).map(e -> buildCompleteEntry(e, skipErrors));
     }
 
     private Optional<ImmutableEntry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
-                        SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name
+                        SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications
                           FROM entry qe
                          WHERE qe.public_id = ?
                         """,
@@ -162,7 +169,7 @@ public class QueueHandlerRepository {
                 businessId);
 
             if (full) {
-                return Streams.map(entries, this::buildCompleteEntry).toList();
+                return Streams.map(entries, e -> buildCompleteEntry(e, true)).toList();
             } else {
                 return entries;
             }
@@ -177,20 +184,23 @@ public class QueueHandlerRepository {
      * @param entry Entry to complete.
      * @return Fully completed entry.
      */
-    private ImmutableEntry buildCompleteEntry(ImmutableEntry entry) {
+    private ImmutableEntry buildCompleteEntry(ImmutableEntry entry, boolean skipErrors) {
         List<Task> tasks = taskService.findTasks(entry);
         List<Package> packages = Streams.flatten(tasks, packagesService::findPackages).toList();
-        return entry
+        ImmutableEntry e = entry
             .withTasks(tasks)
             .withValidations(findValidationInputs(entry.id()))
             .withConversions(findConversionInputs(entry.id()))
-            .withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()))
             .withPackages(packages);
+        if (!skipErrors) {
+            e = e.withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));
+        }
+        return e;
     }
 
     @Transactional
     public Entry reload(Entry entry) {
-        return findByPublicId(entry.publicId())
+        return findByPublicId(entry.publicId(), true)
             .orElseThrow(() -> new RuleExecutionException("Failed to reload entry with public id " + entry.publicId() + " from database, corrupt entry?"));
     }
 }

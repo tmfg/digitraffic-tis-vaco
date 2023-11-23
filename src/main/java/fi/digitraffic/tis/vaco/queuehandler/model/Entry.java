@@ -61,6 +61,15 @@ public interface Entry {
     @Nullable
     List<Error> errors();
 
+    /**
+     * List of email addresses to send notifications on events related to this entry, e.g. the matching job is complete.
+     * @return List of emails as strings.
+     */
+    @Value.Default
+    default List<String> notifications() {
+        return List.of();
+    }
+
     @Nullable
     LocalDateTime created();
 
