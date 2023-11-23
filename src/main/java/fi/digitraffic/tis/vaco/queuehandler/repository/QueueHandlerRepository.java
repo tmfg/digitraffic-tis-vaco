@@ -157,6 +157,7 @@ public class QueueHandlerRepository {
                     SELECT *
                       FROM entry
                      WHERE business_id = ?
+                     ORDER BY created DESC
                     """,
                 RowMappers.QUEUE_ENTRY.apply(objectMapper),
                 businessId);

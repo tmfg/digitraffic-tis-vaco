@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
+import static fi.digitraffic.tis.utilities.JwtHelpers.safeGet;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @RestController
@@ -67,13 +68,6 @@ public class QueueHandlerController {
         return ResponseEntity.ok(
             Streams.map(queueHandlerService.getAllQueueEntriesFor(businessId, full), QueueHandlerController::asQueueHandlerResource)
             .toList());
-    }
-
-    private Optional<String> safeGet(JwtAuthenticationToken token, String companyNameClaim) {
-        if (token != null && token.getTokenAttributes().containsKey(companyNameClaim)) {
-            return Optional.of(token.getTokenAttributes().get(companyNameClaim).toString());
-        }
-        return Optional.empty();
     }
 
     @GetMapping(path = "/{publicId}")
