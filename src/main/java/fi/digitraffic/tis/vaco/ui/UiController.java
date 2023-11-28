@@ -2,20 +2,33 @@ package fi.digitraffic.tis.vaco.ui;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.Responses;
+import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import static fi.digitraffic.tis.utilities.JwtHelpers.safeGet;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @RestController
 @RequestMapping("/ui")
@@ -44,7 +57,7 @@ public class UiController {
                 vacoProperties.azureAd().clientId()));
     }
 
-    @GetMapping(path = "/entry/{publicId}/state")
+    @GetMapping(path = "/entries/{publicId}/state")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId) {
         Optional<Entry> entry = queueHandlerService.getEntry(publicId);
@@ -55,5 +68,32 @@ public class UiController {
         // More fetchings coming here
 
         return ResponseEntity.ok(new Resource(ImmutableEntryState.builder().entry(entry.get()).build(), null,  null));
+    }
+
+    @GetMapping(path = "/entries")
+    @JsonView(DataVisibility.External.class)
+    public ResponseEntity<List<Resource<Entry>>> listEntries(
+        JwtAuthenticationToken token,
+        @RequestParam String businessId,
+        @RequestParam(required = false) boolean full) {
+        businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);
+        List<ImmutableEntry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, full);
+        return ResponseEntity.ok(
+            Streams.map(entries, UiController::asEntryStateResource)
+                .toList());
+    }
+
+    private static Resource<Entry> asEntryStateResource(Entry entry) {
+        Map<String, Map<String, Link>> links = new HashMap<>();
+        links.put("refs", Map.of("self", linkToGetEntryState(entry)));
+        return new Resource<>(entry, null, links);
+    }
+
+    private static Link linkToGetEntryState(Entry entry) {
+        return new Link(
+            MvcUriComponentsBuilder
+                .fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId()))
+                .toUriString(),
+            RequestMethod.GET);
     }
 }

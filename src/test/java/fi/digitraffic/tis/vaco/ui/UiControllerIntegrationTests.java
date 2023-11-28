@@ -25,7 +25,7 @@ public class UiControllerIntegrationTests extends SpringBootIntegrationTestBase 
         JsonNode createResult = apiResponse(response);
         String entryPublicId = createResult.get("data").get("publicId").textValue();
 
-        MvcResult fetchResponse = apiCall(get("/ui/entry/" + entryPublicId + "/state"))
+        MvcResult fetchResponse = apiCall(get("/ui/entries/" + entryPublicId + "/state"))
             .andExpect(status().isOk())
             .andReturn();
         JsonNode fetchResult = apiResponse(fetchResponse);
@@ -39,7 +39,7 @@ public class UiControllerIntegrationTests extends SpringBootIntegrationTestBase 
 
     @Test
     void returnsError404OnNonExistingId() throws Exception {
-        MvcResult fetchResponse = apiCall(get("/ui/entry/smth/state"))
+        MvcResult fetchResponse = apiCall(get("/ui/entries/smth/state"))
             .andExpect(status().isNotFound())
             .andReturn();
     }
