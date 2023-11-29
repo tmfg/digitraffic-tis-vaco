@@ -324,19 +324,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Canonical GTFS validator -->
-        <dependency>
-            <groupId>com.github.MobilityData</groupId>
-            <artifactId>gtfs-validator</artifactId>
-            <version>v4.0.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <!-- Entur NeTEx Validator -->
         <dependency>
             <groupId>org.entur</groupId>
@@ -351,15 +338,6 @@
             <version>${caffeine.version}</version>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <!-- local mirror for hard-to-get dependencies -->
-        <repository>
-            <id>local-dependencies</id>
-            <name>local-dependencies</name>
-            <url>file://${project.basedir}/local-dependencies</url>
-        </repository>
-    </repositories>
 
     <build>
         <plugins>
