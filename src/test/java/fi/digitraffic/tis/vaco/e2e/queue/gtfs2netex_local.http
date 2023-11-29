@@ -17,22 +17,19 @@ Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
 {
-  "url": "https://tvv.fra1.digitaloceanspaces.com/211_netex.zip",
-  "format": "netex",
+  "url": "https://tvv.fra1.digitaloceanspaces.com/211.zip",
+  "format": "gtfs",
   "businessId": "2942108-7",
   "etag": "etagg",
-  "name": "NeTEx Kajaani netex2gtfs local",
-  "validations": [],
+  "name": "NeTEx Kajaani gtfs2netex local",
   "conversions": [{
-    "name": "netex2gtfs.entur.v2_0_6",
-    "config": {
-      "codespace": "FTR"
-    }
+    "name": "gtfs2netex.fintraffic.v1_0_0",
+    "config": {}
   }],
   "metadata": {
-    "brewingEquipment": "concave piece of copper",
-    "capacity (ml)": 126,
-    "tea": "dried polypore"
+    "brewingEquipment": "car radiator",
+    "capacity (ml)": 7200,
+    "tea": "egg whites"
   }
 }
 

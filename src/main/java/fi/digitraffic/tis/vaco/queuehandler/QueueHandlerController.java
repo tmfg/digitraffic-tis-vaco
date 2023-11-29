@@ -73,7 +73,7 @@ public class QueueHandlerController {
     @GetMapping(path = "/{publicId}")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Entry>> fetchEntry(@PathVariable("publicId") String publicId) {
-        Optional<Entry> entry = queueHandlerService.getEntry(publicId);
+        Optional<Entry> entry = queueHandlerService.findEntry(publicId);
 
         return entry
             .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
