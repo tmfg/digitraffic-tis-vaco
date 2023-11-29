@@ -35,7 +35,7 @@ public class PackagesController {
         @PathVariable("taskName") String taskName,
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
-        return queueHandlerService.getEntry(entryPublicId)
+        return queueHandlerService.findEntry(entryPublicId)
             .flatMap(e -> Streams.filter(e.tasks(), t -> t.name().equals(taskName))
                     .findFirst()
                     .flatMap(t -> packagesService.downloadPackage(e, t, packageName)))

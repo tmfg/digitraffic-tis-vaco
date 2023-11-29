@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -101,8 +102,13 @@ public class QueueHandlerService {
         }
     }
 
-    public Optional<Entry> getEntry(String publicId) {
+    public Optional<Entry> findEntry(String publicId) {
         return queueHandlerRepository.findByPublicId(publicId, false);
+    }
+
+    public Entry getEntry(String publicId, boolean skipErrorsField) {
+        return queueHandlerRepository.findByPublicId(publicId, skipErrorsField)
+            .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"));
     }
 
     public List<ImmutableEntry> getAllQueueEntriesFor(String businessId, boolean full) {

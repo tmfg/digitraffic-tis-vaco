@@ -8,6 +8,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -20,13 +21,12 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -64,8 +64,7 @@ public class RuleListenerService {
     private final QueueHandlerService queueHandlerService;
     private final PackagesService packagesService;
     private final TaskService taskService;
-    private final RulesetRepository rulesetRepository;
-    private final QueueHandlerRepository queueHandlerRepository;
+    private final RulesetService rulesetService;
 
     public RuleListenerService(MessagingService messagingService,
                                ErrorHandlerService errorHandlerService,
@@ -75,8 +74,7 @@ public class RuleListenerService {
                                QueueHandlerService queueHandlerService,
                                PackagesService packagesService,
                                TaskService taskService,
-                               RulesetRepository rulesetRepository,
-                               QueueHandlerRepository queueHandlerRepository) {
+                               RulesetService rulesetService) {
         this.messagingService = Objects.requireNonNull(messagingService);
         this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -85,8 +83,7 @@ public class RuleListenerService {
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.taskService = Objects.requireNonNull(taskService);
-        this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
-        this.queueHandlerRepository = Objects.requireNonNull(queueHandlerRepository);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.errors.poll-rate}")
@@ -127,11 +124,11 @@ public class RuleListenerService {
                 }
             };
         }).thenApply(ruleProcessingSuccess -> {
-            if (ruleProcessingSuccess) {
-                Optional<Entry> entry = queueHandlerRepository.findByPublicId(resultMessage.entryId(), false);
+            if (Boolean.TRUE.equals(ruleProcessingSuccess)) {
+                Optional<Entry> entry = queueHandlerService.findEntry(resultMessage.entryId());
                 if (entry.isPresent()) {
                     messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
-                        .entry(queueHandlerRepository.reload(entry.get()))
+                        .entry(queueHandlerService.getEntry(entry.get().publicId(), true))
                         .retryStatistics(ImmutableRetryStatistics.of(5))
                         .build());
                     return true;
@@ -218,7 +215,9 @@ public class RuleListenerService {
                             return ImmutableError.of(
                                     entry.publicId(),
                                     task.id(),
-                                    rulesetRepository.findByName(ruleName).orElseThrow().id(),
+                                    rulesetService.findByName(ruleName)
+                                        .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
+                                        .id(),
                                     ruleName,
                                     notice.code())
                                 .withRaw(objectMapper.writeValueAsBytes(sn));
@@ -252,7 +251,7 @@ public class RuleListenerService {
     }
 
     private boolean processRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
-        Optional<Entry> e = queueHandlerService.getEntry(resultMessage.entryId());
+        Optional<Entry> e = queueHandlerService.findEntry(resultMessage.entryId());
         if (e.isPresent()) {
             Entry entry = e.get();
             Optional<Task> task = taskService.findTask(entry.id(), resultMessage.ruleName());

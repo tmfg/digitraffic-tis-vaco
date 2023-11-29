@@ -60,7 +60,7 @@ public class UiController {
     @GetMapping(path = "/entries/{publicId}/state")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId) {
-        Optional<Entry> entry = queueHandlerService.getEntry(publicId);
+        Optional<Entry> entry = queueHandlerService.findEntry(publicId);
         if(!entry.isPresent()) {
             return Responses.notFound((String.format("A ticket with public ID %s does not exist", publicId)));
         }
