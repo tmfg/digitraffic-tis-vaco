@@ -34,7 +34,7 @@ public class RulesetService {
             rulesets = rulesetRepository.findRulesets(businessId, type, format, names);
         }
 
-        logger.info("Selected {} rulesets for {} are {}", type, businessId, Streams.collect(rulesets, Ruleset::identifyingName));
+        logger.info("Selected {} rulesets for {} are {}, requested {}", type, businessId, Streams.collect(rulesets, Ruleset::identifyingName), names);
 
         return rulesets;
     }
