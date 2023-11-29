@@ -55,9 +55,7 @@ public class RuleListenerService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
-
     private final ErrorHandlerService errorHandlerService;
-
     private final ObjectMapper objectMapper;
     private final S3Client s3Client;
     private final VacoProperties vacoProperties;
@@ -111,8 +109,8 @@ public class RuleListenerService {
                 case DownloadRule.DOWNLOAD_SUBTASK -> processDownloadRuleResults(resultMessage);
                 case StopsAndQuaysRule.STOPS_AND_QUAYS_TASK -> processStopsAndQuaysResults(resultMessage);
                 case RuleName.NETEX_ENTUR_1_0_1 -> processResultFromNetexEntur101(resultMessage);
-                case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical400(resultMessage);
-                case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical410(resultMessage);
+                case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL_4_0_0, resultMessage);
+                case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL_4_1_0, resultMessage);
                 case RuleName.NETEX2GTFS_ENTUR_2_0_6 -> processNetex2GtfsEntur206(resultMessage);
                 case RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0 -> processGtfs2NetexFintraffic100(resultMessage);
                 default -> {
@@ -143,11 +141,11 @@ public class RuleListenerService {
     }
 
     private Boolean processDownloadRuleResults(ResultMessage resultMessage) {
-        return processRule(resultMessage, handleInternalRuleResults(resultMessage));
+        return processRule(DownloadRule.DOWNLOAD_SUBTASK, resultMessage, handleInternalRuleResults(resultMessage));
     }
 
     private Boolean processStopsAndQuaysResults(ResultMessage resultMessage) {
-        return processRule(resultMessage, handleInternalRuleResults(resultMessage));
+        return processRule(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, resultMessage, handleInternalRuleResults(resultMessage));
     }
 
     private BiPredicate<Entry, Task> handleInternalRuleResults(ResultMessage resultMessage) {
@@ -168,20 +166,15 @@ public class RuleListenerService {
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
+        return processRule(RuleName.NETEX_ENTUR_1_0_1, resultMessage, (entry, task) -> {
             logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR_1_0_1, entry.publicId(), task.name());
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
     }
 
-    private boolean processResultFromGtfsCanonical400(ResultMessage resultMessage) {
-        // there's no difference in processing between Canonical GTFS Validator's point releases
-        return processResultFromGtfsCanonical410(resultMessage);
-    }
-
-    private boolean processResultFromGtfsCanonical410(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
+    private boolean processResultFromGtfsCanonical(String ruleName, ResultMessage resultMessage) {
+        return processRule(ruleName, resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
 
             Map<String, String> fileNames = collectOutputFileNames(resultMessage);
@@ -235,22 +228,20 @@ public class RuleListenerService {
     }
 
     private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
-            logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX2GTFS_ENTUR_2_0_6, entry.publicId(), task.name());
+        return processRule(RuleName.NETEX2GTFS_ENTUR_2_0_6, resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
     }
 
     private boolean processGtfs2NetexFintraffic100(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
-            logger.info("Processing result from {} for entry {}/task {}", RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, entry.publicId(), task.name());
+        return processRule(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
     }
 
-    private boolean processRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
+    private boolean processRule(String ruleName, ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
         Optional<Entry> e = queueHandlerService.findEntry(resultMessage.entryId());
         if (e.isPresent()) {
             Entry entry = e.get();
@@ -258,6 +249,7 @@ public class RuleListenerService {
             return task.map(t -> {
                 Task tracked = taskService.trackTask(t, ProcessingState.UPDATE);
                 try {
+                    logger.info("Processing result from {} for entry {}/task {}", ruleName, entry.publicId(), tracked.name());
                     return processingHandler.test(entry, tracked);
                 } finally {
                     taskService.trackTask(tracked, ProcessingState.COMPLETE);
