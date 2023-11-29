@@ -117,6 +117,7 @@ public class RuleListenerService {
                 case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical400(resultMessage);
                 case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical410(resultMessage);
                 case RuleName.NETEX2GTFS_ENTUR_2_0_6 -> processNetex2GtfsEntur206(resultMessage);
+                case RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0 -> processGtfs2NetexFintraffic100(resultMessage);
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -237,6 +238,14 @@ public class RuleListenerService {
     private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
         return processRule(resultMessage, (entry, task) -> {
             logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX2GTFS_ENTUR_2_0_6, entry.publicId(), task.name());
+            createOutputPackages(resultMessage, entry, task);
+            return true;
+        });
+    }
+
+    private boolean processGtfs2NetexFintraffic100(ResultMessage resultMessage) {
+        return processRule(resultMessage, (entry, task) -> {
+            logger.info("Processing result from {} for entry {}/task {}", RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, entry.publicId(), task.name());
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
