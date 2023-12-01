@@ -88,6 +88,7 @@ class QueueHandlerServiceTests {
             .put("operator-name", operatorName);
 
         entryRequest = ImmutableEntryRequest.builder()
+            .name("fake gtfs entry")
             .businessId(operatorBusinessId)
             .url(TestConstants.EXAMPLE_URL + "/gtfs.zip")
             .format("gtfs")

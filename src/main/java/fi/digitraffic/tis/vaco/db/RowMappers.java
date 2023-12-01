@@ -14,6 +14,7 @@ import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
@@ -87,7 +88,7 @@ public final class RowMappers {
             .partnerB(ALIASED_COMPANY.apply("partner_b_").mapRow(rs, rowNum))
             .build();
 
-    public static final Function<ObjectMapper, RowMapper<ImmutableEntry>> QUEUE_ENTRY = RowMappers::mapQueueEntry;
+    public static final Function<ObjectMapper, RowMapper<Entry>> ENTRY = RowMappers::mapQueueEntry;
     public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
     public static final Function<ObjectMapper, RowMapper<ImmutableConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
     public static final RowMapper<ImmutableError> ERROR = (rs, rowNum) -> ImmutableError.builder()
@@ -100,7 +101,7 @@ public final class RowMappers {
         .raw(rs.getBytes("raw"))
         .build();
 
-    private static RowMapper<ImmutableEntry> mapQueueEntry(ObjectMapper objectMapper) {
+    private static RowMapper<Entry> mapQueueEntry(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableEntry.builder()
                 .id(rs.getLong("id"))
                 .publicId(rs.getString("public_id"))

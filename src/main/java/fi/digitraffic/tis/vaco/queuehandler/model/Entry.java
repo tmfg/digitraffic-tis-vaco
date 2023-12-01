@@ -27,7 +27,7 @@ public interface Entry {
     @Nullable
     String publicId();
 
-    @Nullable
+    @Value.Parameter
     String name();
 
     @Value.Parameter

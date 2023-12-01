@@ -52,21 +52,21 @@ public class QueueHandlerRepository {
 
     @Transactional
     public Entry create(Entry entry) {
-        ImmutableEntry created = createEntry(entry);
-        created = created
-            .withValidations(createValidationInputs(created.id(), entry.validations()))
-            .withConversions(createConversionInputs(created.id(), entry.conversions()));
+        Entry baseValues = createEntry(entry);
+        ImmutableEntry withRules = ImmutableEntry.copyOf(baseValues)
+            .withValidations(createValidationInputs(baseValues.id(), entry.validations()))
+            .withConversions(createConversionInputs(baseValues.id(), entry.conversions()));
         // createTasks requires validations and conversions to exist at this point
-        return created.withTasks(taskService.createTasks(created));
+        return withRules.withTasks(taskService.createTasks(withRules));
     }
 
-    private ImmutableEntry createEntry(Entry entry) {
+    private Entry createEntry(Entry entry) {
         return jdbc.queryForObject("""
                 INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications)
                      VALUES (?, ?, ?, ?, ?, ?, ?)
                   RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications
                 """,
-            RowMappers.QUEUE_ENTRY.apply(objectMapper),
+            RowMappers.ENTRY.apply(objectMapper),
             entry.businessId(),
             entry.format(),
             entry.url(),
@@ -103,14 +103,14 @@ public class QueueHandlerRepository {
         return findEntry(publicId).map(e -> buildCompleteEntry(e, skipErrors));
     }
 
-    private Optional<ImmutableEntry> findEntry(String publicId) {
+    private Optional<Entry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                         SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications
                           FROM entry qe
                          WHERE qe.public_id = ?
                         """,
-                        RowMappers.QUEUE_ENTRY.apply(objectMapper),
+                        RowMappers.ENTRY.apply(objectMapper),
                         publicId));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
@@ -158,15 +158,15 @@ public class QueueHandlerRepository {
                 entry.id());
     }
 
-    public List<ImmutableEntry> findAllByBusinessId(String businessId, boolean full) {
+    public List<Entry> findAllByBusinessId(String businessId, boolean full) {
         try {
-            List<ImmutableEntry> entries = jdbc.query("""
+            List<Entry> entries = jdbc.query("""
                     SELECT *
                       FROM entry
                      WHERE business_id = ?
                      ORDER BY created DESC
                     """,
-                RowMappers.QUEUE_ENTRY.apply(objectMapper),
+                RowMappers.ENTRY.apply(objectMapper),
                 businessId);
 
             if (full) {
@@ -185,10 +185,10 @@ public class QueueHandlerRepository {
      * @param entry Entry to complete.
      * @return Fully completed entry.
      */
-    private ImmutableEntry buildCompleteEntry(ImmutableEntry entry, boolean skipErrors) {
+    private Entry buildCompleteEntry(Entry entry, boolean skipErrors) {
         List<Task> tasks = taskService.findTasks(entry);
         List<Package> packages = Streams.flatten(tasks, packagesService::findPackages).toList();
-        ImmutableEntry e = entry
+        ImmutableEntry e = ImmutableEntry.copyOf(entry)
             .withTasks(tasks)
             .withValidations(findValidationInputs(entry.id()))
             .withConversions(findConversionInputs(entry.id()))

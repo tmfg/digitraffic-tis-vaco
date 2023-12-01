@@ -9,7 +9,6 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import org.springframework.http.ResponseEntity;
@@ -77,7 +76,7 @@ public class UiController {
         @RequestParam String businessId,
         @RequestParam(required = false) boolean full) {
         businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);
-        List<ImmutableEntry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, full);
+        List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, full);
         return ResponseEntity.ok(
             Streams.map(entries, UiController::asEntryStateResource)
                 .toList());

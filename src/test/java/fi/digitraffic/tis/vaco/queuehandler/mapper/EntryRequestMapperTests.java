@@ -21,6 +21,7 @@ class EntryRequestMapperTests {
         entryRequestMapper = new EntryRequestMapper(new ObjectMapper());
         // entry request with all required fields
         entryRequest = ImmutableEntryRequest.builder()
+            .name("mapper tests")
             .format("gtfs")
             .url("http://fintraffic.example")
             .businessId(Constants.FINTRAFFIC_BUSINESS_ID)
