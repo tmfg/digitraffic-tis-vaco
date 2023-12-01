@@ -49,7 +49,7 @@ class ValidationQueueSqsListenerTests {
     void setUp() {
         listener = new ValidationQueueSqsListener(messagingService, rulesetSubmissionService, queueHandlerRepository);
 
-        entry = ImmutableEntry.of(TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, Constants.FINTRAFFIC_BUSINESS_ID);
+        entry = ImmutableEntry.of("entry", TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, Constants.FINTRAFFIC_BUSINESS_ID);
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
         message = ImmutableValidationJobMessage.builder()
             .entry(entry)
