@@ -62,8 +62,8 @@ public class QueueHandlerController {
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<List<Resource<Entry>>> listEntries(
         JwtAuthenticationToken token,
-        @RequestParam String businessId,
-        @RequestParam(required = false) boolean full) {
+        @RequestParam(name = "businessId") String businessId,
+        @RequestParam(name = "full", required = false) boolean full) {
         // TODO: We do not know the exact claim name (or maybe we need to use Graph) at this point, so this is kind of
         //       meh passthrough until we get more details.
         businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);

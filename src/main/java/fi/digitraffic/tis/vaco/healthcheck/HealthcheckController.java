@@ -22,7 +22,7 @@ public class HealthcheckController {
     @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<String> ok(
-        @RequestParam(required = false) String key) {
+        @RequestParam(name="key", required = false) String key) {
         if (key != null) {
             if (sharedSecret.equals(key)) {
                 return ResponseEntity.ok().body("ok");

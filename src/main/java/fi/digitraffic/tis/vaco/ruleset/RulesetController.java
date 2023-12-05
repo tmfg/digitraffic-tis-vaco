@@ -27,7 +27,7 @@ public class RulesetController {
     @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<List<Resource<Ruleset>>> listRulesets(
-        @RequestParam String businessId
+        @RequestParam(name = "businessId") String businessId
     ) {
         // TODO: Once we have authentication there needs to be an authentication check that the calling user has access
         //       to the businessId. No authentication yet though, so no such check either.
