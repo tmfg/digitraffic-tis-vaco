@@ -8,6 +8,7 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -33,7 +34,6 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,8 +78,12 @@ public class RulesetSubmissionService {
             .map(task -> {
                 Set<Ruleset> rulesets = selectRulesets(entry, configuration);
 
-                submitRules(entry, task, configuration, rulesets);
-
+                if (rulesets.isEmpty()) {
+                    taskService.markStatus(task, Status.FAILED);
+                } else {
+                    submitRules(entry, task, configuration, rulesets);
+                    taskService.markStatus(task, Status.SUCCESS);
+                }
                 return taskService.trackTask(task, ProcessingState.COMPLETE);
             }).orElseThrow();
     }

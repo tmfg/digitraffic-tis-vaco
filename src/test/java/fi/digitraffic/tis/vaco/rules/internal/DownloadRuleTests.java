@@ -6,6 +6,7 @@ import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -77,6 +78,7 @@ class DownloadRuleTests {
         given(taskService.trackTask(dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
+        given(taskService.markStatus(dlTask, Status.SUCCESS)).willReturn(dlTask);
 
         ResultMessage result = rule.execute(entry).join();
 

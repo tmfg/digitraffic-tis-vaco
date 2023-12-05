@@ -139,6 +139,7 @@ class RuleListenerServiceTests {
         givenFindEntry(entry).willReturn(Optional.of(entry));
         givenFindTask(entry).willReturn(Optional.of(task));
         givenTaskProgressIsTracked();
+        givenTaskStatusIsTracked();
     }
 
     @NotNull
@@ -177,6 +178,10 @@ class RuleListenerServiceTests {
 
     private void givenTaskProgressIsTracked() {
         given(taskService.trackTask(any(), any())).will(a -> a.getArgument(0));
+    }
+
+    private void givenTaskStatusIsTracked() {
+        given(taskService.markStatus(any(), any())).will(a -> a.getArgument(0));
     }
 
     private Entry entryWithTask(Function<Entry, Task> taskCreator) {

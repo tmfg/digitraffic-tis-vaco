@@ -9,6 +9,8 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
+import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -161,6 +163,7 @@ public class RuleListenerService {
                 task.id(),
                 "result",
                 dlFile.toString()));
+            taskService.markStatus(task, Status.SUCCESS);
             return true;
         };
     }
@@ -169,6 +172,7 @@ public class RuleListenerService {
         return processRule(RuleName.NETEX_ENTUR_1_0_1, resultMessage, (entry, task) -> {
             logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR_1_0_1, entry.publicId(), task.name());
             createOutputPackages(resultMessage, entry, task);
+            taskService.markStatus(task, Status.SUCCESS);
             return true;
         });
     }
@@ -188,7 +192,13 @@ public class RuleListenerService {
                 URI s3Uri = URI.create(fileNames.get("report.json"));
                 s3Client.downloadFile(s3Uri.getHost(), S3Path.of(s3Uri.getPath()), reportFile);
 
-                errorHandlerService.reportErrors(new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile)));
+                List<Error> errors = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
+                if (errors.isEmpty()) {
+                    taskService.markStatus(task, Status.SUCCESS);
+                } else {
+                    errorHandlerService.reportErrors(errors);
+                    taskService.markStatus(task, Status.ERRORS);
+                }
             } else {
                 logger.warn("Expected file 'report.json' missing from output for message {}", resultMessage);
             }
@@ -231,6 +241,7 @@ public class RuleListenerService {
     private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
         return processRule(RuleName.NETEX2GTFS_ENTUR_2_0_6, resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
+            taskService.markStatus(task, Status.SUCCESS);
             return true;
         });
     }
@@ -238,6 +249,7 @@ public class RuleListenerService {
     private boolean processGtfs2NetexFintraffic100(ResultMessage resultMessage) {
         return processRule(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
+            taskService.markStatus(task, Status.SUCCESS);
             return true;
         });
     }

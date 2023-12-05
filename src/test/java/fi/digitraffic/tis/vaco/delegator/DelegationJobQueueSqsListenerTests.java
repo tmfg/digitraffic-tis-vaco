@@ -1,9 +1,10 @@
 package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
-import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.email.EmailService;
+import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -11,7 +12,6 @@ import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.verify;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
@@ -42,6 +42,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     private RulesetService rulesetService;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private EntryService entryService;
 
     @Mock
     private Acknowledgement acknowledgement;
@@ -63,7 +65,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
             rulesetService,
             downloadRule,
             stopsAndQuaysRule,
-            emailService);
+            emailService,
+            entryService);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)
@@ -88,10 +91,10 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
                 .copyOf(retries)
                 .withTryNumber(retries.maxRetries() + 1)); // technically this is run 6 of 5, so it just skips everything
 
-        doAnswer(invocation -> null).when(messagingService).updateJobProcessingStatus(tooManyRetries, ProcessingState.COMPLETE);
-
         listener.listen(tooManyRetries, acknowledgement);
 
-        verify(messagingService).updateJobProcessingStatus(tooManyRetries, ProcessingState.COMPLETE);
+        Entry result = entryRepository.findByPublicId(entry.publicId(), true).get();
+
+        assertThat(result.completed(), notNullValue());
     }
 }
