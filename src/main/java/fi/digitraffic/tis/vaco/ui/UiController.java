@@ -73,8 +73,8 @@ public class UiController {
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<List<Resource<Entry>>> listEntries(
         JwtAuthenticationToken token,
-        @RequestParam String businessId,
-        @RequestParam(required = false) boolean full) {
+        @RequestParam("businessId") String businessId,
+        @RequestParam("full") boolean full) {
         businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);
         List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, full);
         return ResponseEntity.ok(
