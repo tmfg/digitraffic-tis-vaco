@@ -16,7 +16,6 @@ import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.email.model.Message;
 import fi.digitraffic.tis.vaco.email.model.Recipients;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -77,7 +76,7 @@ public class EmailService {
                 company.businessId(),
                 company.contactEmails());
         }
-        List<ImmutableEntry> latestEntries = emailRepository.findLatestEntries(company);
+        List<Entry> latestEntries = emailRepository.findLatestEntries(company);
         if (latestEntries.isEmpty()) {
 
         } else {
@@ -136,7 +135,7 @@ public class EmailService {
         return builder.build(buildOptions);
     }
 
-    private String createFeedStatusEmailHtml(Translations translations, List<ImmutableEntry> entries) {
+    private String createFeedStatusEmailHtml(Translations translations, List<Entry> entries) {
         HtmlBuilder builder = new HtmlBuilder();
         HtmlBuildOptions buildOptions = new HtmlBuildOptions(0, false);
 
@@ -157,7 +156,7 @@ public class EmailService {
         return builder.build(buildOptions);
     }
 
-    private Element table(ContentBuilder c, Translations translations, List<ImmutableEntry> entries) {
+    private Element table(ContentBuilder c, Translations translations, List<Entry> entries) {
         Element headers = c.element("tr")
             .children(
                 c.element("th").text(translations.get("message.feeds.labels.feed")),

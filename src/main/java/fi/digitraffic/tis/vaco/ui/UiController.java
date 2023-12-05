@@ -12,7 +12,6 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
@@ -71,7 +70,7 @@ public class UiController {
     @GetMapping(path = "/entries/{publicId}/state")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId) {
-        Optional<Entry> entryOpt = queueHandlerService.getEntry(publicId, true);
+        Optional<Entry> entryOpt = queueHandlerService.findEntry(publicId, true);
         if(entryOpt.isEmpty()) {
             return Responses.notFound((String.format("A ticket with public ID %s does not exist", publicId)));
         }
@@ -111,7 +110,7 @@ public class UiController {
         @RequestParam String businessId,
         @RequestParam(required = false) boolean full) {
         businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);
-        List<ImmutableEntry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, full);
+        List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, full);
         return ResponseEntity.ok(
             Streams.map(entries, UiController::asEntryStateResource)
                 .toList());

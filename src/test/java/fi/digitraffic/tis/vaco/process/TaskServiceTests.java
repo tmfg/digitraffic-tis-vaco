@@ -53,6 +53,7 @@ class TaskServiceTests {
     void setUp() {
         taskService = new TaskService(taskRepository, packagesService, rulesetService);
         entry = ImmutableEntry.of(
+                "entry",
                 TransitDataFormat.GTFS.fieldName(),
                 TestConstants.EXAMPLE_URL,
                 Constants.FINTRAFFIC_BUSINESS_ID)

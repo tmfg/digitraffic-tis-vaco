@@ -8,7 +8,6 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -34,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -76,9 +76,9 @@ public class RulesetSubmissionService {
 
         taskService.findTask(entry.id(), configuration.submissionTask())
             .map(task -> {
-                Set<Ruleset> validationRulesets = selectRulesets(entry, configuration);
+                Set<Ruleset> rulesets = selectRulesets(entry, configuration);
 
-                submitRules(entry, task, configuration, validationRulesets);
+                submitRules(entry, task, configuration, rulesets);
 
                 return taskService.trackTask(task, ProcessingState.COMPLETE);
             }).orElseThrow();
@@ -93,14 +93,8 @@ public class RulesetSubmissionService {
             return Set.of();
         }
 
-        Set<String> rulesetNames;
-        if (RulesetSubmissionService.VALIDATE_TASK.equals(configuration.submissionTask())) {
-            rulesetNames = Streams.map(entry.validations(), ValidationInput::name).toSet();
-        } else if (ConversionService.CONVERT_TASK.equals(configuration.submissionTask())) {
-            rulesetNames = Streams.map(entry.conversions(), ConversionInput::name).toSet();
-        } else {
-            rulesetNames = Set.of();
-        }
+        // add all task names to rulesets to select to ensure rules from dependencies are also included
+        Set<String> rulesetNames = Streams.map(entry.tasks(), Task::name).toSet();
 
         // find all possible rulesets to execute
         Set<Ruleset> rulesets = Streams.filter(

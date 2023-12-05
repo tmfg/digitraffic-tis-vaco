@@ -14,7 +14,6 @@ import java.util.List;
 public interface EntryRequest {
     String getFormat();
 
-    @Nullable
     String getName();
 
     String getUrl();

@@ -1,18 +1,18 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.PartnershipService;
+import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
-import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.service.PartnershipService;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,11 +101,20 @@ public class QueueHandlerService {
         }
     }
 
-    public Optional<Entry> getEntry(String publicId, boolean skipErrors) {
-        return queueHandlerRepository.findByPublicId(publicId, skipErrors);
+    public Optional<Entry> findEntry(String publicId) {
+        return queueHandlerRepository.findByPublicId(publicId, false);
+    }
+  
+    public Optional<Entry> findEntry(String publicId, boolean skipErrorsField) {
+        return queueHandlerRepository.findByPublicId(publicId, false);
     }
 
-    public List<ImmutableEntry> getAllQueueEntriesFor(String businessId, boolean full) {
+    public Entry getEntry(String publicId, boolean skipErrorsField) {
+        return queueHandlerRepository.findByPublicId(publicId, skipErrorsField)
+            .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"));
+    }
+
+    public List<Entry> getAllQueueEntriesFor(String businessId, boolean full) {
         return queueHandlerRepository.findAllByBusinessId(businessId, full);
     }
 }

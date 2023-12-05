@@ -8,6 +8,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -20,13 +21,12 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -55,17 +55,14 @@ public class RuleListenerService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
-
     private final ErrorHandlerService errorHandlerService;
-
     private final ObjectMapper objectMapper;
     private final S3Client s3Client;
     private final VacoProperties vacoProperties;
     private final QueueHandlerService queueHandlerService;
     private final PackagesService packagesService;
     private final TaskService taskService;
-    private final RulesetRepository rulesetRepository;
-    private final QueueHandlerRepository queueHandlerRepository;
+    private final RulesetService rulesetService;
 
     public RuleListenerService(MessagingService messagingService,
                                ErrorHandlerService errorHandlerService,
@@ -75,8 +72,7 @@ public class RuleListenerService {
                                QueueHandlerService queueHandlerService,
                                PackagesService packagesService,
                                TaskService taskService,
-                               RulesetRepository rulesetRepository,
-                               QueueHandlerRepository queueHandlerRepository) {
+                               RulesetService rulesetService) {
         this.messagingService = Objects.requireNonNull(messagingService);
         this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -85,8 +81,7 @@ public class RuleListenerService {
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.taskService = Objects.requireNonNull(taskService);
-        this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
-        this.queueHandlerRepository = Objects.requireNonNull(queueHandlerRepository);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.errors.poll-rate}")
@@ -114,9 +109,10 @@ public class RuleListenerService {
                 case DownloadRule.DOWNLOAD_SUBTASK -> processDownloadRuleResults(resultMessage);
                 case StopsAndQuaysRule.STOPS_AND_QUAYS_TASK -> processStopsAndQuaysResults(resultMessage);
                 case RuleName.NETEX_ENTUR_1_0_1 -> processResultFromNetexEntur101(resultMessage);
-                case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical400(resultMessage);
-                case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical410(resultMessage);
+                case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL_4_0_0, resultMessage);
+                case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL_4_1_0, resultMessage);
                 case RuleName.NETEX2GTFS_ENTUR_2_0_6 -> processNetex2GtfsEntur206(resultMessage);
+                case RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0 -> processGtfs2NetexFintraffic100(resultMessage);
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -126,11 +122,11 @@ public class RuleListenerService {
                 }
             };
         }).thenApply(ruleProcessingSuccess -> {
-            if (ruleProcessingSuccess) {
-                Optional<Entry> entry = queueHandlerRepository.findByPublicId(resultMessage.entryId(), false);
+            if (Boolean.TRUE.equals(ruleProcessingSuccess)) {
+                Optional<Entry> entry = queueHandlerService.findEntry(resultMessage.entryId());
                 if (entry.isPresent()) {
                     messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
-                        .entry(queueHandlerRepository.reload(entry.get()))
+                        .entry(queueHandlerService.getEntry(entry.get().publicId(), true))
                         .retryStatistics(ImmutableRetryStatistics.of(5))
                         .build());
                     return true;
@@ -145,11 +141,11 @@ public class RuleListenerService {
     }
 
     private Boolean processDownloadRuleResults(ResultMessage resultMessage) {
-        return processRule(resultMessage, handleInternalRuleResults(resultMessage));
+        return processRule(DownloadRule.DOWNLOAD_SUBTASK, resultMessage, handleInternalRuleResults(resultMessage));
     }
 
     private Boolean processStopsAndQuaysResults(ResultMessage resultMessage) {
-        return processRule(resultMessage, handleInternalRuleResults(resultMessage));
+        return processRule(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, resultMessage, handleInternalRuleResults(resultMessage));
     }
 
     private BiPredicate<Entry, Task> handleInternalRuleResults(ResultMessage resultMessage) {
@@ -170,20 +166,15 @@ public class RuleListenerService {
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
+        return processRule(RuleName.NETEX_ENTUR_1_0_1, resultMessage, (entry, task) -> {
             logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR_1_0_1, entry.publicId(), task.name());
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
     }
 
-    private boolean processResultFromGtfsCanonical400(ResultMessage resultMessage) {
-        // there's no difference in processing between Canonical GTFS Validator's point releases
-        return processResultFromGtfsCanonical410(resultMessage);
-    }
-
-    private boolean processResultFromGtfsCanonical410(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
+    private boolean processResultFromGtfsCanonical(String ruleName, ResultMessage resultMessage) {
+        return processRule(ruleName, resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
 
             Map<String, String> fileNames = collectOutputFileNames(resultMessage);
@@ -217,7 +208,9 @@ public class RuleListenerService {
                             return ImmutableError.of(
                                     entry.publicId(),
                                     task.id(),
-                                    rulesetRepository.findByName(ruleName).orElseThrow().id(),
+                                    rulesetService.findByName(ruleName)
+                                        .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
+                                        .id(),
                                     ruleName,
                                     notice.code(),
                                     notice.severity())
@@ -236,21 +229,29 @@ public class RuleListenerService {
     }
 
     private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
-        return processRule(resultMessage, (entry, task) -> {
-            logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX2GTFS_ENTUR_2_0_6, entry.publicId(), task.name());
+        return processRule(RuleName.NETEX2GTFS_ENTUR_2_0_6, resultMessage, (entry, task) -> {
             createOutputPackages(resultMessage, entry, task);
             return true;
         });
     }
 
-    private boolean processRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
-        Optional<Entry> e = queueHandlerService.getEntry(resultMessage.entryId(), false);
+    private boolean processGtfs2NetexFintraffic100(ResultMessage resultMessage) {
+        return processRule(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, resultMessage, (entry, task) -> {
+            createOutputPackages(resultMessage, entry, task);
+            return true;
+        });
+    }
+
+    private boolean processRule(String ruleName, ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
+        Optional<Entry> e = queueHandlerService.findEntry(resultMessage.entryId());
+
         if (e.isPresent()) {
             Entry entry = e.get();
             Optional<Task> task = taskService.findTask(entry.id(), resultMessage.ruleName());
             return task.map(t -> {
                 Task tracked = taskService.trackTask(t, ProcessingState.UPDATE);
                 try {
+                    logger.info("Processing result from {} for entry {}/task {}", ruleName, entry.publicId(), tracked.name());
                     return processingHandler.test(entry, tracked);
                 } finally {
                     taskService.trackTask(tracked, ProcessingState.COMPLETE);

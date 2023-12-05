@@ -125,7 +125,7 @@ public class RulesetRepository {
                 .addValue("type", type.fieldName())
                 .addValue("format", format.fieldName()),
             RowMappers.RULESET);
-        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
+        logger.info("Found {} rulesets of type {} for {} of format {}: {}", rulesets.size(), type, businessId, format, rulesets.stream().map(Ruleset::identifyingName).toList());
         return Set.copyOf(rulesets);
     }
 
