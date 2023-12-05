@@ -3,6 +3,8 @@ package fi.digitraffic.tis.vaco.delegator;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.email.EmailService;
+import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -37,13 +39,15 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     private final DownloadRule downloadRule;
     private final StopsAndQuaysRule stopsAndQuaysRule;
     private final EmailService emailService;
+    private final EntryService entryService;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
                                          TaskService taskService,
                                          RulesetService rulesetService,
                                          DownloadRule downloadRule,
                                          StopsAndQuaysRule stopsAndQuaysRule,
-                                         EmailService emailService) {
+                                         EmailService emailService,
+                                         EntryService entryService) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = Objects.requireNonNull(messagingService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -51,17 +55,23 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         this.knownExternalRules = Objects.requireNonNull(rulesetService).listAllNames();
         this.stopsAndQuaysRule = Objects.requireNonNull(stopsAndQuaysRule);
         this.emailService = Objects.requireNonNull(emailService);
+        this.entryService = Objects.requireNonNull(entryService);
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
     public void listen(ImmutableDelegationJobMessage message, Acknowledgement acknowledgement) {
         handle(message, message.entry().publicId(), acknowledgement, (exhaustedRetries ->
-            messagingService.updateJobProcessingStatus(exhaustedRetries, ProcessingState.COMPLETE)));
+            entryService.markComplete(exhaustedRetries.entry())));
     }
 
     @Override
     protected void runTask(ImmutableDelegationJobMessage message) {
         Entry entry = message.entry();
+        if (entry.started() == null) {
+            entryService.markStarted(entry);
+        } else {
+            entryService.markUpdated(entry);
+        }
         List<Task> tasksToRun = nextTaskGroupToRun(message).orElse(List.of());
 
         logger.info("Entry {} next tasks to run {}", entry.publicId(), tasksToRun);
@@ -83,6 +93,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                         .ifPresent(t -> {
                             taskService.trackTask(t, ProcessingState.START);
                             validationJob(entry);
+                            taskService.markStatus(t, Status.SUCCESS);
                         });
                 } else if (name.equals(ConversionService.CONVERT_TASK)) {
                     logger.debug("Internal category {} detected, delegating...", name);
@@ -90,6 +101,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                         .ifPresent(t -> {
                             taskService.trackTask(t, ProcessingState.START);
                             conversionJob(entry);
+                            taskService.markStatus(t, Status.SUCCESS);
                         });
                 } else if (knownExternalRules.contains(name)) {
                     // these are currently submitted delegatively elsewhere
@@ -100,11 +112,14 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                     // TODO: we could have explicit canceling detection+handling as well
                     taskService.trackTask(task, ProcessingState.START);
                     taskService.trackTask(task, ProcessingState.COMPLETE);
+                    taskService.markStatus(task, Status.FAILED);
                 }
             });
         } else {
             if (taskService.areAllTasksCompleted(entry)) {
                 logger.debug("Job for entry {} complete!", entry.publicId());
+                entryService.markComplete(entry);
+                entryService.updateStatus(entry);
                 emailService.notifyEntryComplete(entry);
             } else {
                 // some kind of limbo/crash

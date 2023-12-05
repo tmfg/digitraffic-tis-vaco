@@ -29,6 +29,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -46,8 +47,8 @@ public class QueueHandlerController {
 
     public QueueHandlerController(QueueHandlerService queueHandlerService,
                                   VacoProperties vacoProperties) {
-        this.queueHandlerService = queueHandlerService;
-        this.vacoProperties = vacoProperties;
+        this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
 
     @PostMapping(path = "")

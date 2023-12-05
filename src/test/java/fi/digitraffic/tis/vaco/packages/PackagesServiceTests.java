@@ -11,7 +11,7 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     PackagesService packagesService;
 
     @Autowired
-    QueueHandlerRepository queueHandlerRepository;
+    EntryRepository entryRepository;
     @Autowired
     private TaskRepository taskRepository;
     @Autowired
@@ -44,7 +44,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void roundtrippingPackageEntityWorks() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
-        Entry createdEntry = queueHandlerRepository.create(entry);
+        Entry createdEntry = entryRepository.create(entry);
         Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
         Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Package> loaded = packagesService.findPackage(task, "FAKE_RULE");
@@ -57,7 +57,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void providesHelperForDownloadingReferencedFile() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
-        Entry createdEntry = queueHandlerRepository.create(entry);
+        Entry createdEntry = entryRepository.create(entry);
         Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
         Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Path> loaded = packagesService.downloadPackage(entry, task, "FAKE_RULE");

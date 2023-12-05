@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.errorhandling;
 
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import org.springframework.stereotype.Service;
 
@@ -28,5 +29,9 @@ public class ErrorHandlerService {
             }
             return (Error) resolve;
         }).toList());
+    }
+
+    public boolean hasErrors(Entry entry) {
+        return errorHandlerRepository.hasErrors(entry);
     }
 }

@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.process;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -25,8 +27,8 @@ public class TaskRepository {
     private final NamedParameterJdbcTemplate namedJdbc;
 
     public TaskRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
-        this.jdbc = jdbc;
-        this.namedJdbc = namedJdbc;
+        this.jdbc = Objects.requireNonNull(jdbc);
+        this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
 
     @Transactional
@@ -35,7 +37,7 @@ public class TaskRepository {
             jdbc.batchUpdate("""
                 INSERT INTO task (entry_id, name, priority)
                      VALUES (?, ?, ?)
-                  RETURNING id, entry_id, name, priority, created, started, updated, completed
+                  RETURNING id, entry_id, name, priority, created, started, updated, completed, status
                 """,
                 tasks,
                 100,
@@ -53,14 +55,15 @@ public class TaskRepository {
     }
 
     public Task startTask(Task task) {
-        return jdbc.queryForObject("""
-                 UPDATE task
-                    SET started = NOW()
-                  WHERE id = ?
-              RETURNING id, entry_id, name, priority, created, started, updated, completed
-            """,
+        Task started = jdbc.queryForObject("""
+                     UPDATE task
+                        SET started = NOW()
+                      WHERE id = ?
+                  RETURNING id, entry_id, name, priority, created, started, updated, completed, status
+                """,
             RowMappers.TASK,
             task.id());
+        return markStatus(started, Status.PROCESSING);
     }
 
     public Task updateTask(Task task) {
@@ -68,7 +71,7 @@ public class TaskRepository {
                  UPDATE task
                     SET updated = NOW()
                   WHERE id = ?
-              RETURNING id, entry_id, name, priority, created, started, updated, completed
+              RETURNING id, entry_id, name, priority, created, started, updated, completed, status
             """,
             RowMappers.TASK,
             task.id());
@@ -81,7 +84,7 @@ public class TaskRepository {
                     SET updated = NOW(),
                         completed = NOW()
                   WHERE id = ?
-              RETURNING id, entry_id, name, priority, created, started, updated, completed
+              RETURNING id, entry_id, name, priority, created, started, updated, completed, status
             """,
             RowMappers.TASK,
             task.id());
@@ -178,5 +181,17 @@ public class TaskRepository {
             """,
             Boolean.class,
             entry.id()));
+    }
+
+    public Task markStatus(Task task, Status status) {
+        return jdbc.queryForObject("""
+                     UPDATE task
+                        SET status = (?)::status
+                      WHERE id = ?
+                  RETURNING id, entry_id, name, priority, created, started, updated, completed, status
+                """,
+            RowMappers.TASK,
+            status.fieldName(),
+            task.id());
     }
 }

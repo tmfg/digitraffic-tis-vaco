@@ -10,6 +10,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -235,5 +236,9 @@ public class TaskService {
 
     public boolean areAllTasksCompleted(Entry entry) {
         return taskRepository.areAllTasksCompleted(entry);
+    }
+
+    public Task markStatus(Task task, Status status) {
+        return taskRepository.markStatus(task, status);
     }
 }

@@ -12,7 +12,7 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
-    private QueueHandlerRepository queueHandlerRepository;
+    private EntryRepository entryRepository;
 
     @Autowired
     private RulesetSubmissionService rulesetSubmissionService;
@@ -87,7 +87,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     }
 
     private Entry createEntryForTesting() {
-        return queueHandlerRepository.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL_4_0_0)).build());
+        return entryRepository.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL_4_0_0)).build());
     }
 
     @Test

@@ -1,9 +1,10 @@
-package fi.digitraffic.tis.vaco.queuehandler.repository;
+package fi.digitraffic.tis.vaco.entries;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -28,7 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Repository
-public class QueueHandlerRepository {
+public class EntryRepository {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -38,11 +39,11 @@ public class QueueHandlerRepository {
     private final TaskService taskService;
     private final PackagesService packagesService;
 
-    public QueueHandlerRepository(JdbcTemplate jdbc,
-                                  ObjectMapper objectMapper,
-                                  ErrorHandlerRepository errorHandlerRepository,
-                                  TaskService taskService,
-                                  PackagesService packagesService) {
+    public EntryRepository(JdbcTemplate jdbc,
+                           ObjectMapper objectMapper,
+                           ErrorHandlerRepository errorHandlerRepository,
+                           TaskService taskService,
+                           PackagesService packagesService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
@@ -64,7 +65,7 @@ public class QueueHandlerRepository {
         return jdbc.queryForObject("""
                 INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications)
                      VALUES (?, ?, ?, ?, ?, ?, ?)
-                  RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications
+                  RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications, status
                 """,
             RowMappers.ENTRY.apply(objectMapper),
             entry.businessId(),
@@ -106,7 +107,7 @@ public class QueueHandlerRepository {
     private Optional<Entry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
-                        SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications
+                        SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications, status
                           FROM entry qe
                          WHERE qe.public_id = ?
                         """,
@@ -156,6 +157,16 @@ public class QueueHandlerRepository {
                  WHERE id = ?
                 """,
                 entry.id());
+    }
+
+    public void markStatus(Entry entry, Status status) {
+        jdbc.update("""
+               UPDATE entry
+                  SET status = (?)::status
+                WHERE id = ?
+            """,
+            status.fieldName(),
+            entry.id());
     }
 
     public List<Entry> findAllByBusinessId(String businessId, boolean full) {

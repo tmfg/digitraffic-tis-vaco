@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.conversion.model.ConversionJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.operations.MessagingOperationFailedException;
@@ -31,16 +31,16 @@ public class MessagingService {
     private final SqsClient sqsClient;
     private final SqsTemplate sqsTemplate;
     private final Cache<String, String> sqsQueueUrlCache;
-    private final QueueHandlerRepository queueHandlerRepository;
+    private final EntryRepository entryRepository;
 
     public MessagingService(SqsClient sqsClient,
                             SqsTemplate sqsTemplate,
                             Cache<String, String> sqsQueueUrlCache,
-                            QueueHandlerRepository queueHandlerRepository) {
+                            EntryRepository entryRepository) {
         this.sqsClient = sqsClient;
         this.sqsTemplate = sqsTemplate;
         this.sqsQueueUrlCache = sqsQueueUrlCache;
-        this.queueHandlerRepository = queueHandlerRepository;
+        this.entryRepository = entryRepository;
     }
 
     public <P> CompletableFuture<P> sendMessage(String queueName, P payload) {
@@ -71,9 +71,9 @@ public class MessagingService {
 
     public void updateJobProcessingStatus(ImmutableDelegationJobMessage jobDescription, ProcessingState state) {
         switch (state) {
-            case START -> queueHandlerRepository.startEntryProcessing(jobDescription.entry());
-            case UPDATE -> queueHandlerRepository.updateEntryProcessing(jobDescription.entry());
-            case COMPLETE -> queueHandlerRepository.completeEntryProcessing(jobDescription.entry());
+            case START -> entryRepository.startEntryProcessing(jobDescription.entry());
+            case UPDATE -> entryRepository.updateEntryProcessing(jobDescription.entry());
+            case COMPLETE -> entryRepository.completeEntryProcessing(jobDescription.entry());
         }
     }
 

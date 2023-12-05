@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.errorhandling;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -72,5 +73,15 @@ public class ErrorHandlerRepository {
             logger.warn("Failed to batch insert tasks", dke);
             return false;
         }
+    }
+
+    public boolean hasErrors(Entry entry) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("""
+            SELECT COUNT(id) = 0
+            FROM error
+            WHERE entry_id = ?
+            """,
+            Boolean.class,
+            entry.id()));
     }
 }

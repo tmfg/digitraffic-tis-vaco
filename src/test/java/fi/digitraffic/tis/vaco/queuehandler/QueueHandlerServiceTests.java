@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class QueueHandlerServiceTests {
     private CompanyService companyService;
 
     @Mock
-    private QueueHandlerRepository queueHandlerRepository;
+    private EntryRepository entryRepository;
 
     @Mock
     private PartnershipService partnershipService;
@@ -77,7 +77,7 @@ class QueueHandlerServiceTests {
             entryRequestMapper,
             messagingService,
             companyService,
-            queueHandlerRepository,
+            entryRepository,
             partnershipService);
 
         operatorBusinessId = "123-4";
@@ -103,7 +103,7 @@ class QueueHandlerServiceTests {
         verifyNoMoreInteractions(
             messagingService,
             companyService,
-            queueHandlerRepository,
+            entryRepository,
             partnershipService);
     }
 
@@ -118,7 +118,7 @@ class QueueHandlerServiceTests {
     @Test
     void autocreatesCompanyOnNewEntryIfSourceIsFinap() {
         // given
-        given(queueHandlerRepository.create(any(Entry.class))).willAnswer(withArg(0));
+        given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
         given(companyService.createCompany(any(ImmutableCompany.class))).willAnswer(withArgInOptional(0));
         given(companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID)).willReturn(Optional.of(fintrafficCompany));
 
@@ -139,7 +139,7 @@ class QueueHandlerServiceTests {
     @Test
     void wontAutocreateCompanyIfCallerIsNotFinap() {
         // given
-        given(queueHandlerRepository.create(any(Entry.class))).willAnswer(withArg(0));
+        given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
 
         // when
         entryRequest = entryRequest.withMetadata(metadata.put("caller", "Graham Bell"));
@@ -152,7 +152,7 @@ class QueueHandlerServiceTests {
     @Test
     void wontAutocreateCompanyIfOperatorNameIsMissing() {
         // given
-        given(queueHandlerRepository.create(any(Entry.class))).willAnswer(withArg(0));
+        given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
 
         // when
         entryRequest = entryRequest.withMetadata(metadata.remove("operator-name"));

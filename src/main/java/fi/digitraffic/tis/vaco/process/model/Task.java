@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
@@ -45,5 +46,10 @@ public interface Task {
     @JsonView(DataVisibility.Internal.class)
     default List<Package> packages() {
         return List.of();
+    }
+
+    @Value.Default
+    default Status status() {
+        return Status.RECEIVED;
     }
 }

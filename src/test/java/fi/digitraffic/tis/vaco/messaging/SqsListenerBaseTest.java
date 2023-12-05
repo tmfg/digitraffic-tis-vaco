@@ -4,7 +4,7 @@ import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.Retryable;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.immutables.value.Value;
 import org.junit.jupiter.api.AfterEach;
@@ -37,7 +37,7 @@ class SqsListenerBaseTest {
     @Mock
     private MessagingService messagingService;
     @Mock
-    private QueueHandlerRepository queueHandlerRepository;
+    private EntryRepository entryRepository;
     @Mock
     private Acknowledgement acknowledgement;
 
@@ -59,7 +59,7 @@ class SqsListenerBaseTest {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(messagingService, queueHandlerRepository);
+        verifyNoMoreInteractions(messagingService, entryRepository);
     }
 
     @Test
