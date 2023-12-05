@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -16,8 +17,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 @Repository
 public class RulesetRepository {
@@ -62,6 +65,34 @@ public class RulesetRepository {
             RowMappers.RULESET);
         logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
         return Set.copyOf(rulesets);
+    }
+
+    public Map<String, Ruleset> findRulesetsAsMap(String businessId) {
+        List<Ruleset> rulesets = namedJdbc.query("""
+                WITH current_id AS (
+                    SELECT id
+                      FROM company
+                     WHERE business_id = :businessId
+                ),
+                parents AS (
+                    SELECT partner_a_id AS id
+                      FROM partnership, current_id
+                     WHERE partner_b_id = current_id.id
+                )
+                SELECT DISTINCT r.*
+                  FROM ruleset r, current_id
+                 WHERE r.owner_id = current_id.id
+                UNION
+                SELECT DISTINCT r.*
+                  FROM ruleset r, parents
+                 WHERE r.owner_id IN (parents.id)
+                   AND r.category = 'generic'
+                """,
+            new MapSqlParameterSource()
+                .addValue("businessId", businessId),
+            RowMappers.RULESET);
+        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
+        return Streams.collect(rulesets, Ruleset::identifyingName, Function.identity());
     }
 
     public Set<Ruleset> findRulesets(String businessId, TransitDataFormat format, Type type) {

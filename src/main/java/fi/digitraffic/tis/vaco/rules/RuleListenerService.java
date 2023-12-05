@@ -219,7 +219,8 @@ public class RuleListenerService {
                                     task.id(),
                                     rulesetRepository.findByName(ruleName).orElseThrow().id(),
                                     ruleName,
-                                    notice.code())
+                                    notice.code(),
+                                    notice.severity())
                                 .withRaw(objectMapper.writeValueAsBytes(sn));
                         } catch (JsonProcessingException e) {
                             logger.warn("Failed to convert tree to bytes", e);
@@ -243,7 +244,7 @@ public class RuleListenerService {
     }
 
     private boolean processRule(ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
-        Optional<Entry> e = queueHandlerService.getEntry(resultMessage.entryId());
+        Optional<Entry> e = queueHandlerService.getEntry(resultMessage.entryId(), false);
         if (e.isPresent()) {
             Entry entry = e.get();
             Optional<Task> task = taskService.findTask(entry.id(), resultMessage.ruleName());

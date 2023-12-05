@@ -39,6 +39,9 @@ public interface Error {
     @Value.Parameter
     String message();
 
+    @Value.Parameter
+    String severity();
+
     @Nullable
     byte[] raw();
 }

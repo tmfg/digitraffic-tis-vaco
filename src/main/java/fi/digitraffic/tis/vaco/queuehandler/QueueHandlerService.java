@@ -101,8 +101,8 @@ public class QueueHandlerService {
         }
     }
 
-    public Optional<Entry> getEntry(String publicId) {
-        return queueHandlerRepository.findByPublicId(publicId, false);
+    public Optional<Entry> getEntry(String publicId, boolean skipErrors) {
+        return queueHandlerRepository.findByPublicId(publicId, skipErrors);
     }
 
     public List<ImmutableEntry> getAllQueueEntriesFor(String businessId, boolean full) {
