@@ -36,7 +36,7 @@ public class ErrorHandlerRepository {
         try {
             return jdbc.query(
                     """
-                    SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, raw
+                    SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
                       FROM error em
                      WHERE em.entry_id = ?
                     """,
@@ -45,16 +45,15 @@ public class ErrorHandlerRepository {
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
         }
-
     }
 
     @Transactional
     public boolean createErrors(List<Error> errors) {
         try {
             jdbc.batchUpdate("""
-                INSERT INTO error (entry_id, task_id, ruleset_id, source, message, raw)
-                     VALUES ((SELECT id FROM entry WHERE public_id = ?), ?, ?, ?, ?, ?)
-                  RETURNING id, public_id, entry_id, task_id, ruleset_id, source, message, raw
+                INSERT INTO error (entry_id, task_id, ruleset_id, source, message, severity, raw)
+                     VALUES ((SELECT id FROM entry WHERE public_id = ?), ?, ?, ?, ?, ?, ?)
+                  RETURNING id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
                 """,
                 errors,
                 100,
@@ -64,7 +63,8 @@ public class ErrorHandlerRepository {
                     ps.setLong(3, error.rulesetId());
                     ps.setString(4, error.source());
                     ps.setString(5, error.message());
-                    ps.setObject(6, error.raw());
+                    ps.setString(6, error.severity() != null ? error.severity() : "UNKNOWN");
+                    ps.setObject(7, error.raw());
                 });
             // TODO: inspect result counts to determine everything was inserted
             return true;

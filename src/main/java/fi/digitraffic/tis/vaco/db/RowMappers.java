@@ -5,11 +5,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -24,6 +24,8 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableNotice;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +93,9 @@ public final class RowMappers {
     public static final Function<ObjectMapper, RowMapper<Entry>> ENTRY = RowMappers::mapQueueEntry;
     public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
     public static final Function<ObjectMapper, RowMapper<ImmutableConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
+    public static final Function<ObjectMapper, RowMapper<ImmutableNotice>> UI_NOTICES = RowMappers::mapUiNotices;
+    public static final Function<ObjectMapper, RowMapper<ImmutableItemCounter>> UI_NOTICE_COUNTERS = RowMappers::mapUiNoticeCounters;
+
     public static final RowMapper<ImmutableError> ERROR = (rs, rowNum) -> ImmutableError.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
@@ -98,6 +103,7 @@ public final class RowMappers {
         .rulesetId(rs.getLong("ruleset_id"))
         .source(rs.getString("source"))
         .message(rs.getString("message"))
+        .severity(rs.getString("severity"))
         .raw(rs.getBytes("raw"))
         .build();
 
@@ -147,6 +153,23 @@ public final class RowMappers {
                     .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
                     .build();
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    private static RowMapper<ImmutableNotice> mapUiNotices(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutableNotice.builder()
+            .code(rs.getString("code"))
+            .severity(rs.getString("severity"))
+            .total(rs.getInt("total"))
+            .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static RowMapper<ImmutableItemCounter> mapUiNoticeCounters(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutableItemCounter.builder()
+            .name(rs.getString("name"))
+            .total(rs.getInt("total"))
+            .build();
     }
 
     /**

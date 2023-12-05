@@ -212,7 +212,8 @@ public class RuleListenerService {
                                         .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
                                         .id(),
                                     ruleName,
-                                    notice.code())
+                                    notice.code(),
+                                    notice.severity())
                                 .withRaw(objectMapper.writeValueAsBytes(sn));
                         } catch (JsonProcessingException e) {
                             logger.warn("Failed to convert tree to bytes", e);
@@ -243,6 +244,7 @@ public class RuleListenerService {
 
     private boolean processRule(String ruleName, ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
         Optional<Entry> e = queueHandlerService.findEntry(resultMessage.entryId());
+
         if (e.isPresent()) {
             Entry entry = e.get();
             Optional<Task> task = taskService.findTask(entry.id(), resultMessage.ruleName());
