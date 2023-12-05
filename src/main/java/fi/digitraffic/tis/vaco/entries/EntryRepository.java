@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.queuehandler.repository;
+package fi.digitraffic.tis.vaco.entries;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Repository
-public class QueueHandlerRepository {
+public class EntryRepository {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -38,11 +38,11 @@ public class QueueHandlerRepository {
     private final TaskService taskService;
     private final PackagesService packagesService;
 
-    public QueueHandlerRepository(JdbcTemplate jdbc,
-                                  ObjectMapper objectMapper,
-                                  ErrorHandlerRepository errorHandlerRepository,
-                                  TaskService taskService,
-                                  PackagesService packagesService) {
+    public EntryRepository(JdbcTemplate jdbc,
+                           ObjectMapper objectMapper,
+                           ErrorHandlerRepository errorHandlerRepository,
+                           TaskService taskService,
+                           PackagesService packagesService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);

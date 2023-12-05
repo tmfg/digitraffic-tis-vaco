@@ -7,11 +7,17 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.EntriesService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -29,6 +36,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -43,11 +51,14 @@ public class QueueHandlerController {
 
     private final QueueHandlerService queueHandlerService;
     private final VacoProperties vacoProperties;
+    private final EntriesService entriesService;
 
     public QueueHandlerController(QueueHandlerService queueHandlerService,
-                                  VacoProperties vacoProperties) {
-        this.queueHandlerService = queueHandlerService;
-        this.vacoProperties = vacoProperties;
+                                  VacoProperties vacoProperties,
+                                  EntriesService entriesService) {
+        this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.entriesService = Objects.requireNonNull(entriesService);
     }
 
     @PostMapping(path = "")

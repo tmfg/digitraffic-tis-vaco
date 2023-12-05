@@ -11,7 +11,7 @@ import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
@@ -35,7 +35,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     private Entry entry;
 
     @Autowired
-    private QueueHandlerRepository queueHandlerRepository;
+    private EntryRepository entryRepository;
     @Autowired
     private TaskService taskService;
     @Autowired
@@ -72,7 +72,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     }
 
     private Entry createQueueEntryForTesting() {
-        return queueHandlerRepository.create(TestObjects.anEntry("gtfs").build());
+        return entryRepository.create(TestObjects.anEntry("gtfs").build());
     }
 
     @AfterEach

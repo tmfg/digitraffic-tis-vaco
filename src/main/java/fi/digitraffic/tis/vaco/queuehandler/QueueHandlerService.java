@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,19 +31,19 @@ public class QueueHandlerService {
 
     private final MessagingService messagingService;
     private final CompanyService companyService;
-    private final QueueHandlerRepository queueHandlerRepository;
+    private final EntryRepository entryRepository;
     private final EntryRequestMapper entryRequestMapper;
     private final PartnershipService partnershipService;
 
     public QueueHandlerService(EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
                                CompanyService companyService,
-                               QueueHandlerRepository queueHandlerRepository,
+                               EntryRepository entryRepository,
                                PartnershipService partnershipService) {
         this.entryRequestMapper = entryRequestMapper;
         this.messagingService = messagingService;
         this.companyService = companyService;
-        this.queueHandlerRepository = queueHandlerRepository;
+        this.entryRepository = entryRepository;
         this.partnershipService = partnershipService;
     }
 
@@ -53,7 +53,7 @@ public class QueueHandlerService {
 
         autoregisterCompany(converted.metadata(), converted.businessId());
 
-        Entry result = queueHandlerRepository.create(converted);
+        Entry result = entryRepository.create(converted);
 
         logger.debug("Processing done for entry request and new entry created as {}, submitting to delegation", result.publicId());
 
@@ -102,19 +102,19 @@ public class QueueHandlerService {
     }
 
     public Optional<Entry> findEntry(String publicId) {
-        return queueHandlerRepository.findByPublicId(publicId, false);
+        return entryRepository.findByPublicId(publicId, false);
     }
-  
+
     public Optional<Entry> findEntry(String publicId, boolean skipErrorsField) {
-        return queueHandlerRepository.findByPublicId(publicId, false);
+        return entryRepository.findByPublicId(publicId, skipErrorsField);
     }
 
     public Entry getEntry(String publicId, boolean skipErrorsField) {
-        return queueHandlerRepository.findByPublicId(publicId, skipErrorsField)
+        return entryRepository.findByPublicId(publicId, skipErrorsField)
             .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"));
     }
 
     public List<Entry> getAllQueueEntriesFor(String businessId, boolean full) {
-        return queueHandlerRepository.findAllByBusinessId(businessId, full);
+        return entryRepository.findAllByBusinessId(businessId, full);
     }
 }
