@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +34,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static fi.digitraffic.tis.utilities.JwtHelpers.safeGet;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @RestController
@@ -112,35 +112,25 @@ public class UiController {
         businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);
         List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, full);
         return ResponseEntity.ok(
-            Streams.map(entries, UiController::asEntryStateResource)
+            Streams.map(entries, this::asEntryStateResource)
                 .toList());
     }
 
-    private static Resource<Entry> asEntryStateResource(Entry entry) {
+    private Resource<Entry> asEntryStateResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", linkToGetEntryState(entry)));
+        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(),
+            RequestMethod.GET,
+            fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId())))));
         return new Resource<>(entry, null, links);
     }
 
-    private static Link linkToGetEntryState(Entry entry) {
-        return new Link(
-            MvcUriComponentsBuilder
-                .fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId()))
-                .toUriString(),
-            RequestMethod.GET);
-    }
-
-    private static Resource<Package> asPackageResource(Package taskPackage, Task task, Entry entry) {
+    private Resource<Package> asPackageResource(Package taskPackage, Task task, Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", linkToGetPackage(taskPackage, task, entry)));
+        links.put("refs", Map.of("self", Link.to(
+            vacoProperties.baseUrl(),
+            RequestMethod.GET,
+            fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), task.name(), taskPackage.name(), null)))));
         return new Resource<>(taskPackage, null, links);
     }
 
-    private static Link linkToGetPackage(Package taskPackage, Task task, Entry entry) {
-        return new Link(
-            MvcUriComponentsBuilder
-                .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), task.name(), taskPackage.name(), null))
-                .toUriString(),
-            RequestMethod.GET);
-    }
 }
