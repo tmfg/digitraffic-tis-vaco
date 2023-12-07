@@ -5,6 +5,7 @@ import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
 public enum Status implements PersistableEnum {
+    CANCELLED("cancelled"),
     ERRORS("errors"),
     FAILED("failed"),
     PROCESSING("processing"),
