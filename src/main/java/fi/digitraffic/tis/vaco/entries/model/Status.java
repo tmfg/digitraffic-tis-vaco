@@ -1,9 +1,11 @@
 package fi.digitraffic.tis.vaco.entries.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
 public enum Status implements PersistableEnum {
+    CANCELLED("cancelled"),
     ERRORS("errors"),
     FAILED("failed"),
     PROCESSING("processing"),
@@ -19,6 +21,7 @@ public enum Status implements PersistableEnum {
 
     public static Status forField(String field) {
         return switch (field) {
+            case "cancelled" -> CANCELLED;
             case "errors" -> ERRORS;
             case "failed" -> FAILED;
             case "processing" -> PROCESSING;
@@ -30,6 +33,7 @@ public enum Status implements PersistableEnum {
     }
 
     @Override
+    @JsonValue
     public String fieldName() {
         return fieldName;
     }
