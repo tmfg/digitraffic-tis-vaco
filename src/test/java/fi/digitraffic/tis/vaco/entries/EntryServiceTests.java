@@ -12,7 +12,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.BDDMockito;
+import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -32,10 +34,14 @@ class EntryServiceTests {
 
     private ImmutableEntry entry;
 
+    // InOrder enables reusing simple verifications in order
+    private InOrder inOrderRepository;
+
     @BeforeEach
     void setUp() {
         entryService = new EntryService(taskService, errorHandlerService, entryRepository);
         entry = ImmutableEntry.copyOf(TestObjects.anEntry().id(99999999L).build());
+        inOrderRepository = Mockito.inOrder(entryRepository);
     }
 
     @AfterEach
@@ -72,6 +78,9 @@ class EntryServiceTests {
         givenTaskInStatus(Status.ERRORS);
         thenEntryIsMarkedAs(Status.ERRORS);
 
+        givenTaskInStatus(Status.WARNINGS);
+        thenEntryIsMarkedAs(Status.WARNINGS);
+
         givenTaskInStatus(Status.CANCELLED);
         thenEntryIsMarkedAs(Status.WARNINGS);
     }
@@ -83,6 +92,6 @@ class EntryServiceTests {
 
     private void thenEntryIsMarkedAs(Status status) {
         entryService.updateStatus(entry);
-        BDDMockito.then(entryRepository).should().markStatus(entry, status);
+        inOrderRepository.verify(entryRepository).markStatus(entry, status);
     }
 }

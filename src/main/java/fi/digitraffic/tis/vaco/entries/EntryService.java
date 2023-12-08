@@ -67,6 +67,9 @@ public class EntryService {
             if (Status.ERRORS.equals(t.status())) {
                 return Status.ERRORS;
             }
+            if (Status.WARNINGS.equals(t.status())) {
+                return Status.WARNINGS;
+            }
             if (Status.CANCELLED.equals(t.status())) {
                 return Status.WARNINGS;
             }

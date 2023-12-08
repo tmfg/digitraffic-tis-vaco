@@ -197,7 +197,16 @@ public class RuleListenerService {
                     taskService.markStatus(task, Status.SUCCESS);
                 } else {
                     errorHandlerService.reportErrors(errors);
-                    taskService.markStatus(task, Status.ERRORS);
+                    Map<String, Long> severities = errorHandlerService.getSeverityCounts(entry, task);
+                    logger.debug("{}/{} produced notices {}", entry.publicId(), task.name(), severities);
+                    if (severities.getOrDefault("ERROR", 0L) > 0) {
+                        taskService.markStatus(task, Status.ERRORS);
+                    // TODO: this branch is commented out for now for demo purposes and should be restored after 15 December
+                    //} else if (severities.contains("WARNING")) {
+                    //    taskService.markStatus(task, Status.WARNINGS);
+                    } else {
+                        taskService.markStatus(task, Status.SUCCESS);
+                    }
                 }
             } else {
                 logger.warn("Expected file 'report.json' missing from output for message {}", resultMessage);

@@ -1,11 +1,13 @@
 package fi.digitraffic.tis.vaco.errorhandling;
 
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ErrorHandlerService {
@@ -33,5 +35,9 @@ public class ErrorHandlerService {
 
     public boolean hasErrors(Entry entry) {
         return errorHandlerRepository.hasErrors(entry);
+    }
+
+    public Map<String, Long> getSeverityCounts(Entry entry, Task task) {
+        return errorHandlerRepository.getSeverityCounts(entry, task);
     }
 }
