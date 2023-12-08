@@ -78,8 +78,9 @@ public class ErrorHandlerRepository {
     public boolean hasErrors(Entry entry) {
         return Boolean.TRUE.equals(jdbc.queryForObject("""
             SELECT COUNT(id) = 0
-            FROM error
-            WHERE entry_id = ?
+              FROM error
+             WHERE entry_id = ?
+               AND severity = 'ERROR'
             """,
             Boolean.class,
             entry.id()));
