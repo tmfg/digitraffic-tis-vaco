@@ -136,19 +136,31 @@ public class RulesetSubmissionService {
 
         Streams.map(rulesets, r -> {
                 String identifyingName = r.identifyingName();
-                Optional<RuleConfiguration> configuration = Optional.ofNullable(configs.get(identifyingName));
-                ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
-                    entry,
-                    task,
-                    configuration,
-                    identifyingName);
-                // mark the processing of matching task as started
-                // 1) shows in API response that the processing has started
-                // 2) this prevents unintended retrying of the task
-                Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
-                ruleTask.map(t -> taskService.trackTask(t, ProcessingState.START))
-                    .orElseThrow();
-                return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
+                if (rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
+                    logger.debug("Entry {}, ruleset {} all dependencies completed successfully, submitting", entry.publicId(), identifyingName);
+                    Optional<RuleConfiguration> configuration = Optional.ofNullable(configs.get(identifyingName));
+                    ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
+                        entry,
+                        task,
+                        configuration,
+                        identifyingName);
+                    // mark the processing of matching task as started
+                    // 1) shows in API response that the processing has started
+                    // 2) this prevents unintended retrying of the task
+                    Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
+                    ruleTask.map(t -> taskService.trackTask(t, ProcessingState.START))
+                        .orElseThrow();
+                    return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
+                } else {
+                    logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
+                    // dependencies failed or were cancelled, mark this one as cancelled and complete
+                    taskService.findTask(entry.id(), identifyingName)
+                        .map(t -> taskService.trackTask(t, ProcessingState.START))
+                        .map(t -> taskService.markStatus(t, Status.CANCELLED))
+                        .map(t -> taskService.trackTask(t, ProcessingState.COMPLETE))
+                        .orElseThrow();
+                    return CompletableFuture.completedFuture(null);
+                }
             })
             .map(CompletableFuture::join)
             .complete();

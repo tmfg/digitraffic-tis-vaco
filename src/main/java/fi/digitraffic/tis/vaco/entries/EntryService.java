@@ -17,10 +17,12 @@ public class EntryService {
     private final TaskService taskService;
     private final ErrorHandlerService errorHandlerService;
 
-    public EntryService(EntryRepository entryRepository, TaskService taskService, ErrorHandlerService errorHandlerService) {
+    public EntryService(TaskService taskService,
+                        ErrorHandlerService errorHandlerService,
+                        EntryRepository entryRepository) {
+        this.taskService = Objects.requireNonNull(taskService);
+        this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
-        this.taskService = taskService;
-        this.errorHandlerService = errorHandlerService;
     }
 
     public Optional<Status> getStatus(String publicId) {
@@ -64,6 +66,9 @@ public class EntryService {
             }
             if (Status.ERRORS.equals(t.status())) {
                 return Status.ERRORS;
+            }
+            if (Status.CANCELLED.equals(t.status())) {
+                return Status.WARNINGS;
             }
         }
         if (errorHandlerService.hasErrors(entry)) {

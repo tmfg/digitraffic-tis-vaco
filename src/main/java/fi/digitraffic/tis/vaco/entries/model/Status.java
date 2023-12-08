@@ -21,6 +21,7 @@ public enum Status implements PersistableEnum {
 
     public static Status forField(String field) {
         return switch (field) {
+            case "cancelled" -> CANCELLED;
             case "errors" -> ERRORS;
             case "failed" -> FAILED;
             case "processing" -> PROCESSING;
