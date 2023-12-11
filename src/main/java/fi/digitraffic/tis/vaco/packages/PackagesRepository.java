@@ -34,11 +34,13 @@ public class PackagesRepository {
         }
     }
 
-    public Package createPackage(Package p) {
+    public Package upsertPackage(Package p) {
         return jdbc.queryForObject("""
                 INSERT INTO package(task_id, path, name)
                      VALUES (?, ?, ?)
-                  RETURNING id, task_id, name, path
+                ON CONFLICT (task_id, name)
+                         DO UPDATE SET path = excluded.path
+                  RETURNING *
                 """,
             RowMappers.PACKAGE,
             p.taskId(), p.path(), p.name());
