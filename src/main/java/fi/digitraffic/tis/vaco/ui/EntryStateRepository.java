@@ -2,16 +2,17 @@ package fi.digitraffic.tis.vaco.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableNotice;
+import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
+import fi.digitraffic.tis.vaco.ui.model.Notice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import fi.digitraffic.tis.vaco.errorhandling.Error;
 
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class EntryStateRepository {
@@ -22,11 +23,11 @@ public class EntryStateRepository {
 
 
     public EntryStateRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
-        this.jdbc = jdbc;
-        this.objectMapper = objectMapper;
+        this.jdbc = Objects.requireNonNull(jdbc);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public List<ImmutableNotice> findValidationRuleNotices(Long taskId) {
+    public List<Notice> findValidationRuleNotices(Long taskId) {
         try {
             return jdbc.query("""
                       SELECT message AS code,
@@ -49,7 +50,7 @@ public class EntryStateRepository {
         }
     }
 
-    public List<ImmutableItemCounter> findValidationRuleCounters(Long taskId) {
+    public List<ItemCounter> findValidationRuleCounters(Long taskId) {
         try {
             return jdbc.query("""
                     ( SELECT 'ALL' AS name,
@@ -70,7 +71,7 @@ public class EntryStateRepository {
         }
     }
 
-    public List<ImmutableError> findNoticeInstances(Long taskId, String code) {
+    public List<Error> findNoticeInstances(Long taskId, String code) {
         try {
             return jdbc.query(
                 """

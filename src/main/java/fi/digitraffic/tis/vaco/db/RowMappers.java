@@ -27,6 +27,9 @@ import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableNotice;
+import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
+import fi.digitraffic.tis.vaco.ui.model.Notice;
+import fi.digitraffic.tis.vaco.errorhandling.Error;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,10 +98,10 @@ public final class RowMappers {
     public static final Function<ObjectMapper, RowMapper<Entry>> ENTRY = RowMappers::mapQueueEntry;
     public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
     public static final Function<ObjectMapper, RowMapper<ImmutableConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
-    public static final Function<ObjectMapper, RowMapper<ImmutableNotice>> UI_NOTICES = RowMappers::mapUiNotices;
-    public static final Function<ObjectMapper, RowMapper<ImmutableItemCounter>> UI_NOTICE_COUNTERS = RowMappers::mapUiNoticeCounters;
+    public static final Function<ObjectMapper, RowMapper<Notice>> UI_NOTICES = RowMappers::mapUiNotices;
+    public static final Function<ObjectMapper, RowMapper<ItemCounter>> UI_NOTICE_COUNTERS = RowMappers::mapUiNoticeCounters;
 
-    public static final RowMapper<ImmutableError> ERROR = (rs, rowNum) -> ImmutableError.builder()
+    public static final RowMapper<Error> ERROR = (rs, rowNum) -> ImmutableError.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
         .taskId(rs.getLong("task_id"))
@@ -159,7 +162,7 @@ public final class RowMappers {
     }
 
     @SuppressWarnings("unchecked")
-    private static RowMapper<ImmutableNotice> mapUiNotices(ObjectMapper objectMapper) {
+    private static RowMapper<Notice> mapUiNotices(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableNotice.builder()
             .code(rs.getString("code"))
             .severity(rs.getString("severity"))
@@ -168,7 +171,7 @@ public final class RowMappers {
     }
 
     @SuppressWarnings("unchecked")
-    private static RowMapper<ImmutableItemCounter> mapUiNoticeCounters(ObjectMapper objectMapper) {
+    private static RowMapper<ItemCounter> mapUiNoticeCounters(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableItemCounter.builder()
             .name(rs.getString("name"))
             .total(rs.getInt("total"))

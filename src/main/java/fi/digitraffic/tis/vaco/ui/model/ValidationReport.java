@@ -2,6 +2,8 @@ package fi.digitraffic.tis.vaco.ui.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.packages.model.Package;
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -17,6 +19,8 @@ public interface ValidationReport {
 
     List<ItemCounter> counters();
 
-    List<ImmutableNotice> notices();
+    List<Notice> notices();
+
+    List<Resource<Package>> packages();
 }
 
