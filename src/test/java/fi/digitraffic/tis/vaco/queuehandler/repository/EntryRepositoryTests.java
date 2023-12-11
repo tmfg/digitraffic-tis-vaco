@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -39,10 +40,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-class QueueHandlerRepositoryTests extends SpringBootIntegrationTestBase {
+class EntryRepositoryTests extends SpringBootIntegrationTestBase {
 
     @Autowired
-    private QueueHandlerRepository repository;
+    private EntryRepository repository;
 
     @Autowired
     private ObjectMapper objectMapper;

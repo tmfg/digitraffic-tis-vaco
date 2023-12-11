@@ -29,14 +29,20 @@ public class EntryStateRepository {
 
     public List<Notice> findValidationRuleNotices(Long taskId) {
         try {
-            return jdbc.query("select message as code, severity, count(*) as total " +
-                    "from vaco.vaco.error where task_id = ? " +
-                    "group by message, severity " +
-                    "order by case when severity = 'ERROR' " +
-                    "   then 1 when severity = 'WARNING' " +
-                    "   then 2 when severity = 'INFO' " +
-                    "   then 3 else 4 end asc, " +
-                    "   message asc",
+            return jdbc.query("""
+                      SELECT message AS code,
+                             severity,
+                             COUNT(*) AS total
+                        FROM error
+                       WHERE task_id = ?
+                    GROUP BY message, severity
+                    ORDER BY CASE
+                                WHEN severity = 'ERROR' THEN 1
+                                WHEN severity = 'WARNING' THEN 2
+                                WHEN severity = 'INFO' THEN 3
+                                ELSE 4
+                             END ASC,
+                             message ASC""",
                 RowMappers.UI_NOTICES.apply(objectMapper),
                 taskId);
         } catch (EmptyResultDataAccessException erdae) {
@@ -46,13 +52,18 @@ public class EntryStateRepository {
 
     public List<ItemCounter> findValidationRuleCounters(Long taskId) {
         try {
-            return jdbc.query(
-                "(select 'ALL' as name, count(*) as total from vaco.vaco.error " +
-                    "where task_id = ?) " +
-                    "union all " +
-                    "(select severity as name, count(*) as total " +
-                    "from vaco.vaco.error where task_id = ? " +
-                    "group by severity)",
+            return jdbc.query("""
+                    ( SELECT 'ALL' AS name,
+                             COUNT(*) AS total
+                        FROM error
+                       WHERE task_id = ?)
+                    UNION ALL
+                    ( SELECT severity AS name,
+                             COUNT(*) AS total
+                        FROM error
+                       WHERE task_id = ?
+                    GROUP BY severity)
+                    """,
                 RowMappers.UI_NOTICE_COUNTERS.apply(objectMapper),
                 taskId, taskId);
         } catch (EmptyResultDataAccessException erdae) {

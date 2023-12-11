@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.queuehandler.repository.QueueHandlerRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.slf4j.Logger;
@@ -20,15 +20,15 @@ public class ConversionQueueSqsListener extends SqsListenerBase<ImmutableConvers
 
     private final MessagingService messagingService;
     private final ConversionService conversionService;
-    private final QueueHandlerRepository queueHandlerRepository;
+    private final EntryRepository entryRepository;
 
     public ConversionQueueSqsListener(MessagingService messagingService,
                                       ConversionService conversionService,
-                                      QueueHandlerRepository queueHandlerRepository) {
+                                      EntryRepository entryRepository) {
         super((message, stats) -> messagingService.submitConversionJob(message.withRetryStatistics(stats)));
         this.messagingService = messagingService;
         this.conversionService = conversionService;
-        this.queueHandlerRepository = queueHandlerRepository;
+        this.entryRepository = entryRepository;
     }
 
     @SqsListener(QueueNames.VACO_JOBS_CONVERSION)
@@ -43,7 +43,7 @@ public class ConversionQueueSqsListener extends SqsListenerBase<ImmutableConvers
         logger.debug("Conversion complete for {}, resubmitting to delegation", message.entry().publicId());
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
-            .entry(queueHandlerRepository.reload(message.entry()))
+            .entry(entryRepository.reload(message.entry()))
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         messagingService.submitProcessingJob(job);

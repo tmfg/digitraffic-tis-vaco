@@ -7,6 +7,7 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,20 +20,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.util.Map;
 import java.util.Optional;
 
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @RestController
 @RequestMapping("/company")
 public class CompanyController {
 
+    private final VacoProperties vacoProperties;
     private final CompanyService companyService;
 
-    public CompanyController(CompanyService companyService) {
+    public CompanyController(VacoProperties vacoProperties, CompanyService companyService) {
+        this.vacoProperties = vacoProperties;
         this.companyService = companyService;
     }
 
@@ -55,15 +58,10 @@ public class CompanyController {
             .orElse(Responses.notFound(String.format("A company with business ID %s does not exist", businessId)));
     }
 
-    private static Resource<Company> asCompanyResource(Company company) {
-        return new Resource<>(company, null, Map.of("refs", Map.of("self", linkToGetCompany(company))));
+    private Resource<Company> asCompanyResource(Company company) {
+        return new Resource<>(company, null, Map.of("refs", Map.of("self", Link.to(vacoProperties.baseUrl(),
+            RequestMethod.GET,
+            fromMethodCall(on(CompanyController.class).getCompanyByBusinessId(company.businessId()))))));
     }
 
-    private static Link linkToGetCompany(Company company) {
-        return new Link(
-                MvcUriComponentsBuilder
-                        .fromMethodCall(on(CompanyController.class).getCompanyByBusinessId(company.businessId()))
-                        .toUriString(),
-                RequestMethod.GET);
-    }
 }

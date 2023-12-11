@@ -39,6 +39,7 @@ public interface Error {
     @Value.Parameter
     String message();
 
+    @Value.Parameter
     @Value.Default
     default String severity() {
         return "UNKNOWN";

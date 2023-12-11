@@ -22,19 +22,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 import static fi.digitraffic.tis.utilities.JwtHelpers.safeGet;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @RestController
@@ -46,8 +45,8 @@ public class QueueHandlerController {
 
     public QueueHandlerController(QueueHandlerService queueHandlerService,
                                   VacoProperties vacoProperties) {
-        this.queueHandlerService = queueHandlerService;
-        this.vacoProperties = vacoProperties;
+        this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
 
     @PostMapping(path = "")
@@ -84,7 +83,7 @@ public class QueueHandlerController {
 
     private Resource<Entry> asQueueHandlerResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", linkToGetEntry(entry)));
+        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId())))));
 
         Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
 
@@ -92,12 +91,7 @@ public class QueueHandlerController {
             ConcurrentMap<String, Map<String, Link>> packageLinks = new ConcurrentHashMap<>();
             entry.packages().forEach(p -> {
                 String taskName = tasks.get(p.taskId()).name();
-                packageLinks.computeIfAbsent(taskName, t -> new HashMap<>())
-                    .put(p.name(),
-                        constructLink(
-                            vacoProperties,
-                            MvcUriComponentsBuilder.fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null)),
-                            RequestMethod.GET));
+                packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))));
             });
 
             links.putAll(packageLinks);
@@ -106,22 +100,4 @@ public class QueueHandlerController {
         return new Resource<>(entry, null, links);
     }
 
-    private Link linkToGetEntry(Entry entry) {
-        return constructLink(
-            vacoProperties,
-            MvcUriComponentsBuilder.fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId())),
-            RequestMethod.GET);
-    }
-
-    private Link constructLink(VacoProperties vacoProperties,
-                               UriComponentsBuilder uriComponentsBuilder,
-                               RequestMethod method) {
-        URI baseUri = URI.create(vacoProperties.baseUrl());
-        return new Link(uriComponentsBuilder
-            .scheme(baseUri.getScheme())
-            .host(baseUri.getHost())
-            .port(baseUri.getPort())
-            .toUriString(),
-            method);
-    }
 }

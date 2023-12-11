@@ -7,6 +7,7 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -57,8 +58,6 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                 Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, tracked, entry.format() + ".zip");
 
                 try {
-                    // TODO: this is copypaste, refactor
-
                     S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), DOWNLOAD_SUBTASK, DOWNLOAD_SUBTASK);
                     S3Path ruleS3Input = ruleBasePath.resolve("input");
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
@@ -67,6 +66,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         .thenApply(track(tracked, ProcessingState.UPDATE))
                         .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
                         .thenApply(track(tracked, ProcessingState.COMPLETE))
+                        .thenApply(status(tracked, Status.SUCCESS))
                         .join();
                     String downloadedFilePackage = "result";
 
@@ -92,6 +92,13 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     private <T> Function<T, T> track(Task task, ProcessingState state) {
         return t -> {
             taskService.trackTask(task, state);
+            return t;
+        };
+    }
+
+    private <T> Function<T, T> status(Task task, Status status) {
+        return t -> {
+            taskService.markStatus(task, status);
             return t;
         };
     }

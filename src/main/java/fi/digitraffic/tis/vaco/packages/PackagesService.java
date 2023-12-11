@@ -93,7 +93,7 @@ public class PackagesService {
      * @return Saved Package with updated ids, references etc.
      */
     public Package registerPackage(Package p) {
-        return packagesRepository.createPackage(p);
+        return packagesRepository.upsertPackage(p);
     }
 
     public List<Package> findPackages(Task task) {

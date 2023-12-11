@@ -8,6 +8,7 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -33,7 +34,6 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,8 +78,12 @@ public class RulesetSubmissionService {
             .map(task -> {
                 Set<Ruleset> rulesets = selectRulesets(entry, configuration);
 
-                submitRules(entry, task, configuration, rulesets);
-
+                if (rulesets.isEmpty()) {
+                    taskService.markStatus(task, Status.FAILED);
+                } else {
+                    submitRules(entry, task, configuration, rulesets);
+                    taskService.markStatus(task, Status.SUCCESS);
+                }
                 return taskService.trackTask(task, ProcessingState.COMPLETE);
             }).orElseThrow();
     }
@@ -132,19 +136,31 @@ public class RulesetSubmissionService {
 
         Streams.map(rulesets, r -> {
                 String identifyingName = r.identifyingName();
-                Optional<RuleConfiguration> configuration = Optional.ofNullable(configs.get(identifyingName));
-                ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
-                    entry,
-                    task,
-                    configuration,
-                    identifyingName);
-                // mark the processing of matching task as started
-                // 1) shows in API response that the processing has started
-                // 2) this prevents unintended retrying of the task
-                Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
-                ruleTask.map(t -> taskService.trackTask(t, ProcessingState.START))
-                    .orElseThrow();
-                return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
+                if (rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
+                    logger.debug("Entry {}, ruleset {} all dependencies completed successfully, submitting", entry.publicId(), identifyingName);
+                    Optional<RuleConfiguration> configuration = Optional.ofNullable(configs.get(identifyingName));
+                    ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
+                        entry,
+                        task,
+                        configuration,
+                        identifyingName);
+                    // mark the processing of matching task as started
+                    // 1) shows in API response that the processing has started
+                    // 2) this prevents unintended retrying of the task
+                    Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
+                    ruleTask.map(t -> taskService.trackTask(t, ProcessingState.START))
+                        .orElseThrow();
+                    return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
+                } else {
+                    logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
+                    // dependencies failed or were cancelled, mark this one as cancelled and complete
+                    taskService.findTask(entry.id(), identifyingName)
+                        .map(t -> taskService.trackTask(t, ProcessingState.START))
+                        .map(t -> taskService.markStatus(t, Status.CANCELLED))
+                        .map(t -> taskService.trackTask(t, ProcessingState.COMPLETE))
+                        .orElseThrow();
+                    return CompletableFuture.completedFuture(null);
+                }
             })
             .map(CompletableFuture::join)
             .complete();

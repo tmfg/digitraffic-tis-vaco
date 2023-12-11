@@ -1,11 +1,11 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.errorhandling.Error;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -18,7 +18,6 @@ import java.util.List;
 @Value.Immutable
 @JsonSerialize(as = ImmutableEntry.class)
 @JsonDeserialize(as = ImmutableEntry.class)
-@JsonInclude(JsonInclude.Include.NON_ABSENT)
 public interface Entry {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
@@ -81,4 +80,9 @@ public interface Entry {
 
     @Nullable
     LocalDateTime completed();
+
+    @Value.Default
+    default Status status() {
+        return Status.RECEIVED;
+    }
 }

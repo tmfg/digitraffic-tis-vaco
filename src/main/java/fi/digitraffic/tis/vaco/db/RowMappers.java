@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -68,6 +69,7 @@ public final class RowMappers {
             .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
             .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
             .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
+            .status(Status.forField(rs.getString("status")))
             .build();
 
     public static final RowMapper<Package> PACKAGE = (rs, rowNum) -> (Package) ImmutablePackage.builder()
@@ -112,20 +114,21 @@ public final class RowMappers {
 
     private static RowMapper<Entry> mapQueueEntry(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableEntry.builder()
-                .id(rs.getLong("id"))
-                .publicId(rs.getString("public_id"))
-                .businessId(rs.getString("business_id"))
-                .name(rs.getString("name"))
-                .format(rs.getString("format"))
-                .url(rs.getString("url"))
-                .etag(rs.getString("etag"))
-                .metadata(readJson(objectMapper, rs, "metadata"))
-                .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
-                .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
-                .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
-                .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
-                .notifications(List.of(ArraySqlValue.read(rs, "notifications")))
-                .build();
+            .id(rs.getLong("id"))
+            .publicId(rs.getString("public_id"))
+            .businessId(rs.getString("business_id"))
+            .name(rs.getString("name"))
+            .format(rs.getString("format"))
+            .url(rs.getString("url"))
+            .etag(rs.getString("etag"))
+            .metadata(readJson(objectMapper, rs, "metadata"))
+            .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
+            .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
+            .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
+            .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
+            .notifications(List.of(ArraySqlValue.read(rs, "notifications")))
+            .status(Status.forField(rs.getString("status")))
+            .build();
     }
 
     @SuppressWarnings("unchecked")
