@@ -7,6 +7,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.badges.BadgeController;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -91,10 +92,9 @@ public class UiController {
                 }
             }
         });
-
         return ResponseEntity.ok(new Resource<>(
             ImmutableEntryState.builder()
-                .entry(entry)
+                .entry(asEntryStateResource(entry))
                 .validationReports(validationReports)
                 .build(), null, null));
     }
@@ -114,9 +114,15 @@ public class UiController {
 
     private Resource<Entry> asEntryStateResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(),
+        Map<String, Link> linkInstances = new HashMap<>();
+        linkInstances.put("self", Link.to(vacoProperties.baseUrl(),
             RequestMethod.GET,
-            fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId())))));
+            fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId()))));
+        linkInstances.put("badge", Link.to(vacoProperties.baseUrl(),
+            RequestMethod.GET,
+            fromMethodCall(on(BadgeController.class).entryBadge(entry.publicId(), null))));
+
+        links.put("refs", linkInstances);
         return new Resource<>(entry, null, links);
     }
 }
