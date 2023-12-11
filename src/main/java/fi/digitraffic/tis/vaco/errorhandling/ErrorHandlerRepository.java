@@ -8,6 +8,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import fi.digitraffic.tis.vaco.errorhandling.Error;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class ErrorHandlerRepository {
         this.jdbc = jdbc;
     }
 
-    public ImmutableError create(Error error) {
+    public Error create(Error error) {
         return jdbc.queryForObject("""
             INSERT INTO error (entry_id, task_id, ruleset_id, message, raw)
                  VALUES (?, ?, ?, ?, ?)
@@ -32,7 +33,7 @@ public class ErrorHandlerRepository {
             error.entryId(), error.taskId(), error.rulesetId(), error.message(), error.raw());
     }
 
-    public List<ImmutableError> findErrorsByEntryId(Long entryId) {
+    public List<Error> findErrorsByEntryId(Long entryId) {
         try {
             return jdbc.query(
                     """
@@ -63,7 +64,7 @@ public class ErrorHandlerRepository {
                     ps.setLong(3, error.rulesetId());
                     ps.setString(4, error.source());
                     ps.setString(5, error.message());
-                    ps.setString(6, error.severity() != null ? error.severity() : "UNKNOWN");
+                    ps.setString(6, error.severity());
                     ps.setObject(7, error.raw());
                 });
             // TODO: inspect result counts to determine everything was inserted

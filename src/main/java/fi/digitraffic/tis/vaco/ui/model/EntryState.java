@@ -2,8 +2,6 @@ package fi.digitraffic.tis.vaco.ui.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.utilities.dto.Resource;
-import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
@@ -18,15 +16,9 @@ public interface EntryState {
     @Value.Parameter
     Entry entry();
 
-    //@Value.Parameter
-    //String status();
-
     @Value.Parameter
     @Nullable
     EntrySummary summary();
 
     List<ValidationReport> validationReports();
-
-    @Nullable
-    List<Resource<Package>> validationPackages();
 }

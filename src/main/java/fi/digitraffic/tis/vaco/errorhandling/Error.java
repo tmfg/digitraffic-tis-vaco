@@ -39,8 +39,10 @@ public interface Error {
     @Value.Parameter
     String message();
 
-    @Value.Parameter
-    String severity();
+    @Value.Default
+    default String severity() {
+        return "UNKNOWN";
+    }
 
     @Nullable
     byte[] raw();

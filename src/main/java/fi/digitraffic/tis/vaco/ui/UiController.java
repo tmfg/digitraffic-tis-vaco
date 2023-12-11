@@ -1,19 +1,20 @@
 package fi.digitraffic.tis.vaco.ui;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ui.model.EntryState;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import fi.digitraffic.tis.vaco.ui.model.ValidationReport;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -50,10 +52,10 @@ public class UiController {
     private final RulesetRepository rulesetRepository;
 
     public UiController(VacoProperties vacoProperties, EntryStateService entryStateService, QueueHandlerService queueHandlerService, RulesetRepository rulesetRepository) {
-        this.vacoProperties = vacoProperties;
-        this.entryStateService = entryStateService;
-        this.queueHandlerService = queueHandlerService;
-        this.rulesetRepository = rulesetRepository;
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.entryStateService = Objects.requireNonNull(entryStateService);
+        this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
+        this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -69,7 +71,7 @@ public class UiController {
 
     @GetMapping(path = "/entries/{publicId}/state")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId) {
+    public ResponseEntity<Resource<EntryState>> fetchEntryState(@PathVariable("publicId") String publicId) {
         Optional<Entry> entryOpt = queueHandlerService.findEntry(publicId, true);
         if(entryOpt.isEmpty()) {
             return Responses.notFound((String.format("A ticket with public ID %s does not exist", publicId)));
@@ -77,30 +79,24 @@ public class UiController {
 
         Entry entry = entryOpt.get();
         Map<String, Task> tasksByName = Streams.collect(entry.tasks(), Task::name, Function.identity());
-        Map<String, Ruleset> rulesets = rulesetRepository.findRulesetsAsMap("2942108-7");
+        Map<String, Ruleset> rulesets = rulesetRepository.findRulesetsAsMap(Constants.FINTRAFFIC_BUSINESS_ID);
         List<ValidationReport> validationReports =  new ArrayList<>();
         entry.validations().forEach(validationInput -> {
             Task ruleTask = tasksByName.get(validationInput.name());
+            List<Package> taskPackages = Streams.filter(entry.packages(), p -> p.taskId().equals(ruleTask.id())).toList();
             if (ruleTask != null) {
-                ValidationReport report = entryStateService.getValidationReport(ruleTask, rulesets.get(validationInput.name()));
+                ValidationReport report = entryStateService.getValidationReport(ruleTask, rulesets.get(validationInput.name()), taskPackages, entry);
                 if(report != null) {
                     validationReports.add(report);
                 }
             }
         });
 
-        List<Resource<Package>> validationPackages = new ArrayList<>();
-        Map<Long, Task> tasksById = Streams.collect(entry.tasks(), Task::id, Function.identity());
-        entry.packages().forEach(p -> {
-            Task task = tasksById.get(p.taskId());
-            validationPackages.add(asPackageResource(p, task, entry));
-        });
-
-        return ResponseEntity.ok(new Resource(ImmutableEntryState.builder()
-            .entry(entry)
-            .validationReports(validationReports)
-            .validationPackages(validationPackages)
-            .build(), null,  null));
+        return ResponseEntity.ok(new Resource<>(
+            ImmutableEntryState.builder()
+                .entry(entry)
+                .validationReports(validationReports)
+                .build(), null, null));
     }
 
     @GetMapping(path = "/entries")
@@ -126,20 +122,6 @@ public class UiController {
         return new Link(
             MvcUriComponentsBuilder
                 .fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId()))
-                .toUriString(),
-            RequestMethod.GET);
-    }
-
-    private static Resource<Package> asPackageResource(Package taskPackage, Task task, Entry entry) {
-        Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", linkToGetPackage(taskPackage, task, entry)));
-        return new Resource<>(taskPackage, null, links);
-    }
-
-    private static Link linkToGetPackage(Package taskPackage, Task task, Entry entry) {
-        return new Link(
-            MvcUriComponentsBuilder
-                .fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), task.name(), taskPackage.name(), null))
                 .toUriString(),
             RequestMethod.GET);
     }

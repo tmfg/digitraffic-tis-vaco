@@ -104,9 +104,9 @@ public class QueueHandlerService {
     public Optional<Entry> findEntry(String publicId) {
         return queueHandlerRepository.findByPublicId(publicId, false);
     }
-  
+
     public Optional<Entry> findEntry(String publicId, boolean skipErrorsField) {
-        return queueHandlerRepository.findByPublicId(publicId, false);
+        return queueHandlerRepository.findByPublicId(publicId, skipErrorsField);
     }
 
     public Entry getEntry(String publicId, boolean skipErrorsField) {
