@@ -31,15 +31,15 @@ public class UiControllerIntegrationTests extends SpringBootIntegrationTestBase 
         JsonNode fetchResult = apiResponse(fetchResponse);
 
         assertAll("Entry fields are fetched properly",
-            () -> assertThat(fetchResult.get("data").get("entry").get("name").textValue(), equalTo(request.getName())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("url").textValue(), equalTo(request.getUrl())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("etag").textValue(), equalTo(request.getEtag())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("format").textValue(), equalTo(request.getFormat())));
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("name").textValue(), equalTo(request.getName())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("url").textValue(), equalTo(request.getUrl())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("etag").textValue(), equalTo(request.getEtag())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("format").textValue(), equalTo(request.getFormat())));
     }
 
     @Test
     void returnsError404OnNonExistingId() throws Exception {
-        MvcResult fetchResponse = apiCall(get("/ui/entries/smth/state"))
+        apiCall(get("/ui/entries/smth/state"))
             .andExpect(status().isNotFound())
             .andReturn();
     }

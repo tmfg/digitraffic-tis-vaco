@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.ui.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
@@ -14,7 +15,7 @@ import java.util.List;
 public interface EntryState {
 
     @Value.Parameter
-    Entry entry();
+    Resource<Entry> entry();
 
     @Value.Parameter
     @Nullable
