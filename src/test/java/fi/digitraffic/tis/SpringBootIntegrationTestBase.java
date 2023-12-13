@@ -75,7 +75,6 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
         registry.add("vaco.aws.endpoint", () -> localstack.getEndpoint());
         registry.add("vaco.scheduling.enable", () -> false);
         registry.add("spring.cloud.azure.active-directory.enabled", () -> false);
-        //registry.add("spring.cloud.azure.active-directory.credential.client-id", () -> "<>");
     }
 
     @Autowired

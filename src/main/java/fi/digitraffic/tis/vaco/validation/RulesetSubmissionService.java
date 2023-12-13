@@ -44,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class RulesetSubmissionService {
     public static final String VALIDATE_TASK = "validate";
+    public static final String CONVERT_TASK = "convert";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 

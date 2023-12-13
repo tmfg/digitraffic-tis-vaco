@@ -2,11 +2,10 @@ package fi.digitraffic.tis.vaco.messaging;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.conversion.model.ConversionJobMessage;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import io.awspring.cloud.sqs.operations.MessagingOperationFailedException;
@@ -63,10 +62,6 @@ public class MessagingService {
 
     public CompletableFuture<ValidationJobMessage> submitValidationJob(ValidationJobMessage jobDescription) {
         return sendMessage(MessageQueue.JOBS_VALIDATION.getQueueName(), jobDescription);
-    }
-
-    public CompletableFuture<ConversionJobMessage> submitConversionJob(ConversionJobMessage jobDescription) {
-        return sendMessage(MessageQueue.JOBS_CONVERSION.getQueueName(), jobDescription);
     }
 
     public void updateJobProcessingStatus(ImmutableDelegationJobMessage jobDescription, ProcessingState state) {

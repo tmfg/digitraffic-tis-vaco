@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.email.EmailService;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -95,7 +94,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                             validationJob(entry);
                             taskService.markStatus(t, Status.SUCCESS);
                         });
-                } else if (name.equals(ConversionService.CONVERT_TASK)) {
+                } else if (name.equals(RulesetSubmissionService.CONVERT_TASK)) {
                     logger.debug("Internal category {} detected, delegating...", name);
                     taskService.findTask(entry.id(), name)
                         .ifPresent(t -> {
@@ -109,10 +108,9 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                     taskService.trackTask(task, ProcessingState.START);
                 } else {
                     logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
-                    // TODO: we could have explicit canceling detection+handling as well
                     taskService.trackTask(task, ProcessingState.START);
                     taskService.trackTask(task, ProcessingState.COMPLETE);
-                    taskService.markStatus(task, Status.FAILED);
+                    taskService.markStatus(task, Status.CANCELLED);
                 }
             });
         } else {
@@ -145,7 +143,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
             .entry(entry)
             .configuration(ImmutableRulesetSubmissionConfiguration
                 .builder()
-                .submissionTask(ConversionService.CONVERT_TASK)
+                .submissionTask(RulesetSubmissionService.CONVERT_TASK)
                 .type(Type.CONVERSION_SYNTAX)
                 .build())
             .retryStatistics(ImmutableRetryStatistics.of(5))
