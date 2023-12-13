@@ -108,10 +108,9 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                     taskService.trackTask(task, ProcessingState.START);
                 } else {
                     logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
-                    // TODO: we could have explicit canceling detection+handling as well
                     taskService.trackTask(task, ProcessingState.START);
                     taskService.trackTask(task, ProcessingState.COMPLETE);
-                    taskService.markStatus(task, Status.FAILED);
+                    taskService.markStatus(task, Status.CANCELLED);
                 }
             });
         } else {
