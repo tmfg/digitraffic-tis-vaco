@@ -7,7 +7,6 @@ import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
@@ -78,7 +77,7 @@ class EntryRepositoryTests extends SpringBootIntegrationTestBase {
             ImmutableTask.of(entryId, RulesetSubmissionService.VALIDATE_TASK, 200)
         );
         conversionTasks = entryId -> Streams.mapIndexed(
-                ConversionService.ALL_SUBTASKS,
+                List.of("conversion.foo", "conversion.bar", "conversion.baz"),
                 (i, p) -> ImmutableTask.of(entryId, p, 200 + i))
             .toList();
         conversionRuleTasks = entryId -> List.of(ImmutableTask.of(entryId, conversion.name(), 101));
