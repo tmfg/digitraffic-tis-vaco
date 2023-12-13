@@ -405,6 +405,9 @@
                         <jvmFlags>
                             <jvmFlag>-Djava.io.tmpdir=/tmp/vaco</jvmFlag>
                         </jvmFlags>
+                        <volumes>
+                            <volume>/tmp</volume>
+                        </volumes>
                         <workingDirectory>/tmp/vaco</workingDirectory>
                     </container>
                     <to>
