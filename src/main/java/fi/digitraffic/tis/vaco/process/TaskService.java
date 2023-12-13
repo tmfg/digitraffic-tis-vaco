@@ -9,7 +9,6 @@ import fi.digitraffic.tis.utilities.MoreGraphs;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
-import fi.digitraffic.tis.vaco.conversion.ConversionService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -131,7 +130,7 @@ public class TaskService {
             List.of(
                 DownloadRule.DOWNLOAD_SUBTASK,
                 StopsAndQuaysRule.STOPS_AND_QUAYS_TASK));
-        deps.put(ConversionService.CONVERT_TASK, conversionDeps());
+        deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
         return deps;
     }
 

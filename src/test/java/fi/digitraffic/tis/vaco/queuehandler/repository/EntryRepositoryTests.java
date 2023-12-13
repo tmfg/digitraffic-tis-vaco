@@ -124,7 +124,7 @@ class EntryRepositoryTests extends SpringBootIntegrationTestBase {
                     Category.GENERIC,
                     Type.CONVERSION_SYNTAX,
                     TransitDataFormat.forField(entry.format()))
-                .withDependencies(DownloadRule.DOWNLOAD_SUBTASK, ConversionService.CONVERT_TASK));
+                .withDependencies(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.CONVERT_TASK));
 
         Entry result = repository.create(entry.withConversions(conversion));
 
@@ -132,7 +132,7 @@ class EntryRepositoryTests extends SpringBootIntegrationTestBase {
             Streams.map(result.tasks(), this::withoutGeneratedValues).toList(),
             equalTo(List.of(
                 ImmutableTask.of(result.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
-                ImmutableTask.of(result.id(), ConversionService.CONVERT_TASK, 200),
+                ImmutableTask.of(result.id(), RulesetSubmissionService.CONVERT_TASK, 200),
                 ImmutableTask.of(result.id(), "bananas", 201)
             )));
     }

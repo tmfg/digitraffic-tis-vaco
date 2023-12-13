@@ -17,6 +17,7 @@ import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,7 +26,6 @@ import java.util.Set;
 
 @Service
 public class ConversionService {
-    public static final String CONVERT_TASK = "convert";
     public static final String PHASE = "conversion";
     public static final String RULESET_SELECTION_SUBTASK = "conversion.rulesets";
     public static final String EXECUTION_SUBTASK = "conversion.execute";
@@ -51,7 +51,7 @@ public class ConversionService {
 
     public void convert(ImmutableConversionJobMessage jobDescription) {
         Entry entry = jobDescription.entry();
-        Task task = taskService.findTask(entry.id(), CONVERT_TASK).get();
+        Task task = taskService.findTask(entry.id(), RulesetSubmissionService.CONVERT_TASK).get();
         TaskResult<Set<Ruleset>> conversionRulesets = selectRulesets(jobDescription.entry());
 
         executeRules(jobDescription.entry(), conversionRulesets.result());
@@ -87,7 +87,6 @@ public class ConversionService {
 
     @VisibleForTesting
     ImmutableTaskResult<List<ConversionReport>> executeRules(Entry queueEntry, Set<Ruleset> conversionRulesets) {
-        // TODO: when exact conversion implementations will be made, they will be executed here
         return ImmutableTaskResult.of(EXECUTION_SUBTASK, List.of());
     }
 
