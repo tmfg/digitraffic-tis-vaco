@@ -7,7 +7,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
@@ -58,7 +58,7 @@ class RuleListenerServiceTests {
     private ObjectMapper objectMapper;
     private VacoProperties vacoProperties;
     @Mock private MessagingService messagingService;
-    @Mock private ErrorHandlerService errorHandlerService;
+    @Mock private FindingService findingService;
     @Mock private S3Client s3Client;
     @Mock private QueueHandlerService queueHandlerService;
     @Mock private PackagesService packagesService;
@@ -78,7 +78,7 @@ class RuleListenerServiceTests {
         vacoProperties = TestObjects.vacoProperties();
         ruleListenerService = new RuleListenerService(
             messagingService,
-            errorHandlerService,
+            findingService,
             objectMapper,
             s3Client,
             vacoProperties,
@@ -92,7 +92,7 @@ class RuleListenerServiceTests {
     void tearDown() {
         verifyNoMoreInteractions(
             messagingService,
-            errorHandlerService,
+            findingService,
             s3Client,
             queueHandlerService,
             packagesService,

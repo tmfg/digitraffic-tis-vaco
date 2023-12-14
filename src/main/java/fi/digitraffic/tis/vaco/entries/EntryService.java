@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.entries;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -15,13 +15,13 @@ import java.util.Optional;
 public class EntryService {
     private final EntryRepository entryRepository;
     private final TaskService taskService;
-    private final ErrorHandlerService errorHandlerService;
+    private final FindingService findingService;
 
     public EntryService(TaskService taskService,
-                        ErrorHandlerService errorHandlerService,
+                        FindingService findingService,
                         EntryRepository entryRepository) {
         this.taskService = Objects.requireNonNull(taskService);
-        this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
+        this.findingService = Objects.requireNonNull(findingService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
     }
 
@@ -74,7 +74,7 @@ public class EntryService {
                 return Status.WARNINGS;
             }
         }
-        if (errorHandlerService.hasErrors(entry)) {
+        if (findingService.hasErrors(entry)) {
             return Status.ERRORS;
         }
         return Status.SUCCESS;

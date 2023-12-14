@@ -9,6 +9,8 @@ public enum MessageQueue {
     JOBS_CONVERSION(QueueNames.VACO_JOBS_CONVERSION),
     RULE_RESULTS_INGEST(QueueNames.VACO_RULES_RESULTS),
     RULE_PROCESSING(QueueNames.VACO_RULES_PROCESSING_TEMPLATE),
+    // TODO: This queue needs to be renamed/migrated with more rigorous process than just direct code renaming as it
+    //       requires AWS infra changes as well.
     ERRORS(QueueNames.VACO_ERRORS);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());

@@ -5,7 +5,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerRepository;
+import fi.digitraffic.tis.vaco.findings.FindingRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
@@ -35,18 +35,18 @@ public class EntryRepository {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
-    private final ErrorHandlerRepository errorHandlerRepository;
+    private final FindingRepository findingRepository;
     private final TaskService taskService;
     private final PackagesService packagesService;
 
     public EntryRepository(JdbcTemplate jdbc,
                            ObjectMapper objectMapper,
-                           ErrorHandlerRepository errorHandlerRepository,
+                           FindingRepository findingRepository,
                            TaskService taskService,
                            PackagesService packagesService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.errorHandlerRepository = Objects.requireNonNull(errorHandlerRepository);
+        this.findingRepository = Objects.requireNonNull(findingRepository);
         this.taskService = Objects.requireNonNull(taskService);
         this.packagesService = Objects.requireNonNull(packagesService);
     }
@@ -205,7 +205,7 @@ public class EntryRepository {
             .withConversions(findConversionInputs(entry.id()))
             .withPackages(packages);
         if (!skipErrors) {
-            e = e.withErrors(errorHandlerRepository.findErrorsByEntryId(entry.id()));
+            e = e.withFindings(findingRepository.findErrorsByEntryId(entry.id()));
         }
         return e;
     }

@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.ui.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.errorhandling.Error;
+import fi.digitraffic.tis.vaco.findings.Finding;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -22,5 +22,5 @@ public interface Notice {
     // description
 
     @Nullable
-    List<Error> instances();
+    List<Finding> instances();
 }

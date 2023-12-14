@@ -10,7 +10,8 @@ import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.findings.Finding;
+import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -29,7 +30,6 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableNotice;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.Notice;
-import fi.digitraffic.tis.vaco.errorhandling.Error;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +101,7 @@ public final class RowMappers {
     public static final Function<ObjectMapper, RowMapper<Notice>> UI_NOTICES = RowMappers::mapUiNotices;
     public static final Function<ObjectMapper, RowMapper<ItemCounter>> UI_NOTICE_COUNTERS = RowMappers::mapUiNoticeCounters;
 
-    public static final RowMapper<Error> ERROR = (rs, rowNum) -> ImmutableError.builder()
+    public static final RowMapper<Finding> FINDING = (rs, rowNum) -> ImmutableFinding.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
         .taskId(rs.getLong("task_id"))
