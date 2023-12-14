@@ -410,7 +410,6 @@
                     </extraDirectories>
                     <container>
                         <mainClass>fi.digitraffic.tis.vaco.VacoApplication</mainClass>
-                        <user>nobody:nobody</user> <!-- "homeless" Linux default user -->
                         <jvmFlags>
                             <jvmFlag>-Djava.io.tmpdir=/tmp/vaco</jvmFlag>
                         </jvmFlags>
