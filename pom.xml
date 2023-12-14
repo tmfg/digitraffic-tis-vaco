@@ -400,10 +400,10 @@
                 <version>${jib-maven-plugin.version}</version>
                 <configuration>
                     <extraDirectories>
-                        <paths>LICENSE.txt</paths>
+                        <paths>container/tmp</paths>
                         <permissions>
                             <permission>
-                                <file>/tmp/vaco</file>
+                                <file>/tmp</file>
                                 <mode>777</mode>
                             </permission>
                         </permissions>
@@ -418,7 +418,6 @@
                             <volume>/tmp</volume>
                         </volumes>
                         <workingDirectory>/tmp/vaco</workingDirectory>
-
                     </container>
                     <to>
                         <image>${jib-maven-plugin.image-name}</image>
