@@ -401,13 +401,7 @@
                 <configuration>
                     <container>
                         <mainClass>fi.digitraffic.tis.vaco.VacoApplication</mainClass>
-                        <jvmFlags>
-                            <jvmFlag>-Djava.io.tmpdir=/tmp/vaco</jvmFlag>
-                        </jvmFlags>
-                        <volumes>
-                            <volume>/tmp</volume>
-                        </volumes>
-                        <workingDirectory>/tmp/vaco</workingDirectory>
+                        <user>nobody:nobody</user> <!-- "homeless" Linux default user -->
                     </container>
                     <to>
                         <image>${jib-maven-plugin.image-name}</image>
