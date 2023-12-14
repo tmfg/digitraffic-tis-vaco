@@ -398,7 +398,28 @@
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>${jib-maven-plugin.version}</version>
+                <dependencies>
+                    <!-- set container permissions for jib build -->
+                    <dependency>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-ownership-extension-maven</artifactId>
+                        <version>0.1.0</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
+                    <pluginExtensions>
+                        <pluginExtension>
+                            <implementation>com.google.cloud.tools.jib.maven.extension.ownership.JibOwnershipExtension</implementation>
+                            <configuration implementation="com.google.cloud.tools.jib.maven.extension.ownership.Configuration">
+                                <rules>
+                                    <rule>
+                                        <glob>/tmp/**</glob>
+                                        <ownership>65534:65534</ownership> <!-- nobody:nobody numeric uid:gid -->
+                                    </rule>
+                                </rules>
+                            </configuration>
+                        </pluginExtension>
+                    </pluginExtensions>
                     <extraDirectories>
                         <paths>container/tmp</paths>
                         <permissions>
@@ -410,6 +431,7 @@
                     </extraDirectories>
                     <container>
                         <mainClass>fi.digitraffic.tis.vaco.VacoApplication</mainClass>
+                        <user>nobody:nobody</user> <!-- "homeless" Linux default user -->
                         <jvmFlags>
                             <jvmFlag>-Djava.io.tmpdir=/tmp/vaco</jvmFlag>
                         </jvmFlags>
