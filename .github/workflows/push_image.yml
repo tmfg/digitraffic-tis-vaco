@@ -32,7 +32,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         with:
           mask-password: 'true'
-          
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -43,7 +43,7 @@ jobs:
       - name: Extract CURRENT version
         id: version
         run: |
-          echo "version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
+          echo "version=$(mvn --quiet -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -52,7 +52,7 @@ jobs:
           ECR_REPOSITORY: "digitraffic-tis-vaco"
           IMAGE_TAG: ${{ steps.version.outputs.version }}
         run: |
-          mvn clean compile jib:dockerBuild -Djib-maven-plugin.image-name=$ECR_REGISTRY/$ECR_REPOSITORY:latest
+          mvn --quiet clean compile jib:dockerBuild -Djib-maven-plugin.image-name=$ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
