@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.errorhandling;
+package fi.digitraffic.tis.vaco.findings;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -8,9 +8,9 @@ import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableError.class)
-@JsonDeserialize(as = ImmutableError.class)
-public interface Error {
+@JsonSerialize(as = ImmutableFinding.class)
+@JsonDeserialize(as = ImmutableFinding.class)
+public interface Finding {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
     Long id();

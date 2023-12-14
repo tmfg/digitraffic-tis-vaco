@@ -10,9 +10,9 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.errorhandling.Error;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
-import fi.digitraffic.tis.vaco.errorhandling.ImmutableError;
+import fi.digitraffic.tis.vaco.findings.Finding;
+import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -57,7 +57,7 @@ public class RuleListenerService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
-    private final ErrorHandlerService errorHandlerService;
+    private final FindingService findingService;
     private final ObjectMapper objectMapper;
     private final S3Client s3Client;
     private final VacoProperties vacoProperties;
@@ -67,7 +67,7 @@ public class RuleListenerService {
     private final RulesetService rulesetService;
 
     public RuleListenerService(MessagingService messagingService,
-                               ErrorHandlerService errorHandlerService,
+                               FindingService findingService,
                                ObjectMapper objectMapper,
                                S3Client s3Client,
                                VacoProperties vacoProperties,
@@ -76,7 +76,7 @@ public class RuleListenerService {
                                TaskService taskService,
                                RulesetService rulesetService) {
         this.messagingService = Objects.requireNonNull(messagingService);
-        this.errorHandlerService = Objects.requireNonNull(errorHandlerService);
+        this.findingService = Objects.requireNonNull(findingService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
@@ -86,7 +86,7 @@ public class RuleListenerService {
         this.rulesetService = Objects.requireNonNull(rulesetService);
     }
 
-    @Scheduled(fixedRateString = "${vaco.scheduling.errors.poll-rate}")
+    @Scheduled(fixedRateString = "${vaco.scheduling.findings.poll-rate}")
     public void handleErrorsQueue() {
         listen(MessageQueue.ERRORS.getQueueName(), ErrorMessage.class, this::handleErrors);
     }
@@ -94,7 +94,7 @@ public class RuleListenerService {
     private CompletableFuture<Boolean> handleErrors(ErrorMessage errorMessage) {
         return CompletableFuture.supplyAsync(() -> {
             logger.warn("Got ErrorMessage {}", errorMessage);
-            errorHandlerService.reportErrors(errorMessage.errors());
+            findingService.reportFindings(errorMessage.findings());
             return true;
         });
     }
@@ -192,12 +192,12 @@ public class RuleListenerService {
                 URI s3Uri = URI.create(fileNames.get("report.json"));
                 s3Client.downloadFile(s3Uri.getHost(), S3Path.of(s3Uri.getPath()), reportFile);
 
-                List<Error> errors = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
-                if (errors.isEmpty()) {
+                List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
+                if (findings.isEmpty()) {
                     taskService.markStatus(task, Status.SUCCESS);
                 } else {
-                    errorHandlerService.reportErrors(errors);
-                    Map<String, Long> severities = errorHandlerService.getSeverityCounts(entry, task);
+                    findingService.reportFindings(findings);
+                    Map<String, Long> severities = findingService.getSeverityCounts(entry, task);
                     logger.debug("{}/{} produced notices {}", entry.publicId(), task.name(), severities);
                     if (severities.getOrDefault("ERROR", 0L) > 0) {
                         taskService.markStatus(task, Status.ERRORS);
@@ -214,7 +214,7 @@ public class RuleListenerService {
         });
     }
 
-    private List<ImmutableError> scanReportFile(Entry entry, Task task, String ruleName, Path reportFile) {
+    private List<ImmutableFinding> scanReportFile(Entry entry, Task task, String ruleName, Path reportFile) {
         try {
             Report report = objectMapper.readValue(reportFile.toFile(), Report.class);
             return report.notices()
@@ -223,7 +223,7 @@ public class RuleListenerService {
                     .stream()
                     .map(sn -> {
                         try {
-                            return ImmutableError.of(
+                            return ImmutableFinding.of(
                                     entry.publicId(),
                                     task.id(),
                                     rulesetService.findByName(ruleName)

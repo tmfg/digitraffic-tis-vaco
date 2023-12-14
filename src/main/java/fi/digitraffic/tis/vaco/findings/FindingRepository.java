@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.errorhandling;
+package fi.digitraffic.tis.vaco.findings;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
@@ -16,35 +16,35 @@ import java.util.List;
 import java.util.Map;
 
 @Repository
-public class ErrorHandlerRepository {
+public class FindingRepository {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbc;
 
-    public ErrorHandlerRepository(JdbcTemplate jdbc) {
+    public FindingRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    public Error create(Error error) {
+    public Finding create(Finding finding) {
         return jdbc.queryForObject("""
-            INSERT INTO error (entry_id, task_id, ruleset_id, message, raw)
+            INSERT INTO finding (entry_id, task_id, ruleset_id, message, raw)
                  VALUES (?, ?, ?, ?, ?)
               RETURNING id, public_id, entry_id, task_id, ruleset_id, message, raw
             """,
-            RowMappers.ERROR,
-            error.entryId(), error.taskId(), error.rulesetId(), error.message(), error.raw());
+            RowMappers.FINDING,
+            finding.entryId(), finding.taskId(), finding.rulesetId(), finding.message(), finding.raw());
     }
 
-    public List<Error> findErrorsByEntryId(Long entryId) {
+    public List<Finding> findErrorsByEntryId(Long entryId) {
         try {
             return jdbc.query(
                     """
                     SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
-                      FROM error em
+                      FROM finding em
                      WHERE em.entry_id = ?
                     """,
-                    RowMappers.ERROR,
+                    RowMappers.FINDING,
                     entryId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
@@ -52,10 +52,10 @@ public class ErrorHandlerRepository {
     }
 
     @Transactional
-    public boolean createErrors(List<Error> errors) {
+    public boolean createFindings(List<Finding> findings) {
         try {
             jdbc.batchUpdate("""
-                        INSERT INTO error (entry_id, task_id, ruleset_id, source, message, severity, raw)
+                        INSERT INTO finding (entry_id, task_id, ruleset_id, source, message, severity, raw)
                              VALUES (
                              (SELECT id FROM entry WHERE public_id = ?),
                              ?,
@@ -70,18 +70,18 @@ public class ErrorHandlerRepository {
                              ?)
                           RETURNING id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
                     """,
-                errors,
+                findings,
                 100,
-                (ps, error) -> {
-                    ps.setString(1, error.entryId());
-                    ps.setLong(2, error.taskId());
-                    ps.setLong(3, error.rulesetId());
-                    ps.setString(4, error.source());
-                    ps.setString(5, error.message());
-                    ps.setLong(6, error.rulesetId());
-                    ps.setString(7, error.message());
-                    ps.setString(8, error.severity());
-                    ps.setObject(9, error.raw());
+                (ps, finding) -> {
+                    ps.setString(1, finding.entryId());
+                    ps.setLong(2, finding.taskId());
+                    ps.setLong(3, finding.rulesetId());
+                    ps.setString(4, finding.source());
+                    ps.setString(5, finding.message());
+                    ps.setLong(6, finding.rulesetId());
+                    ps.setString(7, finding.message());
+                    ps.setString(8, finding.severity());
+                    ps.setObject(9, finding.raw());
                 });
             // TODO: inspect result counts to determine everything was inserted
             return true;
@@ -94,7 +94,7 @@ public class ErrorHandlerRepository {
     public boolean hasErrors(Entry entry) {
         return Boolean.TRUE.equals(jdbc.queryForObject("""
             SELECT COUNT(id) = 0
-              FROM error
+              FROM finding
              WHERE entry_id = ?
                AND severity = 'ERROR'
             """,
@@ -106,7 +106,7 @@ public class ErrorHandlerRepository {
         List<Map<String, Object>> mapList = jdbc.queryForList("""
                   SELECT severity,
                          COUNT(severity) AS count
-                    FROM error
+                    FROM finding
                    WHERE entry_id = (SELECT id FROM entry WHERE entry.public_id = ?)
                      AND task_id = ?
                 GROUP BY severity

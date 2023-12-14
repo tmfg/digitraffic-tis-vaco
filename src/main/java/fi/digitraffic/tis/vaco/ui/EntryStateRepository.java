@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.Notice;
 import org.slf4j.Logger;
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import fi.digitraffic.tis.vaco.errorhandling.Error;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,7 +33,7 @@ public class EntryStateRepository {
                       SELECT message AS code,
                              severity,
                              COUNT(*) AS total
-                        FROM error
+                        FROM finding
                        WHERE task_id = ?
                     GROUP BY message, severity
                     ORDER BY CASE
@@ -55,12 +55,12 @@ public class EntryStateRepository {
             return jdbc.query("""
                     ( SELECT 'ALL' AS name,
                              COUNT(*) AS total
-                        FROM error
+                        FROM finding
                        WHERE task_id = ?)
                     UNION ALL
                     ( SELECT severity AS name,
                              COUNT(*) AS total
-                        FROM error
+                        FROM finding
                        WHERE task_id = ?
                     GROUP BY severity)
                     """,
@@ -71,16 +71,16 @@ public class EntryStateRepository {
         }
     }
 
-    public List<Error> findNoticeInstances(Long taskId, String code) {
+    public List<Finding> findNoticeInstances(Long taskId, String code) {
         try {
             return jdbc.query(
                 """
                 SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
-                  FROM error em
+                  FROM finding em
                  WHERE em.task_id = ? and em.message = ?
                  LIMIT 20
                 """,
-                RowMappers.ERROR,
+                RowMappers.FINDING,
                 taskId, code);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();

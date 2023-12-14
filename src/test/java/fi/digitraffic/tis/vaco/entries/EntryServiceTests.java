@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.entries;
 
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.errorhandling.ErrorHandlerService;
+import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -30,7 +30,7 @@ class EntryServiceTests {
     @Mock
     private TaskService taskService;
     @Mock
-    private ErrorHandlerService errorHandlerService;
+    private FindingService findingService;
 
     private ImmutableEntry entry;
 
@@ -39,32 +39,32 @@ class EntryServiceTests {
 
     @BeforeEach
     void setUp() {
-        entryService = new EntryService(taskService, errorHandlerService, entryRepository);
+        entryService = new EntryService(taskService, findingService, entryRepository);
         entry = ImmutableEntry.copyOf(TestObjects.anEntry().id(99999999L).build());
         inOrderRepository = Mockito.inOrder(entryRepository);
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(entryRepository, taskService, errorHandlerService);
+        verifyNoMoreInteractions(entryRepository, taskService, findingService);
     }
 
     @Test
     void marksEntryAsSuccessByDefault() {
         givenTaskInStatus(Status.SUCCESS);
-        givenHasErrors(false);
+        givenHasFindings(false);
         thenEntryIsMarkedAs(Status.SUCCESS);
     }
 
     @Test
-    void entryWithErrorsIsMarkedAsErrors() {
+    void entryWithFindingsIsMarkedAsErrors() {
         givenTaskInStatus(Status.SUCCESS);
-        givenHasErrors(true);
+        givenHasFindings(true);
         thenEntryIsMarkedAs(Status.ERRORS);
     }
 
-    private void givenHasErrors(boolean hasErrors) {
-        BDDMockito.given(errorHandlerService.hasErrors(entry)).willReturn(hasErrors);
+    private void givenHasFindings(boolean hasErrors) {
+        BDDMockito.given(findingService.hasErrors(entry)).willReturn(hasErrors);
     }
 
     /**

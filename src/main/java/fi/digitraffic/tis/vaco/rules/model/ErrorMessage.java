@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.rules.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.errorhandling.Error;
+import fi.digitraffic.tis.vaco.findings.Finding;
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -12,5 +12,5 @@ import java.util.List;
 @JsonDeserialize(as = ImmutableErrorMessage.class)
 public interface ErrorMessage {
     @Value.Parameter
-    List<Error> errors();
+    List<Finding> findings();
 }

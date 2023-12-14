@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.validation.model;
 
-import fi.digitraffic.tis.vaco.errorhandling.Error;
+import fi.digitraffic.tis.vaco.findings.Finding;
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -11,5 +11,5 @@ public interface ValidationReport {
     @Value.Parameter
     String message();
 
-    List<Error> errors();
+    List<Finding> findings();
 }

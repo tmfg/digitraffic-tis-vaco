@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.errorhandling.Error;
+import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import jakarta.annotation.Nullable;
@@ -58,7 +58,7 @@ public interface Entry {
     List<Package> packages();
 
     @Nullable
-    List<Error> errors();
+    List<Finding> findings();
 
     /**
      * List of email addresses to send notifications on events related to this entry, e.g. the matching job is complete.

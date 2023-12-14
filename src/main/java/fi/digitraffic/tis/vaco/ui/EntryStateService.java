@@ -4,7 +4,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.errorhandling.Error;
+import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -47,7 +47,7 @@ public class EntryStateService {
         }
         List<Notice> noticesWithInstances = new ArrayList<>();
         notices.forEach(notice -> {
-            List<Error> noticeInstances = entryStateRepository.findNoticeInstances(task.id(), notice.code());
+            List<Finding> noticeInstances = entryStateRepository.findNoticeInstances(task.id(), notice.code());
             Notice noticeWithInstances = ImmutableNotice.copyOf(notice).withInstances(noticeInstances);
             noticesWithInstances.add(noticeWithInstances);
         });
