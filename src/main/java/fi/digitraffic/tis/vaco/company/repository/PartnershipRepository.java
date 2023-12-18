@@ -37,10 +37,12 @@ public class PartnershipRepository {
                        o_a.business_id as partner_a_business_id,
                        o_a.name as partner_a_name,
                        o_a.contact_emails as partner_a_contact_emails,
+                       o_a.ad_group_id as partner_a_ad_group_id,
                        o_b.id as partner_b_id,
                        o_b.business_id as partner_b_business_id,
                        o_b.name as partner_b_name,
-                       o_b.contact_emails as partner_b_contact_emails
+                       o_b.contact_emails as partner_b_contact_emails,
+                       o_b.ad_group_id as partner_b_ad_group_id
                   FROM partnership c
                   JOIN company o_a ON c.partner_a_id = o_a.id
                   JOIN company o_b ON c.partner_b_id = o_b.id

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
+import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
@@ -44,6 +46,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public final class RowMappers {
+
     private RowMappers() {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RowMappers.class);
@@ -85,6 +88,7 @@ public final class RowMappers {
             .businessId(rs.getString(alias + "business_id"))
             .name(rs.getString(alias + "name"))
             .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
+            .adGroupId(rs.getString(alias + "ad_group_id"))
             .build();
 
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
@@ -110,6 +114,16 @@ public final class RowMappers {
         .message(rs.getString("message"))
         .severity(rs.getString("severity"))
         .raw(rs.getBytes("raw"))
+        .build();
+
+    public static final RowMapper<GroupIdMappingTask> ADMIN_GROUPID = (rs, rowNum) -> ImmutableGroupIdMappingTask.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .groupId(rs.getString("group_id"))
+        .skip(rs.getBoolean("skip"))
+        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
+        .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
+        .completedBy(rs.getString("completed_by"))
         .build();
 
     private static RowMapper<Entry> mapQueueEntry(ObjectMapper objectMapper) {

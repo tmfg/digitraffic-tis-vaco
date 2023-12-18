@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
@@ -118,5 +119,15 @@ public class TestObjects {
             aws != null ? aws : new Aws("eu-north-1", null, null, null, new S3(null)),
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
             email != null ? email : new Email("king@commonwealth", null));
+    }
+
+    public static ImmutableGroupIdMappingTask.Builder adminGroupId() {
+        return adminGroupId(UUID.randomUUID().toString());
+    }
+
+    public static ImmutableGroupIdMappingTask.Builder adminGroupId(String groupId) {
+        return ImmutableGroupIdMappingTask
+            .builder()
+            .groupId(groupId);
     }
 }

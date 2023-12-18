@@ -5,25 +5,31 @@ import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public class CompanyRepository {
 
     private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcTemplate namedJdbc;
 
-    public CompanyRepository(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public CompanyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
+        this.jdbc = Objects.requireNonNull(jdbc);
+        this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
 
     public Company create(Company company) {
         return jdbc.queryForObject("""
                 INSERT INTO company(business_id, name, contact_emails)
                      VALUES (?, ?, ?)
-                  RETURNING id, business_id, name, contact_emails
+                  RETURNING *
                 """,
                 RowMappers.COMPANY,
                 company.businessId(),
@@ -57,5 +63,16 @@ public class CompanyRepository {
                                        FROM entry e)
             """,
             RowMappers.COMPANY);
+    }
+
+    public Set<Company> findAllByAdGroupIds(List<String> adGroupIds) {
+        return Set.copyOf(namedJdbc.query("""
+            SELECT DISTINCT *
+              FROM company c
+             WHERE ad_group_id IN (:adGroupIds)
+            """,
+            new MapSqlParameterSource()
+                .addValue("adGroupIds", adGroupIds),
+            RowMappers.COMPANY));
     }
 }
