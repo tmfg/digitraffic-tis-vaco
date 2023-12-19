@@ -71,7 +71,7 @@ public class EntryStateRepository {
         }
     }
 
-    public List<Finding> findNoticeInstances(Long taskId, String code) {
+    public List<Finding> findNoticeFindings(Long taskId, String code) {
         try {
             return jdbc.query(
                 """

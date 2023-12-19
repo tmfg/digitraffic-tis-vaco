@@ -22,5 +22,5 @@ public interface Notice {
     // description
 
     @Nullable
-    List<Finding> instances();
+    List<Finding> findings();
 }

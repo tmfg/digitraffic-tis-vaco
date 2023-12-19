@@ -45,11 +45,11 @@ public class EntryStateService {
         if (notices.isEmpty()) {
             return null;
         }
-        List<Notice> noticesWithInstances = new ArrayList<>();
+        List<Notice> noticesWithFindings = new ArrayList<>();
         notices.forEach(notice -> {
-            List<Finding> noticeInstances = entryStateRepository.findNoticeInstances(task.id(), notice.code());
-            Notice noticeWithInstances = ImmutableNotice.copyOf(notice).withInstances(noticeInstances);
-            noticesWithInstances.add(noticeWithInstances);
+            List<Finding> findings = entryStateRepository.findNoticeFindings(task.id(), notice.code());
+            Notice noticeWithFindings = ImmutableNotice.copyOf(notice).withFindings(findings);
+            noticesWithFindings.add(noticeWithFindings);
         });
 
         return ImmutableValidationReport.builder()
@@ -57,7 +57,7 @@ public class EntryStateService {
             .ruleDescription(rule.description())
             .counters(counters)
             .packages(Streams.map(taskPackages, p -> asPackageResource(p, task, entry)).toList())
-            .notices(noticesWithInstances).build();
+            .notices(noticesWithFindings).build();
     }
 
     private Resource<Package> asPackageResource(Package taskPackage, Task task, Entry entry) {
