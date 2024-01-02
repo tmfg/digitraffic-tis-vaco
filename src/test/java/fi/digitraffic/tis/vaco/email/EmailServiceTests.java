@@ -169,7 +169,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
                 equalTo(org.contactEmails()))
             );
         String message = list(path(messages, "messages[].Body.html_part"), JsonNode::textValue).get(0);
-        assertThat(message, containsString("<title>Viikkoraportti</title>"));
+        assertThat(message, containsString("<title>NAP:iin ilmoittamienne rajapintojen tilanneraportti</title>"));
     }
 
     @NotNull
