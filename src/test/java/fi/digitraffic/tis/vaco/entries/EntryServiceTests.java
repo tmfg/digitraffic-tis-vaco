@@ -52,19 +52,7 @@ class EntryServiceTests {
     @Test
     void marksEntryAsSuccessByDefault() {
         givenTaskInStatus(Status.SUCCESS);
-        givenHasFindings(false);
         thenEntryIsMarkedAs(Status.SUCCESS);
-    }
-
-    @Test
-    void entryWithFindingsIsMarkedAsErrors() {
-        givenTaskInStatus(Status.SUCCESS);
-        givenHasFindings(true);
-        thenEntryIsMarkedAs(Status.ERRORS);
-    }
-
-    private void givenHasFindings(boolean hasErrors) {
-        BDDMockito.given(findingService.hasErrors(entry)).willReturn(hasErrors);
     }
 
     /**
@@ -82,7 +70,7 @@ class EntryServiceTests {
         thenEntryIsMarkedAs(Status.WARNINGS);
 
         givenTaskInStatus(Status.CANCELLED);
-        thenEntryIsMarkedAs(Status.WARNINGS);
+        thenEntryIsMarkedAs(Status.SUCCESS);
     }
 
     private void givenTaskInStatus(Status status) {

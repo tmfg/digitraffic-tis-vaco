@@ -38,9 +38,9 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
 
     @Override
     protected void runTask(ImmutableValidationJobMessage message) {
-        rulesetSubmissionService.validate(message);
+        rulesetSubmissionService.submit(message);
 
-        logger.debug("Validation complete for {}, resubmitting to delegation", message.entry().publicId());
+        logger.debug("Submission complete for {}, resubmitting to delegation", message.entry().publicId());
 
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
             // refresh entry to avoid repeating same message over and over and over...and over again

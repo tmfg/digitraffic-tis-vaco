@@ -197,11 +197,11 @@ public class RuleListenerService {
                     taskService.markStatus(task, Status.SUCCESS);
                 } else {
                     findingService.reportFindings(findings);
-                    Map<String, Long> severities = findingService.getSeverityCounts(entry, task);
+                    Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
                     logger.debug("{}/{} produced notices {}", entry.publicId(), task.name(), severities);
                     if (severities.getOrDefault("ERROR", 0L) > 0) {
                         taskService.markStatus(task, Status.ERRORS);
-                    } else if (severities.containsKey("WARNING")) {
+                    } else if (severities.getOrDefault("WARNING", 0L) > 0) {
                         taskService.markStatus(task, Status.WARNINGS);
                     } else {
                         taskService.markStatus(task, Status.SUCCESS);

@@ -37,7 +37,7 @@ public class FindingService {
         return findingRepository.hasErrors(entry);
     }
 
-    public Map<String, Long> getSeverityCounts(Entry entry, Task task) {
+    public Map<String, Long> summarizeFindingsSeverities(Entry entry, Task task) {
         return findingRepository.getSeverityCounts(entry, task);
     }
 }

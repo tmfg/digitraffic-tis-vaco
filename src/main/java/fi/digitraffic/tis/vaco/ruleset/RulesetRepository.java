@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -220,25 +219,24 @@ public class RulesetRepository {
         return Set.copyOf(jdbc.queryForList("SELECT DISTINCT identifying_name FROM ruleset", String.class));
     }
 
-    public boolean allDependenciesMatch(Entry entry, Ruleset ruleset, Status status) {
-        return Boolean.TRUE.equals(jdbc.queryForObject("""
-                SELECT NOT EXISTS(WITH entry AS (SELECT *
-                                                   FROM entry
-                                                  WHERE public_id = ?),
-                                       ruleset AS (SELECT *
-                                                     FROM ruleset
-                                                    WHERE id = ?)
-                                SELECT 1
-                                  FROM task t,
-                                       entry e,
-                                       ruleset r
-                                 WHERE t.entry_id = e.id
-                                   AND t.status != (?)::status
-                                   AND t.name = ANY (r.dependencies))
-                """,
+    public boolean anyDependencyFailed(Entry entry, Ruleset ruleset) {
+        return Boolean.FALSE.equals(jdbc.queryForObject("""
+            SELECT EXISTS(WITH entry AS (SELECT *
+                                       FROM entry
+                                      WHERE public_id = ?),
+                           ruleset AS (SELECT *
+                                         FROM ruleset
+                                        WHERE id = ?)
+                    SELECT
+                      FROM task t,
+                           entry e,
+                           ruleset r
+                     WHERE t.entry_id = e.id
+                       AND t.status = ANY (ARRAY ['failed']::status[])
+                       AND t.name = ANY (r.dependencies))
+            """,
             Boolean.class,
             entry.publicId(),
-            ruleset.id(),
-            status.fieldName()));
+            ruleset.id()));
     }
 }
