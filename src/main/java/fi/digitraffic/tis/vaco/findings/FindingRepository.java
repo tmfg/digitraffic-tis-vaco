@@ -115,7 +115,7 @@ public class FindingRepository {
             task.id());
         return Streams.collect(
             mapList,
-            r -> (String) r.get("severity"),
+            r -> ((String) r.get("severity")).toUpperCase(),
             r -> (Long) r.get("count"));
     }
 }

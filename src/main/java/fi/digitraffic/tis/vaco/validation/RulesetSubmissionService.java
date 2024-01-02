@@ -71,7 +71,7 @@ public class RulesetSubmissionService {
         this.packagesService = packagesService;
     }
 
-    public void validate(ValidationJobMessage message) throws RuleExecutionException {
+    public void submit(ValidationJobMessage message) throws RuleExecutionException {
         Entry entry = message.entry();
         RulesetSubmissionConfiguration configuration = message.configuration();
 
@@ -82,7 +82,7 @@ public class RulesetSubmissionService {
                 if (rulesets.isEmpty()) {
                     taskService.markStatus(task, Status.FAILED);
                 } else {
-                    submitRules(entry, task, configuration, rulesets);
+                    submitRules(entry, task, rulesets);
                     taskService.markStatus(task, Status.SUCCESS);
                 }
                 return taskService.trackTask(task, ProcessingState.COMPLETE);
@@ -120,7 +120,6 @@ public class RulesetSubmissionService {
     @VisibleForTesting
     void submitRules(Entry entry,
                      Task task,
-                     RulesetSubmissionConfiguration configurationx,
                      Set<Ruleset> rulesets) {
 
         Map<String, RuleConfiguration> configs = new HashMap<>();
