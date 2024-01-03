@@ -2,23 +2,13 @@ package fi.digitraffic.tis.vaco.rules;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fi.digitraffic.tis.aws.s3.S3Client;
-import fi.digitraffic.tis.aws.s3.S3Path;
-import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingService;
-import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
-import fi.digitraffic.tis.vaco.packages.PackagesService;
-import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
@@ -27,26 +17,21 @@ import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
-import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 /**
@@ -59,31 +44,31 @@ public class RuleResultsListener {
     private final MessagingService messagingService;
     private final FindingService findingService;
     private final ObjectMapper objectMapper;
-    private final S3Client s3Client;
-    private final VacoProperties vacoProperties;
-    private final QueueHandlerService queueHandlerService;
-    private final PackagesService packagesService;
     private final TaskService taskService;
-    private final RulesetService rulesetService;
+    private final QueueHandlerService queueHandlerService;
+    private final NetexEnturValidatorResultProcessor netexEnturValidator;
+    private final GtfsCanonicalResultProcessor gtfsCanonicalValidator;
+    private final SimpleResultProcessor simpleResultProcessor;
+    private final InternalRuleResultProcessor internalRuleResultProcessor;
 
     public RuleResultsListener(MessagingService messagingService,
                                FindingService findingService,
                                ObjectMapper objectMapper,
-                               S3Client s3Client,
-                               VacoProperties vacoProperties,
                                QueueHandlerService queueHandlerService,
-                               PackagesService packagesService,
                                TaskService taskService,
-                               RulesetService rulesetService) {
+                               NetexEnturValidatorResultProcessor netexEnturValidator,
+                               GtfsCanonicalResultProcessor gtfsCanonicalValidator,
+                               SimpleResultProcessor simpleResultProcessor,
+                               InternalRuleResultProcessor internalRuleResultProcessor) {
         this.messagingService = Objects.requireNonNull(messagingService);
         this.findingService = Objects.requireNonNull(findingService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.s3Client = Objects.requireNonNull(s3Client);
-        this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
-        this.packagesService = Objects.requireNonNull(packagesService);
         this.taskService = Objects.requireNonNull(taskService);
-        this.rulesetService = Objects.requireNonNull(rulesetService);
+        this.netexEnturValidator = Objects.requireNonNull(netexEnturValidator);
+        this.gtfsCanonicalValidator = Objects.requireNonNull(gtfsCanonicalValidator);
+        this.simpleResultProcessor = Objects.requireNonNull(simpleResultProcessor);
+        this.internalRuleResultProcessor = Objects.requireNonNull(internalRuleResultProcessor);
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.findings.poll-rate}")
@@ -143,126 +128,30 @@ public class RuleResultsListener {
     }
 
     private Boolean processDownloadRuleResults(ResultMessage resultMessage) {
-        return processRule(DownloadRule.DOWNLOAD_SUBTASK, resultMessage, handleInternalRuleResults(resultMessage));
+        return processRule(DownloadRule.DOWNLOAD_SUBTASK, resultMessage, internalRuleResultProcessor);
     }
 
     private Boolean processStopsAndQuaysResults(ResultMessage resultMessage) {
-        return processRule(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, resultMessage, handleInternalRuleResults(resultMessage));
-    }
-
-    private BiPredicate<Entry, Task> handleInternalRuleResults(ResultMessage resultMessage) {
-        return (entry, task) -> {
-            // use downloaded result file as is instead of repackaging the zip
-            ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
-            if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
-                throw new RuleExecutionException("Entry " + resultMessage.entryId() + " internal task " + task.name() + " does not contain 'result' package.");
-            }
-            String sourceFile = packages.get("result").get(0);
-            S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
-            packagesService.registerPackage(ImmutablePackage.of(
-                task.id(),
-                "result",
-                dlFile.toString()));
-            taskService.markStatus(task, Status.SUCCESS);
-            return true;
-        };
+        return processRule(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, resultMessage, internalRuleResultProcessor);
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
-        return processRule(RuleName.NETEX_ENTUR_1_0_1, resultMessage, (entry, task) -> {
-            logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR_1_0_1, entry.publicId(), task.name());
-            createOutputPackages(resultMessage, entry, task);
-            taskService.markStatus(task, Status.SUCCESS);
-            return true;
-        });
+        return processRule(RuleName.NETEX_ENTUR_1_0_1, resultMessage, netexEnturValidator);
     }
 
     private boolean processResultFromGtfsCanonical(String ruleName, ResultMessage resultMessage) {
-        return processRule(ruleName, resultMessage, (entry, task) -> {
-            createOutputPackages(resultMessage, entry, task);
-
-            Map<String, String> fileNames = collectOutputFileNames(resultMessage);
-
-            // file specific handling
-            if (fileNames.containsKey("report.json")) {
-                Path ruleTemp = TempFiles.getRuleTempDirectory(vacoProperties, entry, task.name(), resultMessage.ruleName());
-                Path outputDir = ruleTemp.resolve("output");
-
-                Path reportFile = outputDir.resolve("report.json");
-                URI s3Uri = URI.create(fileNames.get("report.json"));
-                s3Client.downloadFile(s3Uri.getHost(), S3Path.of(s3Uri.getPath()), reportFile);
-
-                List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
-                if (findings.isEmpty()) {
-                    taskService.markStatus(task, Status.SUCCESS);
-                } else {
-                    findingService.reportFindings(findings);
-                    Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
-                    logger.debug("{}/{} produced notices {}", entry.publicId(), task.name(), severities);
-                    if (severities.getOrDefault("ERROR", 0L) > 0) {
-                        taskService.markStatus(task, Status.ERRORS);
-                    } else if (severities.getOrDefault("WARNING", 0L) > 0) {
-                        taskService.markStatus(task, Status.WARNINGS);
-                    } else {
-                        taskService.markStatus(task, Status.SUCCESS);
-                    }
-                }
-            } else {
-                logger.warn("Expected file 'report.json' missing from output for message {}", resultMessage);
-            }
-            return true;
-        });
-    }
-
-    private List<ImmutableFinding> scanReportFile(Entry entry, Task task, String ruleName, Path reportFile) {
-        try {
-            Report report = objectMapper.readValue(reportFile.toFile(), Report.class);
-            return report.notices()
-                .stream()
-                .flatMap(notice -> notice.sampleNotices()
-                    .stream()
-                    .map(sn -> {
-                        try {
-                            return ImmutableFinding.of(
-                                    entry.publicId(),
-                                    task.id(),
-                                    rulesetService.findByName(ruleName)
-                                        .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
-                                        .id(),
-                                    ruleName,
-                                    notice.code(),
-                                    notice.severity())
-                                .withRaw(objectMapper.writeValueAsBytes(sn));
-                        } catch (JsonProcessingException e) {
-                            logger.warn("Failed to convert tree to bytes", e);
-                            return null;
-                        }
-                    }))
-                .filter(Objects::nonNull)
-                .toList();
-        } catch (IOException e) {
-            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
-            return List.of();
-        }
+        return processRule(ruleName, resultMessage, gtfsCanonicalValidator);
     }
 
     private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
-        return processRule(RuleName.NETEX2GTFS_ENTUR_2_0_6, resultMessage, (entry, task) -> {
-            createOutputPackages(resultMessage, entry, task);
-            taskService.markStatus(task, Status.SUCCESS);
-            return true;
-        });
+        return processRule(RuleName.NETEX2GTFS_ENTUR_2_0_6, resultMessage, simpleResultProcessor);
     }
 
     private boolean processGtfs2NetexFintraffic100(ResultMessage resultMessage) {
-        return processRule(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, resultMessage, (entry, task) -> {
-            createOutputPackages(resultMessage, entry, task);
-            taskService.markStatus(task, Status.SUCCESS);
-            return true;
-        });
+        return processRule(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, resultMessage, simpleResultProcessor);
     }
 
-    private boolean processRule(String ruleName, ResultMessage resultMessage, BiPredicate<Entry, Task> processingHandler) {
+    private boolean processRule(String ruleName, ResultMessage resultMessage, ResultProcessor resultProcessor) {
         Optional<Entry> e = queueHandlerService.findEntry(resultMessage.entryId());
 
         if (e.isPresent()) {
@@ -272,7 +161,14 @@ public class RuleResultsListener {
                 Task tracked = taskService.trackTask(t, ProcessingState.UPDATE);
                 try {
                     logger.info("Processing result from {} for entry {}/task {}", ruleName, entry.publicId(), tracked.name());
-                    return processingHandler.test(entry, tracked);
+                    boolean result = resultProcessor.processResults(resultMessage, entry, tracked);
+                    if (result) {
+                        tracked = taskService.markStatus(tracked, Status.SUCCESS);
+                    } else {
+                        // TODO: it is unclear if this branch will ever be hit
+                        tracked = taskService.markStatus(tracked, Status.WARNINGS);
+                    }
+                    return result;
                 } finally {
                     taskService.trackTask(tracked, ProcessingState.COMPLETE);
                 }
@@ -280,48 +176,6 @@ public class RuleResultsListener {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Truncate output filenames to contain only the file name without path. Assumes results are in flat directory.
-     *
-     * @param resultMessage Message to get the file names from.
-     * @return Map of file names without directory prefixes to full file name.
-     */
-    private static Map<String, String> collectOutputFileNames(ResultMessage resultMessage) {
-        return Streams.collect(
-            resultMessage.uploadedFiles().keySet(),
-            m -> m.substring(m.lastIndexOf('/') + 1),
-            Function.identity());
-    }
-
-    private void createOutputPackages(ResultMessage resultMessage, Entry entry, Task task) {
-        // package generation based on rule outputs
-        ConcurrentMap<String, List<String>> packagesToCreate = collectPackageContents(resultMessage.uploadedFiles());
-
-        packagesToCreate.forEach((packageName, files) -> {
-            logger.info("Creating package '{}' with files {}", packageName, files);
-            packagesService.createPackage(
-                entry,
-                task,
-                packageName,
-                S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
-                file -> {
-                    boolean match = files.stream().anyMatch(content -> content.endsWith(file));
-                    logger.trace("Matching {} / {}", file, match);
-                    return match;
-                });
-        });
-    }
-
-    private static ConcurrentMap<String, List<String>> collectPackageContents(Map<String, List<String>> uploadedFiles) {
-        ConcurrentMap<String, List<String>> packagesToCreate = new ConcurrentHashMap<>();
-        uploadedFiles.forEach((file, packages) -> {
-            for (String p : packages) {
-                packagesToCreate.computeIfAbsent(p, k -> new ArrayList<>()).add(file);
-            }
-        });
-        return packagesToCreate;
     }
 
     private <M, R> void listen(String queueName, Class<M> cls, Function<M, CompletableFuture<R>> function) {
