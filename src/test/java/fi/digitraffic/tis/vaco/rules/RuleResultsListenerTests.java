@@ -51,9 +51,9 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
-class RuleListenerServiceTests {
+class RuleResultsListenerTests {
 
-    private RuleListenerService ruleListenerService;
+    private RuleResultsListener ruleResultsListener;
 
     private ObjectMapper objectMapper;
     private VacoProperties vacoProperties;
@@ -76,7 +76,7 @@ class RuleListenerServiceTests {
         objectMapper = new ObjectMapper();
         objectMapper.registerModules(new GuavaModule());
         vacoProperties = TestObjects.vacoProperties();
-        ruleListenerService = new RuleListenerService(
+        ruleResultsListener = new RuleResultsListener(
             messagingService,
             findingService,
             objectMapper,
@@ -116,7 +116,7 @@ class RuleListenerServiceTests {
         givenPackageIsCreated("debug", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "debug", IGNORED_PATH_VALUE));
         givenResultProcessingResultsInNewProcessingJobSubmission();
 
-        ruleListenerService.handleRuleResultsIngestQueue();
+        ruleResultsListener.handleRuleResultsIngestQueue();
 
         then(messagingService).should().deleteMessage(QueueNames.VACO_RULES_RESULTS, gtfs2netexMessage);
         assertThat(submittedProcessingJob.getValue().entry(), equalTo(entry));

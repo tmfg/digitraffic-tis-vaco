@@ -32,7 +32,7 @@ import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 
 import java.io.IOException;
@@ -52,8 +52,8 @@ import java.util.function.Function;
 /**
  * SQS listener handles for rules which are implemented as part of VACO.
  */
-@Service
-public class RuleListenerService {
+@Component
+public class RuleResultsListener {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
@@ -66,7 +66,7 @@ public class RuleListenerService {
     private final TaskService taskService;
     private final RulesetService rulesetService;
 
-    public RuleListenerService(MessagingService messagingService,
+    public RuleResultsListener(MessagingService messagingService,
                                FindingService findingService,
                                ObjectMapper objectMapper,
                                S3Client s3Client,
