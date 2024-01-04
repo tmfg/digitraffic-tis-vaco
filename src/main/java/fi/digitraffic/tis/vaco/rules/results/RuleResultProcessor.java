@@ -1,7 +1,15 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.utilities.TempFiles;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.findings.Finding;
+import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
@@ -9,19 +17,47 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public abstract class RuleResultProcessor implements ResultProcessor {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PackagesService packagesService;
+    private final S3Client s3Client;
+    private final TaskService taskService;
+    private final FindingService findingService;
+    private final VacoProperties vacoProperties;
 
-    protected RuleResultProcessor(PackagesService packagesService) {
+    protected RuleResultProcessor(VacoProperties vacoProperties,
+                                  PackagesService packagesService,
+                                  S3Client s3Client,
+                                  TaskService taskService,
+                                  FindingService findingService) {
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.packagesService = Objects.requireNonNull(packagesService);
+        this.s3Client = Objects.requireNonNull(s3Client);
+        this.taskService = Objects.requireNonNull(taskService);
+        this.findingService = Objects.requireNonNull(findingService);
+    }
+
+    /**
+     * Truncate output filenames to contain only the file name without path. Assumes results are in flat directory.
+     *
+     * @param resultMessage Message to get the file names from.
+     * @return Map of file names without directory prefixes to full file name.
+     */
+    protected static Map<String, String> collectOutputFileNames(ResultMessage resultMessage) {
+        return Streams.collect(
+            resultMessage.uploadedFiles().keySet(),
+            m -> m.substring(m.lastIndexOf('/') + 1),
+            Function.identity());
     }
 
     protected void createOutputPackages(ResultMessage resultMessage, Entry entry, Task task) {
@@ -51,5 +87,48 @@ public abstract class RuleResultProcessor implements ResultProcessor {
             }
         });
         return packagesToCreate;
+    }
+
+    protected Path downloadFile(Map<String, String> fileNames, String fileName, Path outputDir) {
+        Path reportFile = outputDir.resolve(fileName);
+        URI s3Uri = URI.create(fileNames.get(fileName));
+        s3Client.downloadFile(s3Uri.getHost(), S3Path.of(s3Uri.getPath()), reportFile);
+        return reportFile;
+    }
+
+    protected void storeFindings(Entry entry, Task task, List<Finding> findings) {
+        if (findings.isEmpty()) {
+            taskService.markStatus(task, Status.SUCCESS);
+        } else {
+            findingService.reportFindings(findings);
+            Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
+            logger.debug("{}/{} produced notices {}", entry.publicId(), task.name(), severities);
+            if (severities.getOrDefault("ERROR", 0L) > 0) {
+                taskService.markStatus(task, Status.ERRORS);
+            } else if (severities.getOrDefault("WARNING", 0L) > 0) {
+                taskService.markStatus(task, Status.WARNINGS);
+            } else {
+                taskService.markStatus(task, Status.SUCCESS);
+            }
+        }
+    }
+
+    protected boolean processFile(ResultMessage resultMessage,
+                                  Entry entry,
+                                  Task task,
+                                  Map<String, String> fileNames,
+                                  String fileName,
+                                  Predicate<Path> consumeFile) {
+        if (fileNames.containsKey(fileName)) {
+            Path ruleTemp = TempFiles.getRuleTempDirectory(vacoProperties, entry, task.name(), resultMessage.ruleName());
+            Path outputDir = ruleTemp.resolve("output");
+
+            Path reportsFile = downloadFile(fileNames, fileName, outputDir);
+
+            return consumeFile.test(reportsFile);
+        } else {
+            logger.warn("Expected file '{}' missing from output for message {}", fileName, resultMessage);
+            return false;
+        }
     }
 }

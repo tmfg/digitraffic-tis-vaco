@@ -1,0 +1,273 @@
+{
+  "notices": [
+    {
+      "code": "missing_recommended_field",
+      "severity": "WARNING",
+      "totalNotices": 5,
+      "sampleNotices": [
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        },
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        },
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        },
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        },
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        }
+      ]
+    },
+    {
+      "code": "stop_without_stop_time",
+      "severity": "WARNING",
+      "totalNotices": 45,
+      "sampleNotices": [
+        {
+          "csvRowNumber": 2.0,
+          "stopId": "138075",
+          "stopName": "Kauppatie"
+        },
+        {
+          "csvRowNumber": 3.0,
+          "stopId": "139789",
+          "stopName": "Manni P"
+        },
+        {
+          "csvRowNumber": 4.0,
+          "stopId": "139794",
+          "stopName": "Maakeski th"
+        },
+        {
+          "csvRowNumber": 5.0,
+          "stopId": "139795",
+          "stopName": "Maakeski P (Keinuhongantie)"
+        },
+        {
+          "csvRowNumber": 6.0,
+          "stopId": "139801",
+          "stopName": "Suojalanmäki"
+        },
+        {
+          "csvRowNumber": 7.0,
+          "stopId": "139805",
+          "stopName": "Hirtniemi th"
+        },
+        {
+          "csvRowNumber": 8.0,
+          "stopId": "139813",
+          "stopName": "Turva"
+        },
+        {
+          "csvRowNumber": 9.0,
+          "stopId": "139815",
+          "stopName": "Kansakoulu"
+        },
+        {
+          "csvRowNumber": 10.0,
+          "stopId": "139818",
+          "stopName": "Nyystölä"
+        },
+        {
+          "csvRowNumber": 11.0,
+          "stopId": "139821",
+          "stopName": "Nuijamäki"
+        },
+        {
+          "csvRowNumber": 12.0,
+          "stopId": "139822",
+          "stopName": "Koiravuori"
+        },
+        {
+          "csvRowNumber": 13.0,
+          "stopId": "139823",
+          "stopName": "Koiravuori"
+        },
+        {
+          "csvRowNumber": 14.0,
+          "stopId": "139827",
+          "stopName": "Padasjoen kirkko"
+        },
+        {
+          "csvRowNumber": 15.0,
+          "stopId": "139830",
+          "stopName": "Kullasvuoren koulu"
+        },
+        {
+          "csvRowNumber": 16.0,
+          "stopId": "86077",
+          "stopName": "Nyystölä th"
+        },
+        {
+          "csvRowNumber": 17.0,
+          "stopId": "138074",
+          "stopName": "Kauppatie"
+        },
+        {
+          "csvRowNumber": 18.0,
+          "stopId": "138166",
+          "stopName": "Palsa"
+        },
+        {
+          "csvRowNumber": 19.0,
+          "stopId": "190498",
+          "stopName": "Porasa"
+        },
+        {
+          "csvRowNumber": 20.0,
+          "stopId": "300918",
+          "stopName": "Vesijako"
+        },
+        {
+          "csvRowNumber": 21.0,
+          "stopId": "86257",
+          "stopName": "Auttoinen"
+        },
+        {
+          "csvRowNumber": 22.0,
+          "stopId": "139788",
+          "stopName": "Maakeski E"
+        },
+        {
+          "csvRowNumber": 23.0,
+          "stopId": "139806",
+          "stopName": "Harila"
+        },
+        {
+          "csvRowNumber": 24.0,
+          "stopId": "53263",
+          "stopName": "Vääksyn koulukeskus"
+        },
+        {
+          "csvRowNumber": 25.0,
+          "stopId": "139829",
+          "stopName": "Kullasvuoren koulu"
+        },
+        {
+          "csvRowNumber": 26.0,
+          "stopId": "139834",
+          "stopName": "Seitniemi"
+        },
+        {
+          "csvRowNumber": 27.0,
+          "stopId": "139837",
+          "stopName": "Pajulantie"
+        },
+        {
+          "csvRowNumber": 28.0,
+          "stopId": "189910",
+          "stopName": "Kellosalmentie 526 P"
+        },
+        {
+          "csvRowNumber": 29.0,
+          "stopId": "86119",
+          "stopName": "Kuivajärvi"
+        },
+        {
+          "csvRowNumber": 30.0,
+          "stopId": "138073",
+          "stopName": "Ilmoilantie"
+        },
+        {
+          "csvRowNumber": 31.0,
+          "stopId": "138296",
+          "stopName": "Kaukela"
+        },
+        {
+          "csvRowNumber": 32.0,
+          "stopId": "138298",
+          "stopName": "Hietasillantie"
+        },
+        {
+          "csvRowNumber": 33.0,
+          "stopId": "138299",
+          "stopName": "Hietasillantie"
+        },
+        {
+          "csvRowNumber": 34.0,
+          "stopId": "189590",
+          "stopName": "Sipiläntie"
+        },
+        {
+          "csvRowNumber": 35.0,
+          "stopId": "310780",
+          "stopName": "Keinuhongantie I"
+        },
+        {
+          "csvRowNumber": 36.0,
+          "stopId": "86090",
+          "stopName": "Syrjäntaantie"
+        },
+        {
+          "csvRowNumber": 37.0,
+          "stopId": "86091",
+          "stopName": "Syrjäntaantie"
+        },
+        {
+          "csvRowNumber": 38.0,
+          "stopId": "86100",
+          "stopName": "Arrakoski"
+        },
+        {
+          "csvRowNumber": 39.0,
+          "stopId": "86101",
+          "stopName": "Arrakoski"
+        },
+        {
+          "csvRowNumber": 40.0,
+          "stopId": "86255",
+          "stopName": "Kalliorinteentie"
+        },
+        {
+          "csvRowNumber": 41.0,
+          "stopId": "86262",
+          "stopName": "Hietaranta"
+        },
+        {
+          "csvRowNumber": 42.0,
+          "stopId": "86263",
+          "stopName": "Hietaranta"
+        },
+        {
+          "csvRowNumber": 43.0,
+          "stopId": "138189",
+          "stopName": "Kasiniemi"
+        },
+        {
+          "csvRowNumber": 44.0,
+          "stopId": "191182",
+          "stopName": "Syrjäläntie"
+        },
+        {
+          "csvRowNumber": 45.0,
+          "stopId": "86108",
+          "stopName": "Kaurate"
+        },
+        {
+          "csvRowNumber": 46.0,
+          "stopId": "86112",
+          "stopName": "Kauratteenkuja"
+        }
+      ]
+    },
+    {
+      "code": "unknown_file",
+      "severity": "INFO",
+      "totalNotices": 1,
+      "sampleNotices": [
+        {
+          "filename": "contracts.txt"
+        }
+      ]
+    }
+  ]
+}

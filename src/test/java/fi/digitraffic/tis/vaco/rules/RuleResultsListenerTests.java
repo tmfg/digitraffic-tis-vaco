@@ -15,7 +15,6 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
@@ -40,6 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -121,7 +121,7 @@ class RuleResultsListenerTests {
 
     private void assertResultProcessorIsUsed(String ruleName, ResultProcessor resultProcessor) throws JsonProcessingException {
         Entry entry = entryForRule(ruleName);
-        ResultMessage resultMessage = asResultMessage(vacoProperties, ruleName, entry);
+        ResultMessage resultMessage = asResultMessage(vacoProperties, ruleName, entry, Map.of());
         Message gtfs2netexMessage = sqsMessage(objectMapper, resultMessage);
 
         givenMatchingResultProcessorIsUsed(ruleName, entry, resultProcessor, gtfs2netexMessage);
@@ -201,18 +201,6 @@ class RuleResultsListenerTests {
     private static Message sqsMessage(ObjectMapper objectMapper, ResultMessage message) throws JsonProcessingException {
         return Message.builder()
             .body(objectMapper.writeValueAsString(message))
-            .build();
-    }
-
-    @NotNull
-    private static ResultMessage asResultMessage(VacoProperties vacoProperties, String ruleName, Entry entry) {
-        return ImmutableResultMessage.builder()
-            .ruleName(ruleName)
-            .entryId(entry.publicId())
-            .taskId(entry.tasks().get(0).id())
-            .inputs("s3://" + vacoProperties.s3ProcessingBucket() + "/inputs")
-            .outputs("s3://" + vacoProperties.s3ProcessingBucket() + "/outputs")
-            .uploadedFiles(Map.of())
             .build();
     }
 }
