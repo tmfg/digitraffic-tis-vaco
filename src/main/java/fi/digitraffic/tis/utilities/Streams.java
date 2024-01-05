@@ -331,4 +331,12 @@ public final class Streams {
             return new Chain<>(stream.flatMap(r -> mapper.apply(r).stream()));
         }
     }
+
+    public static <T> List<T> append(List<T> list, T arg){
+        return Stream.concat(list.stream(), Stream.of(arg)).toList();
+    }
+
+    public static <T> List<T> concat(List<T> listOne, List<T> listTwo){
+        return Stream.concat(listOne.stream(), listTwo.stream()).toList();
+    }
 }

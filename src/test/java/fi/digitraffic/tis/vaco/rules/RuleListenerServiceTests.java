@@ -64,6 +64,7 @@ class RuleListenerServiceTests {
     @Mock private PackagesService packagesService;
     @Mock private TaskService taskService;
     @Mock private RulesetService rulesetService;
+    @Mock private GtfsTaskSummaryService gtfsTaskSummaryService;
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
 
     /**

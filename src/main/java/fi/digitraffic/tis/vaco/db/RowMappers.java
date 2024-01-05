@@ -23,6 +23,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
+import fi.digitraffic.tis.vaco.rules.model.ImmutableTaskSummaryItem;
+import fi.digitraffic.tis.vaco.rules.model.TaskSummaryItem;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -124,6 +126,13 @@ public final class RowMappers {
         .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
         .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
         .completedBy(rs.getString("completed_by"))
+        .build();
+
+    public static final RowMapper<TaskSummaryItem> TASK_SUMMARY = (rs, rowNum) -> ImmutableTaskSummaryItem.builder()
+        .id(rs.getLong("id"))
+        .taskId(rs.getLong("task_id"))
+        .name(rs.getString("name"))
+        .raw(rs.getBytes("raw"))
         .build();
 
     private static RowMapper<Entry> mapQueueEntry(ObjectMapper objectMapper) {

@@ -19,7 +19,7 @@ public interface EntryState {
 
     @Value.Parameter
     @Nullable
-    EntrySummary summary();
+    List<TaskSummaryItem> summaries();
 
     List<ValidationReport> validationReports();
 }
