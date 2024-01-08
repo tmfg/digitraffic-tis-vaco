@@ -10,6 +10,7 @@ import java.util.List;
 @Value.Immutable
 @JsonSerialize(as = ImmutableGtfsTaskSummary.class)
 @JsonDeserialize(as = ImmutableGtfsTaskSummary.class)
+@Value.Style(jdk9Collections = true)
 public interface GtfsTaskSummary extends TaskSummary {
     List<Agency> agencies();
     FeedInfo feedInfo();

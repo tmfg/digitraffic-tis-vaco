@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.rules.model.gtfs.summary;
 
 import com.opencsv.bean.CsvBindByName;
 
-public class FeedInfo extends CsvBean {
+public class FeedInfo {
 
     @CsvBindByName(column = "feed_publisher_name")
     String feedPublisherName;

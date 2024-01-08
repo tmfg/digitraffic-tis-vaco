@@ -108,11 +108,12 @@ public class GtfsTaskSummaryService {
             .build();
     }
 
-    <T extends CsvBean> List<T> getCsvBeans(InputStream inputStream, Class<T> beanClass) {
-        try (CSVReader csvReader = new CSVReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));) {
-            CsvToBean<CsvBean> builder = new CsvToBeanBuilder<CsvBean>(csvReader).withType(beanClass).build();
-            List<CsvBean> hmm = builder.parse();
-            return hmm.stream().map(beanClass::cast).toList();
+    <T> List<T> getCsvBeans(InputStream inputStream, Class<T> beanClass) {
+        try (CSVReader csvReader = new CSVReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            return new CsvToBeanBuilder<T>(csvReader)
+                .withType(beanClass)
+                .build()
+                .parse();
         } catch (IOException e) {
             logger.error("Failed to parse into {}", beanClass, e);
         }

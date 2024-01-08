@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.rules.model.gtfs.summary;
 
 import com.opencsv.bean.CsvBindByName;
 
-public class Route extends CsvBean {
+public class Route {
 
     @CsvBindByName(column = "route_id")
     String routeId;
