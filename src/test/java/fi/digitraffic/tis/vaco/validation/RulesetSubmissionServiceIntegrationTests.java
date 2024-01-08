@@ -103,7 +103,6 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         rulesetSubmissionService.submitRules(
             entry,
             task,
-            null,
             // DownloadRule produces just a single file so this is OK
             Set.of(TestObjects.aRuleset()
                 .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)

@@ -87,8 +87,8 @@ class TaskServiceTests {
         List<Task> expectedTasks = List.of(
             ImmutableTask.of(entry.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
             ImmutableTask.of(entry.id(), RulesetSubmissionService.VALIDATE_TASK, 200),
-            ImmutableTask.of(entry.id(), SummaryRule.SUMMARY_TASK, 201),
-            ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL_4_1_0, 202)
+            ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL_4_1_0, 201),
+            ImmutableTask.of(entry.id(), SummaryRule.SUMMARY_TASK, 300)
         );
 
         assertThat(taskService.resolveTasks(entry), equalTo(expectedTasks));

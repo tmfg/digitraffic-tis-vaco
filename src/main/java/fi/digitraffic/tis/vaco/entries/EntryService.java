@@ -51,7 +51,9 @@ public class EntryService {
     }
 
     /**
-     * Update entry's status based on transitive values from tasks and errors.
+     * Update entry's status based on transitive values from tasks and errors. Should only be called after entry
+     * processing is done.
+     *
      * @param entry Entry to update
      */
     public void updateStatus(Entry entry) {
@@ -70,12 +72,6 @@ public class EntryService {
             if (Status.WARNINGS.equals(t.status())) {
                 return Status.WARNINGS;
             }
-            if (Status.CANCELLED.equals(t.status())) {
-                return Status.WARNINGS;
-            }
-        }
-        if (findingService.hasErrors(entry)) {
-            return Status.ERRORS;
         }
         return Status.SUCCESS;
     }

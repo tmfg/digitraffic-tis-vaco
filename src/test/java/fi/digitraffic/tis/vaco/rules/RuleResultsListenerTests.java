@@ -3,26 +3,24 @@ package fi.digitraffic.tis.vaco.rules;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import fi.digitraffic.tis.aws.s3.S3Client;
-import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.packages.PackagesService;
-import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
-import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
-import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,58 +33,52 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
-class RuleListenerServiceTests {
+class RuleResultsListenerTests {
 
-    private RuleListenerService ruleListenerService;
+    private RuleResultsListener ruleResultsListener;
 
     private ObjectMapper objectMapper;
     private VacoProperties vacoProperties;
     @Mock private MessagingService messagingService;
     @Mock private FindingService findingService;
-    @Mock private S3Client s3Client;
     @Mock private QueueHandlerService queueHandlerService;
-    @Mock private PackagesService packagesService;
     @Mock private TaskService taskService;
-    @Mock private RulesetService rulesetService;
-    @Mock private GtfsTaskSummaryService gtfsTaskSummaryService;
+    @Mock private NetexEnturValidatorResultProcessor netexEnturValidator;
+    @Mock private GtfsCanonicalResultProcessor gtfsCanonicalValidator;
+    @Mock private SimpleResultProcessor simpleResultProcessor;
+    @Mock private InternalRuleResultProcessor internalRuleResultProcessor;
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
-
-    /**
-     * This is ignored because in mocking the files residing in S3 are not available for filtering.
-     */
-    private final static String IGNORED_PATH_VALUE = "IGNORED ON PURPOSE. If you see this in output, something is broken.";
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModules(new GuavaModule());
         vacoProperties = TestObjects.vacoProperties();
-        ruleListenerService = new RuleListenerService(
+        ruleResultsListener = new RuleResultsListener(
             messagingService,
             findingService,
             objectMapper,
-            s3Client,
-            vacoProperties,
             queueHandlerService,
-            packagesService,
             taskService,
-            rulesetService);
+            netexEnturValidator,
+            gtfsCanonicalValidator,
+            simpleResultProcessor,
+            internalRuleResultProcessor);
     }
 
     @AfterEach
@@ -94,65 +86,79 @@ class RuleListenerServiceTests {
         verifyNoMoreInteractions(
             messagingService,
             findingService,
-            s3Client,
             queueHandlerService,
-            packagesService,
             taskService,
-            rulesetService);
+            netexEnturValidator,
+            gtfsCanonicalValidator,
+            simpleResultProcessor,
+            internalRuleResultProcessor);
     }
 
     @Test
-    void canHandleResultOfGtfs2NetexConversion() throws JsonProcessingException {
-        Entry entry = entryWithTask(e -> ImmutableTask.of(e.id(), RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, 100).withId(9_000_000L));
-        Task conversionTask = entry.tasks().get(0);
-        Map<String, List<String>> uploadedFiles = Map.of(
-            "file.txt", List.of("all", "debug"),
-            "another.txt", List.of("debug"));
-        Message gtfs2netexMessage = sqsMessage(asResultMessage(entry, conversionTask, uploadedFiles));
+    void canonicalGtfsValidator400UsesCanonicalResultProcessor() throws JsonProcessingException {
+        assertResultProcessorIsUsed(RuleName.GTFS_CANONICAL_4_0_0, gtfsCanonicalValidator);
+    }
 
-        givenResultPrerequisitesAreMet(entry, conversionTask);
-        given(messagingService.readMessages(QueueNames.VACO_RULES_RESULTS)).willReturn(Stream.of(gtfs2netexMessage));
-        givenGetEntry(entry).willReturn(entry);
-        givenPackageIsCreated("all", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "all", IGNORED_PATH_VALUE));
-        givenPackageIsCreated("debug", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "debug", IGNORED_PATH_VALUE));
-        givenResultProcessingResultsInNewProcessingJobSubmission();
+    @Test
+    void canonicalGtfsValidator410UsesCanonicalResultProcessor() throws JsonProcessingException {
+        assertResultProcessorIsUsed(RuleName.GTFS_CANONICAL_4_1_0, gtfsCanonicalValidator);
+    }
 
-        ruleListenerService.handleRuleResultsIngestQueue();
+    @Test
+    void netexEnturValidatorUsesEnturResultProcessor() throws JsonProcessingException {
+        assertResultProcessorIsUsed(RuleName.NETEX_ENTUR_1_0_1, netexEnturValidator);
+    }
 
+    @Test
+    void fintrafficGtfs2NetexConversionUsesSimpleResultProcessor() throws JsonProcessingException {
+        assertResultProcessorIsUsed(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, simpleResultProcessor);
+    }
+
+    @Test
+    void enturNetex2GtfsConversionUsesSimpleResultProcessor() throws JsonProcessingException {
+        assertResultProcessorIsUsed(RuleName.NETEX2GTFS_ENTUR_2_0_6, simpleResultProcessor);
+    }
+
+    private void assertResultProcessorIsUsed(String ruleName, ResultProcessor resultProcessor) throws JsonProcessingException {
+        Entry entry = entryForRule(ruleName);
+        ResultMessage resultMessage = asResultMessage(vacoProperties, ruleName, entry, Map.of());
+        Message gtfs2netexMessage = sqsMessage(objectMapper, resultMessage);
+
+        givenMatchingResultProcessorIsUsed(ruleName, entry, resultProcessor, gtfs2netexMessage);
+        ruleResultsListener.handleRuleResultsIngestQueue();
         then(messagingService).should().deleteMessage(QueueNames.VACO_RULES_RESULTS, gtfs2netexMessage);
         assertThat(submittedProcessingJob.getValue().entry(), equalTo(entry));
     }
 
-    private BDDMockito.BDDMyOngoingStubbing<Package> givenPackageIsCreated(String packageName, Entry entry, Task task) {
-        return given(packagesService.createPackage(
-            eq(entry),
-            eq(task),
-            eq(packageName),
-            eq(S3Path.of("outputs")),
-            eq(packageName + ".zip"),
-            any()));
+    private void givenMatchingResultProcessorIsUsed(String ruleName, Entry entry, ResultProcessor resultProcessor, Message message) {
+        givenResultPrerequisitesAreMet(ruleName, entry);
+        givenMessageIsInQueue(QueueNames.VACO_RULES_RESULTS, message);
+        givenResultProcessorCompletesWith(resultProcessor, true);
+        givenGetEntry(entry).willReturn(entry);
+        givenResultProcessingResultsInNewProcessingJobSubmission();
+    }
+
+    @NotNull
+    private static Entry entryForRule(String ruleName) {
+        return entryWithTask(e -> ImmutableTask.of(e.id(), ruleName, 100).withId(9_000_000L));
+    }
+
+    private void givenMessageIsInQueue(String queueName, Message gtfs2netexMessage) {
+        given(messagingService.readMessages(queueName)).willReturn(Stream.of(gtfs2netexMessage));
     }
 
     /**
      * Entry and Task exists, state change is tracked.
      */
-    private void givenResultPrerequisitesAreMet(Entry entry, Task task) {
+    private void givenResultPrerequisitesAreMet(String ruleName, Entry entry) {
         givenFindEntry(entry).willReturn(Optional.of(entry));
-        givenFindTask(entry).willReturn(Optional.of(task));
+        givenFindTask(ruleName, entry).willReturn(Optional.of(entry.tasks().get(0)));
         givenTaskProgressIsTracked();
         givenTaskStatusIsTracked();
     }
 
-    @NotNull
-    private ResultMessage asResultMessage(Entry entry, Task conversionTask, Map<String, ? extends List<String>> uploadedFiles) {
-        return ImmutableResultMessage.builder()
-            .ruleName(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0)
-            .entryId(entry.publicId())
-            .taskId(conversionTask.id())
-            .inputs("s3://" + vacoProperties.s3ProcessingBucket() + "/inputs")
-            .outputs("s3://" + vacoProperties.s3ProcessingBucket() + "/outputs")
-            .uploadedFiles(uploadedFiles)
-            .build();
+    private BDDMockito.BDDMyOngoingStubbing<Boolean> givenResultProcessorCompletesWith(ResultProcessor resultProcessor, boolean result) {
+        return given(resultProcessor.processResults(any(), any(), any())).willReturn(result);
     }
 
     @NotNull
@@ -165,8 +171,8 @@ class RuleListenerServiceTests {
         return given(queueHandlerService.findEntry(entry.publicId()));
     }
 
-    private BDDMockito.BDDMyOngoingStubbing<Optional<Task>> givenFindTask(Entry entry) {
-        return given(taskService.findTask(entry.id(), RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0));
+    private BDDMockito.BDDMyOngoingStubbing<Optional<Task>> givenFindTask(String ruleName, Entry entry) {
+        return given(taskService.findTask(entry.id(), ruleName));
     }
 
     /**
@@ -185,14 +191,14 @@ class RuleListenerServiceTests {
         given(taskService.markStatus(any(), any())).will(a -> a.getArgument(0));
     }
 
-    private Entry entryWithTask(Function<Entry, Task> taskCreator) {
+    private static Entry entryWithTask(Function<Entry, Task> taskCreator) {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
         ImmutableEntry entry = entryBuilder.build();
         entry = entry.withTasks(taskCreator.apply(entry));
         return entry;
     }
 
-    private Message sqsMessage(ResultMessage message) throws JsonProcessingException {
+    private static Message sqsMessage(ObjectMapper objectMapper, ResultMessage message) throws JsonProcessingException {
         return Message.builder()
             .body(objectMapper.writeValueAsString(message))
             .build();

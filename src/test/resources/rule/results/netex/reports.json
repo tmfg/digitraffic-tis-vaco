@@ -1,0 +1,357 @@
+[
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:16.444873924",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_5.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:29.09937793",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_4.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:32.966334001",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_6.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:36.655369544",
+      "numberOfValidationEntriesPerRule": {
+        "NETEX_SCHEMA": 1
+      },
+      "validationReportEntries": [
+        {
+          "name": "NETEX_SCHEMA",
+          "message": "Content is not allowed in prolog.",
+          "severity": "CRITICAL",
+          "objectId": null,
+          "fileName": "output/stderr.log",
+          "lineNumber": 1,
+          "columnNumber": 1
+        }
+      ]
+    },
+    "entry": "output/stderr.log",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:36.742329586",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_7.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:39.33836117",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_3.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:42.605746964",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_16_k.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:43.940162881",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_1_l.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:46.709607007",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_1.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:50.123704592",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_400.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:50.925191384",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_401.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:51.741999301",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_405.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:52.647113927",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_411.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:55.84561822",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_6_k.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:57.250618179",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_404.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:58.068985721",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_406.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:58.941797971",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_407.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:59.864693472",
+      "numberOfValidationEntriesPerRule": {
+        "NETEX_SCHEMA": 1
+      },
+      "validationReportEntries": [
+        {
+          "name": "NETEX_SCHEMA",
+          "message": "Content is not allowed in prolog.",
+          "severity": "CRITICAL",
+          "objectId": null,
+          "fileName": "output/stdout.log",
+          "lineNumber": 2,
+          "columnNumber": 1
+        }
+      ]
+    },
+    "entry": "output/stdout.log",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:19:59.87772993",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_409.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:00.999082958",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_408.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:02.184997625",
+      "numberOfValidationEntriesPerRule": {
+        "NETEX_SCHEMA": 1
+      },
+      "validationReportEntries": [
+        {
+          "name": "NETEX_SCHEMA",
+          "message": "Content is not allowed in prolog.",
+          "severity": "CRITICAL",
+          "objectId": null,
+          "fileName": "output/kaj_stats.json",
+          "lineNumber": 1,
+          "columnNumber": 1
+        }
+      ]
+    },
+    "entry": "output/kaj_stats.json",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:02.227399667",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_all_stops.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:09.543069004",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_11.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:14.72322534",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_13.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:18.6195958",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_12.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:22.602384843",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_16.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:24.584619469",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_15.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:25.760757803",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_8.xml",
+    "errors": []
+  },
+  {
+    "validationReport": {
+      "codespace": "FIN",
+      "validationReportId": "NO_REPORT_ID_PROVIDED",
+      "creationDate": "2023-12-22T11:20:30.312425805",
+      "numberOfValidationEntriesPerRule": {},
+      "validationReportEntries": []
+    },
+    "entry": "output/kaj_line_14.xml",
+    "errors": []
+  }
+]

@@ -132,7 +132,7 @@ public class TaskService {
                 DownloadRule.DOWNLOAD_SUBTASK,
                 StopsAndQuaysRule.STOPS_AND_QUAYS_TASK));
         deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
-        deps.put(SummaryRule.SUMMARY_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK));
+        deps.put(SummaryRule.SUMMARY_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.VALIDATE_TASK));
         return deps;
     }
 

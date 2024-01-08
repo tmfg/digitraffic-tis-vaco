@@ -69,7 +69,7 @@ class ValidationQueueSqsListenerTests {
 
         listener.listen(message, acknowledgement);
 
-        verify(rulesetSubmissionService).validate(message);
+        verify(rulesetSubmissionService).submit(message);
         verify(messagingService).submitProcessingJob(delegationJobMessage.capture());
         verify(acknowledgement).acknowledge();
     }

@@ -30,17 +30,17 @@
         <java.version>17</java.version>
         <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
                    avoid conflicts -->
-        <springframework.boot-version>3.2.0</springframework.boot-version>
+        <springframework.boot-version>3.2.1</springframework.boot-version>
         <junit5.version>5.9.2</junit5.version>
         <testcontainers.version>1.19.3</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>3.0.2</awspringcloud.version>
         <azurespring.version>5.7.0</azurespring.version>
-        <oauth2server.version>3.1.5</oauth2server.version>
+        <oauth2server.version>3.2.1</oauth2server.version>
         <immutables.version>2.10.0</immutables.version>
         <jackson.version>2.16.0</jackson.version>
-        <mockito.version>5.6.0</mockito.version>
+        <mockito.version>5.8.0</mockito.version>
         <caffeine.version>3.1.8</caffeine.version>
         <guava.version>32.1.3-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
@@ -51,7 +51,7 @@
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
         <jib-maven-plugin.version>3.4.0</jib-maven-plugin.version>
-        <build-helper-maven-plugin.version>3.4.0</build-helper-maven-plugin.version>
+        <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <sonar.organization>fintraffic</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -330,13 +330,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Entur NeTEx Validator -->
-        <dependency>
-            <groupId>org.entur</groupId>
-            <artifactId>netex-validator-java</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-
         <!-- Near-optimal caching library -->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
@@ -414,7 +407,7 @@
                         <image>${jib-maven-plugin.image-name}</image>
                     </to>
                     <from>
-                        <image>gcr.io/distroless/java17-debian12:nonroot@sha256:74aa41e4cb8b6cc76391c0679370be6bd75ebf60917a7f9fb5dd1b4c7b1a1854</image>
+                        <image>gcr.io/distroless/java17-debian12:nonroot@sha256:cbf2ec039cb3ad0f79f651ad945239bbb95fc40604444b056af9fe3562e0c314</image>
                     </from>
                 </configuration>
             </plugin>

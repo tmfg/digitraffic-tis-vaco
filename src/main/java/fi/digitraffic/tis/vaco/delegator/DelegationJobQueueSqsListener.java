@@ -78,7 +78,6 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         List<Task> tasksToRun = nextTaskGroupToRun(message).orElse(List.of());
 
         logger.info("Entry {} next tasks to run {}", entry.publicId(), tasksToRun);
-
         if (!tasksToRun.isEmpty()) {
             tasksToRun.forEach(task -> {
                 logger.info("Running task {}", task);

@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -64,6 +63,6 @@ public class RulesetService {
     }
 
     public boolean dependenciesCompletedSuccessfully(Entry entry, Ruleset r) {
-        return rulesetRepository.allDependenciesMatch(entry, r, Status.SUCCESS);
+        return rulesetRepository.anyDependencyFailed(entry, r);
     }
 }
