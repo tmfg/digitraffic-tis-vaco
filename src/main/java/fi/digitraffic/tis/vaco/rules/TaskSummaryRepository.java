@@ -15,7 +15,6 @@ public class TaskSummaryRepository {
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
 
-
     public TaskSummaryRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
         this.jdbc = jdbc;
         this.objectMapper = objectMapper;
@@ -23,11 +22,11 @@ public class TaskSummaryRepository {
 
     public TaskSummaryItem create(TaskSummaryItem taskSummaryItem) {
         return jdbc.queryForObject("""
-            INSERT INTO task_summary (task_id, name, raw)
+            INSERT INTO summary (task_id, name, raw)
                  VALUES (?, ?, ?)
               RETURNING id, task_id, name, raw
             """,
-            RowMappers.TASK_SUMMARY,
+            RowMappers.SUMMARY,
             taskSummaryItem.taskId(), taskSummaryItem.name(), taskSummaryItem.raw());
     }
 
@@ -36,10 +35,10 @@ public class TaskSummaryRepository {
             return jdbc.query(
                 """
                 SELECT ts.id, ts.task_id, ts.name, ts.raw
-                  FROM task_summary ts
+                  FROM summary ts
                  WHERE ts.task_id = ?
                 """,
-                RowMappers.TASK_SUMMARY,
+                RowMappers.SUMMARY,
                 taskId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
@@ -51,11 +50,11 @@ public class TaskSummaryRepository {
             return jdbc.query(
                 """
                 SELECT ts.id, ts.task_id, ts.name, ts.raw
-                  FROM task_summary ts
-                 JOIN task t ON ts.task_id = t.id
+                  FROM summary ts
+                  JOIN task t ON ts.task_id = t.id
                  WHERE t.entry_id = ?
                 """,
-                RowMappers.TASK_SUMMARY,
+                RowMappers.SUMMARY,
                 entryId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();

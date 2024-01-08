@@ -13,8 +13,11 @@ import org.immutables.value.Value;
 public interface TaskSummaryItem {
     @JsonView(DataVisibility.Internal.class)
     Long taskId();
+
     String title();
+
     String type();
+
     @Nullable
     Object content();
 }

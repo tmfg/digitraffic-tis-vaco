@@ -128,7 +128,7 @@ public final class RowMappers {
         .completedBy(rs.getString("completed_by"))
         .build();
 
-    public static final RowMapper<TaskSummaryItem> TASK_SUMMARY = (rs, rowNum) -> ImmutableTaskSummaryItem.builder()
+    public static final RowMapper<TaskSummaryItem> SUMMARY = (rs, rowNum) -> ImmutableTaskSummaryItem.builder()
         .id(rs.getLong("id"))
         .taskId(rs.getLong("task_id"))
         .name(rs.getString("name"))

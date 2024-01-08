@@ -10,6 +10,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @JsonSerialize(as = ImmutableTaskSummaryItem.class)
 @JsonDeserialize(as = ImmutableTaskSummaryItem.class)
+// TODO: Should rename to simply "Summary"
 public interface TaskSummaryItem {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
