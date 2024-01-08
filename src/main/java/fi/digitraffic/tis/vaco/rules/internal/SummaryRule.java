@@ -96,7 +96,6 @@ public class SummaryRule implements Rule<Entry, ResultMessage> {
     }
 
     private ImmutableResultMessage unsuccessfulResult(Task t, Entry e) {
-        taskService.trackTask(t, ProcessingState.UPDATE);
         taskService.trackTask(t, ProcessingState.COMPLETE);
         return ImmutableResultMessage.builder()
             .entryId(e.publicId())
