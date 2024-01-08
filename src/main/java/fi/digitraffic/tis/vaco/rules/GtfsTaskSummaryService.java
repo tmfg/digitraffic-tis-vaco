@@ -180,7 +180,7 @@ public class GtfsTaskSummaryService {
 
             return gtfsTaskSummary
                 .withCounts(Streams.append(gtfsTaskSummary.counts(), "Routes:  " + routes.size()))
-                .withComponents(Streams.concat(gtfsTaskSummary.components(), newComponents));
+                .withComponents(Streams.concat(gtfsTaskSummary.components(), newComponents).toList());
         }
         catch (Exception e) {
             logger.error("Failed to process routes for task {}", taskId);
@@ -261,8 +261,8 @@ public class GtfsTaskSummaryService {
                 }
 
                 return gtfsTaskSummary
-                    .withComponents(Streams.concat(gtfsTaskSummary.components(), newComponents))
-                    .withCounts(Streams.concat(gtfsTaskSummary.counts(), newCounts));
+                    .withComponents(Streams.concat(gtfsTaskSummary.components(), newComponents).toList())
+                    .withCounts(Streams.concat(gtfsTaskSummary.counts(), newCounts).toList());
             }
 
             return gtfsTaskSummary;
