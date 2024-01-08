@@ -116,7 +116,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                             taskService.trackTask(t, ProcessingState.START);
                             messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, summaryRule.execute(entry).join());
                             taskService.markStatus(t, Status.SUCCESS);
-                        });
+                        }); // this pattern works only for pseudotasks
                 }
                 else {
                     logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);

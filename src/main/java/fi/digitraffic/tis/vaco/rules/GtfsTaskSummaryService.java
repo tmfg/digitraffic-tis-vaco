@@ -3,13 +3,11 @@ package fi.digitraffic.tis.vaco.rules;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
-import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.exceptions.CsvException;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableTaskSummaryItem;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.Agency;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.CsvBean;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.FeedInfo;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.ImmutableGtfsTaskSummary;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.Route;
@@ -77,9 +75,6 @@ public class GtfsTaskSummaryService {
                     }
                 }
             }
-        } catch (Exception e) {
-            logger.error("Error occurred while processing task's {} data", taskId, e);
-            throw e;
         }
 
         persistTaskSummaryItem(taskId, "agencies", gtfsTaskSummary.agencies());

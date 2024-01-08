@@ -32,7 +32,10 @@ public class SummaryRule implements Rule<Entry, ResultMessage> {
 
     private final VacoProperties vacoProperties;
 
-    public SummaryRule(TaskService taskService, PackagesService packagesService, GtfsTaskSummaryService gtfsTaskSummaryService, VacoProperties vacoProperties) {
+    public SummaryRule(TaskService taskService,
+                       PackagesService packagesService,
+                       GtfsTaskSummaryService gtfsTaskSummaryService,
+                       VacoProperties vacoProperties) {
         this.taskService = Objects.requireNonNull(taskService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.gtfsTaskSummaryService = Objects.requireNonNull(gtfsTaskSummaryService);
