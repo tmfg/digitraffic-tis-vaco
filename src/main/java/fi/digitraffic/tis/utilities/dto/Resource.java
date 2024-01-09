@@ -13,4 +13,15 @@ public record Resource<D>(
 
     @Nullable
     Map<String, Map<String, Link>> links) {
+
+
+    public static <D> Resource<D> resource(D data) {
+        return resource(data, null);
+    }
+    public static <D> Resource<D> resource(D data, String error) {
+        return new Resource<>(
+            data,
+            error,
+            Map.of());
+    }
 }

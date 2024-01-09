@@ -92,11 +92,11 @@ public class UiController {
                 }
             }
         });
-        return ResponseEntity.ok(new Resource<>(
+        return ResponseEntity.ok(Resource.resource(
             ImmutableEntryState.builder()
                 .entry(asEntryStateResource(entry))
                 .validationReports(validationReports)
-                .build(), null, null));
+                .build()));
     }
 
     @GetMapping(path = "/entries")

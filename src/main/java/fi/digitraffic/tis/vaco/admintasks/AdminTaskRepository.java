@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class AdminTaskRepository {
@@ -73,7 +74,8 @@ public class AdminTaskRepository {
     public GroupIdMappingTask resolveSkipped(GroupIdMappingTask task) {
         return jdbc.queryForObject("""
                UPDATE admin_groupid
-                  SET skip = true
+                  SET skip = true,
+                      completed = NOW()
                 WHERE id = ? OR public_id = ?
             RETURNING *
             """,
@@ -100,5 +102,19 @@ public class AdminTaskRepository {
             """,
             task.id(),
             task.publicId()) == 1;
+    }
+
+    public Optional<GroupIdMappingTask> findGroupIdTaskByPublicId(String publicId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                SELECT *
+                  FROM admin_groupid
+                 WHERE public_id = ?
+                """,
+                RowMappers.ADMIN_GROUPID,
+                publicId));
+        } catch (EmptyResultDataAccessException erdae) {
+            return Optional.empty();
+        }
     }
 }

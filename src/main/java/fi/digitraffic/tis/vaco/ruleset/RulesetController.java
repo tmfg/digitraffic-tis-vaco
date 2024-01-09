@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/rules")
@@ -32,13 +31,9 @@ public class RulesetController {
         // TODO: Once we have authentication there needs to be an authentication check that the calling user has access
         //       to the businessId. No authentication yet though, so no such check either.
         return ResponseEntity.ok(
-            Streams.map(rulesetService.selectRulesets(businessId), RulesetController::asRulesetResources)
+            Streams.map(rulesetService.selectRulesets(businessId), Resource::resource)
                 .toList());
     }
 
-
-    private static Resource<Ruleset> asRulesetResources(Ruleset ruleset) {
-        return new Resource<>(ruleset, null, Map.of());
-    }
 
 }
