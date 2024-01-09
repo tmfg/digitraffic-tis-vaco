@@ -74,7 +74,8 @@ public class AdminTaskRepository {
     public GroupIdMappingTask resolveSkipped(GroupIdMappingTask task) {
         return jdbc.queryForObject("""
                UPDATE admin_groupid
-                  SET skip = true
+                  SET skip = true,
+                      completed = NOW()
                 WHERE id = ? OR public_id = ?
             RETURNING *
             """,
