@@ -58,7 +58,7 @@ public class FeatureFlagsRepository {
     }
 
     public boolean isFeatureFlagEnabled(String name) {
-        return Boolean.FALSE.equals(jdbc.queryForObject("""
+        return Boolean.TRUE.equals(jdbc.queryForObject("""
             SELECT r.enabled
               FROM (SELECT ff.enabled,
                            ROW_NUMBER() OVER (PARTITION BY name ORDER BY modified DESC) i
