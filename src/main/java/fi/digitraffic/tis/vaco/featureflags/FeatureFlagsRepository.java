@@ -34,9 +34,10 @@ public class FeatureFlagsRepository {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                 SELECT r.*
-                  FROM (SELECT ff.*, ROW_NUMBER() OVER (PARTITION BY name ORDER BY modified DESC) i
+                  FROM (SELECT ff.*,
+                               ROW_NUMBER() OVER (PARTITION BY name ORDER BY modified DESC) i
                           FROM feature_flag ff
-                          WHERE name = ?) AS r
+                         WHERE name = ?) AS r
                  WHERE r.i = 1;
                 """,
                 RowMappers.FEATURE_FLAG,
@@ -54,5 +55,18 @@ public class FeatureFlagsRepository {
             """,
             RowMappers.FEATURE_FLAG,
             featureFlag.name(), enabled, modifierOid);
+    }
+
+    public boolean isFeatureFlagEnabled(String name) {
+        return Boolean.FALSE.equals(jdbc.queryForObject("""
+            SELECT r.enabled
+              FROM (SELECT ff.enabled,
+                           ROW_NUMBER() OVER (PARTITION BY name ORDER BY modified DESC) i
+                      FROM feature_flag ff
+                     WHERE name = ?) AS r
+             WHERE r.i = 1;
+            """,
+            Boolean.class,
+            name));
     }
 }

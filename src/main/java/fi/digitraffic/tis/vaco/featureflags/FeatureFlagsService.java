@@ -26,4 +26,8 @@ public class FeatureFlagsService {
     public FeatureFlag setFeatureFlag(FeatureFlag featureFlag, boolean enabled, String modifierOid) {
         return featureFlagsRepository.setFeatureFlag(featureFlag, enabled, modifierOid);
     }
+
+    public boolean isFeatureFlagEnabled(String name) {
+        return featureFlagsRepository.isFeatureFlagEnabled(name);
+    }
 }
