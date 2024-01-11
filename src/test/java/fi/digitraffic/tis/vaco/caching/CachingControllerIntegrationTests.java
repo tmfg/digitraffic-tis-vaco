@@ -29,6 +29,8 @@ class CachingControllerIntegrationTests extends SpringBootIntegrationTestBase {
         Map<String, CacheSummaryStatistics> stats = apiResponse(response, listCacheStatsType).data();
 
         CacheSummaryStatistics emptyStatistics = ImmutableCacheSummaryStatistics.of(
+            true,
+            0,
             ImmutableRequestStatistics.of(0, 0),
             ImmutableLoadStatistics.of(0, 0, 0, 0),
             ImmutableEvictionStatistics.of(0)

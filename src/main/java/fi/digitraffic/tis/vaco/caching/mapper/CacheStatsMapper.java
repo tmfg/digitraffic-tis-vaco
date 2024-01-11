@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.caching.mapper;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import fi.digitraffic.tis.vaco.caching.model.ImmutableCacheSummaryStatistics;
@@ -10,7 +11,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CacheStatsMapper {
-    public CacheSummaryStatistics toCacheSummaryStatistics(CacheStats stats) {
+    public <K, V> CacheSummaryStatistics toCacheSummaryStatistics(Cache<K, V> cache) {
+        CacheStats stats = cache.stats();
         // Average load penalty (in nanoseconds) tracks how much time is "wasted" on loading. While interesting and also
         // related to loadFailureCount, it is not mapped because at the moment it is not really actionably interesting.
         // stats.averageLoadPenalty();
@@ -20,6 +22,8 @@ public class CacheStatsMapper {
         //stats.evictionWeight();
 
         return ImmutableCacheSummaryStatistics.of(
+            cache.policy().isRecordingStats(),
+            cache.estimatedSize(),
             ImmutableRequestStatistics.of(
                 stats.hitCount(),
                 stats.missCount()),

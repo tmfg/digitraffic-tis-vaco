@@ -100,8 +100,8 @@ public class CachingService {
 
     public Map<String, CacheSummaryStatistics> getStats() {
         return Map.of(
-            "rulesets", cacheStatsMapper.toCacheSummaryStatistics(rulesetCache.stats()),
-            "SQS queue URLs", cacheStatsMapper.toCacheSummaryStatistics(sqsQueueUrlCache.stats()),
-            "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache.stats()));
+            "rulesets", cacheStatsMapper.toCacheSummaryStatistics(rulesetCache),
+            "SQS queue URLs", cacheStatsMapper.toCacheSummaryStatistics(sqsQueueUrlCache),
+            "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache));
     }
 }

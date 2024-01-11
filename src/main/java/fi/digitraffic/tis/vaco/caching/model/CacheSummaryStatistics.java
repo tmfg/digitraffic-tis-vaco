@@ -10,6 +10,12 @@ import org.immutables.value.Value;
 public interface CacheSummaryStatistics {
 
     @Value.Parameter
+    boolean statisticsEnabled();
+
+    @Value.Parameter
+    long size();
+
+    @Value.Parameter
     RequestStatistics requests();
 
     @Value.Parameter
