@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.messaging;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.caching.CachingFailureException;
 import fi.digitraffic.tis.vaco.caching.CachingService;
-import fi.digitraffic.tis.vaco.caching.model.CachedType;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -102,7 +101,7 @@ public class MessagingService {
     }
 
     private String resolveQueueUrl(String queueName) {
-        return cachingService.cache(CachedType.QUEUE_NAME, queueName, cachedQueueName -> {
+        return cachingService.cacheQueueUrl(queueName, cachedQueueName -> {
             String queueUrl = sqsClient.getQueueUrl(GetQueueUrlRequest.builder()
                 .queueName(cachedQueueName)
                 .build()).queueUrl();

@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.ruleset;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
-import fi.digitraffic.tis.vaco.caching.model.CachedType;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -54,12 +53,11 @@ public class RulesetService {
 
     public void deleteRuleset(Ruleset ruleset) {
         rulesetRepository.deleteRuleset(ruleset);
-        cachingService.invalidate(CachedType.RULESET, ruleset.identifyingName());
+        cachingService.invalidateRuleset(ruleset.identifyingName());
     }
 
     public Optional<Ruleset> findByName(String rulesetName) {
-        return cachingService.cache(
-            CachedType.RULESET,
+        return cachingService.cacheRuleset(
             rulesetName,
             name -> rulesetRepository.findByName(name).orElse(null));
     }

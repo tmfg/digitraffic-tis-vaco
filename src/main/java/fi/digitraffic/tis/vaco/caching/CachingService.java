@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
-import fi.digitraffic.tis.vaco.caching.model.CachedType;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * Centralized caching control for entire application.
@@ -41,33 +41,28 @@ public class CachingService {
         this.localPathCache = localPathCache();
     }
 
-    public <K, C> Optional<C> cache(CachedType type, K key, Function<K, C> loader) {
-        C cached = switch (type) {
-            case RULESET -> (C) cacheRuleset((String) key, (Function<String, Ruleset>) loader);
-            case QUEUE_NAME -> (C) cacheQueueName((String) key, (Function<String, String>) loader);
-            case PATH -> (C) cachePackagePath((Path) key, (Function<Path, Path>) loader);
-        };
-        return Optional.ofNullable(cached);
+    public Optional<Ruleset> cacheRuleset(String key, Function<String, Ruleset> loader) {
+        return Optional.ofNullable(rulesetCache.get(key, loader));
     }
 
-    public <K> void invalidate(CachedType type, K key) {
-        switch (type) {
-            case RULESET -> rulesetCache.invalidate((String) key);
-            case QUEUE_NAME -> sqsQueueUrlCache.invalidate((String) key);
-            case PATH -> localPathCache.invalidate((Path) key);
-        }
+    public void invalidateRuleset(String key) {
+        rulesetCache.invalidate(key);
     }
 
-    private Ruleset cacheRuleset(String key, Function<String, Ruleset> loader) {
-        return rulesetCache.get(key, loader);
+    public Optional<String> cacheQueueUrl(String key, UnaryOperator<String> loader) {
+        return Optional.of(sqsQueueUrlCache.get(key, loader));
     }
 
-    private String cacheQueueName(String key, Function<String, String> loader) {
-        return sqsQueueUrlCache.get(key, loader);
+    public void invalidateQueueUrl(String key) {
+        sqsQueueUrlCache.invalidate(key);
     }
 
-    private Path cachePackagePath(Path key, Function<Path, Path> loader) {
-        return localPathCache.get(key, loader);
+    public Optional<Path> cacheLocalTemporaryPath(Path key, UnaryOperator<Path> loader) {
+        return Optional.ofNullable(localPathCache.get(key, loader));
+    }
+
+    public void invalidateLocalTemporaryPath(Path key) {
+        localPathCache.invalidate(key);
     }
 
     private static Cache<String, Ruleset> rulesetNameCache() {

@@ -7,7 +7,6 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.caching.CachingService;
-import fi.digitraffic.tis.vaco.caching.model.CachedType;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -112,7 +111,7 @@ public class PackagesService {
                 Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, task, packageName)
                     .resolve(Path.of(p.path()).getFileName());
 
-                return cachingService.cache(CachedType.PATH, targetPackagePath, path -> {
+                return cachingService.cacheLocalTemporaryPath(targetPackagePath, path -> {
 
                     logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
 
