@@ -1,7 +1,9 @@
 package fi.digitraffic.tis.vaco.messaging;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
+import fi.digitraffic.tis.vaco.caching.CachingFailureException;
+import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.caching.model.CachedType;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -19,6 +21,7 @@ import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -29,17 +32,17 @@ public class MessagingService {
 
     private final SqsClient sqsClient;
     private final SqsTemplate sqsTemplate;
-    private final Cache<String, String> sqsQueueUrlCache;
+    private final CachingService cachingService;
     private final EntryRepository entryRepository;
 
     public MessagingService(SqsClient sqsClient,
                             SqsTemplate sqsTemplate,
-                            Cache<String, String> sqsQueueUrlCache,
+                            CachingService cachingService,
                             EntryRepository entryRepository) {
-        this.sqsClient = sqsClient;
-        this.sqsTemplate = sqsTemplate;
-        this.sqsQueueUrlCache = sqsQueueUrlCache;
-        this.entryRepository = entryRepository;
+        this.sqsClient = Objects.requireNonNull(sqsClient);
+        this.sqsTemplate = Objects.requireNonNull(sqsTemplate);
+        this.cachingService = Objects.requireNonNull(cachingService);
+        this.entryRepository = Objects.requireNonNull(entryRepository);
     }
 
     public <P> CompletableFuture<P> sendMessage(String queueName, P payload) {
@@ -99,13 +102,12 @@ public class MessagingService {
     }
 
     private String resolveQueueUrl(String queueName) {
-        return sqsQueueUrlCache.get(queueName, cachedQueueName -> {
+        return cachingService.cache(CachedType.QUEUE_NAME, queueName, cachedQueueName -> {
             String queueUrl = sqsClient.getQueueUrl(GetQueueUrlRequest.builder()
                 .queueName(cachedQueueName)
                 .build()).queueUrl();
             logger.debug("Resolved URL for queue {} as {}", cachedQueueName, queueUrl);
             return queueUrl;
-        });
-
+        }).orElseThrow(() -> new CachingFailureException("Failed to cache " + queueName + " resolving!"));
     }
 }
