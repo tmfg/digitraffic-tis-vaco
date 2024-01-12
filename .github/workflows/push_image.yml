@@ -58,7 +58,7 @@ jobs:
           mvn --quiet clean compile jib:dockerBuild -Djib-maven-plugin.image-name=$ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image_latest=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_OUTPUT
-          if [[ -z "$IMAGE_TAG" ]]
+          if [[ -n "$IMAGE_TAG" ]]
           then
             docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
