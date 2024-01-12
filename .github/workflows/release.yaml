@@ -7,9 +7,6 @@ on:
         description: 'Release increment type. Defaults to "minor", available values are "major", "minor" and "patch"'
         required: true
         default: 'minor'
-  push:
-    branches:
-      - main
 
 jobs:
   build:
