@@ -5,6 +5,7 @@ import fi.digitraffic.tis.vaco.admintasks.AdminTasksService;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
@@ -30,7 +31,8 @@ class MeServiceTests extends SpringBootIntegrationTestBase {
         String fakeGroupId = UUID.randomUUID().toString();
         Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("groups", List.of(fakeGroupId)));
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
-        meService.findCompanies(token);
+        SecurityContextHolder.getContext().setAuthentication(token);
+        meService.findCompanies();
 
         List<GroupIdMappingTask> tasks = adminTasksService.listUnresolvedGroupIdMappingTasks();
         assertThat(tasks.size(), equalTo(1));

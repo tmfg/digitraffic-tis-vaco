@@ -14,6 +14,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.model.EntryState;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
@@ -53,15 +54,17 @@ public class UiController {
     private final QueueHandlerService queueHandlerService;
 
     private final RulesetRepository rulesetRepository;
+    private final RulesetService rulesetService;
 
     public UiController(VacoProperties vacoProperties,
                         EntryStateService entryStateService,
                         QueueHandlerService queueHandlerService,
-                        RulesetRepository rulesetRepository) {
+                        RulesetRepository rulesetRepository, RulesetService rulesetService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryStateService = Objects.requireNonNull(entryStateService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
+        this.rulesetService = rulesetService;
     }
 
     @GetMapping(path = "/bootstrap")
@@ -85,7 +88,7 @@ public class UiController {
 
         Entry entry = entryOpt.get();
         Map<String, Task> tasksByName = Streams.collect(entry.tasks(), Task::name, Function.identity());
-        Map<String, Ruleset> rulesets = rulesetRepository.findRulesetsAsMap(Constants.FINTRAFFIC_BUSINESS_ID);
+        Map<String, Ruleset> rulesets = Streams.collect(rulesetService.selectRulesets(Constants.FINTRAFFIC_BUSINESS_ID), Ruleset::identifyingName, Function.identity());
         List<ValidationReport> validationReports =  new ArrayList<>();
         entry.validations().forEach(validationInput -> {
             Task ruleTask = tasksByName.get(validationInput.name());

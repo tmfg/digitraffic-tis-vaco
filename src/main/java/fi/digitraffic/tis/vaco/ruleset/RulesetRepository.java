@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
-import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
@@ -17,11 +16,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 @Repository
 public class RulesetRepository {
@@ -66,10 +63,6 @@ public class RulesetRepository {
             RowMappers.RULESET);
         logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
         return Set.copyOf(rulesets);
-    }
-
-    public Map<String, Ruleset> findRulesetsAsMap(String businessId) {
-        return Streams.collect(findRulesets(businessId), Ruleset::identifyingName, Function.identity());
     }
 
     public Set<Ruleset> findRulesets(String businessId, TransitDataFormat format, Type type) {
