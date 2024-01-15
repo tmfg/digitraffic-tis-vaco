@@ -24,7 +24,7 @@ import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
 @RequestMapping("/admin-tasks")
-@PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
+@PreAuthorize("hasAnyAuthority('vaco.admin' ,'vaco.apiuser')")
 public class AdminTasksController {
 
     private final AdminTasksService adminTasksService;

@@ -1,25 +1,28 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.company.service.PartnershipService;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static fi.digitraffic.tis.Constants.FINTRAFFIC_BUSINESS_ID;
@@ -29,22 +32,25 @@ public class QueueHandlerService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private final MeService meService;
     private final MessagingService messagingService;
     private final CompanyService companyService;
     private final EntryRepository entryRepository;
     private final EntryRequestMapper entryRequestMapper;
     private final PartnershipService partnershipService;
 
-    public QueueHandlerService(EntryRequestMapper entryRequestMapper,
+    public QueueHandlerService(MeService meService,
+                               EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
                                CompanyService companyService,
                                EntryRepository entryRepository,
                                PartnershipService partnershipService) {
-        this.entryRequestMapper = entryRequestMapper;
-        this.messagingService = messagingService;
-        this.companyService = companyService;
-        this.entryRepository = entryRepository;
-        this.partnershipService = partnershipService;
+        this.meService = Objects.requireNonNull(meService);
+        this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
+        this.messagingService = Objects.requireNonNull(messagingService);
+        this.companyService = Objects.requireNonNull(companyService);
+        this.entryRepository = Objects.requireNonNull(entryRepository);
+        this.partnershipService = Objects.requireNonNull(partnershipService);
     }
 
     @Transactional
@@ -102,7 +108,7 @@ public class QueueHandlerService {
     }
 
     public Optional<Entry> findEntry(String publicId) {
-        return entryRepository.findByPublicId(publicId, false);
+        return findEntry(publicId, false);
     }
 
     public Optional<Entry> findEntry(String publicId, boolean skipErrorsField) {
@@ -116,5 +122,10 @@ public class QueueHandlerService {
 
     public List<Entry> getAllQueueEntriesFor(String businessId, boolean full) {
         return entryRepository.findAllByBusinessId(businessId, full);
+    }
+
+    public List<Entry> getAllEntriesVisibleForCurrentUser(boolean full) {
+        return Streams.flatten(meService.findCompanies(), c -> entryRepository.findAllByBusinessId(c.businessId(), full))
+            .toList();
     }
 }

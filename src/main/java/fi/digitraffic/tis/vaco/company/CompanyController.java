@@ -29,6 +29,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 
 @RestController
 @RequestMapping("/company")
+@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
 public class CompanyController {
 
     private final VacoProperties vacoProperties;
@@ -41,7 +42,6 @@ public class CompanyController {
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    @PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
     public ResponseEntity<Resource<Company>> createCompany(@Valid @RequestBody Company company) {
         Optional<Company> createdCompany = companyService.createCompany(company);
         return createdCompany

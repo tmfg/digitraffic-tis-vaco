@@ -12,32 +12,18 @@ client_id={{clientId}}&grant_type=client_credentials&scope={{clientId}}/.default
 
 ###
 
-POST http://localhost:8080/api/queue
+GET {{serviceRootUri}}/api/admin-tasks/group-ids
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
-{
-  "url": "https://tvv.fra1.digitaloceanspaces.com/231.zip",
-  "format": "gtfs",
-  "businessId": "2942108-7",
-  "etag": "etagg",
-  "name": "GTFS Pori local",
-  "validations": [
-    {
-      "name": "gtfs.canonical.v4_1_0",
-      "config": {}
-    }
-  ],
-  "conversions": [
-  ],
-  "metadata": {}
-}
+###
 
-> {%
-    client.global.set("entry_details_link", response.body.links.refs.self.href)
-%}
+POST {{serviceRootUri}}/api/admin-tasks/group-ids/DGWe8Qi1KpRGFwBaUMUo2/assign?businessId=2942108-7
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
 
 ###
 
-GET {{entry_details_link}}
+GET {{serviceRootUri}}/api/admin-tasks/group-ids
 Content-Type: application/json
+Authorization: Bearer {{tis_token}}

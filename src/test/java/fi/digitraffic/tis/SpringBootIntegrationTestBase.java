@@ -6,12 +6,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.vaco.VacoApplication;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -121,6 +123,20 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
      */
     protected JsonNode apiResponse(MvcResult response) throws UnsupportedEncodingException, JsonProcessingException {
         return objectMapper.readTree(response.getResponse().getContentAsString());
+    }
+
+    @Autowired
+    protected CompanyService companyService;
+
+    /**
+     * Make current context believe given token is Fintraffic company.
+     * <p>
+     * This is about 3/5 on scale of "how hacky this is".
+     */
+    protected void injectGroupIdToCompany(JwtAuthenticationToken token) {
+        companyService.updateAdGroupId(
+            companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get(),
+            token.getToken().getClaimAsStringList("groups").get(0));
     }
 
 }
