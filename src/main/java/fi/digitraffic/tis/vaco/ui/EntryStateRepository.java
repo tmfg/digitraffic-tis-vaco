@@ -37,10 +37,11 @@ public class EntryStateRepository {
                        WHERE task_id = ?
                     GROUP BY message, severity
                     ORDER BY CASE
-                                WHEN severity = 'ERROR' THEN 1
-                                WHEN severity = 'WARNING' THEN 2
-                                WHEN severity = 'INFO' THEN 3
-                                ELSE 4
+                                WHEN severity = 'CRITICAL' THEN 1
+                                WHEN severity = 'ERROR' THEN 2
+                                WHEN severity = 'WARNING' THEN 3
+                                WHEN severity = 'INFO' THEN 4
+                                ELSE 5
                              END ASC,
                              message ASC""",
                 RowMappers.UI_AGGREGATED_FINDINGS.apply(objectMapper),
@@ -62,7 +63,14 @@ public class EntryStateRepository {
                              COUNT(*) AS total
                         FROM finding
                        WHERE task_id = ?
-                    GROUP BY severity)
+                    GROUP BY severity
+                    ORDER BY CASE
+                            WHEN severity = 'CRITICAL' THEN 1
+                            WHEN severity = 'ERROR' THEN 2
+                            WHEN severity = 'WARNING' THEN 3
+                            WHEN severity = 'INFO' THEN 4
+                            ELSE 5
+                        END ASC)
                     """,
                 RowMappers.UI_FINDING_COUNTERS.apply(objectMapper),
                 taskId, taskId);

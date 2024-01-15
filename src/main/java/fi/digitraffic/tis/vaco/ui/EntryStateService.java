@@ -41,10 +41,13 @@ public class EntryStateService {
         List<ItemCounter> counters = entryStateRepository.findFindingCounters(task.id());
 
         List<AggregatedFinding> aggregated = entryStateRepository.findAggregatedFindings(task.id());
+        if (aggregated.isEmpty()) {
+            return null;
+        }
         List<AggregatedFinding> aggregatedWithFindings = new ArrayList<>();
-        aggregated.forEach(notice -> {
-            List<Finding> findings = entryStateRepository.findNoticeFindings(task.id(), notice.code());
-            AggregatedFinding aggregatedWithFindingInstances = ImmutableAggregatedFinding.copyOf(notice).withFindings(findings);
+        aggregated.forEach(aggregatedFinding -> {
+            List<Finding> findings = entryStateRepository.findNoticeFindings(task.id(), aggregatedFinding.code());
+            AggregatedFinding aggregatedWithFindingInstances = ImmutableAggregatedFinding.copyOf(aggregatedFinding).withFindings(findings);
             aggregatedWithFindings.add(aggregatedWithFindingInstances);
         });
 
