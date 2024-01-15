@@ -30,10 +30,10 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableNotice;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.Notice;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,8 +104,8 @@ public final class RowMappers {
     public static final Function<ObjectMapper, RowMapper<Entry>> ENTRY = RowMappers::mapQueueEntry;
     public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
     public static final Function<ObjectMapper, RowMapper<ImmutableConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
-    public static final Function<ObjectMapper, RowMapper<Notice>> UI_NOTICES = RowMappers::mapUiNotices;
-    public static final Function<ObjectMapper, RowMapper<ItemCounter>> UI_NOTICE_COUNTERS = RowMappers::mapUiNoticeCounters;
+    public static final Function<ObjectMapper, RowMapper<AggregatedFinding>> UI_AGGREGATED_FINDINGS = RowMappers::mapUiAggregatedFinding;
+    public static final Function<ObjectMapper, RowMapper<ItemCounter>> UI_FINDING_COUNTERS = RowMappers::mapUiFindingCounters;
 
     public static final RowMapper<Finding> FINDING = (rs, rowNum) -> ImmutableFinding.builder()
         .id(rs.getLong("id"))
@@ -186,8 +186,8 @@ public final class RowMappers {
     }
 
     @SuppressWarnings("unchecked")
-    private static RowMapper<Notice> mapUiNotices(ObjectMapper objectMapper) {
-        return (rs, rowNum) -> ImmutableNotice.builder()
+    private static RowMapper<AggregatedFinding> mapUiAggregatedFinding(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutableAggregatedFinding.builder()
             .code(rs.getString("code"))
             .severity(rs.getString("severity"))
             .total(rs.getInt("total"))
@@ -195,7 +195,7 @@ public final class RowMappers {
     }
 
     @SuppressWarnings("unchecked")
-    private static RowMapper<ItemCounter> mapUiNoticeCounters(ObjectMapper objectMapper) {
+    private static RowMapper<ItemCounter> mapUiFindingCounters(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableItemCounter.builder()
             .name(rs.getString("name"))
             .total(rs.getInt("total"))

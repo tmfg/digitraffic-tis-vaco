@@ -4,23 +4,24 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.packages.model.Package;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.immutables.value.Value;
 
 import java.util.List;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableValidationReport.class)
-@JsonDeserialize(as = ImmutableValidationReport.class)
-public interface ValidationReport {
-
+@JsonSerialize(as = ImmutableRuleReport.class)
+@JsonDeserialize(as = ImmutableRuleReport.class)
+public interface RuleReport {
     String ruleName();
 
     String ruleDescription();
 
-    List<ItemCounter> counters();
+    Type ruleType();
 
-    List<Notice> notices();
+    List<ItemCounter> findingCounters();
+
+    List<AggregatedFinding> findings();
 
     List<Resource<Package>> packages();
 }
-

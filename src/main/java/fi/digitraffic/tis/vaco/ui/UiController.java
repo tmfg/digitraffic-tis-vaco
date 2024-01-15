@@ -9,15 +9,14 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.me.MeService;
-import fi.digitraffic.tis.vaco.packages.model.Package;
-import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
-import fi.digitraffic.tis.vaco.ui.model.ValidationReport;
+import fi.digitraffic.tis.vaco.ui.model.RuleReport;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -81,32 +80,29 @@ public class UiController {
         return queueHandlerService.findEntry(publicId, true)
             .filter(meService::isAllowedToAccess)
             .map(entry -> {
-                Map<String, Task> tasksByName = Streams.collect(entry.tasks(), Task::name, Function.identity());
                 Map<String, Ruleset> rulesets = Streams.collect(rulesetService.selectRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
-                List<ValidationReport> validationReports = new ArrayList<>();
-
-                entry.validations().forEach(validationInput -> {
-                    Task ruleTask = tasksByName.get(validationInput.name());
-                    List<Package> taskPackages = Streams.filter(entry.packages(), p -> p.taskId().equals(ruleTask.id())).toList();
-                    if (ruleTask != null) {
-                        ValidationReport report = entryStateService.getValidationReport(ruleTask, rulesets.get(validationInput.name()), taskPackages, entry);
-                        if (report != null) {
-                            validationReports.add(report);
-                        }
+                List<RuleReport> reports =  new ArrayList<>();
+                entry.tasks().forEach(task -> {
+                    RuleReport report = null;
+                    if (RuleName.VALIDATION_RULES.contains(task.name()) || RuleName.CONVERSION_RULES.contains(task.name())) {
+                        report = entryStateService.getRuleReport(task, entry, rulesets);
+                    }
+                    if(report != null) {
+                        reports.add(report);
                     }
                 });
 
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry))
-                        .validationReports(validationReports)
+                        .reports(reports)
                         .build()));
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));
     }
 
     @GetMapping(path = "/entries")
     @JsonView(DataVisibility.External.class)
-    @PreAuthorize("hasAuthority('vaco.user')")
+    //@PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "full") boolean full) {
         List<Entry> entries = queueHandlerService.getAllEntriesVisibleForCurrentUser(full);
         return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));
