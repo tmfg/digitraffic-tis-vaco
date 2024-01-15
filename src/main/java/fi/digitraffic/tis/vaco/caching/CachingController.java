@@ -18,7 +18,7 @@ import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
 @RequestMapping("/admin/caching")
-@PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
+@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
 public class CachingController {
 
     private final CachingService cachingService;

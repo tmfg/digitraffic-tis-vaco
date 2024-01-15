@@ -23,7 +23,7 @@ import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
 @RequestMapping("/feature-flags")
-@PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
+@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
 public class FeatureFlagsController {
 
     private final FeatureFlagsService featureFlagsService;
