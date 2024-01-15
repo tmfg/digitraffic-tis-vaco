@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -55,6 +56,8 @@ public class AadOAuth2LoginSecurityConfig {
 
         // enable CORS
         http.cors(cors -> cors.configurationSource(corsConfigurationSource));
+        // and disable CSRF
+        http.csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
     }

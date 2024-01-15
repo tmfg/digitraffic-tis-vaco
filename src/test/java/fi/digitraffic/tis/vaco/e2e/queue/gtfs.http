@@ -12,7 +12,7 @@ client_id={{clientId}}&grant_type=client_credentials&scope={{clientId}}/.default
 
 ###
 
-POST http://localhost:8080/api/queue
+POST {{serviceRootUri}}/api/queue
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
@@ -41,3 +41,4 @@ Authorization: Bearer {{tis_token}}
 
 GET {{entry_details_link}}
 Content-Type: application/json
+Authorization: Bearer {{tis_token}}

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
@@ -44,6 +45,9 @@ class QueueHandlerServiceTests {
     private EntryRequestMapper entryRequestMapper;
 
     @Mock
+    private MeService meService;
+
+    @Mock
     private MessagingService messagingService;
 
     @Mock
@@ -74,6 +78,7 @@ class QueueHandlerServiceTests {
         entryRequestMapper = new EntryRequestMapper(objectMapper);
 
         queueHandlerService = new QueueHandlerService(
+            meService,
             entryRequestMapper,
             messagingService,
             companyService,
@@ -101,6 +106,7 @@ class QueueHandlerServiceTests {
     @AfterEach
     void tearDown() {
         verifyNoMoreInteractions(
+            meService,
             messagingService,
             companyService,
             entryRepository,
