@@ -39,4 +39,8 @@ public class CompanyService {
     public Set<Company> findAllByAdGroupIds(List<String> adGroupIds) {
         return companyRepository.findAllByAdGroupIds(adGroupIds);
     }
+
+    public Company updateAdGroupId(Company company, String groupId) {
+        return companyRepository.updateAdGroupId(company, groupId);
+    }
 }

@@ -7,13 +7,15 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,19 +34,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
-import static fi.digitraffic.tis.utilities.JwtHelpers.safeGet;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @RestController
 @RequestMapping("/queue")
+@PreAuthorize("hasAuthority('vaco.apiuser')")
 public class QueueHandlerController {
 
+    private final MeService meService;
     private final QueueHandlerService queueHandlerService;
     private final VacoProperties vacoProperties;
 
-    public QueueHandlerController(QueueHandlerService queueHandlerService,
+    public QueueHandlerController(MeService meService,
+                                  QueueHandlerService queueHandlerService,
                                   VacoProperties vacoProperties) {
+        this.meService = Objects.requireNonNull(meService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
@@ -52,23 +57,24 @@ public class QueueHandlerController {
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody EntryRequest entryRequest) {
-        Entry entry = queueHandlerService.processQueueEntry(entryRequest);
-
-        return ResponseEntity.ok(asQueueHandlerResource(entry));
+        if (meService.isAllowedToAccess(entryRequest.getBusinessId())) {
+            Entry entry = queueHandlerService.processQueueEntry(entryRequest);
+            return ResponseEntity.ok(asQueueHandlerResource(entry));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<List<Resource<Entry>>> listEntries(
-        JwtAuthenticationToken token,
-        @RequestParam(name = "businessId") String businessId,
-        @RequestParam(name = "full", required = false) boolean full) {
-        // TODO: We do not know the exact claim name (or maybe we need to use Graph) at this point, so this is kind of
-        //       meh passthrough until we get more details.
-        businessId = safeGet(token, vacoProperties.companyNameClaim()).orElse(businessId);
-        return ResponseEntity.ok(
-            Streams.map(queueHandlerService.getAllQueueEntriesFor(businessId, full), this::asQueueHandlerResource)
-            .toList());
+    public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "businessId") String businessId,
+                                                             @RequestParam(name = "full", required = false) boolean full) {
+        if (meService.isAllowedToAccess(businessId)) {
+            return ResponseEntity.ok(
+                Streams.collect(queueHandlerService.getAllQueueEntriesFor(businessId, full), this::asQueueHandlerResource));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     @GetMapping(path = "/{publicId}")
@@ -77,8 +83,9 @@ public class QueueHandlerController {
         Optional<Entry> entry = queueHandlerService.findEntry(publicId);
 
         return entry
+            .filter(meService::isAllowedToAccess)
             .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
-            .orElse(Responses.notFound(String.format("A ticket with public ID %s does not exist", publicId)));
+            .orElse(Responses.notFound(String.format("Entry with public id %s does not exist", publicId)));
     }
 
     private Resource<Entry> asQueueHandlerResource(Entry entry) {

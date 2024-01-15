@@ -25,6 +25,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/partnership")
 @Validated
+@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
 public class PartnershipController {
 
     private final PartnershipService partnershipService;
@@ -37,7 +38,6 @@ public class PartnershipController {
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    @PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
     public ResponseEntity<Resource<Partnership>> createPartnership(@Valid @RequestBody ImmutablePartnershipRequest partnershipRequest) {
         Optional<Company> partnerA = companyService.findByBusinessId(partnershipRequest.partnerABusinessId());
         Optional<Company> partnerB = companyService.findByBusinessId(partnershipRequest.partnerBBusinessId());

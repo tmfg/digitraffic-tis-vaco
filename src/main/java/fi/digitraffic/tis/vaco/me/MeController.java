@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,8 +35,8 @@ public class MeController {
 
     @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<Me>> fetch(JwtAuthenticationToken token) {
-        Set<Company> companies = meService.findCompanies(token);
+    public ResponseEntity<Resource<Me>> fetch() {
+        Set<Company> companies = meService.findCompanies();
 
         return ResponseEntity.ok(
             new Resource<>(

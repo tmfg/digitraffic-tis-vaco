@@ -6,9 +6,9 @@ import java.util.Optional;
 
 public class JwtHelpers {
 
-    public static Optional<String> safeGet(JwtAuthenticationToken token, String companyNameClaim) {
-        if (token != null && token.getTokenAttributes().containsKey(companyNameClaim)) {
-            return Optional.of(token.getTokenAttributes().get(companyNameClaim).toString());
+    public static Optional<String> safeGet(JwtAuthenticationToken token, String claim) {
+        if (token != null && token.getTokenAttributes().containsKey(claim)) {
+            return Optional.of(token.getTokenAttributes().get(claim).toString());
         }
         return Optional.empty();
     }

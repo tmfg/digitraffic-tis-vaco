@@ -12,6 +12,8 @@ import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
+import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
 import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
@@ -124,6 +126,14 @@ public final class RowMappers {
         .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
         .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
         .completedBy(rs.getString("completed_by"))
+        .build();
+
+    public static final RowMapper<FeatureFlag> FEATURE_FLAG = (rs, rowNum) -> ImmutableFeatureFlag.builder()
+        .id(rs.getLong("id"))
+        .modified(nullable(rs.getTimestamp("modified"), Timestamp::toLocalDateTime))
+        .modifiedBy(rs.getString("modified_by"))
+        .name(rs.getString("name"))
+        .enabled(rs.getBoolean("enabled"))
         .build();
 
     private static RowMapper<Entry> mapQueueEntry(ObjectMapper objectMapper) {

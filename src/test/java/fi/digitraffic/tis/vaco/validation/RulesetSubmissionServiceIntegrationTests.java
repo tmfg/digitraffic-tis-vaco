@@ -78,7 +78,6 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
         CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
-        System.out.println("r = " + r);
     }
 
     @BeforeEach

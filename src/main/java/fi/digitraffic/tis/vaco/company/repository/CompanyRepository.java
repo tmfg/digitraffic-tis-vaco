@@ -66,6 +66,9 @@ public class CompanyRepository {
     }
 
     public Set<Company> findAllByAdGroupIds(List<String> adGroupIds) {
+        if (adGroupIds.isEmpty()) {
+            return Set.of();
+        }
         return Set.copyOf(namedJdbc.query("""
             SELECT DISTINCT *
               FROM company c
@@ -74,5 +77,17 @@ public class CompanyRepository {
             new MapSqlParameterSource()
                 .addValue("adGroupIds", adGroupIds),
             RowMappers.COMPANY));
+    }
+
+    public Company updateAdGroupId(Company company, String adGroupId) {
+        return jdbc.queryForObject("""
+                UPDATE company
+                   SET ad_group_id = ?
+                 WHERE id = ?
+             RETURNING *
+            """,
+            RowMappers.COMPANY,
+            adGroupId,
+            company.id());
     }
 }
