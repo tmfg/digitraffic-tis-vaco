@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.me;
 
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.aaa.AuthorizationService;
 import fi.digitraffic.tis.vaco.admintasks.AdminTasksService;
 import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -9,12 +8,14 @@ import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -22,18 +23,13 @@ public class MeService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private final AdminTasksService adminTasksService;
     private final CompanyService companyService;
 
-    private final AdminTasksService adminTasksService;
-
-    private final AuthorizationService authorizationService;
-
-    public MeService(CompanyService companyService,
-                     AdminTasksService adminTasksService,
-                     AuthorizationService authorizationService) {
-        this.companyService = Objects.requireNonNull(companyService);
+    public MeService(AdminTasksService adminTasksService,
+                     CompanyService companyService) {
         this.adminTasksService = Objects.requireNonNull(adminTasksService);
-        this.authorizationService = Objects.requireNonNull(authorizationService);
+        this.companyService = Objects.requireNonNull(companyService);
     }
 
     /**
@@ -43,8 +39,8 @@ public class MeService {
      * @return set of company metadata the current user has access to
      */
     public Set<Company> findCompanies() {
-        return authorizationService.currentToken().map(token -> {
-            Set<String> allGroupIds = safeSet(token.getToken().getClaim("groups"));
+        return currentToken().map(token -> {
+            Set<String> allGroupIds = new HashSet<>(token.getToken().getClaimAsStringList("groups"));
             Set<Company> companies = companyService.findAllByAdGroupIds(List.copyOf(allGroupIds));
 
             Set<String> mappedGroupIds = Streams.map(companies, Company::adGroupId).toSet();
@@ -60,7 +56,7 @@ public class MeService {
      * @return String with user details to track who's trying to access things they shouldn't.
      */
     public String alertText() {
-        return authorizationService.currentToken()
+        return currentToken()
             .map(token -> token.getToken().getClaimAsString("oid"))
             .orElse("unauthenticated");
     }
@@ -75,19 +71,29 @@ public class MeService {
     }
 
     public boolean isAllowedToAccess(String businessId) {
-        return authorizationService.currentToken()
+        return currentToken()
             .flatMap(token -> Streams.filter(findCompanies(), c -> Objects.equals(c.businessId(), businessId))
                 .findFirst())
             .isPresent();
     }
 
-    @SuppressWarnings("unchecked")
-    private static Set<String> safeSet(Object maybeColl) {
-        if (maybeColl != null
-            && Collection.class.isAssignableFrom(maybeColl.getClass())) {
-            return new HashSet<>((Collection<String>) maybeColl);
-        } else {
-            return Set.of();
-        }
+    /**
+     * Use this method to gain access to current user's JWT token. Remember to handle missing tokens in case the user
+     * hasn't authenticated!
+     * <p>
+     * There are other ways of accessing the token, e.g. through controller handler parameter injection, but doing so
+     * blocks link generation. Also considering the current state of Spring Security's on-going migration/refactoring
+     * and the amount of legacy documentation online it is really hard to quantify what is the least insane approach for
+     * accessing the token itself.
+     * <p>
+     * For the reasons above, this service exists mainly to isolate the insanity, not for providing true authorization
+     * related actions. Lean on Spring Security where available.
+     *
+     * @return Current user's {@link JwtAuthenticationToken}
+     */
+    public Optional<JwtAuthenticationToken> currentToken() {
+        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+            .filter(JwtAuthenticationToken.class::isInstance)
+            .map(JwtAuthenticationToken.class::cast);
     }
 }
