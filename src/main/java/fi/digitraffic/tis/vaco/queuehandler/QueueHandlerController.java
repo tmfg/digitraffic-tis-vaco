@@ -13,6 +13,7 @@ import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,6 +39,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 
 @RestController
 @RequestMapping("/queue")
+@PreAuthorize("hasAuthority('vaco.apiuser')")
 public class QueueHandlerController {
 
     private final QueueHandlerService queueHandlerService;

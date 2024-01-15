@@ -6,6 +6,7 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/rules")
+@PreAuthorize("hasAuthority('vaco.apiuser')")
 public class RulesetController {
 
     private final RulesetService rulesetService;

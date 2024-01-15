@@ -41,18 +41,19 @@ public class AadOAuth2LoginSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource) throws Exception {
-
-        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.NEVER));
-
-        JwtAuthenticationConverter authenticationConverter = overridingGrantedAuthoritiesConverter();
+        // session management is set to stateless as JWT tokens themselves are stateless
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         http.authorizeHttpRequests(auth ->
+            // public endpoints with no authentication
             auth.requestMatchers("/health/**", "/ui/bootstrap/**", "/badge/**").permitAll()
+                // private endpoints (=everything else)
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(customizer ->
-                    customizer.jwtAuthenticationConverter(authenticationConverter)));
+                    customizer.jwtAuthenticationConverter(overridingGrantedAuthoritiesConverter())));
 
+        // enable CORS
         http.cors(cors -> cors.configurationSource(corsConfigurationSource));
 
         return http.build();

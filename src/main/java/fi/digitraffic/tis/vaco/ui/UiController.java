@@ -20,6 +20,7 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import fi.digitraffic.tis.vaco.ui.model.ValidationReport;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +43,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 
 @RestController
 @RequestMapping("/ui")
+@PreAuthorize("hasAuthority('vaco.user')")
 public class UiController {
 
     private final VacoProperties vacoProperties;
@@ -52,7 +54,10 @@ public class UiController {
 
     private final RulesetRepository rulesetRepository;
 
-    public UiController(VacoProperties vacoProperties, EntryStateService entryStateService, QueueHandlerService queueHandlerService, RulesetRepository rulesetRepository) {
+    public UiController(VacoProperties vacoProperties,
+                        EntryStateService entryStateService,
+                        QueueHandlerService queueHandlerService,
+                        RulesetRepository rulesetRepository) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryStateService = Objects.requireNonNull(entryStateService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
