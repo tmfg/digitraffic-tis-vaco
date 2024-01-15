@@ -3,8 +3,8 @@ package fi.digitraffic.tis.vaco.ui;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.findings.Finding;
+import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.Notice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -27,7 +27,7 @@ public class EntryStateRepository {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public List<Notice> findValidationRuleNotices(Long taskId) {
+    public List<AggregatedFinding> findAggregatedFindings(Long taskId) {
         try {
             return jdbc.query("""
                       SELECT message AS code,
@@ -43,14 +43,14 @@ public class EntryStateRepository {
                                 ELSE 4
                              END ASC,
                              message ASC""",
-                RowMappers.UI_NOTICES.apply(objectMapper),
+                RowMappers.UI_AGGREGATED_FINDINGS.apply(objectMapper),
                 taskId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
         }
     }
 
-    public List<ItemCounter> findValidationRuleCounters(Long taskId) {
+    public List<ItemCounter> findFindingCounters(Long taskId) {
         try {
             return jdbc.query("""
                     ( SELECT 'ALL' AS name,
@@ -64,7 +64,7 @@ public class EntryStateRepository {
                        WHERE task_id = ?
                     GROUP BY severity)
                     """,
-                RowMappers.UI_NOTICE_COUNTERS.apply(objectMapper),
+                RowMappers.UI_FINDING_COUNTERS.apply(objectMapper),
                 taskId, taskId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();

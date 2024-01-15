@@ -9,16 +9,15 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.packages.model.Package;
-import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.model.EntryState;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
-import fi.digitraffic.tis.vaco.ui.model.ValidationReport;
+import fi.digitraffic.tis.vaco.ui.model.RuleReport;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static fi.digitraffic.tis.utilities.JwtHelpers.safeGet;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
@@ -79,23 +77,23 @@ public class UiController {
         }
 
         Entry entry = entryOpt.get();
-        Map<String, Task> tasksByName = Streams.collect(entry.tasks(), Task::name, Function.identity());
         Map<String, Ruleset> rulesets = rulesetRepository.findRulesetsAsMap(Constants.FINTRAFFIC_BUSINESS_ID);
-        List<ValidationReport> validationReports =  new ArrayList<>();
-        entry.validations().forEach(validationInput -> {
-            Task ruleTask = tasksByName.get(validationInput.name());
-            List<Package> taskPackages = Streams.filter(entry.packages(), p -> p.taskId().equals(ruleTask.id())).toList();
-            if (ruleTask != null) {
-                ValidationReport report = entryStateService.getValidationReport(ruleTask, rulesets.get(validationInput.name()), taskPackages, entry);
-                if(report != null) {
-                    validationReports.add(report);
-                }
+
+        List<RuleReport> reports =  new ArrayList<>();
+        entry.tasks().forEach(task -> {
+            RuleReport report = null;
+            if (RuleName.VALIDATION_RULES.contains(task.name()) || RuleName.CONVERSION_RULES.contains(task.name())) {
+                report = entryStateService.getRuleReport(task, entry, rulesets);
+            }
+            if(report != null) {
+                reports.add(report);
             }
         });
+
         return ResponseEntity.ok(Resource.resource(
             ImmutableEntryState.builder()
                 .entry(asEntryStateResource(entry))
-                .validationReports(validationReports)
+                .reports(reports)
                 .build()));
     }
 
