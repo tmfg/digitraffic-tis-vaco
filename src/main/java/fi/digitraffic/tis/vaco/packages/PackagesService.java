@@ -1,12 +1,12 @@
 package fi.digitraffic.tis.vaco.packages;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
+import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -14,7 +14,6 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
@@ -31,19 +30,21 @@ public class PackagesService {
     private final VacoProperties vacoProperties;
     private final S3Client s3Client;
     private final S3Packager s3Packager;
+
+    private final CachingService cachingService;
+
     private final PackagesRepository packagesRepository;
-    private final Cache<Path, Path> packageCache;
 
     public PackagesService(VacoProperties vacoProperties,
                            S3Client s3Client,
                            S3Packager s3Packager,
-                           PackagesRepository packagesRepository,
-                           @Qualifier("packagesCache") Cache<Path, Path> packageCache) {
+                           CachingService cachingService,
+                           PackagesRepository packagesRepository) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.s3Packager = Objects.requireNonNull(s3Packager);
+        this.cachingService = Objects.requireNonNull(cachingService);
         this.packagesRepository = Objects.requireNonNull(packagesRepository);
-        this.packageCache = Objects.requireNonNull(packageCache);
     }
 
     /**
@@ -105,19 +106,21 @@ public class PackagesService {
     }
 
     public Optional<Path> downloadPackage(Entry entry, Task task, String packageName) {
-        return findPackage(task, packageName).map(p -> {
-            Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, task, packageName)
-                .resolve(Path.of(p.path()).getFileName());
+        return findPackage(task, packageName)
+            .flatMap(p -> {
+                Path targetPackagePath = TempFiles.getPackageDirectory(vacoProperties, entry, task, packageName)
+                    .resolve(Path.of(p.path()).getFileName());
 
-            return packageCache.get(targetPackagePath, tpp -> {
-                logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
+                return cachingService.cacheLocalTemporaryPath(targetPackagePath, path -> {
 
-                s3Client.downloadFile(
-                    vacoProperties.s3ProcessingBucket(),
-                    S3Path.of(p.path()),  // reuse local path as S3 path key
-                    targetPackagePath);
-                return targetPackagePath;
+                    logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
+
+                    s3Client.downloadFile(
+                        vacoProperties.s3ProcessingBucket(),
+                        S3Path.of(p.path()),  // reuse local path as S3 path key
+                        targetPackagePath);
+                    return targetPackagePath;
+                });
             });
-        });
     }
 }

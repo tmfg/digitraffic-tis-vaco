@@ -19,8 +19,13 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -129,5 +134,12 @@ public class TestObjects {
         return ImmutableGroupIdMappingTask
             .builder()
             .groupId(groupId);
+    }
+
+    public static JwtAuthenticationToken jwtAuthenticationToken(String oid) {
+        String fakeGroupId = UUID.randomUUID().toString();
+        Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("groups", List.of(fakeGroupId), "oid", oid));
+
+        return new JwtAuthenticationToken(jwt);
     }
 }

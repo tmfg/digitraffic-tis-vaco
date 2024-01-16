@@ -6,6 +6,8 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -20,6 +22,10 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
         EntryRequest request = TestObjects.aValidationEntryRequest().build();
+        JwtAuthenticationToken rohnMnadoj = TestObjects.jwtAuthenticationToken("Rohn Mnadoj");
+        SecurityContextHolder.getContext().setAuthentication(rohnMnadoj);
+        injectGroupIdToCompany(rohnMnadoj);
+
         MvcResult response = apiCall(post("/queue").content(toJson(request)))
             .andExpect(status().isOk())
             .andReturn();

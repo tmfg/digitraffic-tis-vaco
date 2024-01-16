@@ -12,6 +12,7 @@ import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import io.burt.jmespath.jackson.JacksonRuntime;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,8 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     private EmailRepository emailRepository;
     @Mock
     private CompanyService companyService;
+    @Mock
+    private FeatureFlagsService featureFlagsService;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +58,13 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         jmesPath = new JacksonRuntime();
         vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null));
 
-        emailService = new EmailService(vacoProperties, new MessageMapper(vacoProperties), sesClient, emailRepository, companyService);
+        emailService = new EmailService(
+            vacoProperties,
+            new MessageMapper(vacoProperties),
+            sesClient,
+            emailRepository,
+            companyService,
+            featureFlagsService);
     }
 
     @AfterEach
@@ -63,7 +72,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         // clear all received messages
         localstack.execInContainer("curl", "-X", "DELETE", "localhost.localstack.cloud:4566/_aws/ses");
 
-        verifyNoMoreInteractions(emailRepository, companyService);
+        verifyNoMoreInteractions(emailRepository, companyService, featureFlagsService);
     }
 
     @BeforeAll
@@ -151,12 +160,12 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         );
     }
 
-
     @Test
     void weeklyStatusEmailIsSentToRelatedCompanyContacts() throws IOException, InterruptedException {
         Company org = TestObjects.aCompany().addContactEmails("organ@izati.on").build();
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
 
+        BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(true);
         BDDMockito.given(emailRepository.findLatestEntries(org)).willReturn(List.of(entry));
 
         emailService.sendFeedStatusEmail(org);
@@ -170,6 +179,28 @@ class EmailServiceTests extends AwsIntegrationTestBase {
             );
         String message = list(path(messages, "messages[].Body.html_part"), JsonNode::textValue).get(0);
         assertThat(message, containsString("<title>NAP:iin ilmoittamienne rajapintojen tilanneraportti</title>"));
+    }
+
+    @Test
+    void willNotSendWeeklyStatusEmailIfFeatureFlagIsDisabled() throws IOException, InterruptedException {
+        Company org = TestObjects.aCompany().addContactEmails("organ@izati.on").build();
+
+        BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(false);
+
+        emailService.sendFeedStatusEmail(org);
+
+        assertAll(messagesSent(readReceivedMessages(), 0));
+    }
+
+    @Test
+    void willNotSendEntryCompleteEmailIfFeatureFlagIsDisabled() throws IOException, InterruptedException {
+        ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
+
+        BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.entryCompleteEmail")).willReturn(false);
+
+        emailService.notifyEntryComplete(entry);
+
+        assertAll(messagesSent(readReceivedMessages(), 0));
     }
 
     @NotNull

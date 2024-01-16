@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class AdminTasksService {
@@ -42,5 +43,9 @@ public class AdminTasksService {
 
     public boolean removeGroupIdMappingTask(GroupIdMappingTask task) {
         return adminTaskRepository.deleteGroupIdMappingTask(task);
+    }
+
+    public Optional<GroupIdMappingTask> findGroupIdMappingTaskByPublicId(String publicId) {
+        return adminTaskRepository.findGroupIdTaskByPublicId(publicId);
     }
 }

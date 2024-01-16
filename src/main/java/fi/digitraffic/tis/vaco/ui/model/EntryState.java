@@ -17,10 +17,7 @@ public interface EntryState {
 
     @Value.Parameter
     Resource<Entry> entry();
-
     @Value.Parameter
-    @Nullable
     List<Summary> summaries();
-
-    List<ValidationReport> validationReports();
+    List<RuleReport> reports();
 }

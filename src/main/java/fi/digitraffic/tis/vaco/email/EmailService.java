@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.email.model.Message;
 import fi.digitraffic.tis.vaco.email.model.Recipients;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,17 +36,20 @@ public class EmailService {
     private final SesClient sesClient;
     private final EmailRepository emailRepository;
     private final CompanyService companyService;
+    private final FeatureFlagsService featureFlagsService;
 
     public EmailService(VacoProperties vacoProperties,
                         MessageMapper messageMapper,
                         SesClient sesClient,
                         EmailRepository emailRepository,
-                        CompanyService companyService) {
+                        CompanyService companyService,
+                        FeatureFlagsService featureFlagsService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
         this.emailRepository = Objects.requireNonNull(emailRepository);
         this.companyService = Objects.requireNonNull(companyService);
+        this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
     @VisibleForTesting
@@ -76,25 +80,32 @@ public class EmailService {
                 company.businessId(),
                 company.contactEmails());
         }
-        List<Entry> latestEntries = emailRepository.findLatestEntries(company);
-        if (latestEntries.isEmpty()) {
 
+        if (!featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")) {
+            logger.info("Feature flag 'emails.feedStatusEmail' is currently disabled, feed status email sending for {} skipped.", company.businessId());
         } else {
-            Translations translations = resolveTranslations(company, "emails/feedStatusEmail");
+            List<Entry> latestEntries = emailRepository.findLatestEntries(company);
+            if (latestEntries.isEmpty()) {
+                logger.debug("No entries available for company '{}', feed status email sending skipped", company.businessId());
+            } else {
+                Translations translations = resolveTranslations(company, "emails/feedStatusEmail");
 
-            Recipients recipients = ImmutableRecipients.builder()
-                .addAllCc(company.contactEmails())
-                .build();
-            Message message = ImmutableMessage.builder()
-                .subject(translations.get("email.subject"))
-                .body(createFeedStatusEmailHtml(translations, latestEntries))
-                .build();
-            sendMessage(recipients, message);
+                Recipients recipients = ImmutableRecipients.builder()
+                    .addAllCc(company.contactEmails())
+                    .build();
+                Message message = ImmutableMessage.builder()
+                    .subject(translations.get("email.subject"))
+                    .body(createFeedStatusEmailHtml(translations, latestEntries))
+                    .build();
+                sendMessage(recipients, message);
+            }
         }
     }
 
     public void notifyEntryComplete(Entry entry) {
-        if (!entry.notifications().isEmpty()) {
+        if (!featureFlagsService.isFeatureFlagEnabled("emails.entryCompleteEmail")) {
+            logger.info("Feature flag 'emails.entryCompleteEmail' is currently disabled, entry complete email sending for {} skipped.", entry.publicId());
+        } else if (!entry.notifications().isEmpty()) {
             logger.debug("Notifying {} entry's {} receivers of entry completion", entry.publicId(), entry.notifications());
             companyService.findByBusinessId(entry.businessId()).ifPresent(company -> {
                 Translations translations = resolveTranslations(company, "emails/entryCompleteEmail");

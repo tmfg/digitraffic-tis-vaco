@@ -1,14 +1,14 @@
 package fi.digitraffic.tis.vaco.company;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
-import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.PartnershipService;
+import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.PartnershipService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/partnership")
 @Validated
+@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
 public class PartnershipController {
 
     private final PartnershipService partnershipService;
@@ -38,7 +38,6 @@ public class PartnershipController {
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    @PreAuthorize("hasAuthority('APPROLE_vaco.admin')")
     public ResponseEntity<Resource<Partnership>> createPartnership(@Valid @RequestBody ImmutablePartnershipRequest partnershipRequest) {
         Optional<Company> partnerA = companyService.findByBusinessId(partnershipRequest.partnerABusinessId());
         Optional<Company> partnerB = companyService.findByBusinessId(partnershipRequest.partnerBBusinessId());
@@ -52,7 +51,7 @@ public class PartnershipController {
         Optional<Partnership> partnership = partnershipService.create(partnershipRequest.type(), partnerA.get(), partnerB.get());
 
         return partnership
-            .map(value -> ResponseEntity.ok(new Resource<>(value, null, Map.of())))
+            .map(value -> ResponseEntity.ok(Resource.resource(value)))
             .orElse(Responses.conflict(String.format("A partnership between provided business ID (%s, %s) already exists",
                 partnershipRequest.partnerABusinessId(), partnershipRequest.partnerBBusinessId())));
     }

@@ -15,16 +15,16 @@ import fi.digitraffic.tis.vaco.summary.SummaryRepository;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableNotice;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableValidationReport;
-import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.Notice;
-import fi.digitraffic.tis.vaco.ui.model.ValidationReport;
 import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableCard;
 import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableLabelValuePair;
 import fi.digitraffic.tis.vaco.ui.model.summary.LabelValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableRuleReport;
+import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
+import fi.digitraffic.tis.vaco.ui.model.RuleReport;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -43,36 +43,38 @@ public class EntryStateService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final EntryStateRepository entryStateRepository;
     private final SummaryRepository summaryRepository;
-    private final ObjectMapper objectMapper;
     private final VacoProperties vacoProperties;
 
-    public EntryStateService(EntryStateRepository entryStateRepository, SummaryRepository summaryRepository, ObjectMapper objectMapper, VacoProperties vacoProperties) {
+    public EntryStateService(EntryStateRepository entryStateRepository, SummaryRepository summaryRepository, VacoProperties vacoProperties) {
         this.entryStateRepository = Objects.requireNonNull(entryStateRepository);
         this.summaryRepository = Objects.requireNonNull(summaryRepository);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
 
-    public ValidationReport getValidationReport(Task task, Ruleset rule, List<Package> taskPackages, Entry entry) {
-        List<ItemCounter> counters = entryStateRepository.findValidationRuleCounters(task.id());
+    public RuleReport getRuleReport(Task task, Entry entry, Map<String, Ruleset> rulesets) {
+        List<ItemCounter> counters = entryStateRepository.findFindingCounters(task.id());
 
-        List<Notice> notices = entryStateRepository.findValidationRuleNotices(task.id());
-        if (notices.isEmpty()) {
+        List<AggregatedFinding> aggregated = entryStateRepository.findAggregatedFindings(task.id());
+        if (aggregated.isEmpty()) {
             return null;
         }
-        List<Notice> noticesWithFindings = new ArrayList<>();
-        notices.forEach(notice -> {
-            List<Finding> findings = entryStateRepository.findNoticeFindings(task.id(), notice.code());
-            Notice noticeWithFindings = ImmutableNotice.copyOf(notice).withFindings(findings);
-            noticesWithFindings.add(noticeWithFindings);
+        List<AggregatedFinding> aggregatedWithFindings = new ArrayList<>();
+        aggregated.forEach(aggregatedFinding -> {
+            List<Finding> findings = entryStateRepository.findNoticeFindings(task.id(), aggregatedFinding.code());
+            AggregatedFinding aggregatedWithFindingInstances = ImmutableAggregatedFinding.copyOf(aggregatedFinding).withFindings(findings);
+            aggregatedWithFindings.add(aggregatedWithFindingInstances);
         });
 
-        return ImmutableValidationReport.builder()
+        List<Package> taskPackages = Streams.filter(entry.packages(), p -> p.taskId().equals(task.id())).toList();
+        Ruleset rule = rulesets.get(task.name());
+
+        return ImmutableRuleReport.builder()
             .ruleName(task.name())
             .ruleDescription(rule.description())
-            .counters(counters)
+            .ruleType(rule.type())
+            .findingCounters(counters)
             .packages(Streams.map(taskPackages, p -> asPackageResource(p, task, entry)).toList())
-            .notices(noticesWithFindings).build();
+            .findings(aggregatedWithFindings).build();
     }
 
     private Resource<Package> asPackageResource(Package taskPackage, Task task, Entry entry) {

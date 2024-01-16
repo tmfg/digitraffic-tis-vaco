@@ -3,8 +3,12 @@ package fi.digitraffic.tis.vaco.ui;
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -14,11 +18,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
+class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
+
+    @Autowired
+    private CompanyService companyService;
 
     @Test
     void canFetchEntryStateWithPublicId() throws Exception {
         EntryRequest request = TestObjects.aValidationEntryRequest().build();
+        JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken("Joh Rnado");
+        SecurityContextHolder.getContext().setAuthentication(johRnado);
+        injectGroupIdToCompany(johRnado);
+
         MvcResult response = apiCall(post("/queue").content(toJson(request)))
             .andExpect(status().isOk())
             .andReturn();

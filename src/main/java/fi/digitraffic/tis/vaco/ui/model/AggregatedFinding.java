@@ -9,17 +9,15 @@ import org.immutables.value.Value;
 import java.util.List;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableNotice.class)
-@JsonDeserialize(as = ImmutableNotice.class)
-public interface Notice {
+@JsonSerialize(as = ImmutableAggregatedFinding.class)
+@JsonDeserialize(as = ImmutableAggregatedFinding.class)
+public interface AggregatedFinding {
 
     String code();
 
     String severity();
 
     int total();
-
-    // description
 
     @Nullable
     List<Finding> findings();

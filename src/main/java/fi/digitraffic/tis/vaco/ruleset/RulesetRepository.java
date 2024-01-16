@@ -1,7 +1,5 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -10,7 +8,6 @@ import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -18,10 +15,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 @Repository
 public class RulesetRepository {
@@ -30,14 +26,11 @@ public class RulesetRepository {
 
     private final JdbcTemplate jdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
-    private final Cache<String, Ruleset> rulesetNameCache;
 
     public RulesetRepository(JdbcTemplate jdbc,
-                             NamedParameterJdbcTemplate namedJdbc,
-                             @Qualifier("rulesetNameCache") Cache<String, Ruleset> rulesetNameCache) {
-        this.jdbc = jdbc;
-        this.rulesetNameCache = warmup(rulesetNameCache);
-        this.namedJdbc = namedJdbc;
+                             NamedParameterJdbcTemplate namedJdbc) {
+        this.jdbc = Objects.requireNonNull(jdbc);
+        this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
 
     public Set<Ruleset> findRulesets(String businessId) {
@@ -66,34 +59,6 @@ public class RulesetRepository {
             RowMappers.RULESET);
         logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
         return Set.copyOf(rulesets);
-    }
-
-    public Map<String, Ruleset> findRulesetsAsMap(String businessId) {
-        List<Ruleset> rulesets = namedJdbc.query("""
-                WITH current_id AS (
-                    SELECT id
-                      FROM company
-                     WHERE business_id = :businessId
-                ),
-                parents AS (
-                    SELECT partner_a_id AS id
-                      FROM partnership, current_id
-                     WHERE partner_b_id = current_id.id
-                )
-                SELECT DISTINCT r.*
-                  FROM ruleset r, current_id
-                 WHERE r.owner_id = current_id.id
-                UNION
-                SELECT DISTINCT r.*
-                  FROM ruleset r, parents
-                 WHERE r.owner_id IN (parents.id)
-                   AND r.category = 'generic'
-                """,
-            new MapSqlParameterSource()
-                .addValue("businessId", businessId),
-            RowMappers.RULESET);
-        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
-        return Streams.collect(rulesets, Ruleset::identifyingName, Function.identity());
     }
 
     public Set<Ruleset> findRulesets(String businessId, TransitDataFormat format, Type type) {
@@ -193,13 +158,13 @@ public class RulesetRepository {
 
     public Optional<Ruleset> findByName(String rulesetName) {
         try {
-            return Optional.ofNullable(rulesetNameCache.get(rulesetName, r -> jdbc.queryForObject("""
+            return Optional.ofNullable(jdbc.queryForObject("""
                     SELECT id, public_id, owner_id, category, identifying_name, description, "type", format, dependencies
                       FROM ruleset
                      WHERE identifying_name = ?
                     """,
                 RowMappers.RULESET,
-                rulesetName)));
+                rulesetName));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }
@@ -209,14 +174,15 @@ public class RulesetRepository {
         jdbc.update("DELETE FROM ruleset WHERE public_id = ?", rule.publicId());
     }
 
-    private Cache<String, Ruleset> warmup(Cache<String, Ruleset> rulesetNameCache) {
-        jdbc.query("SELECT * FROM ruleset", RowMappers.RULESET).forEach(ruleset ->
-            rulesetNameCache.put(ruleset.identifyingName(), ruleset));
-        return rulesetNameCache;
-    }
-
     public Set<String> listAllNames() {
         return Set.copyOf(jdbc.queryForList("SELECT DISTINCT identifying_name FROM ruleset", String.class));
+    }
+
+    public List<Ruleset> listAll() {
+        return jdbc.query("""
+            SELECT * FROM ruleset
+            """,
+            RowMappers.RULESET);
     }
 
     public boolean anyDependencyFailed(Entry entry, Ruleset ruleset) {

@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -10,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,10 +20,14 @@ import java.util.Set;
 public class RulesetService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private final CachingService cachingService;
+
     private final RulesetRepository rulesetRepository;
 
-    public RulesetService(RulesetRepository rulesetRepository) {
-        this.rulesetRepository = rulesetRepository;
+    public RulesetService(CachingService cachingService,
+                          RulesetRepository rulesetRepository) {
+        this.cachingService = Objects.requireNonNull(cachingService);
+        this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
     }
 
     public Set<Ruleset> selectRulesets(String businessId) {
@@ -46,10 +53,13 @@ public class RulesetService {
 
     public void deleteRuleset(Ruleset ruleset) {
         rulesetRepository.deleteRuleset(ruleset);
+        cachingService.invalidateRuleset(ruleset.identifyingName());
     }
 
     public Optional<Ruleset> findByName(String rulesetName) {
-        return rulesetRepository.findByName(rulesetName);
+        return cachingService.cacheRuleset(
+            rulesetName,
+            name -> rulesetRepository.findByName(name).orElse(null));
     }
 
     /**
@@ -64,5 +74,9 @@ public class RulesetService {
 
     public boolean dependenciesCompletedSuccessfully(Entry entry, Ruleset r) {
         return rulesetRepository.anyDependencyFailed(entry, r);
+    }
+
+    public List<Ruleset> findAll() {
+        return rulesetRepository.listAll();
     }
 }
