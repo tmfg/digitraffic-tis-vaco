@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.rules;
+package fi.digitraffic.tis.vaco.summary;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,13 +6,14 @@ import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.exceptions.CsvException;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.rules.model.ImmutableTaskSummaryItem;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.Agency;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.FeedInfo;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.ImmutableGtfsTaskSummary;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.Route;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.Shape;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.Trip;
+import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
+import fi.digitraffic.tis.vaco.summary.model.RendererType;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.ImmutableGtfsInputSummary;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.Route;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.Shape;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.Trip;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,20 +31,20 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 @Service
-public class GtfsTaskSummaryService {
+public class GtfsInputSummaryService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final String COMPONENT_PRESENT_VALUE = "1";
-    private final TaskSummaryRepository taskSummaryRepository;
+    private final SummaryRepository summaryRepository;
     private final ObjectMapper objectMapper;
 
-    public GtfsTaskSummaryService(TaskSummaryRepository taskSummaryRepository, ObjectMapper objectMapper) {
-        this.taskSummaryRepository = taskSummaryRepository;
+    public GtfsInputSummaryService(SummaryRepository summaryRepository, ObjectMapper objectMapper) {
+        this.summaryRepository = summaryRepository;
         this.objectMapper = objectMapper;
     }
 
-    public void generateGtfsSummaries(Path downloadedPackagePath, Long taskId) throws IOException {
-        ImmutableGtfsTaskSummary gtfsTaskSummary = getEmptyGtfsSummaryObject();
+    public void generateGtfsDownloadSummaries(Path downloadedPackagePath, Long taskId) throws IOException {
+        ImmutableGtfsInputSummary gtfsTaskSummary = getEmptyGtfsSummaryObject();
 
         try (ZipFile zipFile = new ZipFile(downloadedPackagePath.toFile())) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -77,24 +78,24 @@ public class GtfsTaskSummaryService {
             }
         }
 
-        persistTaskSummaryItem(taskId, "agencies", gtfsTaskSummary.agencies());
-        persistTaskSummaryItem(taskId, "feedInfo", gtfsTaskSummary.feedInfo());
-        persistTaskSummaryItem(taskId, "files", gtfsTaskSummary.files());
-        persistTaskSummaryItem(taskId, "counts", gtfsTaskSummary.counts());
-        persistTaskSummaryItem(taskId, "components", gtfsTaskSummary.components());
+        persistTaskSummaryItem(taskId, "agencies", RendererType.CARD, gtfsTaskSummary.agencies());
+        persistTaskSummaryItem(taskId, "feedInfo", RendererType.TABULAR, gtfsTaskSummary.feedInfo());
+        persistTaskSummaryItem(taskId, "files", RendererType.LIST, gtfsTaskSummary.files());
+        persistTaskSummaryItem(taskId, "counts", RendererType.LIST, gtfsTaskSummary.counts());
+        persistTaskSummaryItem(taskId, "components", RendererType.LIST, gtfsTaskSummary.components());
     }
 
-    <T> void persistTaskSummaryItem(Long taskId, String itemName, T data) {
+    <T> void persistTaskSummaryItem(Long taskId, String itemName, RendererType rendererType, T data) {
         try {
-            taskSummaryRepository.create(ImmutableTaskSummaryItem.of(taskId, itemName, objectMapper.writeValueAsBytes(data)));
+            summaryRepository.create(ImmutableSummary.of(taskId, itemName, rendererType, objectMapper.writeValueAsBytes(data)));
         }
         catch (JsonProcessingException e) {
             logger.error("Failed to persist {}'s summary data {} generated for task {}", itemName, data, taskId, e);
         }
     }
 
-    ImmutableGtfsTaskSummary getEmptyGtfsSummaryObject() {
-        return ImmutableGtfsTaskSummary.builder()
+    ImmutableGtfsInputSummary getEmptyGtfsSummaryObject() {
+        return ImmutableGtfsInputSummary.builder()
             .agencies(Collections.emptyList())
             .feedInfo(new FeedInfo())
             .files(Collections.emptyList())
@@ -124,7 +125,7 @@ public class GtfsTaskSummaryService {
         return Collections.emptyList();
     }
 
-    ImmutableGtfsTaskSummary processAgencies(InputStream inputStream, Long taskId, ImmutableGtfsTaskSummary gtfsTaskSummary) {
+    ImmutableGtfsInputSummary processAgencies(InputStream inputStream, Long taskId, ImmutableGtfsInputSummary gtfsTaskSummary) {
         try {
             List<Agency> agencies = getCsvBeans(inputStream, Agency.class);
             return gtfsTaskSummary
@@ -139,7 +140,7 @@ public class GtfsTaskSummaryService {
         return gtfsTaskSummary;
     }
 
-    ImmutableGtfsTaskSummary processFeedInfo(InputStream inputStream, Long taskId, ImmutableGtfsTaskSummary gtfsTaskSummary) {
+    ImmutableGtfsInputSummary processFeedInfo(InputStream inputStream, Long taskId, ImmutableGtfsInputSummary gtfsTaskSummary) {
         try {
             List<FeedInfo> feedInfoList = getCsvBeans(inputStream, FeedInfo.class);
             if (!feedInfoList.isEmpty()) {
@@ -157,7 +158,7 @@ public class GtfsTaskSummaryService {
         return gtfsTaskSummary;
     }
 
-    ImmutableGtfsTaskSummary processRoutes(InputStream inputStream, Long taskId, ImmutableGtfsTaskSummary gtfsTaskSummary) {
+    ImmutableGtfsInputSummary processRoutes(InputStream inputStream, Long taskId, ImmutableGtfsInputSummary gtfsTaskSummary) {
         try {
             List<Route> routes = getCsvBeans(inputStream, Route.class);
             List<String> newComponents = new ArrayList<>();
@@ -185,9 +186,9 @@ public class GtfsTaskSummaryService {
         return gtfsTaskSummary;
     }
 
-    ImmutableGtfsTaskSummary processShapes(InputStream inputStream,
-                                           Long taskId,
-                                           ImmutableGtfsTaskSummary gtfsTaskSummary) {
+    ImmutableGtfsInputSummary processShapes(InputStream inputStream,
+                                            Long taskId,
+                                            ImmutableGtfsInputSummary gtfsTaskSummary) {
         try {
             List<Shape> shapes = getCsvBeans(inputStream, Shape.class);
             long uniqueShapesCount = shapes.stream().map(Shape::getShapeId).distinct().count();
@@ -207,10 +208,10 @@ public class GtfsTaskSummaryService {
         return gtfsTaskSummary;
     }
 
-    ImmutableGtfsTaskSummary processStops(InputStream inputStream,
-                                          Long taskId,
-                                          ImmutableGtfsTaskSummary gtfsTaskSummary,
-                                          String fileName) {
+    ImmutableGtfsInputSummary processStops(InputStream inputStream,
+                                           Long taskId,
+                                           ImmutableGtfsInputSummary gtfsTaskSummary,
+                                           String fileName) {
         try {
             List<String[]> stops = getCsvRows(inputStream, fileName);
             return gtfsTaskSummary
@@ -223,7 +224,7 @@ public class GtfsTaskSummaryService {
         return gtfsTaskSummary;
     }
 
-    ImmutableGtfsTaskSummary processTrips(InputStream inputStream, Long taskId, ImmutableGtfsTaskSummary gtfsTaskSummary) {
+    ImmutableGtfsInputSummary processTrips(InputStream inputStream, Long taskId, ImmutableGtfsInputSummary gtfsTaskSummary) {
         try {
             List<Trip> trips = getCsvBeans(inputStream, Trip.class);
             gtfsTaskSummary = gtfsTaskSummary
@@ -269,10 +270,10 @@ public class GtfsTaskSummaryService {
         return gtfsTaskSummary;
     }
 
-    ImmutableGtfsTaskSummary processTransfers(InputStream inputStream,
-                                              Long taskId,
-                                              ImmutableGtfsTaskSummary gtfsTaskSummary,
-                                              String fileName) {
+    ImmutableGtfsInputSummary processTransfers(InputStream inputStream,
+                                               Long taskId,
+                                               ImmutableGtfsInputSummary gtfsTaskSummary,
+                                               String fileName) {
         try {
             List<String[]> transfers = getCsvRows(inputStream, fileName);
 

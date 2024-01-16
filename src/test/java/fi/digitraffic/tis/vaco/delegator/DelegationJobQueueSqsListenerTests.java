@@ -3,8 +3,8 @@ package fi.digitraffic.tis.vaco.delegator;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.email.EmailService;
-import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -14,7 +14,6 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
-import fi.digitraffic.tis.vaco.rules.internal.SummaryRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
@@ -56,8 +55,6 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     @Mock
     private DownloadRule downloadRule;
     @Mock
-    private SummaryRule summaryRule;
-    @Mock
     private StopsAndQuaysRule stopsAndQuaysRule;
 
     @BeforeEach
@@ -69,8 +66,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
             downloadRule,
             stopsAndQuaysRule,
             emailService,
-            entryService,
-            summaryRule);
+            entryService);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)

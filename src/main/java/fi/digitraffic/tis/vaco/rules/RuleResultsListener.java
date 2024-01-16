@@ -15,14 +15,14 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
-import fi.digitraffic.tis.vaco.rules.internal.SummaryRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
+import fi.digitraffic.tis.vaco.summary.SummaryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -51,6 +51,7 @@ public class RuleResultsListener {
     private final GtfsCanonicalResultProcessor gtfsCanonicalValidator;
     private final SimpleResultProcessor simpleResultProcessor;
     private final InternalRuleResultProcessor internalRuleResultProcessor;
+    private final SummaryService summaryService;
 
     public RuleResultsListener(MessagingService messagingService,
                                FindingService findingService,
@@ -60,7 +61,7 @@ public class RuleResultsListener {
                                NetexEnturValidatorResultProcessor netexEnturValidator,
                                GtfsCanonicalResultProcessor gtfsCanonicalValidator,
                                SimpleResultProcessor simpleResultProcessor,
-                               InternalRuleResultProcessor internalRuleResultProcessor) {
+                               InternalRuleResultProcessor internalRuleResultProcessor, SummaryService summaryService) {
         this.messagingService = Objects.requireNonNull(messagingService);
         this.findingService = Objects.requireNonNull(findingService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -70,6 +71,7 @@ public class RuleResultsListener {
         this.gtfsCanonicalValidator = Objects.requireNonNull(gtfsCanonicalValidator);
         this.simpleResultProcessor = Objects.requireNonNull(simpleResultProcessor);
         this.internalRuleResultProcessor = Objects.requireNonNull(internalRuleResultProcessor);
+        this.summaryService = summaryService;
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.findings.poll-rate}")
@@ -101,8 +103,6 @@ public class RuleResultsListener {
                 case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL_4_1_0, resultMessage);
                 case RuleName.NETEX2GTFS_ENTUR_2_0_6 -> processNetex2GtfsEntur206(resultMessage);
                 case RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0 -> processGtfs2NetexFintraffic100(resultMessage);
-                // SUMMARY_TASK not expected to produce any "result" packages:
-                case SummaryRule.SUMMARY_TASK -> true;
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -173,6 +173,7 @@ public class RuleResultsListener {
                     }
                     return result;
                 } finally {
+                    summaryService.generateSummaries(entry, t);
                     taskService.trackTask(tracked, ProcessingState.COMPLETE);
                 }
             }).orElse(false);

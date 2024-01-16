@@ -21,6 +21,7 @@ import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
+import fi.digitraffic.tis.vaco.summary.SummaryService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,6 +63,7 @@ class RuleResultsListenerTests {
     @Mock private GtfsCanonicalResultProcessor gtfsCanonicalValidator;
     @Mock private SimpleResultProcessor simpleResultProcessor;
     @Mock private InternalRuleResultProcessor internalRuleResultProcessor;
+    @Mock private SummaryService summaryService;
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
 
     @BeforeEach
@@ -78,7 +80,8 @@ class RuleResultsListenerTests {
             netexEnturValidator,
             gtfsCanonicalValidator,
             simpleResultProcessor,
-            internalRuleResultProcessor);
+            internalRuleResultProcessor,
+            summaryService);
     }
 
     @AfterEach

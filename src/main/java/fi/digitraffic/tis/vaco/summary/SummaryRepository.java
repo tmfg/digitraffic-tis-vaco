@@ -1,8 +1,8 @@
-package fi.digitraffic.tis.vaco.rules;
+package fi.digitraffic.tis.vaco.summary;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.rules.model.TaskSummaryItem;
+import fi.digitraffic.tis.vaco.summary.model.Summary;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -10,31 +10,31 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public class TaskSummaryRepository {
+public class SummaryRepository {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
 
-    public TaskSummaryRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
+    public SummaryRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
         this.jdbc = jdbc;
         this.objectMapper = objectMapper;
     }
 
-    public TaskSummaryItem create(TaskSummaryItem taskSummaryItem) {
+    public Summary create(Summary summary) {
         return jdbc.queryForObject("""
-            INSERT INTO summary (task_id, name, raw)
-                 VALUES (?, ?, ?)
-              RETURNING id, task_id, name, raw
+            INSERT INTO summary (task_id, name, renderer_type, raw)
+                 VALUES (?, ?, ?::summary_renderer_type, ?)
+              RETURNING id, task_id, name, renderer_type, raw
             """,
             RowMappers.SUMMARY,
-            taskSummaryItem.taskId(), taskSummaryItem.name(), taskSummaryItem.raw());
+            summary.taskId(), summary.name(), summary.rendererType().fieldName(), summary.raw());
     }
 
-    public List<TaskSummaryItem> findTaskSummaryByTaskId(Long taskId) {
+    public List<Summary> findTaskSummaryByTaskId(Long taskId) {
         try {
             return jdbc.query(
                 """
-                SELECT ts.id, ts.task_id, ts.name, ts.raw
+                SELECT ts.id, ts.task_id, ts.name, ts.renderer_type, ts.raw
                   FROM summary ts
                  WHERE ts.task_id = ?
                 """,
@@ -45,16 +45,16 @@ public class TaskSummaryRepository {
         }
     }
 
-    public List<TaskSummaryItem> findTaskSummaryByEntryId(Long entryId) {
+    public List<Summary> findTaskSummaryByEntryId(Long entryId) {
         try {
             return jdbc.query(
                 """
-                SELECT ts.id, ts.task_id, ts.name, ts.raw
+                SELECT ts.id, ts.task_id, ts.name, ts.renderer_type, ts.raw
                   FROM summary ts
                   JOIN task t ON ts.task_id = t.id
                  WHERE t.entry_id = ?
                 """,
-                RowMappers.SUMMARY,
+                RowMappers.SUMMARY_WITH_CONTENT.apply(objectMapper),
                 entryId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();

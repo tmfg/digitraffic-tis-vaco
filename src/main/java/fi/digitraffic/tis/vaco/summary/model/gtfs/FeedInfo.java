@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.rules.model.gtfs.summary;
+package fi.digitraffic.tis.vaco.summary.model.gtfs;
 
 import com.opencsv.bean.CsvBindByName;
 

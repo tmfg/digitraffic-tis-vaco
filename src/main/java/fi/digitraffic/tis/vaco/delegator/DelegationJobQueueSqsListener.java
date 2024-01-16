@@ -14,7 +14,6 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
-import fi.digitraffic.tis.vaco.rules.internal.SummaryRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
@@ -38,7 +37,6 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     // internal tasks are direct dependencies
     private final DownloadRule downloadRule;
     private final StopsAndQuaysRule stopsAndQuaysRule;
-    private final SummaryRule summaryRule;
     private final EmailService emailService;
     private final EntryService entryService;
 
@@ -48,8 +46,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                                          DownloadRule downloadRule,
                                          StopsAndQuaysRule stopsAndQuaysRule,
                                          EmailService emailService,
-                                         EntryService entryService,
-                                         SummaryRule summaryRule) {
+                                         EntryService entryService) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = Objects.requireNonNull(messagingService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -58,7 +55,6 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         this.stopsAndQuaysRule = Objects.requireNonNull(stopsAndQuaysRule);
         this.emailService = Objects.requireNonNull(emailService);
         this.entryService = Objects.requireNonNull(entryService);
-        this.summaryRule = Objects.requireNonNull(summaryRule);
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -109,16 +105,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                     // these are currently submitted delegatively elsewhere
                     logger.debug("External rule {} detected, skipping...", name);
                     taskService.trackTask(task, ProcessingState.START);
-                } else if (SummaryRule.SUMMARY_TASK.equals(name)) {
-                    logger.debug("Internal rule {} detected, delegating...", name);
-                    taskService.findTask(entry.id(), name)
-                        .ifPresent(t -> {
-                            taskService.trackTask(t, ProcessingState.START);
-                            messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, summaryRule.execute(entry).join());
-                            taskService.markStatus(t, Status.SUCCESS);
-                        }); // this pattern works only for pseudotasks
-                }
-                else {
+                } else {
                     logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
                     taskService.trackTask(task, ProcessingState.START);
                     taskService.trackTask(task, ProcessingState.COMPLETE);

@@ -19,7 +19,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
-import fi.digitraffic.tis.vaco.rules.internal.SummaryRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
@@ -132,7 +131,6 @@ public class TaskService {
                 DownloadRule.DOWNLOAD_SUBTASK,
                 StopsAndQuaysRule.STOPS_AND_QUAYS_TASK));
         deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
-        deps.put(SummaryRule.SUMMARY_TASK, List.of(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.VALIDATE_TASK));
         return deps;
     }
 
@@ -219,10 +217,6 @@ public class TaskService {
             .flatten(d -> rulesetsByName.get(d).dependencies())
                 .toSet());
 
-        if(isSummaryTaskSupported(allowedRuleTasks)) {
-            allowedRuleTasks.add(SummaryRule.SUMMARY_TASK);
-        }
-
         logger.debug("Task generation for entry {}: available rules {} / requested {} / allowed {} / dependencies {}",
             entry.publicId(),
             rulesetsByName.keySet(),
@@ -232,10 +226,6 @@ public class TaskService {
         List<String> completeTasks = new ArrayList<>(allowedRuleTasks);
         completeTasks.addAll(dependencies);
         return createTasks(completeTasks, entry);
-    }
-
-    private boolean isSummaryTaskSupported(Set<String> allowedRuleTasks) {
-        return allowedRuleTasks.stream().anyMatch(rule -> rule.startsWith("gtfs.canonical") || rule.startsWith("gtfs2netex"));
     }
 
     private static List<ImmutableTask> createTasks(List<String> taskNames,

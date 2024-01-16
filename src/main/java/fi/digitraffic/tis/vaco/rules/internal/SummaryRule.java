@@ -8,7 +8,7 @@ import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.rules.GtfsTaskSummaryService;
+import fi.digitraffic.tis.vaco.summary.GtfsInputSummaryService;
 import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
@@ -28,17 +28,17 @@ public class SummaryRule implements Rule<Entry, ResultMessage> {
     public static final String SUMMARY_TASK = "generate.summaries";
     private final TaskService taskService;
     private final PackagesService packagesService;
-    private final GtfsTaskSummaryService gtfsTaskSummaryService;
+    private final GtfsInputSummaryService gtfsInputSummaryService;
 
     private final VacoProperties vacoProperties;
 
     public SummaryRule(TaskService taskService,
                        PackagesService packagesService,
-                       GtfsTaskSummaryService gtfsTaskSummaryService,
+                       GtfsInputSummaryService gtfsInputSummaryService,
                        VacoProperties vacoProperties) {
         this.taskService = Objects.requireNonNull(taskService);
         this.packagesService = Objects.requireNonNull(packagesService);
-        this.gtfsTaskSummaryService = Objects.requireNonNull(gtfsTaskSummaryService);
+        this.gtfsInputSummaryService = Objects.requireNonNull(gtfsInputSummaryService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
 
@@ -70,7 +70,7 @@ public class SummaryRule implements Rule<Entry, ResultMessage> {
                 taskService.trackTask(t, ProcessingState.UPDATE);
                 try {
                     if ("gtfs".equalsIgnoreCase(entry.format())) {
-                        gtfsTaskSummaryService.generateGtfsSummaries(downloadedPackagePath.get(), t.id());
+                        gtfsInputSummaryService.generateGtfsDownloadSummaries(downloadedPackagePath.get(), t.id());
                     } else if ("netex".equalsIgnoreCase(entry.format())) {
                     }
                 } catch (Exception e) {

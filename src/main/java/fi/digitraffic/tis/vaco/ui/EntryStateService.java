@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.ui;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
@@ -11,12 +10,12 @@ import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.rules.TaskSummaryRepository;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.Agency;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.summary.FeedInfo;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.summary.SummaryRepository;
+import fi.digitraffic.tis.vaco.summary.model.Summary;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableNotice;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableTaskSummaryItem;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableValidationReport;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.Notice;
@@ -29,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,13 +42,13 @@ public class EntryStateService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final EntryStateRepository entryStateRepository;
-    private final TaskSummaryRepository taskSummaryRepository;
+    private final SummaryRepository summaryRepository;
     private final ObjectMapper objectMapper;
     private final VacoProperties vacoProperties;
 
-    public EntryStateService(EntryStateRepository entryStateRepository, TaskSummaryRepository taskSummaryRepository, ObjectMapper objectMapper, VacoProperties vacoProperties) {
+    public EntryStateService(EntryStateRepository entryStateRepository, SummaryRepository summaryRepository, ObjectMapper objectMapper, VacoProperties vacoProperties) {
         this.entryStateRepository = Objects.requireNonNull(entryStateRepository);
-        this.taskSummaryRepository = Objects.requireNonNull(taskSummaryRepository);
+        this.summaryRepository = Objects.requireNonNull(summaryRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
@@ -86,48 +84,19 @@ public class EntryStateService {
         return new Resource<>(taskPackage, null, links);
     }
 
-    public List<ImmutableTaskSummaryItem> getTaskSummaries(Entry entry) {
-        List<fi.digitraffic.tis.vaco.rules.model.TaskSummaryItem> summaryItems = taskSummaryRepository.findTaskSummaryByEntryId(entry.id());
-
-        return summaryItems.stream().map(summaryItem -> {
-            Object content = null;
-            try {
-                content = getGtfsSummaryContent(summaryItem.name(), summaryItem.raw());
-            } catch (IOException e) {
-                logger.error("Failed to process persisted summary data for {} of entry {}", summaryItem.name(), entry.id(), e);
-            }
-
-            return ImmutableTaskSummaryItem.builder()
-                .title(summaryItem.name())
-                .taskId(summaryItem.taskId())
-                .type(getSummaryType(summaryItem.name()))
-                .content(content)
-                .build();
-        }).toList();
+    public List<Summary> getTaskSummaries(Entry entry) {
+        return summaryRepository.findTaskSummaryByEntryId(entry.id());
     }
 
-    private Object getGtfsSummaryContent(String summaryTitle, byte[] raw) throws IOException {
-        return switch (summaryTitle) {
-            case "agencies" -> {
-                List<Agency> agencies = objectMapper.readValue(raw, new TypeReference<>() {});
-                List<ImmutableCard> agencyCards = Streams.map(agencies,
-                    agency -> ImmutableCard.builder()
-                        .title(agency.getAgencyName())
-                        .content(getAgencyCardUiContent(agency))
-                        .build()).toList();
-                yield agencyCards;
-            }
-            case "feedInfo" -> {
-                FeedInfo feedInfo = objectMapper.readValue(raw, FeedInfo.class);
-                yield getFeedInfoUiContent(feedInfo);
-            }
-            case "files", "counts", "components" -> objectMapper.readValue(raw, new TypeReference<List<String>>() {});
-            default -> null;
-        };
-
+    public static List<ImmutableCard> getAgencyCardUiContent(List<Agency> agencies) {
+        return Streams.map(agencies,
+            agency -> ImmutableCard.builder()
+                .title(agency.getAgencyName())
+                .content(getAgencyCard(agency))
+                .build()).toList();
     }
 
-    private List<LabelValuePair> getAgencyCardUiContent(Agency agency) {
+    private static List<LabelValuePair> getAgencyCard(Agency agency) {
         List<LabelValuePair> agencyCardContent = new ArrayList<>();
         agencyCardContent.add(ImmutableLabelValuePair.builder()
             .label("website")
@@ -144,7 +113,7 @@ public class EntryStateService {
         return agencyCardContent;
     }
 
-    private List<LabelValuePair> getFeedInfoUiContent(FeedInfo feedInfo) {
+    public static List<LabelValuePair> getFeedInfoUiContent(FeedInfo feedInfo) {
         List<LabelValuePair> feedInfoContent = new ArrayList<>();
         feedInfoContent.add(ImmutableLabelValuePair.builder()
             .label("publisherName")
@@ -167,20 +136,5 @@ public class EntryStateService {
             .value(feedInfo.getFeedEndDate())
             .build());
         return feedInfoContent;
-    }
-
-    private List<ImmutableLabelValuePair> getListUiContent(List<String> contentList) {
-        return contentList.stream().map(item -> ImmutableLabelValuePair.builder()
-            .value(item)
-            .build()).toList();
-    }
-
-    private String getSummaryType(String summaryTitle) {
-        return switch (summaryTitle) {
-            case "agencies" -> "cards";
-            case "feedInfo" -> "tabular";
-            case "files", "counts", "components" -> "list";
-            default -> null;
-        };
     }
 }

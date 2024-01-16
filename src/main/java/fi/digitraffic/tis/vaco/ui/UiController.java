@@ -13,13 +13,12 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.rules.internal.SummaryRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.EntryState;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
-import fi.digitraffic.tis.vaco.ui.model.TaskSummaryItem;
 import fi.digitraffic.tis.vaco.ui.model.ValidationReport;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -84,7 +83,6 @@ public class UiController {
         Map<String, Task> tasksByName = Streams.collect(entry.tasks(), Task::name, Function.identity());
         Map<String, Ruleset> rulesets = rulesetRepository.findRulesetsAsMap(Constants.FINTRAFFIC_BUSINESS_ID);
         List<ValidationReport> validationReports =  new ArrayList<>();
-        List<TaskSummaryItem> summaries = new ArrayList<>();
         entry.validations().forEach(validationInput -> {
             Task ruleTask = tasksByName.get(validationInput.name());
             if (ruleTask == null) {
@@ -97,9 +95,7 @@ public class UiController {
             }
         });
 
-        if(tasksByName.containsKey(SummaryRule.SUMMARY_TASK)) {
-            summaries.addAll(entryStateService.getTaskSummaries(entry));
-        }
+        List<Summary> summaries = entryStateService.getTaskSummaries(entry);
 
         return ResponseEntity.ok(new Resource<>(
             ImmutableEntryState.builder()

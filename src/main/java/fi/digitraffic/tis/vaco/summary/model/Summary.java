@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.rules.model;
+package fi.digitraffic.tis.vaco.summary.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -8,21 +8,28 @@ import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableTaskSummaryItem.class)
-@JsonDeserialize(as = ImmutableTaskSummaryItem.class)
-// TODO: Should rename to simply "Summary"
-public interface TaskSummaryItem {
+@JsonSerialize(as = ImmutableSummary.class)
+@JsonDeserialize(as = ImmutableSummary.class)
+public interface Summary {
     @Nullable
     @JsonView(DataVisibility.Internal.class)
     Long id();
 
     @Value.Parameter
+    @JsonView(DataVisibility.Internal.class)
     Long taskId();
 
     @Value.Parameter
     String name();
 
+    @Value.Parameter
+    RendererType rendererType();
+
     @Nullable
+    @JsonView(DataVisibility.Internal.class)
     @Value.Parameter
     byte[] raw();
+
+    @Nullable
+    Object content();
 }
