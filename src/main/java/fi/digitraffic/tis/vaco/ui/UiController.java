@@ -15,7 +15,6 @@ import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
-import fi.digitraffic.tis.vaco.ui.model.EntryState;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
@@ -98,6 +97,7 @@ public class UiController {
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry))
                         .reports(reports)
+                        .summaries(summaries)
                         .build()));
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));
     }
