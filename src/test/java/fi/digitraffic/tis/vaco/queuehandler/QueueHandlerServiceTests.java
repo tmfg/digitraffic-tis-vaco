@@ -4,17 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.PartnershipService;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.service.PartnershipService;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -43,6 +45,9 @@ class QueueHandlerServiceTests {
 
     private ObjectMapper objectMapper;
     private EntryRequestMapper entryRequestMapper;
+
+    @Mock
+    private CachingService cachingService;
 
     @Mock
     private MeService meService;
@@ -78,6 +83,7 @@ class QueueHandlerServiceTests {
         entryRequestMapper = new EntryRequestMapper(objectMapper);
 
         queueHandlerService = new QueueHandlerService(
+            cachingService,
             meService,
             entryRequestMapper,
             messagingService,
@@ -106,6 +112,7 @@ class QueueHandlerServiceTests {
     @AfterEach
     void tearDown() {
         verifyNoMoreInteractions(
+            cachingService,
             meService,
             messagingService,
             companyService,
@@ -127,6 +134,7 @@ class QueueHandlerServiceTests {
         given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
         given(companyService.createCompany(any(ImmutableCompany.class))).willAnswer(withArgInOptional(0));
         given(companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID)).willReturn(Optional.of(fintrafficCompany));
+        givenCachesResult();
 
         // when
         Entry result = queueHandlerService.processQueueEntry(entryRequest);
@@ -140,12 +148,15 @@ class QueueHandlerServiceTests {
         then(partnershipService).should().create(eq(PartnershipType.AUTHORITY_PROVIDER), eq(fintrafficCompany), eq(operator));
 
         thenSubmitProcessingJob(result);
+
+        //thenCacheEntry(result, true);
     }
 
     @Test
     void wontAutocreateCompanyIfCallerIsNotFinap() {
         // given
         given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
+        givenCachesResult();
 
         // when
         entryRequest = entryRequest.withMetadata(metadata.put("caller", "Graham Bell"));
@@ -159,6 +170,7 @@ class QueueHandlerServiceTests {
     void wontAutocreateCompanyIfOperatorNameIsMissing() {
         // given
         given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
+        givenCachesResult();
 
         // when
         entryRequest = entryRequest.withMetadata(metadata.remove("operator-name"));
@@ -173,5 +185,12 @@ class QueueHandlerServiceTests {
         DelegationJobMessage job = delegationJobCaptor.getValue();
         assertThat(job, notNullValue());
         assertThat(job.entry(), equalTo(result));
+    }
+
+    private void givenCachesResult() {
+        given(cachingService.keyForEntry(null, true)).willReturn("mocked cache key");
+        given(cachingService.cacheEntry(any(String.class), any(Function.class)))
+            .willAnswer(a ->
+                Optional.ofNullable(((Function) a.getArgument(1)).apply(a.getArgument(0))));
     }
 }

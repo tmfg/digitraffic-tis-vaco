@@ -17,11 +17,11 @@ Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
 {
-  "url": "https://tvv.fra1.digitaloceanspaces.com/237_netex.zip",
+  "url": "https://s3.eu-north-1.amazonaws.com/perftesting-manual-v1.0/netex_all.zip?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmV1LW5vcnRoLTEiRjBEAiAR%2Fjsdl41ftrnJDHqiC0wX9DBs3VNqpAquIawoK6C64QIgeW4LvVlnL0iPhZbyVb8SIaYh8wR5x6VA%2BiO5WRlmi9Yq9AMIpP%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAAGgw5MjE1NTYwMjc1MTQiDMhrpiPuqhyqhaxXsyrIA%2BFyYQ%2FVigQeNfOLgTP1xIhZap%2BjgNaDUqUOFEnb5Nv78NCMDwNXGtgYg%2BbOqMdL3Yi8ya1RbAZXkkF36%2F3DejSVHmSJ4a6OLpN5bcOcgFILVdbv6w9v7ITggQb7qVHQ1kIf6x8yuYOzAplZOE4RgBYRNLmV7osJlb1b8wpUiKquBg9%2FFQK%2BtPBND%2FZWcTRr7rU%2FqTiZkC4tf6aWNYLARmwvj4pym7hbaLk7KNI%2BqW%2BOeoIvp3y91uv0zWeVkFLtIEGSkKtgJyP%2F%2BEMn7C53uI%2BQleNtGHndk3ufwax35aGsuoQkUDEjxL4d9uIB0okdXhXIuj193NPlllIJcwNJjWXdCqMvlKyD3uSo%2BiGY%2FiIRwgLX1GD2MvpBtf0UzenlzLuXPTB2xBv5gxisoz5sSUSKNugiVDKodWAm0LUbGDVXCCVA7eSLsOsksWU4YFvv3mp6Fd%2B4yIMNpN1dnc8D%2FIv%2F55rjYScZmdyE1JabmNygSVzFSeWCEx69giHXCgAb%2BHaAkycbaORK%2BIl1SrBloEjweGOs4PBbU0XMTt2lp6YBZcCA%2BG1lLfmnBLKRq7tm%2FyF19UhHmRxEX%2Bl0ab53cx%2BPhXObwTwkizDZyZmtBjqVAiGcfPF%2Bff8bjYYNFS%2BJ2Ic1YlZc1b9gjSGEOOoOUgzrMNnIihnp1yzKbOWHtkymdfkXShbr1Liw41ABKTyN987GRX0kuCQc%2FfM%2BVR6BmqhUOZiWeKfXObxgpw5BBu8qh2v3R%2Bx3tXs7K5%2FNfCSoajkpA0Q7TMFkjy89esPz7ozTzr8JwNwP%2FN69K4imnHQf5ox5okcvE2vXJudBY3118iGq7y83hjbCy7ZdGWb17W%2BCW7EEjNeuUQfRy7445NBy0Mqb3FYmcPMLAsFKzWbEJWGwcjDYynqZnLWe4se%2BXegz3Sv3h7dZaitiT2PDoBbsI%2F9y8yYgsH0y%2BFVuqJZbWvlcMoheVs0x8R7GUCCV5cY129Bcz%2Fs%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240116T111639Z&X-Amz-SignedHeaders=host&X-Amz-Expires=43200&X-Amz-Credential=ASIA5NEIFBB5BO5QQRN5%2F20240116%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Signature=c3b4f80e50f748087ce9adaf82c0565228936257cb5ff4f0058fd0d8422e2438",
   "format": "netex",
   "businessId": "2942108-7",
   "etag": "etagg",
-  "name": "NeTEx custom local",
+  "name": "loadtest - NeTEx - all",
   "validations": [
     {
       "name": "netex.entur.v1_0_1",

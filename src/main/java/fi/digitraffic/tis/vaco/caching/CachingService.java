@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ public class CachingService {
     private final Cache<String, Ruleset> rulesetCache;
     private final Cache<String, String> sqsQueueUrlCache;
     private final Cache<Path, Path> localPathCache;
+    private final Cache<String, Entry> entryCache;
     private final CacheStatsMapper cacheStatsMapper;
 
     public CachingService(CacheStatsMapper cacheStatsMapper) {
@@ -39,6 +41,7 @@ public class CachingService {
         this.rulesetCache = rulesetNameCache();
         this.sqsQueueUrlCache = sqsQueueUrlCache();
         this.localPathCache = localPathCache();
+        this.entryCache = entryCache();
     }
 
     public Optional<Ruleset> cacheRuleset(String key, Function<String, Ruleset> loader) {
@@ -63,6 +66,20 @@ public class CachingService {
 
     public void invalidateLocalTemporaryPath(Path key) {
         localPathCache.invalidate(key);
+    }
+
+
+    public String keyForEntry(String publicId, boolean skipErrorsField) {
+        return publicId + " (full=" + skipErrorsField + ")";
+    }
+
+    public Optional<Entry> cacheEntry(String key, Function<String, Entry> loader) {
+        return Optional.ofNullable(entryCache.get(key, loader));
+    }
+
+    public void invalidateEntry(Entry entry) {
+        entryCache.invalidate(keyForEntry(entry.publicId(), true));
+        entryCache.invalidate(keyForEntry(entry.publicId(), false));
     }
 
     private static Cache<String, Ruleset> rulesetNameCache() {
@@ -98,10 +115,20 @@ public class CachingService {
             .build();
     }
 
+    private Cache<String, Entry> entryCache() {
+        return Caffeine.newBuilder()
+            .recordStats()
+            .maximumSize(500)
+            .expireAfterWrite(Duration.ofDays(1))
+            .build();
+    }
+
     public Map<String, CacheSummaryStatistics> getStats() {
         return Map.of(
             "rulesets", cacheStatsMapper.toCacheSummaryStatistics(rulesetCache),
             "SQS queue URLs", cacheStatsMapper.toCacheSummaryStatistics(sqsQueueUrlCache),
-            "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache));
+            "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache),
+            "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache));
     }
+
 }

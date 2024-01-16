@@ -38,7 +38,8 @@ class CachingControllerIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(stats,
             equalTo(Map.of("rulesets", emptyStatistics,
                 "SQS queue URLs", emptyStatistics,
-                "local temporary file paths", emptyStatistics)));
+                "local temporary file paths", emptyStatistics,
+                "entries", emptyStatistics)));
     }
 
 }
