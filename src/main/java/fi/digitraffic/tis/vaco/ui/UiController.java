@@ -14,6 +14,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.summary.model.Summary;
+import fi.digitraffic.tis.vaco.ui.model.EntryState;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
@@ -91,7 +93,7 @@ public class UiController {
                         reports.add(report);
                     }
                 });
-
+                List<Summary> summaries = entryStateService.getTaskSummaries(entry);
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry))

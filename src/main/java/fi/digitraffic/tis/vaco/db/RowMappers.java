@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.db;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
@@ -30,6 +31,12 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
+import fi.digitraffic.tis.vaco.summary.model.RendererType;
+import fi.digitraffic.tis.vaco.summary.model.Summary;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
+import fi.digitraffic.tis.vaco.ui.EntryStateService;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
@@ -39,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -127,6 +135,47 @@ public final class RowMappers {
         .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
         .completedBy(rs.getString("completed_by"))
         .build();
+
+    public static final RowMapper<Summary> SUMMARY = (rs, rowNum) -> ImmutableSummary.builder()
+        .id(rs.getLong("id"))
+        .taskId(rs.getLong("task_id"))
+        .name(rs.getString("name"))
+        .rendererType(RendererType.forField(rs.getString("renderer_type")))
+        .raw(rs.getBytes("raw"))
+        .build();
+
+    public static final Function<ObjectMapper, RowMapper<Summary>> SUMMARY_WITH_CONTENT =
+        RowMappers::mapSummaryWithContent;
+
+    private static RowMapper<Summary> mapSummaryWithContent(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> {
+            try {
+                Object content = null;
+                switch (rs.getString("name")) {
+                    case "agencies" -> {
+                        List<Agency> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                        content = EntryStateService.getAgencyCardUiContent(agencies);
+                    }
+                    case "feedInfo" -> {
+                        FeedInfo feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                        content = EntryStateService.getFeedInfoUiContent(feedInfo);
+                    }
+                    case "files", "counts", "components" -> content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                }
+                return ImmutableSummary.builder()
+                    .id(rs.getLong("id"))
+                    .taskId(rs.getLong("task_id"))
+                    .name(rs.getString("name"))
+                    .rendererType(RendererType.forField(rs.getString("renderer_type")))
+                    .content(content)
+                    .build();
+            } catch (IOException e) {
+                LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("name"), e);
+            }
+
+            return null;
+        };
+    }
 
     public static final RowMapper<FeatureFlag> FEATURE_FLAG = (rs, rowNum) -> ImmutableFeatureFlag.builder()
         .id(rs.getLong("id"))

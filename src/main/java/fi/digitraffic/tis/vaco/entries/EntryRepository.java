@@ -205,7 +205,7 @@ public class EntryRepository {
             .withConversions(findConversionInputs(entry.id()))
             .withPackages(packages);
         if (!skipErrors) {
-            e = e.withFindings(findingRepository.findErrorsByEntryId(entry.id()));
+            e = e.withFindings(findingRepository.findFindingsByEntryId(entry.id()));
         }
         return e;
     }

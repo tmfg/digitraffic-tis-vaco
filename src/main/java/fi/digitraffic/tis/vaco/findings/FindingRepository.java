@@ -36,7 +36,7 @@ public class FindingRepository {
             finding.entryId(), finding.taskId(), finding.rulesetId(), finding.message(), finding.raw());
     }
 
-    public List<Finding> findErrorsByEntryId(Long entryId) {
+    public List<Finding> findFindingsByEntryId(Long entryId) {
         try {
             return jdbc.query(
                     """

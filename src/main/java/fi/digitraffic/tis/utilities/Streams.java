@@ -210,8 +210,8 @@ public final class Streams {
      * @param <T> Common type for all the contained objects.
      */
     @SafeVarargs
-    public static <T> Chain<? extends T> concat(Collection<? extends T> first, Collection<? extends T>... more) {
-        Stream<? extends T> merged = first.stream();
+    public static <T> Chain<T> concat(Collection<T> first, Collection<T>... more) {
+        Stream<T> merged = first.stream();
 
         for (Collection<? extends T> extra : more) {
             merged = Stream.concat(merged, extra.stream());
@@ -331,4 +331,9 @@ public final class Streams {
             return new Chain<>(stream.flatMap(r -> mapper.apply(r).stream()));
         }
     }
+
+    public static <T> List<T> append(List<T> list, T arg){
+        return Stream.concat(list.stream(), Stream.of(arg)).toList();
+    }
+
 }
