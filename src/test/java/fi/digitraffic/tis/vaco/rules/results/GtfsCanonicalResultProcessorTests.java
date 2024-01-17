@@ -110,7 +110,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL_4_1_0)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(entry, task)).willReturn(Map.of());
-        givenTaskStatusIsMarkedAs(Status.SUCCESS);
+        givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
 
         resultProcessor.processResults(resultMessage, entry, task);
 

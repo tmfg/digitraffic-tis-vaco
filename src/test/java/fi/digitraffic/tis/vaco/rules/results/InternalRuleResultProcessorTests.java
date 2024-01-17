@@ -63,7 +63,7 @@ class InternalRuleResultProcessorTests extends ResultProcessorTestBase {
     @Test
     void registersResultPackageAsIs() {
         givenPackageIsRegistered();
-        givenTaskStatusIsMarkedAs(Status.SUCCESS);
+        givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
 
         resultProcessor.processResults(downloadMessage, entry, downloadTask);
 

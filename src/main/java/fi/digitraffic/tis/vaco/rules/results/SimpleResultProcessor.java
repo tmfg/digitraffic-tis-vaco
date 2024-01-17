@@ -32,7 +32,7 @@ public class SimpleResultProcessor extends RuleResultProcessor implements Result
     @Override
     public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
         createOutputPackages(resultMessage, entry, task);
-        taskService.markStatus(task, Status.SUCCESS);
+        taskService.markStatus(entry, task, Status.SUCCESS);
         return true;
     }
 }

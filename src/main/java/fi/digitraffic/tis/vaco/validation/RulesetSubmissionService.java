@@ -80,12 +80,12 @@ public class RulesetSubmissionService {
                 Set<Ruleset> rulesets = selectRulesets(entry, configuration);
 
                 if (rulesets.isEmpty()) {
-                    taskService.markStatus(task, Status.FAILED);
+                    taskService.markStatus(entry, task, Status.FAILED);
                 } else {
                     submitRules(entry, task, rulesets);
-                    taskService.markStatus(task, Status.SUCCESS);
+                    taskService.markStatus(entry, task, Status.SUCCESS);
                 }
-                return taskService.trackTask(task, ProcessingState.COMPLETE);
+                return taskService.trackTask(entry, task, ProcessingState.COMPLETE);
             }).orElseThrow();
     }
 
@@ -148,16 +148,16 @@ public class RulesetSubmissionService {
                     // 1) shows in API response that the processing has started
                     // 2) this prevents unintended retrying of the task
                     Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
-                    ruleTask.map(t -> taskService.trackTask(t, ProcessingState.START))
+                    ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
                         .orElseThrow();
                     return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
                 } else {
                     logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
                     // dependencies failed or were cancelled, mark this one as cancelled and complete
                     taskService.findTask(entry.id(), identifyingName)
-                        .map(t -> taskService.trackTask(t, ProcessingState.START))
-                        .map(t -> taskService.markStatus(t, Status.CANCELLED))
-                        .map(t -> taskService.trackTask(t, ProcessingState.COMPLETE))
+                        .map(t -> taskService.trackTask(entry, t, ProcessingState.START))
+                        .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
+                        .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
                         .orElseThrow();
                     return CompletableFuture.completedFuture(null);
                 }

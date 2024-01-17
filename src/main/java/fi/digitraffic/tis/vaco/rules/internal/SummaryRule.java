@@ -53,7 +53,7 @@ public class SummaryRule implements Rule<Entry, ResultMessage> {
             Optional<Task> task = taskService.findTask(entry.id(), SUMMARY_TASK);
 
             return task.map(t -> {
-                Task tracked = taskService.trackTask(t, ProcessingState.START);
+                Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
                 Optional<Task> downloadTask = taskService.findTask(entry.id(), DownloadRule.DOWNLOAD_SUBTASK);
                 if (downloadTask.isEmpty()) {
                     logger.error("Failed to generate task summaries due to entry's '{}' downloaded data task not existing in the db as a task", entry.id());
@@ -67,7 +67,7 @@ public class SummaryRule implements Rule<Entry, ResultMessage> {
                     return unsuccessfulResult(t, entry);
                 }
 
-                taskService.trackTask(t, ProcessingState.UPDATE);
+                taskService.trackTask(entry, t, ProcessingState.UPDATE);
                 try {
                     if ("gtfs".equalsIgnoreCase(entry.format())) {
                         gtfsInputSummaryService.generateGtfsDownloadSummaries(downloadedPackagePath.get(), t.id());
@@ -81,7 +81,7 @@ public class SummaryRule implements Rule<Entry, ResultMessage> {
                     DownloadRule.DOWNLOAD_SUBTASK, DownloadRule.DOWNLOAD_SUBTASK);
                 S3Path ruleS3Input = ruleBasePath.resolve("input");
 
-                taskService.trackTask(t, ProcessingState.COMPLETE);
+                taskService.trackTask(entry, t, ProcessingState.COMPLETE);
 
                 return ImmutableResultMessage.builder()
                     .entryId(entry.publicId())
@@ -96,7 +96,7 @@ public class SummaryRule implements Rule<Entry, ResultMessage> {
     }
 
     private ImmutableResultMessage unsuccessfulResult(Task t, Entry e) {
-        taskService.trackTask(t, ProcessingState.COMPLETE);
+        taskService.trackTask(e, t, ProcessingState.COMPLETE);
         return ImmutableResultMessage.builder()
             .entryId(e.publicId())
             .taskId(t.id())

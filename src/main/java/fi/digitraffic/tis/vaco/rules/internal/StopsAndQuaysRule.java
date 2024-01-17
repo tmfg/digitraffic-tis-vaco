@@ -50,7 +50,7 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
         return CompletableFuture.supplyAsync(() -> {
             Optional<Task> task = taskService.findTask(entry.id(), STOPS_AND_QUAYS_TASK);
             return task.map(t -> {
-                Task tracked = taskService.trackTask(t, ProcessingState.START);
+                Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
 
                 try {
                     S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), STOPS_AND_QUAYS_TASK, STOPS_AND_QUAYS_TASK);
@@ -62,7 +62,7 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
 
                     s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), target, stopsAndQuays).join();
 
-                    taskService.trackTask(t, ProcessingState.COMPLETE);
+                    taskService.trackTask(entry, t, ProcessingState.COMPLETE);
 
                     return ImmutableResultMessage.builder()
                         .entryId(entry.publicId())

@@ -53,7 +53,7 @@ class SimpleResultProcessorTests extends ResultProcessorTestBase {
     void producesPackagesByDefault() {
         givenPackageIsCreated("all", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "all", IGNORED_PATH_VALUE));
         givenPackageIsCreated("debug", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "debug", IGNORED_PATH_VALUE));
-        givenTaskStatusIsMarkedAs(Status.SUCCESS);
+        givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
 
         simpleResultProcessor.processResults(gtfs2netexMessage, entry, conversionTask);
     }

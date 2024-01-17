@@ -57,7 +57,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         return CompletableFuture.supplyAsync(() -> {
             Optional<Task> task = taskService.findTask(entry.id(), DOWNLOAD_SUBTASK);
             return task.map(t -> {
-                Task tracked = taskService.trackTask(t, ProcessingState.START);
+                Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
                 Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, tracked, entry.format() + ".zip");
 
                 try {
@@ -66,10 +66,10 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
 
                     S3Path result = httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
-                        .thenApply(track(tracked, ProcessingState.UPDATE))
+                        .thenApply(track(entry, tracked, ProcessingState.UPDATE))
                         .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
-                        .thenApply(track(tracked, ProcessingState.COMPLETE))
-                        .thenApply(status(tracked, Status.SUCCESS))
+                        .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
+                        .thenApply(status(entry, tracked, Status.SUCCESS))
                         .join();
                     String downloadedFilePackage = "result";
 
@@ -83,7 +83,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         .build();
                 }  catch (Exception e) {
                     logger.warn("Caught unrecoverable exception during file download", e);
-                    taskService.markStatus(tracked, Status.FAILED);
+                    taskService.markStatus(entry, tracked, Status.FAILED);
                     return null;
                 } finally {
                     try {
@@ -96,16 +96,16 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         });
     }
 
-    private <T> Function<T, T> track(Task task, ProcessingState state) {
+    private <T> Function<T, T> track(Entry entry, Task task, ProcessingState state) {
         return t -> {
-            taskService.trackTask(task, state);
+            taskService.trackTask(entry, task, state);
             return t;
         };
     }
 
-    private <T> Function<T, T> status(Task task, Status status) {
+    private <T> Function<T, T> status(Entry entry, Task task, Status status) {
         return t -> {
-            taskService.markStatus(task, status);
+            taskService.markStatus(entry, task, status);
             return t;
         };
     }
@@ -117,7 +117,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             S3Path s3TargetPath = outputDir.resolve(entry.format() + ".zip");
 
             return s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3TargetPath, path)
-                .thenApply(track(task, ProcessingState.UPDATE))
+                .thenApply(track(entry, task, ProcessingState.UPDATE))
                 .thenApply(u -> s3TargetPath);  // NOTE: There's probably something useful in the `u` parameter
         };
     }
