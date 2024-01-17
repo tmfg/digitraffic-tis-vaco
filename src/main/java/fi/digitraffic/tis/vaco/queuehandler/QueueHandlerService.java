@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
@@ -32,6 +33,7 @@ public class QueueHandlerService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private final CachingService cachingService;
     private final MeService meService;
     private final MessagingService messagingService;
     private final CompanyService companyService;
@@ -39,12 +41,14 @@ public class QueueHandlerService {
     private final EntryRequestMapper entryRequestMapper;
     private final PartnershipService partnershipService;
 
-    public QueueHandlerService(MeService meService,
+    public QueueHandlerService(CachingService cachingService,
+                               MeService meService,
                                EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
                                CompanyService companyService,
                                EntryRepository entryRepository,
                                PartnershipService partnershipService) {
+        this.cachingService = Objects.requireNonNull(cachingService);
         this.meService = Objects.requireNonNull(meService);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
         this.messagingService = Objects.requireNonNull(messagingService);
@@ -69,7 +73,10 @@ public class QueueHandlerService {
             .build();
         messagingService.submitProcessingJob(job);
 
-        return result;
+        return cachingService.cacheEntry(
+                cachingService.keyForEntry(result.publicId(), true),
+                key -> result)
+            .get();
     }
 
     /**
@@ -112,20 +119,33 @@ public class QueueHandlerService {
     }
 
     public Optional<Entry> findEntry(String publicId, boolean skipErrorsField) {
-        return entryRepository.findByPublicId(publicId, skipErrorsField);
+        return cachingService.cacheEntry(
+            cachingService.keyForEntry(publicId, skipErrorsField),
+            key -> entryRepository.findByPublicId(publicId, skipErrorsField).orElse(null));
     }
 
     public Entry getEntry(String publicId, boolean skipErrorsField) {
-        return entryRepository.findByPublicId(publicId, skipErrorsField)
-            .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"));
+        return cachingService.cacheEntry(
+            cachingService.keyForEntry(publicId, skipErrorsField),
+            key -> entryRepository.findByPublicId(publicId, skipErrorsField)
+                .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"))
+        ).get();
     }
 
     public List<Entry> getAllQueueEntriesFor(String businessId, boolean full) {
-        return entryRepository.findAllByBusinessId(businessId, full);
+        List<Entry> entries = entryRepository.findAllByBusinessId(businessId, full);
+        entries.forEach(entry -> cachingService.cacheEntry(
+            cachingService.keyForEntry(entry.publicId(), full),
+            key -> entry));
+        return entries;
     }
 
     public List<Entry> getAllEntriesVisibleForCurrentUser(boolean full) {
-        return Streams.flatten(meService.findCompanies(), c -> entryRepository.findAllByBusinessId(c.businessId(), full))
+        List<Entry> entries = Streams.flatten(meService.findCompanies(), c -> entryRepository.findAllByBusinessId(c.businessId(), full))
             .toList();
+        entries.forEach(entry -> cachingService.cacheEntry(
+            cachingService.keyForEntry(entry.publicId(), full),
+            key -> entry));
+        return entries;
     }
 }

@@ -29,7 +29,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 
 @RestController
 @RequestMapping("/company")
-@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
+@PreAuthorize("hasAuthority('vaco.apiuser') and hasAnyAuthority('vaco.company_admin')")
 public class CompanyController {
 
     private final VacoProperties vacoProperties;

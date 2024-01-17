@@ -12,6 +12,6 @@ client_id={{clientId}}&grant_type=client_credentials&scope={{clientId}}/.default
 
 ###
 
-GET http://localhost:8080/api/me
+GET {{serviceRootUri}}/api/me
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}

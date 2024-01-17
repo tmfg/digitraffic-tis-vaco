@@ -1,11 +1,13 @@
 package fi.digitraffic.tis.vaco.entries;
 
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,28 +33,35 @@ class EntryServiceTests {
     private TaskService taskService;
     @Mock
     private FindingService findingService;
+    @Mock
+    private CachingService cachingService;
+    @Mock
+    private QueueHandlerService queueHandlerService;
 
     private ImmutableEntry entry;
 
     // InOrder enables reusing simple verifications in order
     private InOrder inOrderRepository;
+    private InOrder inOrderCaching;
 
     @BeforeEach
     void setUp() {
-        entryService = new EntryService(taskService, findingService, entryRepository);
+        entryService = new EntryService(entryRepository, cachingService, queueHandlerService, taskService);
         entry = ImmutableEntry.copyOf(TestObjects.anEntry().id(99999999L).build());
         inOrderRepository = Mockito.inOrder(entryRepository);
+        inOrderCaching = Mockito.inOrder(cachingService);
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(entryRepository, taskService, findingService);
+        verifyNoMoreInteractions(entryRepository, taskService, findingService, cachingService, queueHandlerService);
     }
 
     @Test
     void marksEntryAsSuccessByDefault() {
         givenTaskInStatus(Status.SUCCESS);
         thenEntryIsMarkedAs(Status.SUCCESS);
+        thenCacheIsInvalidated();
     }
 
     /**
@@ -62,15 +71,19 @@ class EntryServiceTests {
     void taskStatesGuideEntryStatusSelection() {
         givenTaskInStatus(Status.FAILED);
         thenEntryIsMarkedAs(Status.FAILED);
+        thenCacheIsInvalidated();
 
         givenTaskInStatus(Status.ERRORS);
         thenEntryIsMarkedAs(Status.ERRORS);
+        thenCacheIsInvalidated();
 
         givenTaskInStatus(Status.WARNINGS);
         thenEntryIsMarkedAs(Status.WARNINGS);
+        thenCacheIsInvalidated();
 
         givenTaskInStatus(Status.CANCELLED);
         thenEntryIsMarkedAs(Status.SUCCESS);
+        thenCacheIsInvalidated();
     }
 
     private void givenTaskInStatus(Status status) {
@@ -81,5 +94,9 @@ class EntryServiceTests {
     private void thenEntryIsMarkedAs(Status status) {
         entryService.updateStatus(entry);
         inOrderRepository.verify(entryRepository).markStatus(entry, status);
+    }
+
+    private void thenCacheIsInvalidated() {
+        inOrderCaching.verify(cachingService).invalidateEntry(entry);
     }
 }

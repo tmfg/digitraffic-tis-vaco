@@ -45,6 +45,10 @@ public class MessagingService {
     }
 
     public <P> CompletableFuture<P> sendMessage(String queueName, P payload) {
+        if (payload == null) {
+            logger.warn("send {} !! Tried to send null payload, ignoring", queueName);
+            return CompletableFuture.completedFuture(payload);
+        }
         try {
             logger.debug("send {} <- {}", queueName, payload);
             return sqsTemplate.sendAsync(queueName, payload).thenApply(sr -> sr.message().getPayload());
