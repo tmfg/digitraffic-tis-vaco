@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.ui;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
@@ -15,16 +14,16 @@ import fi.digitraffic.tis.vaco.summary.SummaryRepository;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
-import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableCard;
-import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableLabelValuePair;
-import fi.digitraffic.tis.vaco.ui.model.summary.LabelValuePair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableRuleReport;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
+import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableCard;
+import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableLabelValuePair;
+import fi.digitraffic.tis.vaco.ui.model.summary.LabelValuePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -55,9 +54,6 @@ public class EntryStateService {
         List<ItemCounter> counters = entryStateRepository.findFindingCounters(task.id());
 
         List<AggregatedFinding> aggregated = entryStateRepository.findAggregatedFindings(task.id());
-        if (aggregated.isEmpty()) {
-            return null;
-        }
         List<AggregatedFinding> aggregatedWithFindings = new ArrayList<>();
         aggregated.forEach(aggregatedFinding -> {
             List<Finding> findings = entryStateRepository.findNoticeFindings(task.id(), aggregatedFinding.code());
