@@ -14,6 +14,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.Rule;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.util.function.Function;
 
 @Component
 public class DownloadRule implements Rule<Entry, ResultMessage> {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     public static final String DOWNLOAD_SUBTASK = "prepare.download";
     private final TaskService taskService;
     private final VacoProperties vacoProperties;
@@ -78,6 +81,10 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
                         .uploadedFiles(Map.of(result.asUri(vacoProperties.s3ProcessingBucket()), List.of(downloadedFilePackage)))
                         .build();
+                }  catch (Exception e) {
+                    logger.warn("Caught unrecoverable exception during file download", e);
+                    taskService.markStatus(tracked, Status.FAILED);
+                    return null;
                 } finally {
                     try {
                         Files.deleteIfExists(tempFilePath);
