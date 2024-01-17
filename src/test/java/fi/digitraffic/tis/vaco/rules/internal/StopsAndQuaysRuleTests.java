@@ -64,9 +64,9 @@ class StopsAndQuaysRuleTests {
         Entry entry = entryBuilder.addTasks(saqTask).build();
 
         given(taskService.findTask(entry.id(), StopsAndQuaysRule.STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));
-        given(taskService.trackTask(saqTask, ProcessingState.START)).willReturn(saqTask);
+        given(taskService.trackTask(entry, saqTask, ProcessingState.START)).willReturn(saqTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
-        given(taskService.trackTask(saqTask, ProcessingState.COMPLETE)).willReturn(saqTask);
+        given(taskService.trackTask(entry, saqTask, ProcessingState.COMPLETE)).willReturn(saqTask);
 
         ResultMessage result = rule.execute(entry).join();
 

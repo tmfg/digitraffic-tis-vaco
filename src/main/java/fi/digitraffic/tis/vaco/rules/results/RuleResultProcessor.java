@@ -98,17 +98,17 @@ public abstract class RuleResultProcessor implements ResultProcessor {
 
     protected void storeFindings(Entry entry, Task task, List<Finding> findings) {
         if (findings.isEmpty()) {
-            taskService.markStatus(task, Status.SUCCESS);
+            taskService.markStatus(entry, task, Status.SUCCESS);
         } else {
             findingService.reportFindings(findings);
             Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
             logger.debug("{}/{} produced notices {}", entry.publicId(), task.name(), severities);
             if (severities.getOrDefault("ERROR", 0L) > 0) {
-                taskService.markStatus(task, Status.ERRORS);
+                taskService.markStatus(entry, task, Status.ERRORS);
             } else if (severities.getOrDefault("WARNING", 0L) > 0) {
-                taskService.markStatus(task, Status.WARNINGS);
+                taskService.markStatus(entry, task, Status.WARNINGS);
             } else {
-                taskService.markStatus(task, Status.SUCCESS);
+                taskService.markStatus(entry, task, Status.SUCCESS);
             }
         }
     }

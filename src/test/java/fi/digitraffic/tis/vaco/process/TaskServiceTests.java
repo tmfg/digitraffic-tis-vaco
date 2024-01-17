@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.process;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -46,12 +47,16 @@ class TaskServiceTests {
 
     @Mock
     private RulesetService rulesetService;
+
+    @Mock
+    private CachingService cachingService;
+
     private ImmutableEntry entry;
     private ImmutableRuleset gtfsCanonicalRuleset;
 
     @BeforeEach
     void setUp() {
-        taskService = new TaskService(taskRepository, packagesService, rulesetService);
+        taskService = new TaskService(taskRepository, packagesService, rulesetService, cachingService);
         entry = ImmutableEntry.of(
                 "entry",
                 TransitDataFormat.GTFS.fieldName(),

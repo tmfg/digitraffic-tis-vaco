@@ -46,7 +46,7 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
             task.id(),
             "result",
             dlFile.toString()));
-        taskService.markStatus(task, Status.SUCCESS);
+        taskService.markStatus(entry, task, Status.SUCCESS);
 
         return true;
     }

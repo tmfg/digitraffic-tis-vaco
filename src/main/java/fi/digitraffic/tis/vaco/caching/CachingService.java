@@ -78,8 +78,12 @@ public class CachingService {
     }
 
     public void invalidateEntry(Entry entry) {
-        entryCache.invalidate(keyForEntry(entry.publicId(), true));
-        entryCache.invalidate(keyForEntry(entry.publicId(), false));
+        invalidateEntry(entry.publicId());
+    }
+
+    protected void invalidateEntry(String publicId) {
+        entryCache.invalidate(keyForEntry(publicId, true));
+        entryCache.invalidate(keyForEntry(publicId, false));
     }
 
     private static Cache<String, Ruleset> rulesetNameCache() {
@@ -130,5 +134,4 @@ public class CachingService {
             "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache),
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache));
     }
-
 }

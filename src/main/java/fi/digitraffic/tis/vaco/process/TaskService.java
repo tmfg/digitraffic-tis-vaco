@@ -9,6 +9,7 @@ import fi.digitraffic.tis.utilities.MoreGraphs;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
+import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -43,22 +44,29 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final PackagesService packagesService;
     private final RulesetService rulesetService;
+    private final CachingService cachingService;
 
     public TaskService(TaskRepository taskRepository,
                        PackagesService packagesService,
-                       RulesetService rulesetService) {
+                       RulesetService rulesetService,
+                       CachingService cachingService) {
         this.taskRepository = Objects.requireNonNull(taskRepository);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
+        this.cachingService = Objects.requireNonNull(cachingService);
     }
 
-    public Task trackTask(Task task, ProcessingState state) {
+    public Task trackTask(Entry entry, Task task, ProcessingState state) {
         logger.trace("Updating task {} to {}", task, state);
-        return switch (state) {
+        Task result = switch (state) {
             case START -> taskRepository.startTask(task);
             case UPDATE -> taskRepository.updateTask(task);
             case COMPLETE -> taskRepository.completeTask(task);
         };
+
+        cachingService.invalidateEntry(entry);
+
+        return result;
     }
 
     public Optional<Task> findTask(Long entryId, String taskName) {
@@ -89,7 +97,11 @@ public class TaskService {
             throw new PersistenceException("Failed to create all tasks for entry " + entry);
         }
 
-        return findTasks(entry);
+        List<Task> tasks = findTasks(entry);
+
+        cachingService.invalidateEntry(entry);
+
+        return tasks;
     }
 
     @VisibleForTesting
@@ -237,7 +249,10 @@ public class TaskService {
         return taskRepository.areAllTasksCompleted(entry);
     }
 
-    public Task markStatus(Task task, Status status) {
-        return taskRepository.markStatus(task, status);
+    public Task markStatus(Entry entry, Task task, Status status) {
+        Task marked = taskRepository.markStatus(task, status);
+        cachingService.invalidateEntry(entry);
+        return marked;
+
     }
 }

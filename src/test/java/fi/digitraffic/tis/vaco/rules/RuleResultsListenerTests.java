@@ -187,11 +187,11 @@ class RuleResultsListenerTests {
     }
 
     private void givenTaskProgressIsTracked() {
-        given(taskService.trackTask(any(), any())).will(a -> a.getArgument(0));
+        given(taskService.trackTask(any(), any(), any())).will(a -> a.getArgument(1));
     }
 
     private void givenTaskStatusIsTracked() {
-        given(taskService.markStatus(any(), any())).will(a -> a.getArgument(0));
+        given(taskService.markStatus(any(), any(), any())).will(a -> a.getArgument(1));
     }
 
     private static Entry entryWithTask(Function<Entry, Task> taskCreator) {

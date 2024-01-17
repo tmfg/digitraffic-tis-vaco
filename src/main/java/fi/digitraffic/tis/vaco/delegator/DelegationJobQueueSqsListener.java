@@ -89,27 +89,27 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                     logger.debug("Internal category {} detected, delegating...", name);
                     taskService.findTask(entry.id(), name)
                         .ifPresent(t -> {
-                            taskService.trackTask(t, ProcessingState.START);
+                            taskService.trackTask(entry, t, ProcessingState.START);
                             validationJob(entry);
-                            taskService.markStatus(t, Status.SUCCESS);
+                            taskService.markStatus(entry, t, Status.SUCCESS);
                         });
                 } else if (name.equals(RulesetSubmissionService.CONVERT_TASK)) {
                     logger.debug("Internal category {} detected, delegating...", name);
                     taskService.findTask(entry.id(), name)
                         .ifPresent(t -> {
-                            taskService.trackTask(t, ProcessingState.START);
+                            taskService.trackTask(entry, t, ProcessingState.START);
                             conversionJob(entry);
-                            taskService.markStatus(t, Status.SUCCESS);
+                            taskService.markStatus(entry, t, Status.SUCCESS);
                         });
                 } else if (knownExternalRules.contains(name)) {
                     // these are currently submitted delegatively elsewhere
                     logger.debug("External rule {} detected, skipping...", name);
-                    taskService.trackTask(task, ProcessingState.START);
+                    taskService.trackTask(entry, task, ProcessingState.START);
                 } else {
                     logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
-                    taskService.trackTask(task, ProcessingState.START);
-                    taskService.trackTask(task, ProcessingState.COMPLETE);
-                    taskService.markStatus(task, Status.CANCELLED);
+                    taskService.trackTask(entry, task, ProcessingState.START);
+                    taskService.trackTask(entry, task, ProcessingState.COMPLETE);
+                    taskService.markStatus(entry, task, Status.CANCELLED);
                 }
             });
         } else {

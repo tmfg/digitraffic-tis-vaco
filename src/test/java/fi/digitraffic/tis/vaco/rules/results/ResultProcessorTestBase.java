@@ -34,7 +34,7 @@ public abstract class ResultProcessorTestBase {
             any()));
     }
 
-    protected void givenTaskStatusIsMarkedAs(Status status) {
-        given(taskService.markStatus(any(), eq(status))).will(a -> a.getArgument(0));
+    protected void givenTaskStatusIsMarkedAs(Entry entry, Status status) {
+        given(taskService.markStatus(eq(entry), any(), eq(status))).will(a -> a.getArgument(1));
     }
 }

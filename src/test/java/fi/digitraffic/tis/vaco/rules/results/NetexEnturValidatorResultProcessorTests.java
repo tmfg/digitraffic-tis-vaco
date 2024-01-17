@@ -114,7 +114,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
         given(rulesetService.findByName(RuleName.NETEX_ENTUR_1_0_1)).willReturn(Optional.of(netexEnturRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(entry, task)).willReturn(Map.of());
-        givenTaskStatusIsMarkedAs(Status.SUCCESS);
+        givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
 
         resultProcessor.processResults(resultMessage, entry, task);
 

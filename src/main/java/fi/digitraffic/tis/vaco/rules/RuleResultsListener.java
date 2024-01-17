@@ -161,20 +161,20 @@ public class RuleResultsListener {
             Entry entry = e.get();
             Optional<Task> task = taskService.findTask(entry.id(), resultMessage.ruleName());
             return task.map(t -> {
-                Task tracked = taskService.trackTask(t, ProcessingState.UPDATE);
+                Task tracked = taskService.trackTask(entry, t, ProcessingState.UPDATE);
                 try {
                     logger.info("Processing result from {} for entry {}/task {}", ruleName, entry.publicId(), tracked.name());
                     boolean result = resultProcessor.processResults(resultMessage, entry, tracked);
                     if (result) {
-                        tracked = taskService.markStatus(tracked, Status.SUCCESS);
+                        tracked = taskService.markStatus(entry, tracked, Status.SUCCESS);
                     } else {
                         // TODO: it is unclear if this branch will ever be hit
-                        tracked = taskService.markStatus(tracked, Status.WARNINGS);
+                        tracked = taskService.markStatus(entry, tracked, Status.WARNINGS);
                     }
                     return result;
                 } finally {
                     summaryService.generateSummaries(entry, t);
-                    taskService.trackTask(tracked, ProcessingState.COMPLETE);
+                    taskService.trackTask(entry, tracked, ProcessingState.COMPLETE);
                 }
             }).orElse(false);
         } else {
