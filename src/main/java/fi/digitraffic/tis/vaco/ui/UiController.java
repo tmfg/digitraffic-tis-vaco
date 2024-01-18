@@ -7,6 +7,8 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
@@ -32,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
@@ -51,16 +54,19 @@ public class UiController {
 
     private final MeService meService;
 
+    private final CompanyService companyService;
+
     public UiController(VacoProperties vacoProperties,
                         EntryStateService entryStateService,
                         QueueHandlerService queueHandlerService,
                         RulesetService rulesetService,
-                        MeService meService) {
+                        MeService meService, CompanyService companyService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryStateService = Objects.requireNonNull(entryStateService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.meService = Objects.requireNonNull(meService);
+        this.companyService = Objects.requireNonNull(companyService);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -93,18 +99,20 @@ public class UiController {
                     }
                 });
                 List<Summary> summaries = entryStateService.getTaskSummaries(entry);
+                Optional<Company> company = companyService.findByBusinessId(entry.businessId());
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry))
                         .reports(reports)
                         .summaries(summaries)
+                        .company(company.map(c -> c.name() + " (" +c.businessId() + ")").orElse(entry.businessId()))
                         .build()));
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));
     }
 
     @GetMapping(path = "/entries")
     @JsonView(DataVisibility.External.class)
-    //@PreAuthorize("hasAuthority('vaco.user')")
+    @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "full") boolean full) {
         List<Entry> entries = queueHandlerService.getAllEntriesVisibleForCurrentUser(full);
         return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));

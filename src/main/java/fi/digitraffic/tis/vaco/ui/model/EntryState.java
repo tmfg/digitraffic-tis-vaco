@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
-import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -15,9 +14,8 @@ import java.util.List;
 @JsonDeserialize(as = ImmutableEntryState.class)
 public interface EntryState {
 
-    @Value.Parameter
     Resource<Entry> entry();
-    @Value.Parameter
     List<Summary> summaries();
     List<RuleReport> reports();
+    String company();
 }
