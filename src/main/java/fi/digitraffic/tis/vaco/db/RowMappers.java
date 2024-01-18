@@ -10,7 +10,9 @@ import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
+import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
@@ -184,6 +186,20 @@ public final class RowMappers {
         .name(rs.getString("name"))
         .enabled(rs.getBoolean("enabled"))
         .build();
+
+    public static RowMapper<IntermediateHierarchyLink> INTERMEDIATE_HIERARCHY_LINK = (rs, rowNum) -> ImmutableIntermediateHierarchyLink.builder()
+        .parentId(nullableLong(rs, "parent_id"))
+        .childId(nullableLong(rs, "child_id"))
+        .build();
+
+    private static Long nullableLong(ResultSet rs, String columnLabel) throws SQLException {
+        long possibleValue = rs.getLong(columnLabel);
+        if (rs.wasNull()) {
+            return null;
+        } else {
+            return possibleValue;
+        }
+    }
 
     private static RowMapper<Entry> mapQueueEntry(ObjectMapper objectMapper) {
         return (rs, rowNum) -> ImmutableEntry.builder()
