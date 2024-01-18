@@ -4,6 +4,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.slf4j.Logger;
@@ -34,6 +36,7 @@ public class CachingService {
     private final Cache<String, String> sqsQueueUrlCache;
     private final Cache<Path, Path> localPathCache;
     private final Cache<String, Entry> entryCache;
+    private final Cache<String, Hierarchy> companyHierarchyCache;
     private final CacheStatsMapper cacheStatsMapper;
 
     public CachingService(CacheStatsMapper cacheStatsMapper) {
@@ -42,6 +45,7 @@ public class CachingService {
         this.sqsQueueUrlCache = sqsQueueUrlCache();
         this.localPathCache = localPathCache();
         this.entryCache = entryCache();
+        this.companyHierarchyCache = companyHierarchyCache();
     }
 
     public Optional<Ruleset> cacheRuleset(String key, Function<String, Ruleset> loader) {
@@ -86,6 +90,14 @@ public class CachingService {
         entryCache.invalidate(keyForEntry(publicId, false));
     }
 
+    public Hierarchy cacheCompanyHierarchy(Company company, String kind, Function<String, Hierarchy> loader) {
+        return companyHierarchyCache.get(company.businessId() + "(" + kind + ")", loader);
+    }
+
+    public void invalidateCompanyHierarchy(Company company, String kind) {
+        companyHierarchyCache.invalidate(company.businessId() + "(" + kind + ")");
+    }
+
     private static Cache<String, Ruleset> rulesetNameCache() {
         return Caffeine.newBuilder()
             .recordStats()
@@ -119,6 +131,14 @@ public class CachingService {
             .build();
     }
 
+    private Cache<String, Hierarchy> companyHierarchyCache() {
+        return Caffeine.newBuilder()
+            .recordStats()
+            .maximumSize(200)
+            .expireAfterWrite(Duration.ofHours(1))
+            .build();
+    }
+
     private Cache<String, Entry> entryCache() {
         return Caffeine.newBuilder()
             .recordStats()
@@ -132,6 +152,8 @@ public class CachingService {
             "rulesets", cacheStatsMapper.toCacheSummaryStatistics(rulesetCache),
             "SQS queue URLs", cacheStatsMapper.toCacheSummaryStatistics(sqsQueueUrlCache),
             "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache),
-            "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache));
+            "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
+            "hierarchies", cacheStatsMapper.toCacheSummaryStatistics(companyHierarchyCache));
     }
+
 }

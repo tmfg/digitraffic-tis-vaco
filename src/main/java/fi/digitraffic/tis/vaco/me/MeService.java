@@ -71,10 +71,9 @@ public class MeService {
     }
 
     public boolean isAllowedToAccess(String businessId) {
-        return currentToken()
-            .flatMap(token -> Streams.filter(findCompanies(), c -> Objects.equals(c.businessId(), businessId))
-                .findFirst())
-            .isPresent();
+        Set<Company> directMemberCompanies = findCompanies();
+        return Streams.filter(directMemberCompanies, c -> Objects.equals(c.businessId(), businessId)).findFirst().isPresent()
+            || companyService.isChildOfAny(directMemberCompanies, businessId);
     }
 
     /**
