@@ -162,7 +162,7 @@ public final class RowMappers {
                         FeedInfo feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getFeedInfoUiContent(feedInfo);
                     }
-                    case "files", "counts", "components" -> content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                    default -> content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                 }
                 return ImmutableSummary.builder()
                     .id(rs.getLong("id"))

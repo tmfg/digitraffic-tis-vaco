@@ -19,10 +19,14 @@ public class SummaryService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PackagesService packagesService;
     private final GtfsInputSummaryService gtfsInputSummaryService;
+    private final NetexInputSummaryService netexInputSummaryService;
 
-    public SummaryService(PackagesService packagesService, GtfsInputSummaryService gtfsInputSummaryService) {
+    public SummaryService(PackagesService packagesService,
+                          GtfsInputSummaryService gtfsInputSummaryService,
+                          NetexInputSummaryService netexInputSummaryService) {
         this.packagesService = packagesService;
         this.gtfsInputSummaryService = gtfsInputSummaryService;
+        this.netexInputSummaryService = netexInputSummaryService;
     }
 
     public void generateSummaries(Entry entry, Task task) {
@@ -40,11 +44,16 @@ public class SummaryService {
 
         if (TransitDataFormat.GTFS.fieldName().equals(entry.format())) {
             try {
-                gtfsInputSummaryService.generateGtfsDownloadSummaries(downloadedPackagePath.get(), task.id());
+                gtfsInputSummaryService.generateGtfsInputSummaries(downloadedPackagePath.get(), task.id());
             } catch (IOException e) {
-                logger.error("Failed to generate input data summaries for entry {}", entry.id(), e);
+                logger.error("Failed to generate GTFS input data summaries for entry {}", entry.id(), e);
             }
         } else if (TransitDataFormat.NETEX.fieldName().equals(entry.format())) {
+            try {
+                netexInputSummaryService.generateNetexInputSummaries(downloadedPackagePath.get(), task.id());
+            } catch (IOException e) {
+                logger.error("Failed to generate NeTEx input data summaries for entry {}", entry.id(), e);
+            }
         }
     }
 }

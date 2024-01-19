@@ -9,8 +9,11 @@ import org.immutables.value.Value;
 @JsonSerialize(as = ImmutableLabelValuePair.class)
 @JsonDeserialize(as = ImmutableLabelValuePair.class)
 public interface LabelValuePair {
+    @Value.Parameter
     @Nullable
     String label();
+
+    @Value.Parameter
     @Nullable
     String value();
 }
