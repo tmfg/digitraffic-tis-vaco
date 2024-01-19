@@ -67,6 +67,16 @@ public class SummaryRepository {
                   FROM summary ts
                   JOIN task t ON ts.task_id = t.id
                  WHERE t.entry_id = ?
+                 ORDER BY CASE
+                    WHEN ts.name = 'agencies' THEN 1
+                    WHEN ts.name = 'operators' THEN 1
+                    WHEN ts.name = 'feedInfo' THEN 2
+                    WHEN ts.name = 'lines' THEN 2
+                    WHEN ts.name = 'files' THEN 3
+                    WHEN ts.name = 'counts' THEN 4
+                    WHEN ts.name = 'components' THEN 5
+                    ELSE 6
+                 END ASC
                 """,
                 RowMappers.SUMMARY_WITH_CONTENT.apply(objectMapper),
                 entryId);
