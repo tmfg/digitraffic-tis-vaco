@@ -1,12 +1,9 @@
 package fi.digitraffic.tis.vaco.summary;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.exceptions.CsvException;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
@@ -36,14 +33,13 @@ public class GtfsInputSummaryService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final String COMPONENT_PRESENT_VALUE = "1";
     private final SummaryRepository summaryRepository;
-    private final ObjectMapper objectMapper;
 
-    public GtfsInputSummaryService(SummaryRepository summaryRepository, ObjectMapper objectMapper) {
+    public GtfsInputSummaryService(SummaryRepository summaryRepository) {
         this.summaryRepository = summaryRepository;
-        this.objectMapper = objectMapper;
     }
 
-    public void generateGtfsDownloadSummaries(Path downloadedPackagePath, Long taskId) throws IOException {
+    public void generateGtfsInputSummaries(Path downloadedPackagePath, Long taskId) throws IOException {
+        logger.info("Starting GTFS input summary generation for task {}", taskId);
         ImmutableGtfsInputSummary gtfsTaskSummary = getEmptyGtfsSummaryObject();
 
         try (ZipFile zipFile = new ZipFile(downloadedPackagePath.toFile())) {
@@ -78,20 +74,11 @@ public class GtfsInputSummaryService {
             }
         }
 
-        persistTaskSummaryItem(taskId, "agencies", RendererType.CARD, gtfsTaskSummary.agencies());
-        persistTaskSummaryItem(taskId, "feedInfo", RendererType.TABULAR, gtfsTaskSummary.feedInfo());
-        persistTaskSummaryItem(taskId, "files", RendererType.LIST, gtfsTaskSummary.files());
-        persistTaskSummaryItem(taskId, "counts", RendererType.LIST, gtfsTaskSummary.counts());
-        persistTaskSummaryItem(taskId, "components", RendererType.LIST, gtfsTaskSummary.components());
-    }
-
-    <T> void persistTaskSummaryItem(Long taskId, String itemName, RendererType rendererType, T data) {
-        try {
-            summaryRepository.create(ImmutableSummary.of(taskId, itemName, rendererType, objectMapper.writeValueAsBytes(data)));
-        }
-        catch (JsonProcessingException e) {
-            logger.error("Failed to persist {}'s summary data {} generated for task {}", itemName, data, taskId, e);
-        }
+        summaryRepository.persistTaskSummaryItem(taskId, "agencies", RendererType.CARD, gtfsTaskSummary.agencies());
+        summaryRepository.persistTaskSummaryItem(taskId, "feedInfo", RendererType.TABULAR, gtfsTaskSummary.feedInfo());
+        summaryRepository.persistTaskSummaryItem(taskId, "files", RendererType.LIST, gtfsTaskSummary.files());
+        summaryRepository.persistTaskSummaryItem(taskId, "counts", RendererType.LIST, gtfsTaskSummary.counts());
+        summaryRepository.persistTaskSummaryItem(taskId, "components", RendererType.LIST, gtfsTaskSummary.components());
     }
 
     ImmutableGtfsInputSummary getEmptyGtfsSummaryObject() {

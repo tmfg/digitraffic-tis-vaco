@@ -19,7 +19,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/packages")
-@PreAuthorize("hasAuthority('vaco.apiuser')")
+@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.user')")
 public class PackagesController {
 
     private final PackagesService packagesService;
