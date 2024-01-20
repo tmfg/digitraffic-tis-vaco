@@ -57,12 +57,8 @@ public class QueueHandlerController {
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody EntryRequest entryRequest) {
-        if (meService.isAllowedToAccess(entryRequest.getBusinessId())) {
-            Entry entry = queueHandlerService.processQueueEntry(entryRequest);
-            return ResponseEntity.ok(asQueueHandlerResource(entry));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        Entry entry = queueHandlerService.processQueueEntry(entryRequest);
+        return ResponseEntity.ok(asQueueHandlerResource(entry));
     }
 
     @GetMapping(path = "")
