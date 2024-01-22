@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
+import java.util.Map;
 import java.util.Set;
 
 @Value.Immutable
@@ -30,5 +31,13 @@ public interface Hierarchy {
             }
         }
         return false;
+    }
+
+    default void collectChildren(Map<String, Company> children) {
+        children.putIfAbsent(company().businessId(), company());
+        Set<Hierarchy> ch = children();
+        if (ch != null) {
+            ch.forEach(child -> child.collectChildren(children));
+        }
     }
 }
