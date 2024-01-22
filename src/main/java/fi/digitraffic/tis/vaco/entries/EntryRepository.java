@@ -21,12 +21,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public class EntryRepository {
@@ -34,17 +37,20 @@ public class EntryRepository {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcTemplate namedJdbc;
     private final ObjectMapper objectMapper;
     private final FindingRepository findingRepository;
     private final TaskService taskService;
     private final PackagesService packagesService;
 
     public EntryRepository(JdbcTemplate jdbc,
+                           NamedParameterJdbcTemplate namedJdbc,
                            ObjectMapper objectMapper,
                            FindingRepository findingRepository,
                            TaskService taskService,
                            PackagesService packagesService) {
         this.jdbc = Objects.requireNonNull(jdbc);
+        this.namedJdbc = Objects.requireNonNull(namedJdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.findingRepository = Objects.requireNonNull(findingRepository);
         this.taskService = Objects.requireNonNull(taskService);
@@ -179,6 +185,27 @@ public class EntryRepository {
                     """,
                 RowMappers.ENTRY.apply(objectMapper),
                 businessId);
+
+            if (full) {
+                return Streams.map(entries, e -> buildCompleteEntry(e, true)).toList();
+            } else {
+                return entries;
+            }
+        } catch (EmptyResultDataAccessException erdae) {
+            return List.of();
+        }
+    }
+
+    public List<Entry> findAllForBusinessIds(Set<String> businessIds, boolean full) {
+        try {
+            List<Entry> entries = namedJdbc.query("""
+                SELECT e.*
+                  FROM entry e
+                 WHERE e.business_id IN (:businessIds)
+                """,
+                new MapSqlParameterSource()
+                    .addValue("businessIds", businessIds),
+                RowMappers.ENTRY.apply(objectMapper));
 
             if (full) {
                 return Streams.map(entries, e -> buildCompleteEntry(e, true)).toList();

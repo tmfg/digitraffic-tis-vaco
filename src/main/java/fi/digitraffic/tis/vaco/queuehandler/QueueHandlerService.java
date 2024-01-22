@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
@@ -22,9 +21,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import static fi.digitraffic.tis.Constants.FINTRAFFIC_BUSINESS_ID;
 
@@ -141,8 +142,11 @@ public class QueueHandlerService {
     }
 
     public List<Entry> getAllEntriesVisibleForCurrentUser(boolean full) {
-        List<Entry> entries = Streams.flatten(meService.findCompanies(), c -> entryRepository.findAllByBusinessId(c.businessId(), full))
-            .toList();
+        Set<String> allAccessibleBusinessIds = new HashSet<>();
+        meService.findCompanies().forEach(company ->
+            allAccessibleBusinessIds.addAll(companyService.listAllChildren(company).keySet()));
+
+        List<Entry> entries = entryRepository.findAllForBusinessIds(allAccessibleBusinessIds, full);
         entries.forEach(entry -> cachingService.cacheEntry(
             cachingService.keyForEntry(entry.publicId(), full),
             key -> entry));

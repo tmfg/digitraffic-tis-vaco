@@ -72,7 +72,9 @@ public class MeService {
 
     public boolean isAllowedToAccess(String businessId) {
         Set<Company> directMemberCompanies = findCompanies();
-        return Streams.filter(directMemberCompanies, c -> Objects.equals(c.businessId(), businessId)).findFirst().isPresent()
+        return Streams.filter(directMemberCompanies, c -> Objects.equals(c.businessId(), businessId))
+            .findFirst()
+            .isPresent()
             || companyService.isChildOfAny(directMemberCompanies, businessId);
     }
 

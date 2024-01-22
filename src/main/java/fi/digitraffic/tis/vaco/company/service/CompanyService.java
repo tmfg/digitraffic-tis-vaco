@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -56,6 +58,13 @@ public class CompanyService {
             .filter(h -> h.isMember(childBusinessId))
             .findFirst()
             .isPresent();
+    }
+
+    public Map<String, Company> listAllChildren(Company parent) {
+        Map<String, Company> allChildren = new HashMap<>();
+        Hierarchy h = findHierarchyFor(parent);
+        h.collectChildren(allChildren);
+        return allChildren;
     }
 
     private Hierarchy findHierarchyFor(Company company) {
