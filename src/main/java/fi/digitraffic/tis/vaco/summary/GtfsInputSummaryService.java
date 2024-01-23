@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.ImmutableGtfsInputSummary;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Route;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Shape;
+import fi.digitraffic.tis.vaco.summary.model.gtfs.Stop;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Trip;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class GtfsInputSummaryService {
                             case "shapes.txt" ->
                                 gtfsTaskSummary = processShapes(inputStream, taskId, gtfsTaskSummary);
                             case "stops.txt" ->
-                                gtfsTaskSummary = processStops(inputStream, taskId, gtfsTaskSummary, zipEntry.getName());
+                                gtfsTaskSummary = processStops(inputStream, taskId, gtfsTaskSummary);
                             case "trips.txt" ->
                                 gtfsTaskSummary = processTrips(inputStream, taskId, gtfsTaskSummary);
                             case "transfers.txt" ->
@@ -95,6 +96,8 @@ public class GtfsInputSummaryService {
         try (CSVReader csvReader = new CSVReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             return new CsvToBeanBuilder<T>(csvReader)
                 .withType(beanClass)
+                .withIgnoreEmptyLine(true)
+                .withIgnoreLeadingWhiteSpace(true)
                 .build()
                 .parse();
         } catch (IOException e) {
@@ -121,7 +124,7 @@ public class GtfsInputSummaryService {
                     gtfsTaskSummary.counts(),
                     "Agencies:  " + agencies.size()));
         } catch (Exception e) {
-            logger.error("Failed to process agencies for task {}", taskId);
+            logger.error("Failed to process agencies for task {}", taskId, e);
         }
 
         return gtfsTaskSummary;
@@ -139,7 +142,7 @@ public class GtfsInputSummaryService {
             }
         }
         catch (Exception e) {
-            logger.error("Failed to process feed info for task {}", taskId);
+            logger.error("Failed to process feed info for task {}", taskId, e);
         }
 
         return gtfsTaskSummary;
@@ -167,7 +170,7 @@ public class GtfsInputSummaryService {
                 .withComponents(Streams.concat(gtfsTaskSummary.components(), newComponents).toList());
         }
         catch (Exception e) {
-            logger.error("Failed to process routes for task {}", taskId);
+            logger.error("Failed to process routes for task {}", taskId, e);
         }
 
         return gtfsTaskSummary;
@@ -189,7 +192,7 @@ public class GtfsInputSummaryService {
             }
         }
         catch (Exception e) {
-            logger.error("Failed to process shapes for task {}", taskId);
+            logger.error("Failed to process shapes for task {}", taskId, e);
         }
 
         return gtfsTaskSummary;
@@ -197,15 +200,21 @@ public class GtfsInputSummaryService {
 
     ImmutableGtfsInputSummary processStops(InputStream inputStream,
                                            Long taskId,
-                                           ImmutableGtfsInputSummary gtfsTaskSummary,
-                                           String fileName) {
+                                           ImmutableGtfsInputSummary gtfsTaskSummary) {
         try {
-            List<String[]> stops = getCsvRows(inputStream, fileName);
+            List<Stop> stops = getCsvBeans(inputStream, Stop.class);
+            List<String> components = new ArrayList<>();
+            if (!stops.isEmpty() && stops.stream()
+                .filter(stop -> stop.getLocationType() != null && !stop.getLocationType().isBlank())
+                .map(Stop::getLocationType).distinct().findAny().isPresent()) {
+                components.add("Location Types");
+            }
             return gtfsTaskSummary
-                .withCounts(Streams.append(gtfsTaskSummary.counts(), "Stops:  " + Math.max(stops.size() - 1, 0)));
+                .withComponents(Streams.concat(gtfsTaskSummary.components(), components).toList())
+                .withCounts(Streams.append(gtfsTaskSummary.counts(), "Stops:  " + stops.size()));
         }
         catch (Exception e) {
-            logger.error("Failed to process stops for task {}", taskId);
+            logger.error("Failed to process stops for task {}", taskId, e);
         }
 
         return gtfsTaskSummary;
@@ -222,18 +231,20 @@ public class GtfsInputSummaryService {
                 List<String> newCounts = new ArrayList<>();
 
                 boolean wheelchairAccessibility = trips.stream()
-                    .anyMatch(trip -> COMPONENT_PRESENT_VALUE.equals(trip.getWheelchairAccessible()));
+                    .anyMatch(trip -> trip.getWheelchairAccessible() != null && COMPONENT_PRESENT_VALUE.equals(trip.getWheelchairAccessible()));
                 if (wheelchairAccessibility) {
                     newComponents.add("Wheelchair Accessibility");
                 }
 
                 boolean bikesAllowed = trips.stream()
-                    .anyMatch(trip -> COMPONENT_PRESENT_VALUE.contains(trip.getBikesAllowed()));
+                    .anyMatch(trip -> trip.getBikesAllowed() != null && COMPONENT_PRESENT_VALUE.contains(trip.getBikesAllowed()));
                 if (bikesAllowed) {
                     newComponents.add("Bikes Allowance");
                 }
 
-                long blocks = trips.stream().map(Trip::getBlockId).distinct().count();
+                long blocks = trips.stream()
+                    .filter(trip -> trip.getBlockId() != null && !trip.getBlockId().isBlank())
+                    .map(Trip::getBlockId).distinct().count();
                 newCounts.add("Blocks:  " + blocks);
                 if (blocks > 0) {
                     newComponents.add("Blocks");
@@ -251,7 +262,7 @@ public class GtfsInputSummaryService {
 
             return gtfsTaskSummary;
         } catch(Exception e) {
-            logger.error("Failed to process trips for task {}", taskId);
+            logger.error("Failed to process trips for task {}", taskId, e);
         }
 
         return gtfsTaskSummary;
@@ -264,12 +275,12 @@ public class GtfsInputSummaryService {
         try {
             List<String[]> transfers = getCsvRows(inputStream, fileName);
 
-            if (!transfers.isEmpty()) {
+            if (transfers.size() > 1) {
                 return gtfsTaskSummary.withComponents(Streams.append(gtfsTaskSummary.components(), "Transfers"));
             }
         }
         catch (Exception e) {
-            logger.error("Failed to process shapes for task {}", taskId);
+            logger.error("Failed to process shapes for task {}", taskId, e);
         }
 
         return gtfsTaskSummary;

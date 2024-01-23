@@ -4,50 +4,39 @@ import com.opencsv.bean.CsvBindByName;
 
 public class Agency {
 
-    @CsvBindByName(column = "agency_id")
-    String agencyId;
-
     @CsvBindByName(column = "agency_name")
     String agencyName;
 
     @CsvBindByName(column = "agency_url")
     String agencyUrl;
 
-    @CsvBindByName(column = "agency_timezone")
-    String agencyTimezone;
-
-    @CsvBindByName(column = "agency_lang")
-    String agencyLang;
-
     @CsvBindByName(column = "agency_phone")
     String agencyPhone;
-
-    @CsvBindByName(column = "agency_fare_url")
-    String agencyFareUrl;
 
     @CsvBindByName(column = "agency_email")
     String agencyEmail;
 
+    // These are just for the record what agency.txt can contain (but now not needed)
+    //@CsvBindByName(column = "agency_id")
+    //String agencyId;
+
+    //@CsvBindByName(column = "agency_timezone")
+    //String agencyTimezone;
+
+    //@CsvBindByName(column = "agency_lang", required = false)
+    //String agencyLang;
+
+    //@CsvBindByName(column = "agency_fare_url", required = false)
+    //String agencyFareUrl;
+
     public Agency() {
     }
 
-    public Agency(String agencyId, String agencyName, String agencyUrl, String agencyTimezone, String agencyLang, String agencyPhone, String agencyFareUrl, String agencyEmail) {
-        this.agencyId = agencyId;
+    public Agency(String agencyName, String agencyUrl, String agencyPhone, String agencyEmail) {
         this.agencyName = agencyName;
         this.agencyUrl = agencyUrl;
-        this.agencyTimezone = agencyTimezone;
-        this.agencyLang = agencyLang;
         this.agencyPhone = agencyPhone;
-        this.agencyFareUrl = agencyFareUrl;
         this.agencyEmail = agencyEmail;
-    }
-
-    public String getAgencyId() {
-        return agencyId;
-    }
-
-    public void setAgencyId(String agencyId) {
-        this.agencyId = agencyId;
     }
 
     public String getAgencyName() {
@@ -66,36 +55,12 @@ public class Agency {
         this.agencyUrl = agencyUrl;
     }
 
-    public String getAgencyTimezone() {
-        return agencyTimezone;
-    }
-
-    public void setAgencyTimezone(String agencyTimezone) {
-        this.agencyTimezone = agencyTimezone;
-    }
-
-    public String getAgencyLang() {
-        return agencyLang;
-    }
-
-    public void setAgencyLang(String agencyLang) {
-        this.agencyLang = agencyLang;
-    }
-
     public String getAgencyPhone() {
         return agencyPhone;
     }
 
     public void setAgencyPhone(String agencyPhone) {
         this.agencyPhone = agencyPhone;
-    }
-
-    public String getAgencyFareUrl() {
-        return agencyFareUrl;
-    }
-
-    public void setAgencyFareUrl(String agencyFareUrl) {
-        this.agencyFareUrl = agencyFareUrl;
     }
 
     public String getAgencyEmail() {
