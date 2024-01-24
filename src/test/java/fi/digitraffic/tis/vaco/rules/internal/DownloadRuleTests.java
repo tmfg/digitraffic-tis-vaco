@@ -74,7 +74,7 @@ class DownloadRuleTests {
 
         given(taskService.findTask(entry.id(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
-        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(a.getArgument(0)));
+        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(Optional.ofNullable(a.getArgument(0))));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);

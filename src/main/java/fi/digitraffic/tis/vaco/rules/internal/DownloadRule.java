@@ -65,21 +65,33 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     S3Path ruleS3Input = ruleBasePath.resolve("input");
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
 
-                    S3Path result = httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
+                    // generic download: maybe fetch file
+                    Optional<S3Path> result = httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
                         .thenApply(track(entry, tracked, ProcessingState.UPDATE))
                         .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
                         .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
-                        .thenApply(status(entry, tracked, Status.SUCCESS))
                         .join();
-                    String downloadedFilePackage = "result";
 
+                    // inspect result: did download result in file(s) in S3?
+                    String downloadedFilePackage = "result";
+                    Map<String, List<String>> uploadedFiles = Map.of();
+                    if (result.isPresent()) {
+                        taskService.markStatus(entry, tracked, Status.SUCCESS);
+                        S3Path s3Path = result.get();
+                        uploadedFiles = Map.of(s3Path.asUri(vacoProperties.s3ProcessingBucket()), List.of(downloadedFilePackage));
+                    } else {
+                        // did not produce file but that might be intended (e.g. ETag results in 304), cancel task
+                        taskService.markStatus(entry, tracked, Status.CANCELLED);
+                    }
+
+                    // generic response:
                     return ImmutableResultMessage.builder()
                         .entryId(entry.publicId())
                         .taskId(tracked.id())
                         .ruleName(DOWNLOAD_SUBTASK)
                         .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
                         .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
-                        .uploadedFiles(Map.of(result.asUri(vacoProperties.s3ProcessingBucket()), List.of(downloadedFilePackage)))
+                        .uploadedFiles(uploadedFiles)
                         .build();
                 }  catch (Exception e) {
                     logger.warn("Caught unrecoverable exception during file download", e);
@@ -110,15 +122,20 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         };
     }
 
-    private Function<Path, CompletableFuture<S3Path>> uploadToS3(Entry entry,
+    private Function<Optional<Path>, CompletableFuture<Optional<S3Path>>> uploadToS3(Entry entry,
                                                                  S3Path outputDir,
                                                                  Task task) {
         return path -> {
-            S3Path s3TargetPath = outputDir.resolve(entry.format() + ".zip");
+            if (path.isPresent()) {
+                Path localPath = path.get();
+                S3Path s3TargetPath = outputDir.resolve(entry.format() + ".zip");
 
-            return s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3TargetPath, path)
-                .thenApply(track(entry, task, ProcessingState.UPDATE))
-                .thenApply(u -> s3TargetPath);  // NOTE: There's probably something useful in the `u` parameter
+                return s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3TargetPath, localPath)
+                    .thenApply(track(entry, task, ProcessingState.UPDATE))
+                    .thenApply(u -> Optional.of(s3TargetPath));  // NOTE: There's probably something useful in the `u` parameter
+            } else {
+                return CompletableFuture.completedFuture(Optional.empty());
+            }
         };
     }
 }
