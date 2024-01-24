@@ -67,6 +67,8 @@ public class GtfsInputSummaryService {
                                 gtfsTaskSummary = processTrips(inputStream, taskId, gtfsTaskSummary);
                             case "transfers.txt" ->
                                 gtfsTaskSummary = processTransfers(inputStream, taskId, gtfsTaskSummary, zipEntry.getName());
+                            case "translations.txt" ->
+                                gtfsTaskSummary = processTranslations(inputStream, taskId, gtfsTaskSummary, zipEntry.getName());
                             default ->
                                 logger.info("Did not process a file {} while generating summaries for task {}", zipEntry.getName(), taskId);
                         }
@@ -231,13 +233,13 @@ public class GtfsInputSummaryService {
                 List<String> newCounts = new ArrayList<>();
 
                 boolean wheelchairAccessibility = trips.stream()
-                    .anyMatch(trip -> trip.getWheelchairAccessible() != null && COMPONENT_PRESENT_VALUE.equals(trip.getWheelchairAccessible()));
+                    .anyMatch(trip -> trip.getWheelchairAccessible() != null &&  COMPONENT_PRESENT_VALUE.equals(trip.getWheelchairAccessible()));
                 if (wheelchairAccessibility) {
                     newComponents.add("Wheelchair Accessibility");
                 }
 
                 boolean bikesAllowed = trips.stream()
-                    .anyMatch(trip -> trip.getBikesAllowed() != null && COMPONENT_PRESENT_VALUE.contains(trip.getBikesAllowed()));
+                    .anyMatch(trip -> trip.getBikesAllowed() != null && COMPONENT_PRESENT_VALUE.equals(trip.getBikesAllowed()));
                 if (bikesAllowed) {
                     newComponents.add("Bikes Allowance");
                 }
@@ -280,7 +282,25 @@ public class GtfsInputSummaryService {
             }
         }
         catch (Exception e) {
-            logger.error("Failed to process shapes for task {}", taskId, e);
+            logger.error("Failed to process transfers for task {}", taskId, e);
+        }
+
+        return gtfsTaskSummary;
+    }
+
+    ImmutableGtfsInputSummary processTranslations(InputStream inputStream,
+                                                  Long taskId,
+                                                  ImmutableGtfsInputSummary gtfsTaskSummary,
+                                                  String fileName) {
+        try {
+            List<String[]> translations = getCsvRows(inputStream, fileName);
+
+            if (translations.size() > 1) {
+                return gtfsTaskSummary.withComponents(Streams.append(gtfsTaskSummary.components(), "Translations"));
+            }
+        }
+        catch (Exception e) {
+            logger.error("Failed to process translations for task {}", taskId, e);
         }
 
         return gtfsTaskSummary;
