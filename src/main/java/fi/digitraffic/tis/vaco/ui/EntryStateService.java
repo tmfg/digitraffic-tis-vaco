@@ -5,7 +5,6 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.findings.Finding;
-import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -78,7 +77,7 @@ public class EntryStateService {
         links.put("refs", Map.of("self", Link.to(
             vacoProperties.baseUrl(),
             RequestMethod.GET,
-            fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), task.name(), taskPackage.name(), null)))));
+            fromMethodCall(on(UiController.class).fetchPackage(entry.publicId(), task.name(), taskPackage.name(), null)))));
         return new Resource<>(taskPackage, null, links);
     }
 
