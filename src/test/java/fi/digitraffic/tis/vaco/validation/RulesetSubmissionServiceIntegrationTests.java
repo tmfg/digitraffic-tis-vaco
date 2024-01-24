@@ -34,6 +34,7 @@ import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -92,7 +93,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     @Test
     void delegatesRuleProcessingToRuleSpecificQueueBasedOnRuleName() {
         when(httpClientUtility.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
-            .thenReturn(CompletableFuture.supplyAsync(() -> response));
+            .thenReturn(CompletableFuture.supplyAsync(() -> Optional.ofNullable(response)));
 
         Entry entry = createEntryForTesting();
         String testQueueName = createSqsQueue();
