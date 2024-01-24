@@ -11,7 +11,12 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.me.MeService;
+import fi.digitraffic.tis.vaco.packages.PackagesController;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerController;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
+import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
@@ -20,14 +25,24 @@ import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +50,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
@@ -56,17 +73,20 @@ public class UiController {
 
     private final CompanyService companyService;
 
+    private final PackagesService packagesService;
+
     public UiController(VacoProperties vacoProperties,
                         EntryStateService entryStateService,
                         QueueHandlerService queueHandlerService,
                         RulesetService rulesetService,
-                        MeService meService, CompanyService companyService) {
+                        MeService meService, CompanyService companyService, PackagesService packagesService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryStateService = Objects.requireNonNull(entryStateService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.meService = Objects.requireNonNull(meService);
         this.companyService = Objects.requireNonNull(companyService);
+        this.packagesService = Objects.requireNonNull(packagesService);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -78,6 +98,26 @@ public class UiController {
                 vacoProperties.baseUrl(),
                 vacoProperties.azureAd().tenantId(),
                 vacoProperties.azureAd().clientId()));
+    }
+
+    @PostMapping(path = "/queue")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAuthority('vaco.user')")
+    public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody EntryRequest entryRequest) {
+        Entry entry = queueHandlerService.processQueueEntry(entryRequest);
+        return ResponseEntity.ok(asQueueHandlerResource(entry));
+    }
+
+    @GetMapping(path = "/rules")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAuthority('vaco.user')")
+    public ResponseEntity<List<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
+        if (meService.isAllowedToAccess(businessId)) {
+            return ResponseEntity.ok(
+                Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     @GetMapping(path = "/entries/{publicId}/state")
@@ -118,6 +158,29 @@ public class UiController {
         return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));
     }
 
+    @GetMapping(path = "/packages/{entryPublicId}/{taskName}/{packageName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PreAuthorize("hasAuthority('vaco.user')")
+    public FileSystemResource fetchPackage(
+        @PathVariable("entryPublicId") String entryPublicId,
+        @PathVariable("taskName") String taskName,
+        @PathVariable("packageName") String packageName,
+        HttpServletResponse response) {
+        return queueHandlerService.findEntry(entryPublicId)
+            .flatMap(e -> Streams.filter(e.tasks(), t -> t.name().equals(taskName))
+                .findFirst()
+                .flatMap(t -> packagesService.downloadPackage(e, t, packageName)))
+            .map(filePath -> {
+                ContentDisposition contentDisposition = ContentDisposition.builder("inline")
+                    .filename(packageName + ".zip")
+                    .build();
+                response.addHeader(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString());
+
+                return new FileSystemResource(filePath);
+            })
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                String.format("Unknown package '%s' for entry '%s'", packageName, entryPublicId)));
+    }
+
     private Resource<Entry> asEntryStateResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
         Map<String, Link> linkInstances = new HashMap<>();
@@ -129,6 +192,25 @@ public class UiController {
             fromMethodCall(on(BadgeController.class).entryBadge(entry.publicId(), null))));
 
         links.put("refs", linkInstances);
+        return new Resource<>(entry, null, links);
+    }
+
+    private Resource<Entry> asQueueHandlerResource(Entry entry) {
+        Map<String, Map<String, Link>> links = new HashMap<>();
+        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId())))));
+
+        Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
+
+        if (entry.packages() != null) {
+            ConcurrentMap<String, Map<String, Link>> packageLinks = new ConcurrentHashMap<>();
+            entry.packages().forEach(p -> {
+                String taskName = tasks.get(p.taskId()).name();
+                packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))));
+            });
+
+            links.putAll(packageLinks);
+        }
+
         return new Resource<>(entry, null, links);
     }
 }
