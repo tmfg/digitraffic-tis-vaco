@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.caching;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -32,6 +33,7 @@ import java.util.function.UnaryOperator;
 public class CachingService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private final Cache<String, GroupIdMappingTask> adminTasksCache;
     private final Cache<String, Ruleset> rulesetCache;
     private final Cache<String, String> sqsQueueUrlCache;
     private final Cache<Path, Path> localPathCache;
@@ -41,6 +43,7 @@ public class CachingService {
 
     public CachingService(CacheStatsMapper cacheStatsMapper) {
         this.cacheStatsMapper = Objects.requireNonNull(cacheStatsMapper);
+        this.adminTasksCache = adminTasksCache();
         this.rulesetCache = rulesetNameCache();
         this.sqsQueueUrlCache = sqsQueueUrlCache();
         this.localPathCache = localPathCache();
@@ -96,6 +99,27 @@ public class CachingService {
 
     public void invalidateCompanyHierarchy(Company company, String kind) {
         companyHierarchyCache.invalidate(company.businessId() + "(" + kind + ")");
+    }
+
+    public GroupIdMappingTask cacheAdminTask(String key, Function<String, GroupIdMappingTask> loader) {
+        return adminTasksCache.get(key, loader);
+    }
+
+    public void invalidateAdminTask(String key) {
+        adminTasksCache.invalidate(key);
+    }
+
+    public GroupIdMappingTask forceUpdateAdminTask(String key, Function<String, GroupIdMappingTask> loader) {
+        GroupIdMappingTask result = loader.apply(key);
+        adminTasksCache.put(key, result);
+        return result;
+    }
+
+    private Cache<String, GroupIdMappingTask> adminTasksCache() {
+        return Caffeine.newBuilder()
+            .recordStats()
+            .maximumSize(100)
+            .build();
     }
 
     private static Cache<String, Ruleset> rulesetNameCache() {
@@ -155,5 +179,6 @@ public class CachingService {
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
             "hierarchies", cacheStatsMapper.toCacheSummaryStatistics(companyHierarchyCache));
     }
+
 
 }
