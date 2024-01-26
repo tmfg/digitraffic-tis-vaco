@@ -253,6 +253,5 @@ public class TaskService {
         Task marked = taskRepository.markStatus(task, status);
         cachingService.invalidateEntry(entry);
         return marked;
-
     }
 }
