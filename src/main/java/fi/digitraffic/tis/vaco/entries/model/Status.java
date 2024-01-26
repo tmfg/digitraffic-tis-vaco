@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
+import java.util.Set;
+
 public enum Status implements PersistableEnum {
     CANCELLED("cancelled"),
     ERRORS("errors"),
@@ -36,5 +38,9 @@ public enum Status implements PersistableEnum {
     @JsonValue
     public String fieldName() {
         return fieldName;
+    }
+
+    public static boolean isNotCompleted(Status status) {
+        return Set.of(Status.RECEIVED, Status.PROCESSING).contains(status);
     }
 }

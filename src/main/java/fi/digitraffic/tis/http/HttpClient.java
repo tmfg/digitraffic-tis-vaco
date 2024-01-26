@@ -26,10 +26,11 @@ public class HttpClient {
                                                           String url,
                                                           String etag) {
         logger.info("Downloading file from {} to {} (eTag {})", url, targetFilePath, etag);
-        Map<String, String> headers = Map.of(
+        Map<String, String> headers = etag != null
+            ? Map.of(
             "If-None-Match", etag,
-            "Accept-Encoding", "gzip"
-        );
+            "Accept-Encoding", "gzip")
+            : Map.of("Accept-Encoding", "gzip");
         HttpRequest request = buildGetRequest(url, headers);
         HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
         return javaHttpClient.sendAsync(request, bodyHandler).thenApply(response -> {

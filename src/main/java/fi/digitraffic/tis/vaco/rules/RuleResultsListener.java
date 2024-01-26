@@ -165,11 +165,10 @@ public class RuleResultsListener {
                 try {
                     logger.info("Processing result from {} for entry {}/task {}", ruleName, entry.publicId(), tracked.name());
                     boolean result = resultProcessor.processResults(resultMessage, entry, tracked);
-                    if (result) {
+                    Task taskWithLatestStatus = taskService.findTask(entry.id(), resultMessage.ruleName()).get();
+
+                    if (result && Status.isNotCompleted(taskWithLatestStatus.status())) {
                         tracked = taskService.markStatus(entry, tracked, Status.SUCCESS);
-                    } else {
-                        // TODO: it is unclear if this branch will ever be hit
-                        tracked = taskService.markStatus(entry, tracked, Status.WARNINGS);
                     }
                     return result;
                 } finally {

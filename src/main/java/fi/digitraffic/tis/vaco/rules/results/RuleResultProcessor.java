@@ -102,8 +102,9 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         } else {
             findingService.reportFindings(findings);
             Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
-            logger.debug("{}/{} produced notices {}", entry.publicId(), task.name(), severities);
-            if (severities.getOrDefault("ERROR", 0L) > 0) {
+            logger.debug("{}/{} produced findings {}", entry.publicId(), task.name(), severities);
+            if (severities.getOrDefault("ERROR", 0L) > 0
+                || severities.getOrDefault("CRITICAL", 0L) > 0) {
                 taskService.markStatus(entry, task, Status.ERRORS);
             } else if (severities.getOrDefault("WARNING", 0L) > 0) {
                 taskService.markStatus(entry, task, Status.WARNINGS);
