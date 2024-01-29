@@ -120,9 +120,11 @@ public class QueueHandlerService {
     }
 
     public Optional<Entry> findEntry(String publicId, boolean skipErrorsField) {
-        return cachingService.cacheEntry(
-            cachingService.keyForEntry(publicId, skipErrorsField),
-            key -> entryRepository.findByPublicId(publicId, skipErrorsField).orElse(null));
+        return entryRepository.findByPublicId(publicId, skipErrorsField)
+            .map(e -> {
+                cachingService.invalidateEntry(e);
+                return e;
+            });
     }
 
     public Entry getEntry(String publicId, boolean skipErrorsField) {
