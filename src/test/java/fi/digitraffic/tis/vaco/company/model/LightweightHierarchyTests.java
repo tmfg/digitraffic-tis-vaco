@@ -1,11 +1,15 @@
 package fi.digitraffic.tis.vaco.company.model;
 
+import fi.digitraffic.tis.vaco.company.service.model.ImmutableLightweightHierarchy;
+import fi.digitraffic.tis.vaco.company.service.model.LightweightHierarchy;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-class HierarchyTests {
+class LightweightHierarchyTests {
 
     @Test
     void canLookupChildren() {
@@ -14,15 +18,17 @@ class HierarchyTests {
         Company childB = ImmutableCompany.of("112233-6", "Puulaaki Oyj");
         Company grandchildC = ImmutableCompany.of("112233-7", "Limited Ltd.");
 
-        Hierarchy h = ImmutableHierarchy.builder()
-            .company(root)
-            .addChildren(
-                ImmutableHierarchy.builder().company(childA).build(),
-                ImmutableHierarchy.builder()
-                    .company(childB)
-                    .addChildren(ImmutableHierarchy.builder().company(grandchildC).build())
-                    .build())
-            .build();
+        LightweightHierarchy h = ImmutableLightweightHierarchy.of(
+            root.businessId(),
+            Set.of(
+                ImmutableLightweightHierarchy.of(
+                    childA.businessId(),
+                    Set.of()),
+                ImmutableLightweightHierarchy.of(
+                    childB.businessId(),
+                    Set.of(ImmutableLightweightHierarchy.of(grandchildC.businessId(),
+                        Set.of()))
+            )));
 
         assertThat(h.findNode(root.businessId()).get().hasChildWithBusinessId(childA.businessId()), equalTo(true));
         assertThat(h.findNode(root.businessId()).get().hasChildWithBusinessId(childB.businessId()), equalTo(true));

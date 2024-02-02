@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.repository.CompanyHierarchyRepository;
+import fi.digitraffic.tis.vaco.company.service.model.LightweightHierarchy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,12 +28,10 @@ public class CompanyHierarchyService {
     /**
      * This service keeps an in-memory version of the company hierarchies always available to make tree navigation
      * related queries as fast and flexible as possible. Pay attention to caching and reloading!
+     *
+     * The structure contains only business ids, if you need the entities, load them from the database.
      */
-    private Map<Company, Hierarchy> hierarchies;
-
-    /**
-     * A lookup of child -> parent is kept as well
-     */
+    private Map<String, LightweightHierarchy> hierarchies;
 
     public CompanyHierarchyService(CompanyHierarchyRepository companyHierarchyRepository) {
         this.companyHierarchyRepository = Objects.requireNonNull(companyHierarchyRepository);
@@ -42,10 +41,14 @@ public class CompanyHierarchyService {
     /**
      * Reloads all root hierarchies from database and updates in-memory lookups.
      */
-    public void reloadRootHierarchies() {
+    private void reloadRootHierarchies() {
         Map<Company, Hierarchy> rootHierarchies = companyHierarchyRepository.findRootHierarchies();
+        Map<String, LightweightHierarchy> lightweightHierarchies = new HashMap<>();
+        rootHierarchies.forEach((company, hierarchy) -> {
+            lightweightHierarchies.put(company.businessId(), LightweightHierarchy.from(hierarchy));
+        });
         synchronized (this) {
-            this.hierarchies = rootHierarchies;
+            this.hierarchies = lightweightHierarchies;
         }
     }
 
@@ -74,14 +77,14 @@ public class CompanyHierarchyService {
     }
 
     public boolean isChildOfAny(Set<Company> possibleParents, String childBusinessId) {
-        List<Hierarchy> possibleHierarchies = new ArrayList<>();
+        List<LightweightHierarchy> possibleHierarchies = new ArrayList<>();
         for (Company possibleParent : possibleParents) {
-            for (Hierarchy rootHierarchy : hierarchies.values()) {
-                Optional<Hierarchy> found = rootHierarchy.findNode(possibleParent.businessId());
+            for (LightweightHierarchy rootHierarchy : hierarchies.values()) {
+                Optional<LightweightHierarchy> found = rootHierarchy.findNode(possibleParent.businessId());
                 found.ifPresent(possibleHierarchies::add);
             }
         }
-        for (Hierarchy h : possibleHierarchies) {
+        for (LightweightHierarchy h : possibleHierarchies) {
             if (h.hasChildWithBusinessId(childBusinessId)) {
                 return true;
             }
@@ -89,9 +92,9 @@ public class CompanyHierarchyService {
         return false;
     }
 
-    public Map<String, Company> listAllChildren(Company parent) {
-        Map<String, Company> allChildren = new HashMap<>();
-        for (Hierarchy h : hierarchies.values()) {
+    public Map<String, String> listAllChildren(Company parent) {
+        Map<String, String> allChildren = new HashMap<>();
+        for (LightweightHierarchy h : hierarchies.values()) {
             h.findNode(parent.businessId())
                 .ifPresent(n -> n.collectChildren(allChildren));
         }
@@ -102,11 +105,12 @@ public class CompanyHierarchyService {
         if (companyHierarchyRepository.findByIds(partnershipType, partnerA.id(), partnerB.id()).isPresent()) {
             return Optional.empty();
         }
-        reloadRootHierarchies();
-        return Optional.of(companyHierarchyRepository.create(
+        Optional<Partnership> partnership = Optional.of(companyHierarchyRepository.create(
             ImmutablePartnership.of(
                 partnershipType,
                 partnerA,
                 partnerB)));
+        reloadRootHierarchies();
+        return partnership;
     }
 }
