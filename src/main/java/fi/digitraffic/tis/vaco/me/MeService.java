@@ -4,7 +4,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.admintasks.AdminTasksService;
 import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +24,12 @@ public class MeService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final AdminTasksService adminTasksService;
-    private final CompanyService companyService;
+    private final CompanyHierarchyService companyHierarchyService;
 
     public MeService(AdminTasksService adminTasksService,
-                     CompanyService companyService) {
+                     CompanyHierarchyService companyHierarchyService) {
         this.adminTasksService = Objects.requireNonNull(adminTasksService);
-        this.companyService = Objects.requireNonNull(companyService);
+        this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
     }
 
     /**
@@ -41,7 +41,7 @@ public class MeService {
     public Set<Company> findCompanies() {
         return currentToken().map(token -> {
             Set<String> allGroupIds = new HashSet<>(token.getToken().getClaimAsStringList("groups"));
-            Set<Company> companies = companyService.findAllByAdGroupIds(List.copyOf(allGroupIds));
+            Set<Company> companies = companyHierarchyService.findAllByAdGroupIds(List.copyOf(allGroupIds));
 
             Set<String> mappedGroupIds = Streams.map(companies, Company::adGroupId).toSet();
             Set<String> unmappedGroupIds = new HashSet<>(allGroupIds);
@@ -72,10 +72,18 @@ public class MeService {
 
     public boolean isAllowedToAccess(String businessId) {
         Set<Company> directMemberCompanies = findCompanies();
-        return Streams.filter(directMemberCompanies, c -> Objects.equals(c.businessId(), businessId))
-            .findFirst()
-            .isPresent()
-            || companyService.isChildOfAny(directMemberCompanies, businessId);
+
+        return hasDirectAccess(directMemberCompanies, businessId)
+            || companyHierarchyService.isChildOfAny(directMemberCompanies, businessId);
+    }
+
+    private static boolean hasDirectAccess(Set<Company> directMemberCompanies, String businessId) {
+        for (Company c : directMemberCompanies) {
+            if (c.businessId().equals(businessId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

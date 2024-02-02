@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.ui;
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
-    private CompanyService companyService;
+    private CompanyHierarchyService companyHierarchyService;
 
     @Test
     void canFetchEntryStateWithPublicId() throws Exception {

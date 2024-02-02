@@ -7,8 +7,7 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
-import fi.digitraffic.tis.vaco.company.service.PartnershipService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,19 +27,17 @@ import java.util.Optional;
 @PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
 public class PartnershipController {
 
-    private final PartnershipService partnershipService;
-    private final CompanyService companyService;
+    private final CompanyHierarchyService companyHierarchyService;
 
-    public PartnershipController(PartnershipService partnershipService, CompanyService companyService) {
-        this.partnershipService = partnershipService;
-        this.companyService = companyService;
+    public PartnershipController(CompanyHierarchyService companyHierarchyService) {
+        this.companyHierarchyService = companyHierarchyService;
     }
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Partnership>> createPartnership(@Valid @RequestBody ImmutablePartnershipRequest partnershipRequest) {
-        Optional<Company> partnerA = companyService.findByBusinessId(partnershipRequest.partnerABusinessId());
-        Optional<Company> partnerB = companyService.findByBusinessId(partnershipRequest.partnerBBusinessId());
+        Optional<Company> partnerA = companyHierarchyService.findByBusinessId(partnershipRequest.partnerABusinessId());
+        Optional<Company> partnerB = companyHierarchyService.findByBusinessId(partnershipRequest.partnerBBusinessId());
 
         if (partnerA.isEmpty() || partnerB.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -48,7 +45,7 @@ public class PartnershipController {
                     partnershipRequest.partnerABusinessId(), partnershipRequest.partnerBBusinessId()));
         }
 
-        Optional<Partnership> partnership = partnershipService.create(partnershipRequest.type(), partnerA.get(), partnerB.get());
+        Optional<Partnership> partnership = companyHierarchyService.createPartnership(partnershipRequest.type(), partnerA.get(), partnerB.get());
 
         return partnership
             .map(value -> ResponseEntity.ok(Resource.resource(value)))

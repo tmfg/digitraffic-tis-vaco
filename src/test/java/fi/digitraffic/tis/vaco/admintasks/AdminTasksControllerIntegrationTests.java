@@ -8,7 +8,7 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MvcResult;
@@ -32,7 +32,7 @@ class AdminTasksControllerIntegrationTests extends SpringBootIntegrationTestBase
     @Autowired
     private AdminTasksService adminTasksService;
     @Autowired
-    private CompanyService companyService;
+    private CompanyHierarchyService companyHierarchyService;
 
     @Test
     void canListAllUnresolvedGroupIdMappingTasks() throws Exception {
@@ -77,7 +77,7 @@ class AdminTasksControllerIntegrationTests extends SpringBootIntegrationTestBase
             .andExpect(status().isOk())
             .andReturn();
         GroupIdMappingTask assignedTask = apiResponse(response, groupIdMappingTaskType).data();
-        Optional<Company> fintrafficCompany = companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID);
+        Optional<Company> fintrafficCompany = companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID);
 
         assertAll("Base fields are stored properly",
             () -> assertThat(assignedTask.groupId(), equalTo(newTask.groupId())),

@@ -6,7 +6,7 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -33,17 +33,17 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 public class CompanyController {
 
     private final VacoProperties vacoProperties;
-    private final CompanyService companyService;
+    private final CompanyHierarchyService companyHierarchyService;
 
-    public CompanyController(VacoProperties vacoProperties, CompanyService companyService) {
+    public CompanyController(VacoProperties vacoProperties, CompanyHierarchyService companyHierarchyService) {
         this.vacoProperties = vacoProperties;
-        this.companyService = companyService;
+        this.companyHierarchyService = companyHierarchyService;
     }
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Company>> createCompany(@Valid @RequestBody Company company) {
-        Optional<Company> createdCompany = companyService.createCompany(company);
+        Optional<Company> createdCompany = companyHierarchyService.createCompany(company);
         return createdCompany
             .map(o -> ResponseEntity.ok(asCompanyResource(o)))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
@@ -53,7 +53,7 @@ public class CompanyController {
     @GetMapping(path = "/{businessId}")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Company>> getCompanyByBusinessId(@PathVariable("businessId") String businessId) {
-        return companyService.findByBusinessId(businessId)
+        return companyHierarchyService.findByBusinessId(businessId)
             .map(o -> ResponseEntity.ok(asCompanyResource(o)))
             .orElse(Responses.notFound(String.format("A company with business ID %s does not exist", businessId)));
     }

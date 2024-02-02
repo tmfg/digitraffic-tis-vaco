@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +29,7 @@ class AdminTasksServiceTests extends SpringBootIntegrationTestBase {
     private AdminTasksService adminTasksService;
 
     @Autowired
-    private CompanyService companyService;
+    private CompanyHierarchyService companyHierarchyService;
 
     private GroupIdMappingTask task;
     private Company company;
@@ -41,7 +41,7 @@ class AdminTasksServiceTests extends SpringBootIntegrationTestBase {
         tasksToCleanup = new ArrayList<>();
         task = adminTasksService.registerGroupIdMappingTask(TestObjects.adminGroupId().build());
         tasksToCleanup.add(task);
-        company = companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).orElseThrow();
+        company = companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).orElseThrow();
     }
 
     @AfterEach

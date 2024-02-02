@@ -4,7 +4,9 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
+import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -14,7 +16,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,12 +26,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Repository
-public class CompanyRepository {
+public class CompanyHierarchyRepository {
 
     private final JdbcTemplate jdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
 
-    public CompanyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
+    public CompanyHierarchyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
@@ -102,13 +104,54 @@ public class CompanyRepository {
 
     @Transactional
     public Hierarchy resolveDescendantHierarchyFor(Company company) {
-        /*
-        Implementation note: Generally I push logic like this to database, but in this case my mind kinda broke on
-        recursive hierarchies querying. If you come up with an improvement, please feel free to modify this!
-         */
-        List<IntermediateHierarchyLink> flatLinks = jdbc.query("""
+        return null;// loadHierarchies();
+    }
+
+    public Map<Company, Hierarchy> findRootHierarchies() {
+        // 1. find roots
+        List<Long> roots = findHierarchyRoots();
+
+        Map<Company, Hierarchy> hierarchies = new HashMap<>();
+
+        // 2. build hierarchies
+        roots.forEach(root -> {
+            Hierarchy hierarchy = loadHierarchy(root);
+            hierarchies.put(hierarchy.company(), hierarchy);
+        });
+        return hierarchies;
+    }
+
+    private Hierarchy loadHierarchy(Long rootId) {
+        // 2a. find hierarchy links for root
+        List<IntermediateHierarchyLink> hierarchyLinks = findHierarchyLinks(rootId);
+
+        // 2b. create lookup for id->entity
+        Map<Long, Company> companiesbyId = Streams.collect(
+            hierarchyLinks,
+            IntermediateHierarchyLink::childId,
+            IntermediateHierarchyLink::company);
+
+        // 2c. create lookup for getting children of each parent
+        Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren = hierarchyLinks.stream()
+            .filter(l -> l.parentId() != null)
+            .collect(Collectors.groupingBy(IntermediateHierarchyLink::parentId));
+
+        // 2d. construct the hierarchy
+        return buildHierarchy(companiesbyId.get(rootId), companiesbyId, parentsAndChildren);
+    }
+
+    private static Hierarchy buildHierarchy(Company company,
+                                            Map<Long, Company> companiesbyId,
+                                            Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
+        ImmutableHierarchy.Builder builder = ImmutableHierarchy.builder();
+        resolveHierarchy(company, builder, companiesbyId, parentsAndChildren);
+        return builder.build();
+    }
+
+    private List<IntermediateHierarchyLink> findHierarchyLinks(Long root) {
+        return jdbc.query("""
             WITH RECURSIVE
-                hierarchy AS (SELECT root.id AS child_id, NULL::BIGINT AS parent_id
+                hierarchy AS (SELECT id AS child_id, NULL::BIGINT AS parent_id
                                 FROM root
                                UNION ALL
                               SELECT ps.partner_b_id, ps.partner_a_id
@@ -116,30 +159,20 @@ public class CompanyRepository {
                                          JOIN
                                      partnership ps
                                      ON ps.partner_a_id = hierarchy.child_id),
-                root AS (SELECT id FROM company WHERE business_id = ?)
+                root AS (SELECT ? AS id)
           SELECT DISTINCT *
-            FROM hierarchy
-             """, RowMappers.INTERMEDIATE_HIERARCHY_LINK, company.businessId());
+            FROM hierarchy h
+            LEFT JOIN company c ON h.child_id = c.id
+             """,
+            RowMappers.INTERMEDIATE_HIERARCHY_LINK,
+            root);
+    }
 
-        Set<Long> allCompanyIds = new HashSet<>();
-        flatLinks.forEach(link -> {
-            if (link.parentId() != null) {
-                allCompanyIds.add(link.parentId());
-            }
-            if (link.childId() != null) {
-                allCompanyIds.add(link.childId());
-            }
-        });
-
-        Map<Long, Company> companiesbyId = findAlLByIds(List.copyOf(allCompanyIds));
-
-        Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren = flatLinks.stream()
-            .filter(l -> l.parentId() != null)
-            .collect(Collectors.groupingBy(IntermediateHierarchyLink::parentId));
-
-        ImmutableHierarchy.Builder builder = ImmutableHierarchy.builder();
-        resolveHierarchy(company, builder, companiesbyId, parentsAndChildren);
-        return builder.build();
+    private List<Long> findHierarchyRoots() {
+        return jdbc.queryForList("""
+                SELECT id FROM company c WHERE c.id NOT IN (SELECT DISTINCT partner_b_id FROM partnership)
+                """,
+            Long.class);
     }
 
     private static void resolveHierarchy(Company parent, ImmutableHierarchy.Builder builder, Map<Long, Company> companiesbyId, Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
@@ -167,13 +200,40 @@ public class CompanyRepository {
                 ,
             Company::id, Function.identity());
     }
-    /*
-    namedJdbc.query("""
-            SELECT DISTINCT *
-              FROM company c
-             WHERE ad_group_id IN (:adGroupIds)
-            """,
 
-            RowMappers.COMPANY));
-     */
+
+    public ImmutablePartnership create(ImmutablePartnership partnership) {
+        jdbc.update("""
+                INSERT INTO partnership(type, partner_a_id, partner_b_id)
+                     VALUES (?::partnership_type, ?, ?)
+                """,
+            partnership.type().fieldName(), partnership.partnerA().id(), partnership.partnerB().id());
+        // There's no easy way to do this with just one query so the fetch query is delegated to #findByIds to avoid
+        // code duplication. The blind call to Optional#get is on purpose.
+        return findByIds(partnership.type(), partnership.partnerA().id(), partnership.partnerB().id()).get();
+    }
+
+    public Optional<ImmutablePartnership> findByIds(PartnershipType type,
+                                                    Long partnerAId,
+                                                    Long partnerBId) {
+        return jdbc.query("""
+                SELECT c.type AS type,
+                       o_a.id as partner_a_id,
+                       o_a.business_id as partner_a_business_id,
+                       o_a.name as partner_a_name,
+                       o_a.contact_emails as partner_a_contact_emails,
+                       o_a.ad_group_id as partner_a_ad_group_id,
+                       o_b.id as partner_b_id,
+                       o_b.business_id as partner_b_business_id,
+                       o_b.name as partner_b_name,
+                       o_b.contact_emails as partner_b_contact_emails,
+                       o_b.ad_group_id as partner_b_ad_group_id
+                  FROM partnership c
+                  JOIN company o_a ON c.partner_a_id = o_a.id
+                  JOIN company o_b ON c.partner_b_id = o_b.id
+                 WHERE c.type = ?::partnership_type AND c.partner_a_id = ? AND c.partner_b_id = ?
+                """,
+            RowMappers.PARTNERSHIP,
+            type.fieldName(), partnerAId, partnerBId).stream().findFirst();
+    }
 }
