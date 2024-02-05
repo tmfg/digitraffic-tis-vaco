@@ -152,7 +152,7 @@ public final class RowMappers {
     private static RowMapper<Summary> mapSummaryWithContent(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
             try {
-                Object content = null;
+                Object content;
                 switch (rs.getString("name")) {
                     case "agencies" -> {
                         List<Agency> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
