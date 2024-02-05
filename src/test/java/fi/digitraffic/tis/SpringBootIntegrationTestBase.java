@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.vaco.VacoApplication;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -126,7 +126,7 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
     }
 
     @Autowired
-    protected CompanyService companyService;
+    protected CompanyHierarchyService companyHierarchyService;
 
     /**
      * Make current context believe given token is Fintraffic company.
@@ -134,8 +134,8 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
      * This is about 3/5 on scale of "how hacky this is".
      */
     protected void injectGroupIdToCompany(JwtAuthenticationToken token) {
-        companyService.updateAdGroupId(
-            companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get(),
+        companyHierarchyService.updateAdGroupId(
+            companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get(),
             token.getToken().getClaimAsStringList("groups").get(0));
     }
 

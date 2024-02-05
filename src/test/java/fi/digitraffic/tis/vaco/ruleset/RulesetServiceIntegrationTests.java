@@ -5,8 +5,7 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
-import fi.digitraffic.tis.vaco.company.repository.PartnershipRepository;
-import fi.digitraffic.tis.vaco.company.repository.CompanyRepository;
+import fi.digitraffic.tis.vaco.company.repository.CompanyHierarchyRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -27,10 +26,7 @@ import static org.hamcrest.Matchers.equalTo;
 class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
-    PartnershipRepository partnershipRepository;
-
-    @Autowired
-    CompanyRepository companyRepository;
+    CompanyHierarchyRepository companyHierarchyRepository;
 
     @Autowired
     RulesetService rulesetService;
@@ -52,12 +48,12 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        fintraffic = companyRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get();
-        parentOrg = companyRepository.create(TestObjects.aCompany().build());
-        currentOrg = companyRepository.create(TestObjects.aCompany().build());
-        otherOrg = companyRepository.create(TestObjects.aCompany().build());
-        partnershipRepository.create(partnership(parentOrg, currentOrg));
-        partnershipRepository.create(partnership(parentOrg, otherOrg));
+        fintraffic = companyHierarchyRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get();
+        parentOrg = companyHierarchyRepository.create(TestObjects.aCompany().build());
+        currentOrg = companyHierarchyRepository.create(TestObjects.aCompany().build());
+        otherOrg = companyHierarchyRepository.create(TestObjects.aCompany().build());
+        companyHierarchyRepository.create(partnership(parentOrg, currentOrg));
+        companyHierarchyRepository.create(partnership(parentOrg, otherOrg));
 
         parentRuleA = rulesetService.createRuleset(
             ImmutableRuleset.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC, Type.VALIDATION_SYNTAX, testFormat));
@@ -73,9 +69,9 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        companyRepository.delete(parentOrg.businessId());
-        companyRepository.delete(currentOrg.businessId());
-        companyRepository.delete(otherOrg.businessId());
+        companyHierarchyRepository.delete(parentOrg.businessId());
+        companyHierarchyRepository.delete(currentOrg.businessId());
+        companyHierarchyRepository.delete(otherOrg.businessId());
         rulesetService.deleteRuleset(parentRuleA);
         rulesetService.deleteRuleset(parentRuleB);
         rulesetService.deleteRuleset(currentRuleC);

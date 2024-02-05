@@ -8,7 +8,7 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -71,7 +72,7 @@ public class UiController {
 
     private final MeService meService;
 
-    private final CompanyService companyService;
+    private final CompanyHierarchyService companyHierarchyService;
 
     private final PackagesService packagesService;
 
@@ -79,13 +80,13 @@ public class UiController {
                         EntryStateService entryStateService,
                         QueueHandlerService queueHandlerService,
                         RulesetService rulesetService,
-                        MeService meService, CompanyService companyService, PackagesService packagesService) {
+                        MeService meService, CompanyHierarchyService companyHierarchyService, PackagesService packagesService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryStateService = Objects.requireNonNull(entryStateService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.meService = Objects.requireNonNull(meService);
-        this.companyService = Objects.requireNonNull(companyService);
+        this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.packagesService = Objects.requireNonNull(packagesService);
     }
 
@@ -111,7 +112,7 @@ public class UiController {
     @GetMapping(path = "/rules")
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
-    public ResponseEntity<List<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
+    public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
                 Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));
@@ -139,7 +140,7 @@ public class UiController {
                     }
                 });
                 List<Summary> summaries = entryStateService.getTaskSummaries(entry);
-                Optional<Company> company = companyService.findByBusinessId(entry.businessId());
+                Optional<Company> company = companyHierarchyService.findByBusinessId(entry.businessId());
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry))

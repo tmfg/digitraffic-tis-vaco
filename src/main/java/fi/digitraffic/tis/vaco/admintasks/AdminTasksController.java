@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,11 +28,11 @@ import static org.springframework.http.ResponseEntity.ok;
 public class AdminTasksController {
 
     private final AdminTasksService adminTasksService;
-    private final CompanyService companyService;
+    private final CompanyHierarchyService companyHierarchyService;
 
-    public AdminTasksController(AdminTasksService adminTasksService, CompanyService companyService) {
+    public AdminTasksController(AdminTasksService adminTasksService, CompanyHierarchyService companyHierarchyService) {
         this.adminTasksService = Objects.requireNonNull(adminTasksService);
-        this.companyService = Objects.requireNonNull(companyService);
+        this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
     }
 
     @GetMapping(path = "/group-ids")
@@ -53,7 +53,7 @@ public class AdminTasksController {
                 GroupIdMappingTask data = adminTasksService.resolveAsSkippable(t);
                 yield ok(resource(data));
             }
-            case "assign" -> companyService.findByBusinessId(businessId)
+            case "assign" -> companyHierarchyService.findByBusinessId(businessId)
                     .map(c -> {
                         GroupIdMappingTask data = adminTasksService.resolveAsPairedToCompany(t, c).getLeft();
                         return ok(resource(data));

@@ -8,7 +8,7 @@ import fi.digitraffic.tis.html.HtmlBuilder;
 import fi.digitraffic.tis.html.HtmlContent;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
@@ -35,20 +35,20 @@ public class EmailService {
     private final MessageMapper messageMapper;
     private final SesClient sesClient;
     private final EmailRepository emailRepository;
-    private final CompanyService companyService;
+    private final CompanyHierarchyService companyHierarchyService;
     private final FeatureFlagsService featureFlagsService;
 
     public EmailService(VacoProperties vacoProperties,
                         MessageMapper messageMapper,
                         SesClient sesClient,
                         EmailRepository emailRepository,
-                        CompanyService companyService,
+                        CompanyHierarchyService companyHierarchyService,
                         FeatureFlagsService featureFlagsService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
         this.emailRepository = Objects.requireNonNull(emailRepository);
-        this.companyService = Objects.requireNonNull(companyService);
+        this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
@@ -68,7 +68,7 @@ public class EmailService {
 
     @Scheduled(cron = "${vaco.scheduling.weekly-feed-status.cron}")
     public void weeklyFeedStatus() {
-        List<Company> companies = companyService.listAllWithEntries();
+        List<Company> companies = companyHierarchyService.listAllWithEntries();
         companies.forEach(this::sendFeedStatusEmail);
     }
 
@@ -107,7 +107,7 @@ public class EmailService {
             logger.info("Feature flag 'emails.entryCompleteEmail' is currently disabled, entry complete email sending for {} skipped.", entry.publicId());
         } else if (!entry.notifications().isEmpty()) {
             logger.debug("Notifying {} entry's {} receivers of entry completion", entry.publicId(), entry.notifications());
-            companyService.findByBusinessId(entry.businessId()).ifPresent(company -> {
+            companyHierarchyService.findByBusinessId(entry.businessId()).ifPresent(company -> {
                 Translations translations = resolveTranslations(company, "emails/entryCompleteEmail");
 
                 Recipients recipients = ImmutableRecipients.builder()

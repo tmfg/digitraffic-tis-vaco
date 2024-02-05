@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.admintasks;
 
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.repository.CompanyRepository;
+import fi.digitraffic.tis.vaco.company.repository.CompanyHierarchyRepository;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -19,11 +19,11 @@ public class AdminTaskRepository {
 
     private final JdbcTemplate jdbc;
 
-    private final CompanyRepository companyRepository;
+    private final CompanyHierarchyRepository companyHierarchyRepository;
 
-    public AdminTaskRepository(JdbcTemplate jdbc, CompanyRepository companyRepository) {
+    public AdminTaskRepository(JdbcTemplate jdbc, CompanyHierarchyRepository companyHierarchyRepository) {
         this.jdbc = Objects.requireNonNull(jdbc);
-        this.companyRepository = Objects.requireNonNull(companyRepository);
+        this.companyHierarchyRepository = Objects.requireNonNull(companyHierarchyRepository);
     }
 
     public GroupIdMappingTask create(GroupIdMappingTask task) {
@@ -63,7 +63,7 @@ public class AdminTaskRepository {
             task.id(),
             task.publicId());
 
-        Company updatedCompany = companyRepository.updateAdGroupId(company, task.groupId());
+        Company updatedCompany = companyHierarchyRepository.updateAdGroupId(company, task.groupId());
 
         return Pair.of(updatedTask, updatedCompany);
     }
