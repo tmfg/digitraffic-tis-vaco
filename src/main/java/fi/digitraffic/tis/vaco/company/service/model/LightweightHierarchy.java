@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import org.immutables.value.Value;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -88,5 +90,32 @@ public interface LightweightHierarchy {
         return ImmutableLightweightHierarchy.of(
             h.company().businessId(),
             Streams.collect(h.children(), LightweightHierarchy::from));
+    }
+
+    /**
+     * @return Set of all business ids currently contained within this hierarchy.
+     * @see #toHierarchy(Map)
+     */
+    default Set<String> collectContainedBusinessIds() {
+        Set<String> businessIds = new HashSet<>();
+        businessIds.add(businessId());
+        for (LightweightHierarchy child : children()) {
+            businessIds.addAll(child.collectContainedBusinessIds());
+        }
+        return businessIds;
+    }
+
+    /**
+     * Convert this lightweight hierarchy to full-blown Hierarchy.
+     *
+     * @param companies business id to company lookup for conversion.
+     * @return converted Hierarchy
+     * @see #collectContainedBusinessIds()
+     */
+    default Hierarchy toHierarchy(Map<String, Company> companies) {
+        return ImmutableHierarchy.builder()
+            .company((companies.get(businessId())))
+            .children(Streams.collect(children(), c -> c.toHierarchy(companies)))
+            .build();
     }
 }
