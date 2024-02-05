@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/rules")
@@ -32,7 +32,7 @@ public class RulesetController {
 
     @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<List<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
+    public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
                 Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));

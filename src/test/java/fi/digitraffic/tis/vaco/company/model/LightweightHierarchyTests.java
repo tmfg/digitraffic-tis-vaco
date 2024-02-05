@@ -38,4 +38,33 @@ class LightweightHierarchyTests {
 
         assertThat(h.findNode("huuhaa-ytunnus").isEmpty(), equalTo(true));
     }
+
+    @Test
+    void canConvertHierarchyToLightweightHierarchy() {
+
+        Company root = ImmutableCompany.of("123456-7", "Pelit ja Vehkeet Oy");
+        Company child = ImmutableCompany.of("101010-1", "Kainuun Keksi ja Kalarehu Oy");
+        Company grandhild = ImmutableCompany.of("1717171-7", "Arvat ja ja Luulot Oy");
+
+        Hierarchy fullHierarchy = ImmutableHierarchy.builder()
+            .company(root)
+            .addChildren(ImmutableHierarchy.builder()
+                .company(child)
+                .addChildren(ImmutableHierarchy.builder()
+                    .company(grandhild)
+                    .build())
+                .build())
+            .build();
+        LightweightHierarchy lightweightHierarchy = LightweightHierarchy.from(fullHierarchy);
+
+        assertThat(lightweightHierarchy, equalTo(ImmutableLightweightHierarchy.builder()
+            .businessId(root.businessId())
+            .addChildren(ImmutableLightweightHierarchy.builder()
+                .businessId(child.businessId())
+                .addChildren(ImmutableLightweightHierarchy.builder()
+                    .businessId(grandhild.businessId())
+                    .build())
+                .build())
+            .build()));
+    }
 }

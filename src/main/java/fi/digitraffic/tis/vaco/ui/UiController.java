@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -111,7 +112,7 @@ public class UiController {
     @GetMapping(path = "/rules")
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
-    public ResponseEntity<List<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
+    public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
                 Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));
