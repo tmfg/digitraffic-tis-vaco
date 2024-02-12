@@ -22,6 +22,7 @@ import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
+import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
@@ -54,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
@@ -76,11 +78,13 @@ public class UiController {
 
     private final PackagesService packagesService;
 
+    private final AdminToolsService adminToolsService;
+
     public UiController(VacoProperties vacoProperties,
                         EntryStateService entryStateService,
                         QueueHandlerService queueHandlerService,
                         RulesetService rulesetService,
-                        MeService meService, CompanyHierarchyService companyHierarchyService, PackagesService packagesService) {
+                        MeService meService, CompanyHierarchyService companyHierarchyService, PackagesService packagesService, AdminToolsService adminToolsService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryStateService = Objects.requireNonNull(entryStateService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
@@ -88,6 +92,7 @@ public class UiController {
         this.meService = Objects.requireNonNull(meService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.packagesService = Objects.requireNonNull(packagesService);
+        this.adminToolsService = Objects.requireNonNull(adminToolsService);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -166,6 +171,7 @@ public class UiController {
         @PathVariable("taskName") String taskName,
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
+        // TODO: Add MeService check here !
         return queueHandlerService.findEntry(entryPublicId)
             .flatMap(e -> Streams.filter(e.tasks(), t -> t.name().equals(taskName))
                 .findFirst()
@@ -180,6 +186,43 @@ public class UiController {
             })
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                 String.format("Unknown package '%s' for entry '%s'", packageName, entryPublicId)));
+    }
+
+    @GetMapping(path = "/admin/data-delivery")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<List<Resource<CompanyLatestEntry>>> fetchLatestEntriesPerCompany() {
+        List<CompanyLatestEntry> companyLatestEntries = adminToolsService
+            .listLatestEntriesPerCompany(
+                meService.isAdmin()
+                    ? null
+                    : meService.findCompanies());
+        return ResponseEntity.ok(Streams.collect(companyLatestEntries, this::asCompanyLatestEntryResource));
+    }
+
+    @GetMapping(path = "/admin/entries")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
+        if (meService.isCompanyAdmin() &&
+            !meService.findCompanies().stream()
+                .map(Company::businessId).collect(Collectors.toSet()).contains(businessId)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, false);
+        return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));
+    }
+
+    private Resource<CompanyLatestEntry> asCompanyLatestEntryResource(CompanyLatestEntry companyLatestEntry) {
+        Map<String, Map<String, Link>> links = new HashMap<>();
+        Map<String, Link> refs = new HashMap<>();
+        if (companyLatestEntry.publicId() != null) {
+            refs.put("badge", Link.to(vacoProperties.baseUrl(),
+                RequestMethod.GET,
+                fromMethodCall(on(BadgeController.class).entryBadge(companyLatestEntry.publicId(), null))));
+        }
+        links.put("refs", refs);
+        return new Resource<>(companyLatestEntry, null, links);
     }
 
     private Resource<Entry> asEntryStateResource(Entry entry) {

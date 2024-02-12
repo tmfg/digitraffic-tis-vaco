@@ -73,8 +73,23 @@ public class MeService {
     public boolean isAllowedToAccess(String businessId) {
         Set<Company> directMemberCompanies = findCompanies();
 
-        return hasDirectAccess(directMemberCompanies, businessId)
+        return isAdmin()
+            || hasDirectAccess(directMemberCompanies, businessId)
             || companyHierarchyService.isChildOfAny(directMemberCompanies, businessId);
+    }
+
+    public boolean isCompanyAdmin() {
+        return currentToken().map(t -> {
+            List<String> roles = t.getToken().getClaimAsStringList("roles");
+            return roles != null && Set.copyOf(roles).contains("vaco.company_admin");
+        }).orElse(false);
+    }
+
+    public boolean isAdmin() {
+        return currentToken().map(t -> {
+            List<String> roles = t.getToken().getClaimAsStringList("roles");
+            return roles != null && Set.copyOf(roles).contains("vaco.admin");
+        }).orElse(false);
     }
 
     private static boolean hasDirectAccess(Set<Company> directMemberCompanies, String businessId) {
