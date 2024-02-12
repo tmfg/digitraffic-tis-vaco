@@ -40,7 +40,9 @@ import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.ui.EntryStateService;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
+import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import org.postgresql.util.PGobject;
@@ -220,6 +222,16 @@ public final class RowMappers {
             .status(Status.forField(rs.getString("status")))
             .build();
     }
+
+    public static final RowMapper<CompanyLatestEntry> COMPANY_LATEST_ENTRY = (rs, rowNum) -> ImmutableCompanyLatestEntry.builder()
+        .companyName(rs.getString("company_name"))
+        .businessId(rs.getString("business_id"))
+        .publicId(rs.getString("public_id"))
+        .format(rs.getString("format"))
+        .convertedFormat(rs.getString("converted_format"))
+        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
+        .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
+        .build();
 
     @SuppressWarnings("unchecked")
     private static RowMapper<ImmutableValidationInput> mapValidationInput(ObjectMapper objectMapper) {
