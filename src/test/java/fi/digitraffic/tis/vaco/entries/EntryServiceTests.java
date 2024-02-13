@@ -82,7 +82,7 @@ class EntryServiceTests {
         thenCacheIsInvalidated();
 
         givenTaskInStatus(Status.CANCELLED);
-        thenEntryIsMarkedAs(Status.SUCCESS);
+        thenEntryIsMarkedAs(Status.FAILED);
         thenCacheIsInvalidated();
     }
 

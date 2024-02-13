@@ -71,7 +71,8 @@ public class EntryService {
 
     private Status resolveStatus(Entry entry) {
         for (Task t : taskService.findTasks(entry)) {
-            if (Status.FAILED.equals(t.status())) {
+            if (Status.FAILED.equals(t.status())
+                || Status.CANCELLED.equals(t.status())) {
                 return Status.FAILED;
             }
             if (Status.ERRORS.equals(t.status())) {

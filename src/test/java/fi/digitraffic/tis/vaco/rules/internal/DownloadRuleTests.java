@@ -7,6 +7,7 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -22,6 +23,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -47,6 +49,8 @@ class DownloadRuleTests {
     private HttpClient httpClient;
     @Mock
     private S3Client s3Client;
+    @Mock
+    private FindingService findingService;
 
     @Captor
     private ArgumentCaptor<Path> tempFilePath;
@@ -54,16 +58,18 @@ class DownloadRuleTests {
     private ArgumentCaptor<S3Path> targetPath;
     @Captor
     private ArgumentCaptor<Path> sourcePath;
+    private Path gtfsTestFile;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws URISyntaxException {
+        gtfsTestFile = Path.of(Thread.currentThread().getContextClassLoader().getResource("public/testfiles/padasjoen_kunta.zip").toURI());
         vacoProperties = TestObjects.vacoProperties();
-        rule = new DownloadRule(taskService, vacoProperties, httpClient, s3Client);
+        rule = new DownloadRule(taskService, vacoProperties, httpClient, s3Client, findingService);
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(taskService, httpClient, s3Client);
+        verifyNoMoreInteractions(taskService, httpClient, s3Client, findingService);
     }
 
     @Test
@@ -74,7 +80,7 @@ class DownloadRuleTests {
 
         given(taskService.findTask(entry.id(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
-        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(Optional.ofNullable(a.getArgument(0))));
+        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(Optional.ofNullable(gtfsTestFile)));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);

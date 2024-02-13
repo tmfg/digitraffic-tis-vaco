@@ -111,22 +111,16 @@ public class RuleResultsListener {
                     yield false;
                 }
             };
-        }).thenApply(ruleProcessingSuccess -> {
-            if (Boolean.TRUE.equals(ruleProcessingSuccess)) {
-                Optional<Entry> entry = queueHandlerService.findEntry(resultMessage.entryId());
-                if (entry.isPresent()) {
-                    messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
-                        .entry(queueHandlerService.getEntry(entry.get().publicId(), true))
-                        .retryStatistics(ImmutableRetryStatistics.of(5))
-                        .build());
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                // could fork logic at this point for non-successful rule runs
-                return false;
+        }).whenComplete((ruleProcessingSuccess, maybeEx) -> {
+            if (maybeEx != null) {
+                logger.warn("Handling rule result failed due to unhandled exception", maybeEx);
             }
+            // resubmit to processing queue to continue general logic
+            Optional<Entry> entry = queueHandlerService.findEntry(resultMessage.entryId());
+            entry.ifPresent(value -> messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
+                    .entry(queueHandlerService.getEntry(value.publicId(), true))
+                    .retryStatistics(ImmutableRetryStatistics.of(5))
+                    .build()));
         });
     }
 
@@ -198,7 +192,6 @@ public class RuleResultsListener {
                 })
                 .map(CompletableFuture::join)
                 .toList();
-
         } catch (SqsException e) {
             logger.warn("Failed to process messages from queue {}", queueName, e);
         }

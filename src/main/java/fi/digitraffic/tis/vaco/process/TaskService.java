@@ -254,4 +254,25 @@ public class TaskService {
         cachingService.invalidateEntry(entry);
         return marked;
     }
+
+    /**
+     * Looks up possible internal task dependencies and inspects their success for given entry+task pair.
+     *
+     * @param entry Entry which should be inspected
+     * @param task Task which dependencies should all be successful
+     * @return True if all dependent tasks are successful, fail otherwise.
+     */
+    public boolean internalDependenciesCompletedSuccessfully(Entry entry, String task) {
+        List<String> deps = ruleDeps().getOrDefault(task, List.of());
+        Map<String, Task> byName = Streams.collect(entry.tasks(), Task::name, Function.identity());
+        for (String dep : deps) {
+            if (byName.containsKey(dep)) {
+                Status taskStatus = byName.get(dep).status();
+                if (Status.CANCELLED.equals(taskStatus)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }
