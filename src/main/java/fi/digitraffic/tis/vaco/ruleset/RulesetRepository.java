@@ -128,6 +128,8 @@ public class RulesetRepository {
                   FROM ruleset r, parents, specific_rulesets
                  WHERE r.owner_id IN (parents.id)
                    AND r.category = 'generic'
+                   AND r.type = :type
+                   AND r.format = (:format)::transit_data_format
                 """,
             new MapSqlParameterSource()
                 .addValue("businessId", businessId)
