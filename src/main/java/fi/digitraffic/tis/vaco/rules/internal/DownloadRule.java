@@ -8,6 +8,8 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -18,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +31,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 @Component
 public class DownloadRule implements Rule<Entry, ResultMessage> {
@@ -36,15 +43,17 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     private final VacoProperties vacoProperties;
     private final HttpClient httpClient;
     private final S3Client s3Client;
+    private final FindingService findingService;
 
     public DownloadRule(TaskService taskService,
                         VacoProperties vacoProperties,
                         HttpClient httpClient,
-                        S3Client s3Client) {
+                        S3Client s3Client, FindingService findingService) {
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.httpClient = Objects.requireNonNull(httpClient);
         this.s3Client = Objects.requireNonNull(s3Client);
+        this.findingService = findingService;
     }
 
     @Override
@@ -65,9 +74,10 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     S3Path ruleS3Input = ruleBasePath.resolve("input");
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
 
-                    // generic download: maybe fetch file
+                    // generic download: maybe fetch file and validate it
                     Optional<S3Path> result = httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
                         .thenApply(track(entry, tracked, ProcessingState.UPDATE))
+                        .thenCompose(validateZip(entry, tracked))
                         .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
                         .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
                         .join();
@@ -122,9 +132,47 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         };
     }
 
+    /**
+     * Ensure the downloaded file is a valid ZIP file, e.g. not partial, corrupted or complete nonsense.
+     * <p>
+     * Original from <a href="https://stackoverflow.com/a/17222756/44523">StackOverflow</a> by Nikhil Das Nomula,
+     * licensed under CC BY-SA 3.0.
+     *
+     * @return Composable function which returns the input as is if it represents a valid ZIP file, empty otherwise
+     */
+    private Function<Optional<Path>, CompletableFuture<Optional<Path>>> validateZip(Entry entry, Task task) {
+        return path -> {
+            if (path.isPresent()) {
+                File file = path.get().toFile();
+
+                try (ZipFile zipfile = new ZipFile(file)) {
+                    ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
+                    ZipEntry ze = zis.getNextEntry();
+                    if (ze == null) {
+                        return CompletableFuture.completedFuture(Optional.empty());
+                    }
+                    while (ze != null) {
+                        // if it throws an exception fetching any of the following then we know the file is corrupted.
+                        zipfile.getInputStream(ze);
+                        ze.getCrc();
+                        ze.getCompressedSize();
+                        ze.getName();
+                        ze = zis.getNextEntry();
+                    }
+                    return CompletableFuture.completedFuture(path);
+                } catch (IOException e) {
+                    findingService.reportFinding(ImmutableFinding.of(entry.publicId(), task.id(), null, DOWNLOAD_SUBTASK, e.getMessage(), "ERROR"));
+                    return CompletableFuture.completedFuture(Optional.empty());
+                }
+            } else {
+                return CompletableFuture.completedFuture(Optional.empty());
+            }
+        };
+    }
+
     private Function<Optional<Path>, CompletableFuture<Optional<S3Path>>> uploadToS3(Entry entry,
-                                                                 S3Path outputDir,
-                                                                 Task task) {
+                                                                                     S3Path outputDir,
+                                                                                     Task task) {
         return path -> {
             if (path.isPresent()) {
                 Path localPath = path.get();

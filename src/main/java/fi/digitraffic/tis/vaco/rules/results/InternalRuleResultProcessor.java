@@ -27,7 +27,11 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
     private final PackagesService packagesService;
     private final TaskService taskService;
 
-    public InternalRuleResultProcessor(VacoProperties vacoProperties, PackagesService packagesService, S3Client s3Client, TaskService taskService, FindingService findingService) {
+    public InternalRuleResultProcessor(VacoProperties vacoProperties,
+                                       PackagesService packagesService,
+                                       S3Client s3Client,
+                                       TaskService taskService,
+                                       FindingService findingService) {
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.taskService = Objects.requireNonNull(taskService);
