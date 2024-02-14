@@ -60,11 +60,26 @@ public class FindingRepository {
             return jdbc.query(
                     """
                     SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
-                      FROM finding em
-                     WHERE em.entry_id = ?
+                      FROM finding
+                     WHERE entry_id = ?
                     """,
                     RowMappers.FINDING,
                     entryId);
+        } catch (EmptyResultDataAccessException erdae) {
+            return List.of();
+        }
+    }
+
+    public List<Finding> findFindingsByTaskId(Long taskId) {
+        try {
+            return jdbc.query(
+                """
+                SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
+                  FROM finding
+                 WHERE task_id = ?
+                """,
+                RowMappers.FINDING,
+                taskId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
         }
