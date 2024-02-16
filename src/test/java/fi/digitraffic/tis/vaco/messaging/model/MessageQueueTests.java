@@ -9,30 +9,31 @@ import static org.hamcrest.Matchers.matchesPattern;
 
 class MessageQueueTests {
 
+    public static final String QUEUE_NAME = "^([a-zA-Z0-9]+-?)+$";
+
     @Test
     void queueNamesMatchDesiredPattern() {
         for (MessageQueue mq : MessageQueue.values()) {
             String queueName = mq.getQueueName();
             // this test is only for non-patternet queue names, see test below
             if (!queueName.contains("{")) {
-                assertThat(queueName, matchesPattern("^([a-z]+?-?)+$"));
+                assertThat(queueName, matchesPattern(QUEUE_NAME));
             }
         }
     }
 
     @Test
     void ruleQueueMatchesDesiredPattern() {
-        String versionedPattern = "^([a-z]+?-?)+v\\d+_\\d+_\\d$";
-        String gtfsQueue = MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL_4_0_0);
+        String gtfsQueue = MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL);
 
-        assertThat(gtfsQueue, equalTo("rules-processing-gtfs-canonical-v4_0_0"));
+        assertThat(gtfsQueue, equalTo("rules-processing-gtfs-canonical"));
 
-        String netexQueue = MessageQueue.RULE_PROCESSING.munge(RuleName.NETEX_ENTUR_1_0_1);
-        assertThat(netexQueue, equalTo("rules-processing-netex-entur-v1_0_1"));
-        assertThat(netexQueue, matchesPattern(versionedPattern));
+        String netexQueue = MessageQueue.RULE_PROCESSING.munge(RuleName.NETEX_ENTUR);
+        assertThat(netexQueue, equalTo("rules-processing-netex-entur"));
+        assertThat(netexQueue, matchesPattern(QUEUE_NAME));
 
-        String fakeQueue = MessageQueue.RULE_PROCESSING.munge("fake.rule.v1_2_3");
-        assertThat(fakeQueue, matchesPattern("rules-processing-fake-rule-v1_2_3"));
-        assertThat(fakeQueue, matchesPattern(versionedPattern));
+        String fakeQueue = MessageQueue.RULE_PROCESSING.munge("fake.rule");
+        assertThat(fakeQueue, matchesPattern("rules-processing-fake-rule"));
+        assertThat(fakeQueue, matchesPattern(QUEUE_NAME));
     }
 }

@@ -3,7 +3,7 @@
 POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
 Content-Type: application/x-www-form-urlencoded
 
-client_id={{clientId}}&grant_type=client_credentials&scope={{clientId}}/.default&client_secret={{clientSecret}}
+client_id={{clientId}}&grant_type=client_credentials&scope={{scope}}&client_secret={{clientSecret}}
 
 
 > {%
@@ -12,18 +12,18 @@ client_id={{clientId}}&grant_type=client_credentials&scope={{clientId}}/.default
 
 ###
 
-POST http://localhost:8080/api/queue
+POST {{serviceRootUri}}/api/queue
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
 {
-  "url": "https://tvv.fra1.digitaloceanspaces.com/211.zip",
+  "url": "https://finap.finferries.fi/share/Reitit20042021.zip",
   "format": "gtfs",
   "businessId": "2942108-7",
   "etag": "etagg",
-  "name": "NeTEx Kajaani gtfs2netex local",
+  "name": "Finferries (Suomen Lauttaliikenne Oy, Suomen Saaristovarustamo Oy) / GTFS / FINAP (2790/4103/1003)",
   "conversions": [{
-    "name": "gtfs2netex.fintraffic.v1_0_0",
+    "name": "gtfs2netex.fintraffic",
     "config": {}
   }],
   "metadata": {

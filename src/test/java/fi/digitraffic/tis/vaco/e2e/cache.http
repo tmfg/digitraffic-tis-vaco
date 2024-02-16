@@ -12,18 +12,6 @@ client_id={{clientId}}&grant_type=client_credentials&scope={{clientId}}/.default
 
 ###
 
-GET {{serviceRootUri}}/api/admin-tasks/group-ids
-Content-Type: application/json
-Authorization: Bearer {{tis_token}}
-
-###
-#
-POST {{serviceRootUri}}/api/admin-tasks/group-ids/jCn0-dPPHYIOWzxl_O0wK/assign?businessId=2560184-9
-Content-Type: application/json
-Authorization: Bearer {{tis_token}}
-
-###
-
-GET {{serviceRootUri}}/api/admin-tasks/group-ids
+GET {{serviceRootUri}}/api/admin/caching/statistics
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}

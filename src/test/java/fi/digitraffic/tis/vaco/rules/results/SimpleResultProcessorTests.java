@@ -41,12 +41,12 @@ class SimpleResultProcessorTests extends ResultProcessorTestBase {
         vacoProperties = TestObjects.vacoProperties();
         simpleResultProcessor = new SimpleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService);
 
-        entry = entryWithTask(e -> ImmutableTask.of(e.id(), RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(e.id(), RuleName.GTFS2NETEX_FINTRAFFIC, 100).withId(9_000_000L));
         conversionTask = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of(
             "file.txt", List.of("all", "debug"),
             "another.txt", List.of("debug"));
-        gtfs2netexMessage = asResultMessage(vacoProperties, RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, entry, uploadedFiles);
+        gtfs2netexMessage = asResultMessage(vacoProperties, RuleName.GTFS2NETEX_FINTRAFFIC, entry, uploadedFiles);
     }
 
     @Test

@@ -66,7 +66,7 @@ class TaskServiceTests {
             .withPublicId(NanoIdUtils.randomNanoId());
         gtfsCanonicalRuleset = ImmutableRuleset.of(
                 entry.id(),
-                RuleName.GTFS_CANONICAL_4_1_0,
+                RuleName.GTFS_CANONICAL,
                 "bleh",
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
@@ -81,17 +81,17 @@ class TaskServiceTests {
 
     @Test
     void generatesAllAppropriateTasks() {
-        entry = entry.withValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL_4_1_0));
+        entry = entry.withValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL));
 
         givenAvailableRulesets(Type.VALIDATION_SYNTAX, TransitDataFormat.GTFS, Set.of(gtfsCanonicalRuleset));
-        given(rulesetService.findByName(RuleName.GTFS_CANONICAL_4_1_0)).willReturn(Optional.of(gtfsCanonicalRuleset));
+        given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
 
         List<Task> tasks = taskService.resolveTasks(entry);
         tasks.forEach(System.out::println);
         List<Task> expectedTasks = List.of(
             ImmutableTask.of(entry.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
             ImmutableTask.of(entry.id(), RulesetSubmissionService.VALIDATE_TASK, 200),
-            ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL_4_1_0, 201)
+            ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 201)
         );
 
         assertThat(taskService.resolveTasks(entry), equalTo(expectedTasks));
