@@ -84,17 +84,15 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
      */
     @Test
     void hasDefaultRulesAlwaysAvailable() {
-        Ruleset canonicalGtfsValidator400 = rulesetService.findByName(RuleName.GTFS_CANONICAL_4_0_0).get();
-        Ruleset canonicalGtfsValidator410 = rulesetService.findByName(RuleName.GTFS_CANONICAL_4_1_0).get();
-        Ruleset enturNetexValidator = rulesetService.findByName(RuleName.NETEX_ENTUR_1_0_1).get();
-        Ruleset enturNetex2GtfsConverter = rulesetService.findByName(RuleName.NETEX2GTFS_ENTUR_2_0_6).get();
-        Ruleset fintrafficGtfs2NetexConverter = rulesetService.findByName(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0).get();
+        Ruleset canonicalGtfsValidator = rulesetService.findByName(RuleName.GTFS_CANONICAL).get();
+        Ruleset enturNetexValidator = rulesetService.findByName(RuleName.NETEX_ENTUR).get();
+        Ruleset enturNetex2GtfsConverter = rulesetService.findByName(RuleName.NETEX2GTFS_ENTUR).get();
+        Ruleset fintrafficGtfs2NetexConverter = rulesetService.findByName(RuleName.GTFS2NETEX_FINTRAFFIC).get();
 
         assertThat(
             rulesetService.selectRulesets(fintraffic.businessId()),
             equalTo(Set.of(
-                canonicalGtfsValidator400,
-                canonicalGtfsValidator410,
+                canonicalGtfsValidator,
                 enturNetexValidator,
                 enturNetex2GtfsConverter,
                 fintrafficGtfs2NetexConverter)));

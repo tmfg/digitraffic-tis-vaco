@@ -3,7 +3,7 @@
 POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
 Content-Type: application/x-www-form-urlencoded
 
-client_id={{clientId}}&grant_type=client_credentials&scope={{clientId}}/.default&client_secret={{clientSecret}}
+client_id={{clientId}}&grant_type=client_credentials&scope={{scope}}&client_secret={{clientSecret}}
 
 
 > {%
@@ -24,7 +24,7 @@ Authorization: Bearer {{tis_token}}
   "name": "loadtest - NeTEx - all",
   "validations": [
     {
-      "name": "netex.entur.v1_0_1",
+      "name": "netex.entur",
       "config": {
         "codespace": "ROV",
         "reportId": "NO_REPORT_ID",

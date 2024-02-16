@@ -89,13 +89,13 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
                 }
             }
         };
-        entry = entryWithTask(e -> ImmutableTask.of(e.id(), RuleName.NETEX_ENTUR_1_0_1, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(e.id(), RuleName.NETEX_ENTUR, 100).withId(9_000_000L));
         task = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of("reports.json", List.of("report"));
-        resultMessage = asResultMessage(vacoProperties, RuleName.NETEX_ENTUR_1_0_1, entry, uploadedFiles);
+        resultMessage = asResultMessage(vacoProperties, RuleName.NETEX_ENTUR, entry, uploadedFiles);
         netexEnturRuleset = ImmutableRuleset.of(
                 entry.id(),
-                RuleName.NETEX_ENTUR_1_0_1,
+                RuleName.NETEX_ENTUR,
                 "bleh",
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
@@ -111,7 +111,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
     @Test
     void mapsNetexValidationReportsToFindings() {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
-        given(rulesetService.findByName(RuleName.NETEX_ENTUR_1_0_1)).willReturn(Optional.of(netexEnturRuleset));
+        given(rulesetService.findByName(RuleName.NETEX_ENTUR)).willReturn(Optional.of(netexEnturRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(entry, task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
@@ -122,7 +122,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
 
         // TODO: chore for the bored yet excited: better assertions for these
         assertThat(findings.size(), equalTo(3));
-        findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.NETEX_ENTUR_1_0_1)));
+        findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.NETEX_ENTUR)));
     }
 
 }

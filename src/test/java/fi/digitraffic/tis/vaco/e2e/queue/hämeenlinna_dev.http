@@ -3,7 +3,7 @@
 POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
 Content-Type: application/x-www-form-urlencoded
 
-client_id={{clientId}}&grant_type=client_credentials&scope= {{clientId}}/.default&client_secret={{clientSecret}}
+client_id={{clientId}}&grant_type=client_credentials&scope={{scope}}&client_secret={{clientSecret}}
 
 
 > {%
@@ -12,7 +12,7 @@ client_id={{clientId}}&grant_type=client_credentials&scope= {{clientId}}/.defaul
 
 ###
 
-POST https://digitraffic-tis-dev.aws.fintraffic.cloud/api/queue
+POST {{serviceRootUri}}/api/queue
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
@@ -24,12 +24,6 @@ Authorization: Bearer {{tis_token}}
   "name": "GTFS Hämeenlinna dev",
   "validations": [
     {
-      "name": "gtfs.canonical.v4_0_0",
-      "config": {
-        "lol": "apua",
-        "muumi": "pappa"
-      }
-    },{
       "name": "gtfs.canonical.v4_1_0",
       "config": {
         "lol": "apua",

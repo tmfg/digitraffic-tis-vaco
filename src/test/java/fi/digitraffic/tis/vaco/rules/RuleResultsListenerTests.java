@@ -98,28 +98,23 @@ class RuleResultsListenerTests {
     }
 
     @Test
-    void canonicalGtfsValidator400UsesCanonicalResultProcessor() throws JsonProcessingException {
-        assertResultProcessorIsUsed(RuleName.GTFS_CANONICAL_4_0_0, gtfsCanonicalValidator);
-    }
-
-    @Test
     void canonicalGtfsValidator410UsesCanonicalResultProcessor() throws JsonProcessingException {
-        assertResultProcessorIsUsed(RuleName.GTFS_CANONICAL_4_1_0, gtfsCanonicalValidator);
+        assertResultProcessorIsUsed(RuleName.GTFS_CANONICAL, gtfsCanonicalValidator);
     }
 
     @Test
     void netexEnturValidatorUsesEnturResultProcessor() throws JsonProcessingException {
-        assertResultProcessorIsUsed(RuleName.NETEX_ENTUR_1_0_1, netexEnturValidator);
+        assertResultProcessorIsUsed(RuleName.NETEX_ENTUR, netexEnturValidator);
     }
 
     @Test
     void fintrafficGtfs2NetexConversionUsesSimpleResultProcessor() throws JsonProcessingException {
-        assertResultProcessorIsUsed(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, simpleResultProcessor);
+        assertResultProcessorIsUsed(RuleName.GTFS2NETEX_FINTRAFFIC, simpleResultProcessor);
     }
 
     @Test
     void enturNetex2GtfsConversionUsesSimpleResultProcessor() throws JsonProcessingException {
-        assertResultProcessorIsUsed(RuleName.NETEX2GTFS_ENTUR_2_0_6, simpleResultProcessor);
+        assertResultProcessorIsUsed(RuleName.NETEX2GTFS_ENTUR, simpleResultProcessor);
     }
 
     private void assertResultProcessorIsUsed(String ruleName, ResultProcessor resultProcessor) throws JsonProcessingException {
