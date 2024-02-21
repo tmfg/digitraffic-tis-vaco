@@ -43,11 +43,12 @@ public class HttpClient {
 
         Map<String, String> requestHeaders = headers(
             "If-None-Match", etag,
-            "Accept", "application/zip");
+            "Accept", "application/zip, */*");
 
         HttpRequest request = buildGetRequest(url, requestHeaders);
         HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
         return methanol.sendAsync(request, bodyHandler).thenApply(response -> {
+            logger.info("Response for {} with ETag {} resulted in HTTP status {}", url, etag, response.statusCode());
             if (response.statusCode() == 304) {
                 return Optional.empty();
             } else {
