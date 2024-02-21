@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.utilities;
 
-import fi.digitraffic.tis.exceptions.UtilitiesException;
+import fi.digitraffic.exceptions.UnrecoverableIOException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -91,7 +91,7 @@ public final class TempFiles {
             Path root = Paths.get(vacoProperties.temporaryDirectory());
             return Files.createDirectories(root.resolve(path));
         } catch (IOException e) {
-            throw new UtilitiesException("Failed to create temp file, check application runtime permissions", e);
+            throw new UnrecoverableIOException("Failed to create temp file, check application runtime permissions", e);
         }
     }
 

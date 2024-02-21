@@ -2,12 +2,12 @@ package fi.digitraffic.tis.vaco.rules.internal;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
-import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -46,7 +46,7 @@ class DownloadRuleTests {
     private TaskService taskService;
 
     @Mock
-    private HttpClient httpClient;
+    private VacoHttpClient httpClient;
     @Mock
     private S3Client s3Client;
     @Mock

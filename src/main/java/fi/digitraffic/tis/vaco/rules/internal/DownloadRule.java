@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.rules.internal;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
-import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
@@ -10,6 +9,7 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
+import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -41,14 +41,15 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     public static final String DOWNLOAD_SUBTASK = "prepare.download";
     private final TaskService taskService;
     private final VacoProperties vacoProperties;
-    private final HttpClient httpClient;
+    private final VacoHttpClient httpClient;
     private final S3Client s3Client;
     private final FindingService findingService;
 
     public DownloadRule(TaskService taskService,
                         VacoProperties vacoProperties,
-                        HttpClient httpClient,
-                        S3Client s3Client, FindingService findingService) {
+                        VacoHttpClient httpClient,
+                        S3Client s3Client,
+                        FindingService findingService) {
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.httpClient = Objects.requireNonNull(httpClient);
