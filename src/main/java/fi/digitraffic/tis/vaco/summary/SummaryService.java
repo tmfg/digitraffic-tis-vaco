@@ -38,7 +38,7 @@ public class SummaryService {
     private void generateInputDataSummaries(Entry entry, Task task) {
         Optional<Path> downloadedPackagePath = packagesService.downloadPackage(entry, task, "result");
         if (downloadedPackagePath.isEmpty()) {
-            logger.error("Failed to generate input data summaries while trying to get S3 path to entry's '{}' downloaded data package", entry.id());
+            logger.error("Failed to generate input data summaries while trying to get S3 path to entry's '{}' downloaded data package", entry.publicId());
             return;
         }
 
