@@ -1,11 +1,9 @@
 package fi.digitraffic.tis.vaco.process;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import fi.digitraffic.tis.exceptions.PersistenceException;
-import fi.digitraffic.tis.utilities.MoreGraphs;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
@@ -170,35 +168,84 @@ public class TaskService {
      */
     @SuppressWarnings("UnstableApiUsage")
     private List<Task> resolvePrioritiesBasedOnTopology(List<Task> tasks) {
-        // 1) construct graph
+        // 0) prerequisite lookups
         Map<String, Task> tasksByName = Streams.collect(tasks, Task::name, Function.identity());
-        MutableGraph<Task> g = GraphBuilder.directed().build();
-        tasks.forEach(g::addNode);
-        tasks.forEach(task -> {
+        // 1) construct graph
+        MutableGraph<Task> dag = constructGraph(tasksByName);
+        // 2) do the topological sorting
+        List<Task> sorted = sortTopologically(tasksByName, dag);
+        // 3) resolve priority groups
+        return groupForParallelism(sorted);
+    }
 
+    private MutableGraph<Task> constructGraph(Map<String, Task> tasks) {
+        MutableGraph<Task> dag = GraphBuilder.directed().allowsSelfLoops(false).build();
+        tasks.values().forEach(task -> {
+            dag.addNode(task);
+            // add "before" edges
             if (ruleDeps.containsKey(task.name())) {
                 ruleDeps.get(task.name()).forEach(dep -> {
-                    if (tasksByName.containsKey(dep)) {
-                        g.putEdge(tasksByName.get(dep), task);
+                    if (tasks.containsKey(dep)) {
+                        dag.putEdge(tasks.get(dep), task);
                     }
                 });
             } else {
                 rulesetService.findByName(task.name()).ifPresent(ruleset ->
                     ruleset.dependencies().forEach(dep -> {
-                        if (tasksByName.containsKey(dep)) {
-                            g.putEdge(tasksByName.get(dep), task);
+                        if (tasks.containsKey(dep)) {
+                            dag.putEdge(tasks.get(dep), task);
                         }
                     }));
-            }});
-        // 2) do the topological ordering
-        ImmutableList<Task> order = MoreGraphs.topologicalOrdering(g);
+            }
+            // TODO: support for "after" edges
+        });
+        return dag;
+    }
 
-        // 3) resolve priority groups
+    /**
+     * Topological sort using <a href="https://en.wikipedia.org/wiki/Topological_sorting#Kahn's_algorithm" target="_blank">Kahn's algorithm</a>.
+     * @param tasks
+     * @param dag
+     * @return
+     */
+    private List<Task> sortTopologically(Map<String, Task> tasks, MutableGraph<Task> dag) {
+        // L ← Empty list that will contain the sorted elements
+        List<Task> sorted = new ArrayList<>();
+        // S ← Set of all nodes with no incoming edge
+        Map<String, Task> roots = Streams.filter(tasks.values(), t -> dag.predecessors(t).isEmpty()).collect(Task::name, Function.identity());
+        List<Task> rootKeys = new ArrayList<>(roots.values());
+        // while S is not empty do)
+        while (!rootKeys.isEmpty()) {
+            Task n = rootKeys.get(0);
+            //    remove a node n from S
+            rootKeys.remove(n);
+            //    add n to L
+            sorted.add(n);
+            //    for each node m with an edge e from n to m do
+            List.copyOf(dag.successors(n)).forEach(m -> {
+                //        remove edge e from the graph
+                dag.removeEdge(n, m);
+                //        if m has no other incoming edges then
+                if (dag.predecessors(m).isEmpty()) {
+                    //            insert m into S
+                    roots.put(m.name(), m);
+                    rootKeys.add(m);
+                }
+            });
+        }
+        // if graph has edges then
+        if (!dag.edges().isEmpty()) {
+            throw new InvalidMappingException("graph has referential cycles, cannot sort");
+        }
+        return sorted;
+    }
+
+    private List<Task> groupForParallelism(List<Task> sorted) {
         Set<String> previousGroupNodes = new HashSet<>();
         List<Task> finalTasks = new ArrayList<>();
         int prioGroup = 1;
         int groupIndex = 0;
-        for (Task task : order) {
+        for (Task task : sorted) {
             if (ruleDeps.getOrDefault(task.name(), List.of()).stream().anyMatch(previousGroupNodes::contains)) {
                 prioGroup++;
                 groupIndex = 0;
