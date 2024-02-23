@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Special variant of {@link Hierarchy} which contains only business id references.
@@ -117,5 +118,38 @@ public interface LightweightHierarchy {
             .company((companies.get(businessId())))
             .children(Streams.collect(children(), c -> c.toHierarchy(companies)))
             .build();
+    }
+
+    default Hierarchy toTruncatedHierarchy(Map<String, Company> companies,
+                                           String businessIdToTruncateAfter,
+                                           boolean exitRecursion) {
+        if (exitRecursion) {
+            return ImmutableHierarchy.builder()
+                .company((companies.get(businessId())))
+                .children(Set.of())
+                .build();
+        }
+        return businessId().equals(businessIdToTruncateAfter) ?
+            // Getting all children of the found node:
+            ImmutableHierarchy.builder()
+                .company((companies.get(businessId())))
+                .children(Streams.collect(
+                    children(),
+                    c -> c.toTruncatedHierarchy(
+                        companies,
+                        businessIdToTruncateAfter,
+                        true)))
+                .build()
+            :
+            // Continuing further traversal only for those hierarchies that might still contain businessIdToTruncateAfter:
+            ImmutableHierarchy.builder()
+                .company((companies.get(businessId())))
+                .children(Streams.collect(
+                    children().stream().filter(c -> c.isMember(businessIdToTruncateAfter)).collect(Collectors.toSet()),
+                    c -> c.toTruncatedHierarchy(
+                        companies,
+                        businessIdToTruncateAfter,
+                        false)))
+                .build();
     }
 }

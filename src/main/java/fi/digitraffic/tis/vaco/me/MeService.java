@@ -70,6 +70,15 @@ public class MeService {
         }
     }
 
+    public boolean isAllowedToAccess(Company company) {
+        if (isAllowedToAccess(company.businessId())) {
+            return true;
+        } else {
+            logger.warn("User [{}] tried to access company {} without having rights for that", alertText(), company.businessId());
+            return false;
+        }
+    }
+
     public boolean isAllowedToAccess(String businessId) {
         Set<Company> directMemberCompanies = findCompanies();
 
