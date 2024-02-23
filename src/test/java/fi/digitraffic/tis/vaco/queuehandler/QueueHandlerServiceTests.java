@@ -8,13 +8,13 @@ import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,13 +52,13 @@ class QueueHandlerServiceTests {
     private MeService meService;
 
     @Mock
+    private EntryService entryService;
+
+    @Mock
     private MessagingService messagingService;
 
     @Mock
     private CompanyHierarchyService companyHierarchyService;
-
-    @Mock
-    private EntryRepository entryRepository;
 
     @Captor
     private ArgumentCaptor<DelegationJobMessage> delegationJobCaptor;
@@ -69,7 +69,7 @@ class QueueHandlerServiceTests {
     private String operatorBusinessId;
     private String operatorName;
     private ObjectNode metadata;
-    private ImmutableEntryRequest entryRequest;
+    private ImmutableEntry entryRequest;
     private ImmutableCompany fintrafficCompany;
 
     @BeforeEach
@@ -81,10 +81,10 @@ class QueueHandlerServiceTests {
         queueHandlerService = new QueueHandlerService(
             cachingService,
             meService,
+            entryService,
             entryRequestMapper,
             messagingService,
-            companyHierarchyService,
-            entryRepository);
+            companyHierarchyService);
 
         operatorBusinessId = "123-4";
         operatorName = "Oppypop Oy";
@@ -93,7 +93,7 @@ class QueueHandlerServiceTests {
             .put("caller", "FINAP")
             .put("operator-name", operatorName);
 
-        entryRequest = ImmutableEntryRequest.builder()
+        entryRequest = ImmutableEntry.builder()
             .name("fake gtfs entry")
             .businessId(operatorBusinessId)
             .url(TestConstants.EXAMPLE_URL + "/gtfs.zip")
@@ -109,9 +109,9 @@ class QueueHandlerServiceTests {
         verifyNoMoreInteractions(
             cachingService,
             meService,
+            entryService,
             messagingService,
-            companyHierarchyService,
-            entryRepository);
+            companyHierarchyService);
     }
 
     private <T> Answer<T> withArg(int i) {
@@ -125,7 +125,7 @@ class QueueHandlerServiceTests {
     @Test
     void autocreatesCompanyOnNewEntryIfSourceIsFinap() {
         // given
-        given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
+        given(entryService.create(any(Entry.class))).willAnswer(withArg(0));
         given(companyHierarchyService.createCompany(any(ImmutableCompany.class))).willAnswer(withArgInOptional(0));
         given(companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID)).willReturn(Optional.of(fintrafficCompany));
         givenCachesResult();
@@ -149,7 +149,7 @@ class QueueHandlerServiceTests {
     @Test
     void wontAutocreateCompanyIfCallerIsNotFinap() {
         // given
-        given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
+        given(entryService.create(any(Entry.class))).willAnswer(withArg(0));
         givenCachesResult();
 
         // when
@@ -163,7 +163,7 @@ class QueueHandlerServiceTests {
     @Test
     void wontAutocreateCompanyIfOperatorNameIsMissing() {
         // given
-        given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
+        given(entryService.create(any(Entry.class))).willAnswer(withArg(0));
         givenCachesResult();
 
         // when

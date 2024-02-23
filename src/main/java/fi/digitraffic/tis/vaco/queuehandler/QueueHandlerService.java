@@ -7,12 +7,11 @@ import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
-import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
@@ -37,30 +36,28 @@ public class QueueHandlerService {
     private final MeService meService;
     private final MessagingService messagingService;
     private final CompanyHierarchyService companyHierarchyService;
-    private final EntryRepository entryRepository;
+    private final EntryService entryService;
     private final EntryRequestMapper entryRequestMapper;
 
     public QueueHandlerService(CachingService cachingService,
                                MeService meService,
+                               EntryService entryService,
                                EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
-                               CompanyHierarchyService companyHierarchyService,
-                               EntryRepository entryRepository) {
+                               CompanyHierarchyService companyHierarchyService) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.meService = Objects.requireNonNull(meService);
+        this.entryService = Objects.requireNonNull(entryService);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
         this.messagingService = Objects.requireNonNull(messagingService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
-        this.entryRepository = Objects.requireNonNull(entryRepository);
     }
 
     @Transactional
-    public Entry processQueueEntry(EntryRequest entryRequest) {
-        Entry converted = entryRequestMapper.toEntry(entryRequest);
+    public Entry processQueueEntry(Entry entry) {
+        autoregisterCompany(entry.metadata(), entry.businessId());
 
-        autoregisterCompany(converted.metadata(), converted.businessId());
-
-        Entry result = entryRepository.create(converted);
+        Entry result = entryService.create(entry);
 
         logger.debug("Processing done for entry request and new entry created as {}, submitting to delegation", result.publicId());
 
@@ -111,28 +108,16 @@ public class QueueHandlerService {
         }
     }
 
-    public Optional<Entry> findEntry(String publicId) {
-        return findEntry(publicId, false);
-    }
-
-    public Optional<Entry> findEntry(String publicId, boolean skipErrorsField) {
-        return entryRepository.findByPublicId(publicId, skipErrorsField)
-            .map(e -> {
-                cachingService.invalidateEntry(e);
-                return e;
-            });
-    }
-
     public Entry getEntry(String publicId, boolean skipErrorsField) {
         return cachingService.cacheEntry(
             cachingService.keyForEntry(publicId, skipErrorsField),
-            key -> entryRepository.findByPublicId(publicId, skipErrorsField)
+            key -> entryService.findEntry(publicId, skipErrorsField)
                 .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"))
         ).get();
     }
 
     public List<Entry> getAllQueueEntriesFor(String businessId, boolean full) {
-        List<Entry> entries = entryRepository.findAllByBusinessId(businessId, full);
+        List<Entry> entries = entryService.findAllByBusinessId(businessId, full);
         entries.forEach(entry -> cachingService.cacheEntry(
             cachingService.keyForEntry(entry.publicId(), full),
             key -> entry));
@@ -144,7 +129,7 @@ public class QueueHandlerService {
         meService.findCompanies().forEach(company ->
             allAccessibleBusinessIds.addAll(companyHierarchyService.listAllChildren(company).keySet()));
 
-        List<Entry> entries = entryRepository.findAllForBusinessIds(allAccessibleBusinessIds, full);
+        List<Entry> entries = entryService.findAllForBusinessIds(allAccessibleBusinessIds, full);
         entries.forEach(entry -> cachingService.cacheEntry(
             cachingService.keyForEntry(entry.publicId(), full),
             key -> entry));

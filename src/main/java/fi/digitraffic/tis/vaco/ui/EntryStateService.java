@@ -108,7 +108,7 @@ public class EntryStateService {
     }
 
     public List<Summary> getTaskSummaries(Entry entry) {
-        return summaryRepository.findTaskSummaryByEntryId(entry.id());
+        return summaryRepository.findTaskSummaryByEntry(entry);
     }
 
     public static List<ImmutableCard> getAgencyCardUiContent(List<Agency> agencies) {

@@ -3,42 +3,54 @@ package fi.digitraffic.tis.vaco.entries;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.findings.FindingRepository;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
+import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class EntryService {
 
     private final EntryRepository entryRepository;
+    private final FindingRepository findingRepository;
     private final CachingService cachingService;
-    private final QueueHandlerService queueHandlerService;
     private final TaskService taskService;
+    private final PackagesService packagesService;
+    private final PersistentEntryMapper persistentEntryMapper;
 
     public EntryService(EntryRepository entryRepository,
+                        FindingRepository findingRepository,
                         CachingService cachingService,
-                        QueueHandlerService queueHandlerService,
-                        TaskService taskService) {
-        this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
+                        TaskService taskService,
+                        PackagesService packagesService,
+                        PersistentEntryMapper persistentEntryMapper) {
+        this.findingRepository = findingRepository;
         this.taskService = Objects.requireNonNull(taskService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.cachingService = Objects.requireNonNull(cachingService);
+        this.packagesService = Objects.requireNonNull(packagesService);
+        this.persistentEntryMapper = Objects.requireNonNull(persistentEntryMapper);
     }
 
     public Optional<Status> getStatus(String publicId) {
-        return queueHandlerService.findEntry(publicId).map(Entry::status);
+        return entryRepository.findByPublicId(publicId).map(PersistentEntry::status);
     }
 
     public Optional<Status> getStatus(String publicId, String taskName) {
-        return entryRepository.findByPublicId(publicId, true)
-            .map(Entry::tasks)
-            .flatMap(tasks -> Streams.filter(tasks, t -> t.name().equals(taskName)).findFirst())
-            .map(Task::status);
+        return taskService.findTask(publicId, taskName).map(Task::status);
     }
 
     public void markComplete(Entry entry) {
@@ -83,5 +95,81 @@ public class EntryService {
             }
         }
         return Status.SUCCESS;
+    }
+
+    public Entry create(Entry entry) {
+        PersistentEntry persisted = entryRepository.create(entry);
+
+        ImmutableEntry.Builder resultBuilder = persistentEntryMapper.toEntryBuilder(persisted);
+
+        List<ValidationInput> validationInputs = entryRepository.createValidationInputs(persisted, entry.validations());
+        List<ConversionInput> conversionInputs = entryRepository.createConversionInputs(persisted, entry.conversions());
+
+        return resultBuilder.validations(validationInputs)
+            .conversions(conversionInputs)
+            // NOTE: createTasks requires validations and conversions to exist at this point
+            .tasks(taskService.createTasks(persisted))
+            .build();
+    }
+
+    public List<Entry> findAllByBusinessId(String businessId, boolean skipFindings) {
+        List<PersistentEntry> entries = entryRepository.findAllByBusinessId(businessId);
+        if (skipFindings) {
+            return Streams.map(entries, e -> buildCompleteEntry(e, skipFindings)).toList();
+        } else {
+            return Streams.map(entries, this::asEntry).toList();
+        }
+    }
+
+    public List<Entry> findAllForBusinessIds(Set<String> businessIds, boolean skipFindings) {
+        List<PersistentEntry> entries = entryRepository.findAllForBusinessIds(businessIds);
+        if (skipFindings) {
+            return Streams.map(entries, e -> buildCompleteEntry(e, skipFindings)).toList();
+        } else {
+            return Streams.map(entries, this::asEntry).toList();
+        }
+    }
+
+    private Entry asEntry(PersistentEntry e) {
+        return persistentEntryMapper.toEntryBuilder(e).build();
+    }
+
+    /**
+     * Call this to complete {@link Entry} object's fields if needed.
+     *
+     * @param entry Entry to complete.
+     * @return Fully completed entry.
+     */
+    private Entry buildCompleteEntry(PersistentEntry entry, boolean skipFindings) {
+        List<Package> packages = Streams.flatten(taskService.findTasks(entry), packagesService::findPackages).toList();
+        ImmutableEntry e = persistentEntryMapper.toEntryBuilder(entry)
+            .tasks(taskService.findTasks(entry))
+            .validations(taskService.findValidationInputs(entry))
+            .conversions(taskService.findConversionInputs(entry))
+            .packages(packages)
+            .build();
+        if (!skipFindings) {
+            e = e.withFindings(findingRepository.findFindingsByEntryId(entry.id()));
+        }
+        return e;
+    }
+
+    public Optional<Entry> findEntry(String publicId) {
+        return entryRepository.findByPublicId(publicId)
+            .map(e -> {
+                cachingService.invalidateEntry(e);
+                return e;
+            })
+            .map(this::asEntry);
+    }
+
+    public Optional<Entry> findEntry(String publicId, boolean skipFindings) {
+        return entryRepository.findByPublicId(publicId)
+            .map(e -> buildCompleteEntry(e, skipFindings));
+    }
+
+    // TODO: this is horrible in both concept and practice
+    public Entry reload(Entry entry) {
+        return findEntry(entry.publicId(), true).get();
     }
 }

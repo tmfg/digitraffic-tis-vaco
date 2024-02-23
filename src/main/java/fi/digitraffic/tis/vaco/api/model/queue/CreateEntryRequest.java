@@ -1,17 +1,18 @@
-package fi.digitraffic.tis.vaco.queuehandler.dto;
+package fi.digitraffic.tis.vaco.api.model.queue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableCreateEntryRequest;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.util.List;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableEntryRequest.class)
-@JsonDeserialize(as = ImmutableEntryRequest.class)
-public interface EntryRequest {
+@JsonSerialize(as = ImmutableCreateEntryRequest.class)
+@JsonDeserialize(as = ImmutableCreateEntryRequest.class)
+public interface CreateEntryRequest {
     String getFormat();
 
     String getName();

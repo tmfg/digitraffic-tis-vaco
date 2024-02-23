@@ -54,7 +54,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.httpClient = Objects.requireNonNull(httpClient);
         this.s3Client = Objects.requireNonNull(s3Client);
-        this.findingService = findingService;
+        this.findingService = Objects.requireNonNull(findingService);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     @Override
     public CompletableFuture<ResultMessage> execute(Entry entry) {
         return CompletableFuture.supplyAsync(() -> {
-            Optional<Task> task = taskService.findTask(entry.id(), DOWNLOAD_SUBTASK);
+            Optional<Task> task = taskService.findTask(entry.publicId(), DOWNLOAD_SUBTASK);
             return task.map(t -> {
                 Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
                 Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, tracked, entry.format() + ".zip");

@@ -2,12 +2,12 @@ package fi.digitraffic.tis.vaco.validation;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableRulesetSubmissionConfiguration;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
@@ -41,13 +41,13 @@ class ValidationQueueSqsListenerTests {
     @Mock
     private RulesetSubmissionService rulesetSubmissionService;
     @Mock
-    private EntryRepository entryRepository;
+    private EntryService entryService;
     @Captor
     private ArgumentCaptor<DelegationJobMessage> delegationJobMessage;
 
     @BeforeEach
     void setUp() {
-        listener = new ValidationQueueSqsListener(messagingService, rulesetSubmissionService, entryRepository);
+        listener = new ValidationQueueSqsListener(messagingService, rulesetSubmissionService, entryService);
 
         entry = ImmutableEntry.of("entry", TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, Constants.FINTRAFFIC_BUSINESS_ID);
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
@@ -65,7 +65,7 @@ class ValidationQueueSqsListenerTests {
 
     @Test
     void submitsItselfBackToDelegationQueueAndAcknowledgesOriginalMessageOnCompletion() {
-        when(entryRepository.reload(entry)).thenReturn(entry);
+        when(entryService.reload(entry)).thenReturn(entry);
 
         listener.listen(message, acknowledgement);
 

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
-import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
+import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
@@ -24,21 +24,21 @@ public class EntryRequestMapper {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public ImmutableEntry toEntry(EntryRequest entryRequest) {
-        if (entryRequest == null) {
+    public ImmutableEntry toEntry(CreateEntryRequest createEntryRequest) {
+        if (createEntryRequest == null) {
             return null;
         }
 
         return ImmutableEntry.builder()
-            .name(entryRequest.getName())
-            .format(safeTrim(entryRequest.getFormat()))
-            .url(safeTrim(entryRequest.getUrl()))
-            .businessId(safeTrim(entryRequest.getBusinessId()))
-            .etag(strip("\"", safeTrim(entryRequest.getEtag()), "\""))
-            .metadata(entryRequest.getMetadata())
-            .validations(mapValidations(entryRequest.getValidations()))
-            .conversions(mapConversions(entryRequest.getConversions()))
-            .notifications(entryRequest.notifications())
+            .name(createEntryRequest.getName())
+            .format(safeTrim(createEntryRequest.getFormat()))
+            .url(safeTrim(createEntryRequest.getUrl()))
+            .businessId(safeTrim(createEntryRequest.getBusinessId()))
+            .etag(strip("\"", safeTrim(createEntryRequest.getEtag()), "\""))
+            .metadata(createEntryRequest.getMetadata())
+            .validations(mapValidations(createEntryRequest.getValidations()))
+            .conversions(mapConversions(createEntryRequest.getConversions()))
+            .notifications(createEntryRequest.notifications())
             .build();
     }
 

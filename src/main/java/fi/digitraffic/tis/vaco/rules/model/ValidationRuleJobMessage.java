@@ -21,8 +21,6 @@ public interface ValidationRuleJobMessage extends JobMessage, Retryable {
 
     String source();
 
-    // TODO: ValidationInput should be faded away from this, it is unnecessary wrapping between RuleConfiguration and
-    //       this message
     @Nullable
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "source")
     RuleConfiguration configuration();

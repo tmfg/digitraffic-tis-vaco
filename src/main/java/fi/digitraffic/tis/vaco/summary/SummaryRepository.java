@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.summary;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
@@ -59,14 +60,15 @@ public class SummaryRepository {
         }
     }
 
-    public List<Summary> findTaskSummaryByEntryId(Long entryId) {
+    // TODO: check if this can be migrated to PersistentEntry
+    public List<Summary> findTaskSummaryByEntry(Entry entry) {
         try {
             return jdbc.query(
                 """
                 SELECT ts.id, ts.task_id, ts.name, ts.renderer_type, ts.raw
                   FROM summary ts
                   JOIN task t ON ts.task_id = t.id
-                 WHERE t.entry_id = ?
+                 WHERE t.entry_id = (SELECT id FROM entry WHERE public_id = ?)
                  ORDER BY CASE
                     WHEN ts.name = 'agencies' THEN 1
                     WHEN ts.name = 'operators' THEN 1
@@ -79,7 +81,7 @@ public class SummaryRepository {
                  END ASC
                 """,
                 RowMappers.SUMMARY_WITH_CONTENT.apply(objectMapper),
-                entryId);
+                entry.publicId());
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
         }

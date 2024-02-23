@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
 class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
-    private EntryRepository entryRepository;
+    private EntryService entryService;
 
     @Autowired
     private RulesetSubmissionService rulesetSubmissionService;
@@ -87,7 +87,8 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     }
 
     private Entry createEntryForTesting() {
-        return entryRepository.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)).build());
+
+        return entryService.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)).build());
     }
 
     @Test
@@ -99,7 +100,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         String testQueueName = createSqsQueue();
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
-        Task task = taskService.findTask(entry.id(), RulesetSubmissionService.VALIDATE_TASK).get();
+        Task task = taskService.findTask(entry.publicId(), RulesetSubmissionService.VALIDATE_TASK).get();
         rulesetSubmissionService.submitRules(
             entry,
             task,

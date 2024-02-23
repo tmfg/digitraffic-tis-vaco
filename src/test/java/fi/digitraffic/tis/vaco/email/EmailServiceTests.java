@@ -5,15 +5,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.AwsIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
-import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import io.burt.jmespath.jackson.JacksonRuntime;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -46,7 +48,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     private JacksonRuntime jmesPath;
     private VacoProperties vacoProperties;
     @Mock
-    private EmailRepository emailRepository;
+    private EntryRepository entryRepository;
     @Mock
     private CompanyHierarchyService companyHierarchyService;
     @Mock
@@ -62,9 +64,9 @@ class EmailServiceTests extends AwsIntegrationTestBase {
             vacoProperties,
             new MessageMapper(vacoProperties),
             sesClient,
-            emailRepository,
             companyHierarchyService,
-            featureFlagsService);
+            featureFlagsService,
+            entryRepository);
     }
 
     @AfterEach
@@ -72,7 +74,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         // clear all received messages
         localstack.execInContainer("curl", "-X", "DELETE", "localhost.localstack.cloud:4566/_aws/ses");
 
-        verifyNoMoreInteractions(emailRepository, companyHierarchyService, featureFlagsService);
+        verifyNoMoreInteractions(companyHierarchyService, featureFlagsService, entryRepository);
     }
 
     @BeforeAll
@@ -163,10 +165,10 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     @Test
     void weeklyStatusEmailIsSentToRelatedCompanyContacts() throws IOException, InterruptedException {
         Company org = TestObjects.aCompany().addContactEmails("organ@izati.on").build();
-        ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
+        PersistentEntry entry = TestObjects.persistentEntry("gtfs").build();
 
         BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(true);
-        BDDMockito.given(emailRepository.findLatestEntries(org)).willReturn(List.of(entry));
+        BDDMockito.given(entryRepository.findLatestEntries(org)).willReturn(List.of(entry));
 
         emailService.sendFeedStatusEmail(org);
         JsonNode messages = readReceivedMessages();

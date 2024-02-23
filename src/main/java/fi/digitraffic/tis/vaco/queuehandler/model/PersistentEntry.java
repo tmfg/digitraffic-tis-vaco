@@ -1,14 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.Finding;
-import fi.digitraffic.tis.vaco.packages.model.Package;
-import fi.digitraffic.tis.vaco.process.model.Task;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -16,9 +9,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableEntry.class)
-@JsonDeserialize(as = ImmutableEntry.class)
-public interface Entry {
+public interface PersistentEntry {
+    @Nullable
+    Long id();
+
     @Nullable
     String publicId();
 
@@ -39,22 +33,6 @@ public interface Entry {
 
     @Nullable
     JsonNode metadata();
-
-    @Nullable
-    List<Task> tasks();
-
-    @Nullable
-    List<ValidationInput> validations();
-
-    @Nullable
-    List<ConversionInput> conversions();
-
-    @Nullable
-    @JsonView(DataVisibility.Internal.class)
-    List<Package> packages();
-
-    @Nullable
-    List<Finding> findings();
 
     /**
      * List of email addresses to send notifications on events related to this entry, e.g. the matching job is complete.

@@ -74,11 +74,11 @@ class DownloadRuleTests {
 
     @Test
     void ruleExecution() {
-        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs").id(9500000L);
+        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
         Task dlTask = ImmutableTask.of(-1L, DownloadRule.DOWNLOAD_SUBTASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
 
-        given(taskService.findTask(entry.id(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
+        given(taskService.findTask(entry.publicId(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(Optional.ofNullable(gtfsTestFile)));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);

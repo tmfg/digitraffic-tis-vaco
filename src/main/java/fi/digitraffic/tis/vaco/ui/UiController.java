@@ -15,13 +15,16 @@ import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerController;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
-import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
+import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -76,6 +79,10 @@ public class UiController {
 
     private final VacoProperties vacoProperties;
 
+    private final EntryService entryService;
+
+    private final TaskService taskService;
+
     private final EntryStateService entryStateService;
 
     private final QueueHandlerService queueHandlerService;
@@ -89,18 +96,21 @@ public class UiController {
     private final PackagesService packagesService;
 
     private final AdminToolsService adminToolsService;
+    private final EntryRequestMapper entryRequestMapper;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public UiController(VacoProperties vacoProperties,
-                        EntryStateService entryStateService,
+                        EntryService entryService, TaskService taskService, EntryStateService entryStateService,
                         QueueHandlerService queueHandlerService,
                         RulesetService rulesetService,
                         MeService meService,
                         CompanyHierarchyService companyHierarchyService,
                         PackagesService packagesService,
-                        AdminToolsService adminToolsService) {
+                        AdminToolsService adminToolsService, EntryRequestMapper entryRequestMapper) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.entryService = Objects.requireNonNull(entryService);
+        this.taskService = Objects.requireNonNull(taskService);
         this.entryStateService = Objects.requireNonNull(entryStateService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
@@ -108,6 +118,7 @@ public class UiController {
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.adminToolsService = Objects.requireNonNull(adminToolsService);
+        this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -124,9 +135,10 @@ public class UiController {
     @PostMapping(path = "/queue")
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
-    public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody EntryRequest entryRequest) {
-        Entry entry = queueHandlerService.processQueueEntry(entryRequest);
-        return ResponseEntity.ok(asQueueHandlerResource(entry));
+    public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
+        Entry converted = entryRequestMapper.toEntry(createEntryRequest);
+        Entry processed = queueHandlerService.processQueueEntry(converted);
+        return ResponseEntity.ok(asQueueHandlerResource(processed));
     }
 
     @GetMapping(path = "/rules")
@@ -145,7 +157,7 @@ public class UiController {
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId) {
-        return queueHandlerService.findEntry(publicId, true)
+        return entryService.findEntry(publicId, true)
             .filter(meService::isAllowedToAccess)
             .map(entry -> {
                 Map<String, Ruleset> rulesets = Streams.collect(rulesetService.selectRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
@@ -187,10 +199,10 @@ public class UiController {
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
         // TODO: Add MeService check here !
-        return queueHandlerService.findEntry(entryPublicId)
-            .flatMap(e -> Streams.filter(e.tasks(), t -> t.name().equals(taskName))
-                .findFirst()
-                .flatMap(t -> packagesService.downloadPackage(e, t, packageName)))
+        return entryService.findEntry(entryPublicId)
+            .flatMap(e ->
+                taskService.findTask(entryPublicId, taskName)
+                    .flatMap(t -> packagesService.downloadPackage(e, t, packageName)))
             .map(filePath -> {
                 ContentDisposition contentDisposition = ContentDisposition.builder("inline")
                     .filename(packageName + ".zip")
