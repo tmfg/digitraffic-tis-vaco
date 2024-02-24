@@ -290,13 +290,19 @@ public class UiController {
         if (!(meService.isAdmin() || meService.findCompanies().contains(partnerB.get()))) {
             // Let's check that company admin has right to edit anything for partnerB
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                String.format("User does not have rights to remove partnership for company %s (%s)",
+                String.format("User does not have rights to create partnership for company %s (%s)",
                     partnerB.get().name(), partnerB.get().businessId()));
         }
 
         if (companyHierarchyService.findPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 String.format("Cannot create partnership between companies %s and %s because it already exists",
+                    partnerA.get().businessId(), partnerB.get().businessId()));
+        }
+
+        if (companyHierarchyService.findPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerB.get(), partnerA.get()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Cannot create partnership between companies %s and %s because that would result in a circular relation",
                     partnerA.get().businessId(), partnerB.get().businessId()));
         }
 

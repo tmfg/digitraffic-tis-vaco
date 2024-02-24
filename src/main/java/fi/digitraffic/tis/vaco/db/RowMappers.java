@@ -104,6 +104,7 @@ public final class RowMappers {
             .id(rs.getLong(alias + "id"))
             .businessId(rs.getString(alias + "business_id"))
             .name(rs.getString(alias + "name"))
+            .language(rs.getString(alias + "language"))
             .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
             .adGroupId(rs.getString(alias + "ad_group_id"))
             .build();

@@ -50,8 +50,6 @@ public class CompanyHierarchyRepository {
     }
 
     public Company update(String businessId, Company company) {
-        var hmm = ArraySqlValue.create(company.contactEmails().toArray(new String[0]));
-        //var hmm2 = ArraySqlValue.create(company.contactEmails());
         return jdbc.queryForObject("""
                 UPDATE company
                     SET name = ?, language = (?)::company_language, ad_group_id = ?, contact_emails = ?
@@ -265,11 +263,13 @@ public class CompanyHierarchyRepository {
                        o_a.name as partner_a_name,
                        o_a.contact_emails as partner_a_contact_emails,
                        o_a.ad_group_id as partner_a_ad_group_id,
+                       o_a.language as partner_a_language,
                        o_b.id as partner_b_id,
                        o_b.business_id as partner_b_business_id,
                        o_b.name as partner_b_name,
                        o_b.contact_emails as partner_b_contact_emails,
-                       o_b.ad_group_id as partner_b_ad_group_id
+                       o_b.ad_group_id as partner_b_ad_group_id,
+                       o_b.language as partner_b_language
                   FROM partnership c
                   JOIN company o_a ON c.partner_a_id = o_a.id
                   JOIN company o_b ON c.partner_b_id = o_b.id
