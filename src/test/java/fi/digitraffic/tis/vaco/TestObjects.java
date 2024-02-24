@@ -81,8 +81,7 @@ public class TestObjects {
     }
 
     public static ImmutablePartnershipRequest.Builder aPartnershipRequest() {
-        return ImmutablePartnershipRequest.builder()
-            .type(PartnershipType.AUTHORITY_PROVIDER);
+        return ImmutablePartnershipRequest.builder();
     }
 
     /**

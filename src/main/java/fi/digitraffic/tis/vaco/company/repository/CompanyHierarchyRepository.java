@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
+import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
@@ -48,6 +49,21 @@ public class CompanyHierarchyRepository {
             ArraySqlValue.create(company.contactEmails().toArray(new String[0])));
     }
 
+    public Company update(String businessId, Company company) {
+        return jdbc.queryForObject("""
+                UPDATE company
+                    SET name = ?, language = (?)::company_language, ad_group_id = ?, contact_emails = ?
+                    WHERE business_id = ?
+                  RETURNING *
+                """,
+            RowMappers.COMPANY,
+            company.name(),
+            company.language(),
+            company.adGroupId(),
+            ArraySqlValue.create(company.contactEmails().toArray(new String[0])),
+            businessId);
+    }
+
     public Optional<Company> findByBusinessId(String businessId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
@@ -74,6 +90,14 @@ public class CompanyHierarchyRepository {
                                        FROM entry e)
             """,
             RowMappers.COMPANY);
+    }
+
+    public Set<Company> findAll() {
+        return Set.copyOf(jdbc.query("""
+            SELECT DISTINCT *
+              FROM company c
+            """,
+            RowMappers.COMPANY));
     }
 
     public Set<Company> findAllByAdGroupIds(List<String> adGroupIds) {
@@ -109,7 +133,7 @@ public class CompanyHierarchyRepository {
 
     public Map<Company, Hierarchy> findRootHierarchies() {
         // 1. find roots
-        List<Long> roots = findHierarchyRoots();
+        Set<Long> roots = findHierarchyRoots();
 
         Map<Company, Hierarchy> hierarchies = new HashMap<>();
 
@@ -126,10 +150,11 @@ public class CompanyHierarchyRepository {
         List<IntermediateHierarchyLink> hierarchyLinks = findHierarchyLinks(rootId);
 
         // 2b. create lookup for id->entity
-        Map<Long, Company> companiesbyId = Streams.collect(
-            hierarchyLinks,
-            IntermediateHierarchyLink::childId,
-            IntermediateHierarchyLink::company);
+        Map<Long, Company> companiesbyId = hierarchyLinks.stream().collect(
+            Collectors.toMap(
+                IntermediateHierarchyLink::childId,
+                IntermediateHierarchyLink::company,
+                (company1, company2) -> company2));
 
         // 2c. create lookup for getting children of each parent
         Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren = hierarchyLinks.stream()
@@ -168,11 +193,11 @@ public class CompanyHierarchyRepository {
             root);
     }
 
-    private List<Long> findHierarchyRoots() {
-        return jdbc.queryForList("""
-                SELECT id FROM company c WHERE c.id NOT IN (SELECT DISTINCT partner_b_id FROM partnership)
+    private Set<Long> findHierarchyRoots() {
+        return Set.copyOf(jdbc.queryForList("""
+                SELECT DISTINCT id FROM company c WHERE c.id NOT IN (SELECT DISTINCT partner_b_id FROM partnership)
                 """,
-            Long.class);
+            Long.class));
     }
 
     private static void resolveHierarchy(Company parent, ImmutableHierarchy.Builder builder, Map<Long, Company> companiesbyId, Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
@@ -201,8 +226,18 @@ public class CompanyHierarchyRepository {
             Company::id, Function.identity());
     }
 
+    public Map<String, Company> findAlLByIds() {
+        return Streams.collect(jdbc.query("""
+            SELECT *
+            FROM company
+            """,
+                RowMappers.COMPANY)
+            ,
+            Company::businessId, Function.identity());
+    }
 
-    public ImmutablePartnership create(ImmutablePartnership partnership) {
+
+    public Partnership create(ImmutablePartnership partnership) {
         jdbc.update("""
                 INSERT INTO partnership(type, partner_a_id, partner_b_id)
                      VALUES (?::partnership_type, ?, ?)
@@ -213,7 +248,12 @@ public class CompanyHierarchyRepository {
         return findByIds(partnership.type(), partnership.partnerA().id(), partnership.partnerB().id()).get();
     }
 
-    public Optional<ImmutablePartnership> findByIds(PartnershipType type,
+    public void deletePartnership(Partnership partnership) {
+        jdbc.update("DELETE FROM partnership WHERE type = ?::partnership_type AND partner_a_id =? AND partner_b_id = ?",
+            partnership.type().fieldName(), partnership.partnerA().id(), partnership.partnerB().id());
+    }
+
+    public Optional<Partnership> findByIds(PartnershipType type,
                                                     Long partnerAId,
                                                     Long partnerBId) {
         return jdbc.query("""
@@ -223,11 +263,13 @@ public class CompanyHierarchyRepository {
                        o_a.name as partner_a_name,
                        o_a.contact_emails as partner_a_contact_emails,
                        o_a.ad_group_id as partner_a_ad_group_id,
+                       o_a.language as partner_a_language,
                        o_b.id as partner_b_id,
                        o_b.business_id as partner_b_business_id,
                        o_b.name as partner_b_name,
                        o_b.contact_emails as partner_b_contact_emails,
-                       o_b.ad_group_id as partner_b_ad_group_id
+                       o_b.ad_group_id as partner_b_ad_group_id,
+                       o_b.language as partner_b_language
                   FROM partnership c
                   JOIN company o_a ON c.partner_a_id = o_a.id
                   JOIN company o_b ON c.partner_b_id = o_b.id

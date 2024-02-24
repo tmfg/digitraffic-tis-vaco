@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.ui;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
+import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -64,5 +65,36 @@ public class AdminToolsRepository {
             new MapSqlParameterSource()
                 .addValue("businessIds", businessIds),
             RowMappers.COMPANY_LATEST_ENTRY);
+    }
+
+    public List<CompanyWithFormatSummary> getCompaniesWithFormats() {
+        return jdbc.query("""
+            SELECT c.name, c.business_id, string_agg(formats.format, ', ') as format_summary
+            FROM vaco.vaco.company c
+            LEFT JOIN (
+                    (select distinct e.business_id,
+                             CASE
+                               WHEN upper(e.format) = 'GTFS' THEN 'NeTEx'
+                               WHEN upper(e.format) = 'NETEX' THEN 'GTFS'
+                               WHEN upper(e.format) = 'GBFS' THEN 'GBFS'
+                               ELSE 'Unknown format'
+                             END as format
+                     from  vaco.vaco.entry e)
+                    UNION
+                    (
+                        select distinct e.business_id,
+                            CASE
+                              WHEN starts_with(ci.name, 'gtfs2netex.fintraffic') THEN 'NeTEx'
+                              WHEN starts_with(ci.name, 'netex2gtfs.entur') THEN 'GTFS'
+                            ELSE 'Unknown format'
+                            END as format
+                        from  vaco.vaco.entry e
+                        JOIN vaco.vaco.conversion_input ci ON ci.entry_id = e.id
+                    )
+                ) formats ON formats.business_id = c.business_id
+            group by c.name, c.business_id
+            ORDER BY c.name ASC;
+            """,
+            RowMappers.COMPANY_WITH_FORMATS);
     }
 }

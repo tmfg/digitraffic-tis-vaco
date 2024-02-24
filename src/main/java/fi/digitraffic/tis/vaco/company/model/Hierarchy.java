@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Value.Immutable
@@ -19,5 +17,4 @@ public interface Hierarchy {
     default Set<Hierarchy> children() {
         return Set.of();
     }
-
 }

@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,7 @@ public class PartnershipController {
                     partnershipRequest.partnerABusinessId(), partnershipRequest.partnerBBusinessId()));
         }
 
-        Optional<Partnership> partnership = companyHierarchyService.createPartnership(partnershipRequest.type(), partnerA.get(), partnerB.get());
+        Optional<Partnership> partnership = companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get());
 
         return partnership
             .map(value -> ResponseEntity.ok(Resource.resource(value)))
