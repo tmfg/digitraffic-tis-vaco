@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.api.model.queue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableCreateEntryRequest;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
