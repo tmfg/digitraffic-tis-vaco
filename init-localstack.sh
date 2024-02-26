@@ -8,11 +8,10 @@ echo $(awslocal sqs create-queue --queue-name 'vaco-errors')
 # -- > External rules result ingesting
 echo $(awslocal sqs create-queue --queue-name 'rules-results')
 # -- > each rule needs to have a matching queue
-echo $(awslocal sqs create-queue --queue-name 'rules-processing-gtfs-canonical-v4_0_0')
-echo $(awslocal sqs create-queue --queue-name 'rules-processing-gtfs-canonical-v4_1_0')
-echo $(awslocal sqs create-queue --queue-name 'rules-processing-netex-entur-v1_0_1')
-echo $(awslocal sqs create-queue --queue-name 'rules-processing-netex2gtfs-entur-v2_0_6')
-echo $(awslocal sqs create-queue --queue-name 'rules-processing-gtfs2netex-fintraffic-v1_0_0')
+echo $(awslocal sqs create-queue --queue-name 'rules-processing-gtfs-canonical')
+echo $(awslocal sqs create-queue --queue-name 'rules-processing-netex-entur')
+echo $(awslocal sqs create-queue --queue-name 'rules-processing-netex2gtfs-entur')
+echo $(awslocal sqs create-queue --queue-name 'rules-processing-gtfs2netex-fintraffic')
 
 # --> List SQS Queues
 echo Listing queues ...
