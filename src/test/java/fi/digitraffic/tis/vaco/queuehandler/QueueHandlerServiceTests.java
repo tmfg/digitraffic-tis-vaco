@@ -7,8 +7,7 @@ import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
-import fi.digitraffic.tis.vaco.company.service.PartnershipService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -56,13 +55,10 @@ class QueueHandlerServiceTests {
     private MessagingService messagingService;
 
     @Mock
-    private CompanyService companyService;
+    private CompanyHierarchyService companyHierarchyService;
 
     @Mock
     private EntryRepository entryRepository;
-
-    @Mock
-    private PartnershipService partnershipService;
 
     @Captor
     private ArgumentCaptor<DelegationJobMessage> delegationJobCaptor;
@@ -87,9 +83,8 @@ class QueueHandlerServiceTests {
             meService,
             entryRequestMapper,
             messagingService,
-            companyService,
-            entryRepository,
-            partnershipService);
+            companyHierarchyService,
+            entryRepository);
 
         operatorBusinessId = "123-4";
         operatorName = "Oppypop Oy";
@@ -115,9 +110,8 @@ class QueueHandlerServiceTests {
             cachingService,
             meService,
             messagingService,
-            companyService,
-            entryRepository,
-            partnershipService);
+            companyHierarchyService,
+            entryRepository);
     }
 
     private <T> Answer<T> withArg(int i) {
@@ -132,20 +126,20 @@ class QueueHandlerServiceTests {
     void autocreatesCompanyOnNewEntryIfSourceIsFinap() {
         // given
         given(entryRepository.create(any(Entry.class))).willAnswer(withArg(0));
-        given(companyService.createCompany(any(ImmutableCompany.class))).willAnswer(withArgInOptional(0));
-        given(companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID)).willReturn(Optional.of(fintrafficCompany));
+        given(companyHierarchyService.createCompany(any(ImmutableCompany.class))).willAnswer(withArgInOptional(0));
+        given(companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID)).willReturn(Optional.of(fintrafficCompany));
         givenCachesResult();
 
         // when
         Entry result = queueHandlerService.processQueueEntry(entryRequest);
 
         // then
-        then(companyService).should().createCompany(companyCaptor.capture());
+        then(companyHierarchyService).should().createCompany(companyCaptor.capture());
         ImmutableCompany operator = companyCaptor.getValue();
         assertThat(operator.businessId(), equalTo(operatorBusinessId));
         assertThat(operator.name(), equalTo(operatorName));
 
-        then(partnershipService).should().create(eq(PartnershipType.AUTHORITY_PROVIDER), eq(fintrafficCompany), eq(operator));
+        then(companyHierarchyService).should().createPartnership(eq(PartnershipType.AUTHORITY_PROVIDER), eq(fintrafficCompany), eq(operator));
 
         thenSubmitProcessingJob(result);
 

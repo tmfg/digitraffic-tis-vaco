@@ -85,13 +85,13 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
                 }
             }
         };
-        entry = entryWithTask(e -> ImmutableTask.of(e.id(), RuleName.GTFS_CANONICAL_4_1_0, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(e.id(), RuleName.GTFS_CANONICAL, 100).withId(9_000_000L));
         task = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of("report.json", List.of("report"));
-        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL_4_1_0, entry, uploadedFiles);
+        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, uploadedFiles);
         gtfsCanonicalRuleset = ImmutableRuleset.of(
                 entry.id(),
-                RuleName.GTFS_CANONICAL_4_1_0,
+                RuleName.GTFS_CANONICAL,
                 "bleh",
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
@@ -107,7 +107,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
     @Test
     void mapsGtfsCanonicalNoticesToFindings() {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
-        given(rulesetService.findByName(RuleName.GTFS_CANONICAL_4_1_0)).willReturn(Optional.of(gtfsCanonicalRuleset));
+        given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(entry, task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
@@ -118,7 +118,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
 
         // TODO: chore for the bored yet excited: better assertions for these
         assertThat(findings.size(), equalTo(51));
-        findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.GTFS_CANONICAL_4_1_0)));
+        findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.GTFS_CANONICAL)));
     }
 
 }

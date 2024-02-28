@@ -85,7 +85,7 @@ public class AadOAuth2LoginSecurityConfig {
         logger.info("Setting CORS configuration for {}", uiBaseUrl);
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(uiBaseUrl));
-        configuration.setAllowedMethods(List.of("OPTIONS", "GET", "POST"));
+        configuration.setAllowedMethods(List.of("OPTIONS", "GET", "POST", "DELETE", "PUT"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("*"));
 

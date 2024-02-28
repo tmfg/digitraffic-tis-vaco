@@ -98,11 +98,10 @@ public class RuleResultsListener {
             return switch (resultMessage.ruleName()) {
                 case DownloadRule.DOWNLOAD_SUBTASK -> processDownloadRuleResults(resultMessage);
                 case StopsAndQuaysRule.STOPS_AND_QUAYS_TASK -> processStopsAndQuaysResults(resultMessage);
-                case RuleName.NETEX_ENTUR_1_0_1 -> processResultFromNetexEntur101(resultMessage);
-                case RuleName.GTFS_CANONICAL_4_0_0 -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL_4_0_0, resultMessage);
-                case RuleName.GTFS_CANONICAL_4_1_0 -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL_4_1_0, resultMessage);
-                case RuleName.NETEX2GTFS_ENTUR_2_0_6 -> processNetex2GtfsEntur206(resultMessage);
-                case RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0 -> processGtfs2NetexFintraffic100(resultMessage);
+                case RuleName.NETEX_ENTUR -> processResultFromNetexEntur101(resultMessage);
+                case RuleName.GTFS_CANONICAL -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL, resultMessage);
+                case RuleName.NETEX2GTFS_ENTUR -> processNetex2GtfsEntur206(resultMessage);
+                case RuleName.GTFS2NETEX_FINTRAFFIC -> processGtfs2NetexFintraffic100(resultMessage);
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -111,22 +110,16 @@ public class RuleResultsListener {
                     yield false;
                 }
             };
-        }).thenApply(ruleProcessingSuccess -> {
-            if (Boolean.TRUE.equals(ruleProcessingSuccess)) {
-                Optional<Entry> entry = queueHandlerService.findEntry(resultMessage.entryId());
-                if (entry.isPresent()) {
-                    messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
-                        .entry(queueHandlerService.getEntry(entry.get().publicId(), true))
-                        .retryStatistics(ImmutableRetryStatistics.of(5))
-                        .build());
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                // could fork logic at this point for non-successful rule runs
-                return false;
+        }).whenComplete((ruleProcessingSuccess, maybeEx) -> {
+            if (maybeEx != null) {
+                logger.warn("Handling rule result failed due to unhandled exception", maybeEx);
             }
+            // resubmit to processing queue to continue general logic
+            Optional<Entry> entry = queueHandlerService.findEntry(resultMessage.entryId());
+            entry.ifPresent(value -> messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
+                    .entry(queueHandlerService.getEntry(value.publicId(), true))
+                    .retryStatistics(ImmutableRetryStatistics.of(5))
+                    .build()));
         });
     }
 
@@ -139,7 +132,7 @@ public class RuleResultsListener {
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
-        return processRule(RuleName.NETEX_ENTUR_1_0_1, resultMessage, netexEnturValidator);
+        return processRule(RuleName.NETEX_ENTUR, resultMessage, netexEnturValidator);
     }
 
     private boolean processResultFromGtfsCanonical(String ruleName, ResultMessage resultMessage) {
@@ -147,11 +140,11 @@ public class RuleResultsListener {
     }
 
     private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
-        return processRule(RuleName.NETEX2GTFS_ENTUR_2_0_6, resultMessage, simpleResultProcessor);
+        return processRule(RuleName.NETEX2GTFS_ENTUR, resultMessage, simpleResultProcessor);
     }
 
     private boolean processGtfs2NetexFintraffic100(ResultMessage resultMessage) {
-        return processRule(RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0, resultMessage, simpleResultProcessor);
+        return processRule(RuleName.GTFS2NETEX_FINTRAFFIC, resultMessage, simpleResultProcessor);
     }
 
     private boolean processRule(String ruleName, ResultMessage resultMessage, ResultProcessor resultProcessor) {
@@ -198,7 +191,6 @@ public class RuleResultsListener {
                 })
                 .map(CompletableFuture::join)
                 .toList();
-
         } catch (SqsException e) {
             logger.warn("Failed to process messages from queue {}", queueName, e);
         }

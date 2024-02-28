@@ -12,5 +12,5 @@ public interface ItemCounter {
     String name();
 
     @Value.Parameter
-    int total();
+    long total();
 }

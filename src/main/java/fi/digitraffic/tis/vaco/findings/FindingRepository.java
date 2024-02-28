@@ -28,12 +28,31 @@ public class FindingRepository {
 
     public Finding create(Finding finding) {
         return jdbc.queryForObject("""
-            INSERT INTO finding (entry_id, task_id, ruleset_id, message, raw)
-                 VALUES (?, ?, ?, ?, ?)
-              RETURNING id, public_id, entry_id, task_id, ruleset_id, message, raw
+            INSERT INTO finding (entry_id, task_id, ruleset_id, source, message, severity, raw)
+                 VALUES (
+                             (SELECT id FROM entry WHERE public_id = ?),
+                             ?,
+                             ?,
+                             ?,
+                             ?,
+                             COALESCE((SELECT rso.severity
+                                         FROM rule_severity_override rso
+                                        WHERE rso.ruleset_id = ?
+                                          AND rso.name = ?),
+                                      ?),
+                             ?)
+              RETURNING id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
             """,
             RowMappers.FINDING,
-            finding.entryId(), finding.taskId(), finding.rulesetId(), finding.message(), finding.raw());
+            finding.entryId(),
+            finding.taskId(),
+            finding.rulesetId(),
+            finding.source(),
+            finding.message(),
+            finding.rulesetId(),
+            finding.message(),
+            finding.severity(),
+            finding.raw());
     }
 
     public List<Finding> findFindingsByEntryId(Long entryId) {
@@ -41,11 +60,26 @@ public class FindingRepository {
             return jdbc.query(
                     """
                     SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
-                      FROM finding em
-                     WHERE em.entry_id = ?
+                      FROM finding
+                     WHERE entry_id = ?
                     """,
                     RowMappers.FINDING,
                     entryId);
+        } catch (EmptyResultDataAccessException erdae) {
+            return List.of();
+        }
+    }
+
+    public List<Finding> findFindingsByTaskId(Long taskId) {
+        try {
+            return jdbc.query(
+                """
+                SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
+                  FROM finding
+                 WHERE task_id = ?
+                """,
+                RowMappers.FINDING,
+                taskId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
         }

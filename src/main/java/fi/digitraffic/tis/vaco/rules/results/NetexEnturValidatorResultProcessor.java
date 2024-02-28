@@ -51,7 +51,7 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
 
     @Override
     public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
-        logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR_1_0_1, entry.publicId(), task.name());
+        logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR, entry.publicId(), task.name());
         createOutputPackages(resultMessage, entry, task);
 
         Map<String, String> fileNames = collectOutputFileNames(resultMessage);

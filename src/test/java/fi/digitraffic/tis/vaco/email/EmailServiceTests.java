@@ -11,7 +11,7 @@ import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import io.burt.jmespath.jackson.JacksonRuntime;
@@ -48,7 +48,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     @Mock
     private EmailRepository emailRepository;
     @Mock
-    private CompanyService companyService;
+    private CompanyHierarchyService companyHierarchyService;
     @Mock
     private FeatureFlagsService featureFlagsService;
 
@@ -63,7 +63,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
             new MessageMapper(vacoProperties),
             sesClient,
             emailRepository,
-            companyService,
+            companyHierarchyService,
             featureFlagsService);
     }
 
@@ -72,7 +72,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         // clear all received messages
         localstack.execInContainer("curl", "-X", "DELETE", "localhost.localstack.cloud:4566/_aws/ses");
 
-        verifyNoMoreInteractions(emailRepository, companyService, featureFlagsService);
+        verifyNoMoreInteractions(emailRepository, companyHierarchyService, featureFlagsService);
     }
 
     @BeforeAll

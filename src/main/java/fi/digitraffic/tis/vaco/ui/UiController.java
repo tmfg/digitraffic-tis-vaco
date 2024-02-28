@@ -7,8 +7,13 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
+import fi.digitraffic.tis.vaco.company.CompanyController;
+import fi.digitraffic.tis.vaco.company.dto.PartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.company.model.Partnership;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
@@ -18,15 +23,20 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerController;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
+import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
+import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyInfo;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
+import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -34,9 +44,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -50,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -71,22 +84,30 @@ public class UiController {
 
     private final MeService meService;
 
-    private final CompanyService companyService;
+    private final CompanyHierarchyService companyHierarchyService;
 
     private final PackagesService packagesService;
+
+    private final AdminToolsService adminToolsService;
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public UiController(VacoProperties vacoProperties,
                         EntryStateService entryStateService,
                         QueueHandlerService queueHandlerService,
                         RulesetService rulesetService,
-                        MeService meService, CompanyService companyService, PackagesService packagesService) {
+                        MeService meService,
+                        CompanyHierarchyService companyHierarchyService,
+                        PackagesService packagesService,
+                        AdminToolsService adminToolsService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryStateService = Objects.requireNonNull(entryStateService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.meService = Objects.requireNonNull(meService);
-        this.companyService = Objects.requireNonNull(companyService);
+        this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.packagesService = Objects.requireNonNull(packagesService);
+        this.adminToolsService = Objects.requireNonNull(adminToolsService);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -111,7 +132,7 @@ public class UiController {
     @GetMapping(path = "/rules")
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
-    public ResponseEntity<List<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
+    public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
                 Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));
@@ -131,7 +152,7 @@ public class UiController {
                 List<RuleReport> reports =  new ArrayList<>();
                 entry.tasks().forEach(task -> {
                     RuleReport report = null;
-                    if (RuleName.VALIDATION_RULES.contains(task.name()) || RuleName.CONVERSION_RULES.contains(task.name())) {
+                    if (rulesets.get(task.name()) != null) {
                         report = entryStateService.getRuleReport(task, entry, rulesets);
                     }
                     if(report != null) {
@@ -139,7 +160,7 @@ public class UiController {
                     }
                 });
                 List<Summary> summaries = entryStateService.getTaskSummaries(entry);
-                Optional<Company> company = companyService.findByBusinessId(entry.businessId());
+                Optional<Company> company = companyHierarchyService.findByBusinessId(entry.businessId());
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry))
@@ -165,6 +186,7 @@ public class UiController {
         @PathVariable("taskName") String taskName,
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
+        // TODO: Add MeService check here !
         return queueHandlerService.findEntry(entryPublicId)
             .flatMap(e -> Streams.filter(e.tasks(), t -> t.name().equals(taskName))
                 .findFirst()
@@ -179,6 +201,208 @@ public class UiController {
             })
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                 String.format("Unknown package '%s' for entry '%s'", packageName, entryPublicId)));
+    }
+
+    @GetMapping(path = "/admin/data-delivery")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<List<Resource<CompanyLatestEntry>>> fetchLatestEntriesPerCompany() {
+        List<CompanyLatestEntry> companyLatestEntries = adminToolsService
+            .listLatestEntriesPerCompany(
+                meService.isAdmin()
+                    ? null
+                    : meService.findCompanies());
+        return ResponseEntity.ok(Streams.collect(companyLatestEntries, this::asCompanyLatestEntryResource));
+    }
+
+    @GetMapping(path = "/admin/entries")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
+        if (meService.isAllowedToAccess(businessId)) {
+            List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, false);
+            return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @GetMapping(path = "/admin/companies/{businessId}/info")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<ImmutableCompanyInfo>> getCompanyInfo(@PathVariable("businessId") String businessId) {
+        return companyHierarchyService.findByBusinessId(businessId)
+            .filter(meService::isAllowedToAccess)
+            .map(company -> ResponseEntity.ok(new Resource<>(ImmutableCompanyInfo.builder()
+                .company(company)
+                .hierarchies(companyHierarchyService.getHierarchiesContainingCompany(businessId))
+                .rulesets(rulesetService.selectRulesets(businessId))
+                .build(), null, Map.of()))
+            ).orElseGet(() ->
+                Responses.notFound((String.format("Company with business id %s either does not exist or not authorized to be accessed", businessId))));
+    }
+
+    @GetMapping(path = "/admin/companies/hierarchy")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<Hierarchy>>> getHierarchies(@RequestParam("businessId") String businessId) {
+        return ResponseEntity.ok(new Resource<>(companyHierarchyService.getHierarchies(businessId), null, null));
+    }
+
+    @PutMapping(path = "/admin/companies/{businessId}")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<ImmutableCompanyInfo>> editCompany(
+        @PathVariable("businessId") String businessId,
+        @Valid @RequestBody Company company) {
+        return companyHierarchyService.findByBusinessId(businessId)
+            .filter(meService::isAllowedToAccess)
+            .map(c -> {
+                Company updatedCompany = companyHierarchyService.editCompany(businessId, company);
+                return ResponseEntity.ok(
+                    new Resource<>(
+                        ImmutableCompanyInfo.builder()
+                            .company(updatedCompany)
+                            .hierarchies(companyHierarchyService.getHierarchiesContainingCompany(updatedCompany.businessId()))
+                            .rulesets(rulesetService.selectRulesets(updatedCompany.businessId()))
+                            .build(),
+                        null, Map.of())); })
+            .orElseGet(() ->
+                Responses.notFound((String.format("Company with business id %s either does not exist or not authorized to be accessed", businessId))));
+    }
+
+    @PostMapping(path = "/admin/partnership")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<Hierarchy>>> createPartnership(
+        @RequestBody @Valid PartnershipRequest partnershipRequest) {
+        String partnerABusinessId = partnershipRequest.partnerABusinessId();
+        String partnerBBusinessId = partnershipRequest.partnerBBusinessId();
+
+        Optional<Company> partnerA = companyHierarchyService.findByBusinessId(partnerABusinessId);
+        Optional<Company> partnerB = companyHierarchyService.findByBusinessId(partnerBBusinessId);
+
+        if (partnerA.isEmpty() || partnerB.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Either of the provided company' business ID (%s, %s) does not exist",
+                    partnerABusinessId, partnerBBusinessId));
+        }
+
+        if (!(meService.isAdmin() || meService.findCompanies().contains(partnerB.get()))) {
+            // Let's check that company admin has right to edit anything for partnerB
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("User does not have rights to create partnership for company %s (%s)",
+                    partnerB.get().name(), partnerB.get().businessId()));
+        }
+
+        if (companyHierarchyService.findPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Cannot create partnership between companies %s and %s because it already exists",
+                    partnerA.get().businessId(), partnerB.get().businessId()));
+        }
+
+        if (companyHierarchyService.findPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerB.get(), partnerA.get()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Cannot create partnership between companies %s and %s because that would result in a circular relation",
+                    partnerA.get().businessId(), partnerB.get().businessId()));
+        }
+
+        return ResponseEntity.ok(new Resource<>(companyHierarchyService.createPartnershipAndReturnUpdatedHierarchy(
+            PartnershipType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get()), null, null));
+    }
+
+    @DeleteMapping(path = "/admin/partnership")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<Hierarchy>>> deletePartnership(
+        @RequestParam("partnerABusinessId") String partnerABusinessId,
+        @RequestParam("partnerBBusinessId") String partnerBBusinessId) {
+        Optional<Company> partnerA = companyHierarchyService.findByBusinessId(partnerABusinessId);
+        Optional<Company> partnerB = companyHierarchyService.findByBusinessId(partnerBBusinessId);
+
+        if (partnerA.isEmpty() || partnerB.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Either of the provided company' business ID (%s, %s) does not exist",
+                    partnerABusinessId, partnerBBusinessId));
+        }
+
+        if (!meService.isAdmin() && !meService.findCompanies().contains(partnerB.get())) {
+            // Let's check that company admin has right to edit anything for partnerB
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("User does not have rights to remove partnership for company %s (%s)",
+                    partnerB.get().name(), partnerB.get().businessId()));
+        }
+
+        return companyHierarchyService.findPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get())
+            .map(partnership ->
+                ResponseEntity.ok(new Resource<>(companyHierarchyService.deletePartnership(partnership), null, null))
+            ).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Partnership between (%s, %s) cannot be deleted because it does not exist",
+                    partnerABusinessId, partnerBBusinessId)));
+    }
+
+    @PostMapping(path = "/admin/partnership/swap")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<Hierarchy>>> swapPartnership(
+        @Valid @RequestBody SwapPartnershipRequest swapPartnershipRequest) {
+        String oldPartnerABusinessId = swapPartnershipRequest.oldPartnerABusinessId();
+        String newPartnerABusinessId = swapPartnershipRequest.newPartnerABusinessId();
+        String partnerBBusinessId = swapPartnershipRequest.partnerBBusinessId();
+
+        Optional<Company> oldPartnerA = companyHierarchyService.findByBusinessId(oldPartnerABusinessId);
+        Optional<Company> newPartnerA = companyHierarchyService.findByBusinessId(newPartnerABusinessId);
+        Optional<Company> partnerB = companyHierarchyService.findByBusinessId(partnerBBusinessId);
+
+        if (oldPartnerA.isEmpty() || newPartnerA.isEmpty() || partnerB.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Either of the provided company' business ID (%s, %s, %s) does not exist",
+                    oldPartnerABusinessId, newPartnerABusinessId, partnerBBusinessId));
+        }
+
+        if (!(meService.isAdmin() || meService.findCompanies().contains(partnerB.get()))) {
+            // Let's check that company admin has right to edit anything for partnerB
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("User does not have rights to remove partnership for company %s (%s)",
+                    partnerB.get().name(), partnerB.get().businessId()));
+        }
+
+        Optional<Partnership> existingPartnership = companyHierarchyService
+            .findPartnership(PartnershipType.AUTHORITY_PROVIDER, oldPartnerA.get(), partnerB.get());
+        if (existingPartnership.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Partnership between %s and %s does not exist, hence swapping is not possible",
+                    oldPartnerA.get().name(), partnerB.get().businessId()));
+        }
+
+        Optional<Partnership> potentialDuplicatePartnership = companyHierarchyService
+            .findPartnership(PartnershipType.AUTHORITY_PROVIDER, newPartnerA.get(), partnerB.get());
+        if (potentialDuplicatePartnership.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Partnership between %s and %s already exists, hence swapping is not possible",
+                    newPartnerA.get().name(), partnerB.get().businessId()));
+        }
+
+        return ResponseEntity.ok(new Resource<>(companyHierarchyService.swapPartnership(
+            newPartnerA.get(), partnerB.get(), existingPartnership.get()), null, null));
+    }
+
+    @GetMapping(path = "/admin/companies")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<CompanyWithFormatSummary>>> listCompanies() {
+        return ResponseEntity.ok(new Resource<>(adminToolsService.getRelevantCompanies(), null, null));
+    }
+
+    private Resource<CompanyLatestEntry> asCompanyLatestEntryResource(CompanyLatestEntry companyLatestEntry) {
+        Map<String, Map<String, Link>> links = new HashMap<>();
+        Map<String, Link> refs = new HashMap<>();
+        if (companyLatestEntry.publicId() != null) {
+            refs.put("badge", Link.to(vacoProperties.baseUrl(),
+                RequestMethod.GET,
+                fromMethodCall(on(BadgeController.class).entryBadge(companyLatestEntry.publicId(), null))));
+        }
+        links.put("refs", refs);
+        return new Resource<>(companyLatestEntry, null, links);
     }
 
     private Resource<Entry> asEntryStateResource(Entry entry) {
@@ -212,5 +436,11 @@ public class UiController {
         }
 
         return new Resource<>(entry, null, links);
+    }
+
+    private Resource<Company> asCompanyResource(Company company) {
+        return new Resource<>(company, null, Map.of("refs", Map.of("self", Link.to(vacoProperties.baseUrl(),
+            RequestMethod.GET,
+            fromMethodCall(on(CompanyController.class).getCompanyByBusinessId(company.businessId()))))));
     }
 }

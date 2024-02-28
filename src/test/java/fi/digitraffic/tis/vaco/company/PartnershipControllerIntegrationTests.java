@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
@@ -47,7 +48,7 @@ class PartnershipControllerIntegrationTests extends SpringBootIntegrationTestBas
         ImmutablePartnership createdPartnershipRequest = apiResponse(response, partnershipRequestType).data();
 
         assertAll("Base fields are stored properly",
-            () -> assertThat(createdPartnershipRequest.type(), equalTo(partnershipRequest.type())),
+            () -> assertThat(createdPartnershipRequest.type(), equalTo(PartnershipType.AUTHORITY_PROVIDER)),
             () -> assertThat(createdPartnershipRequest.partnerA().businessId(), equalTo(partnershipRequest.partnerABusinessId())),
             () -> assertThat(createdPartnershipRequest.partnerB().businessId(), equalTo(partnershipRequest.partnerBBusinessId())));
     }

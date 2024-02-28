@@ -5,8 +5,7 @@ import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
-import fi.digitraffic.tis.vaco.company.service.PartnershipService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.me.MeService;
@@ -37,25 +36,22 @@ public class QueueHandlerService {
     private final CachingService cachingService;
     private final MeService meService;
     private final MessagingService messagingService;
-    private final CompanyService companyService;
+    private final CompanyHierarchyService companyHierarchyService;
     private final EntryRepository entryRepository;
     private final EntryRequestMapper entryRequestMapper;
-    private final PartnershipService partnershipService;
 
     public QueueHandlerService(CachingService cachingService,
                                MeService meService,
                                EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
-                               CompanyService companyService,
-                               EntryRepository entryRepository,
-                               PartnershipService partnershipService) {
+                               CompanyHierarchyService companyHierarchyService,
+                               EntryRepository entryRepository) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.meService = Objects.requireNonNull(meService);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
         this.messagingService = Objects.requireNonNull(messagingService);
-        this.companyService = Objects.requireNonNull(companyService);
+        this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
-        this.partnershipService = Objects.requireNonNull(partnershipService);
     }
 
     @Transactional
@@ -96,15 +92,15 @@ public class QueueHandlerService {
             if ("FINAP".equals(callerName)) {
                 String finapOperator = operatorName.asText();
                 ImmutableCompany operatorCompany = ImmutableCompany.of(businessId, finapOperator);
-                Optional<Company> createdCompany = companyService.createCompany(operatorCompany);
+                Optional<Company> createdCompany = companyHierarchyService.createCompany(operatorCompany);
 
                 createdCompany.ifPresent(newOperator -> {
                     logger.info("New company registration from FINAP: {} / {}", businessId, finapOperator);
 
-                    Optional<Company> fintrafficOrg = companyService.findByBusinessId(FINTRAFFIC_BUSINESS_ID);
+                    Optional<Company> fintrafficOrg = companyHierarchyService.findByBusinessId(FINTRAFFIC_BUSINESS_ID);
                     fintrafficOrg.ifPresent(fintraffic -> {
                         logger.debug("Registering partnership between Fintraffic ({}) and FINAP originated operator {} / {}", fintraffic.businessId(), businessId, finapOperator);
-                        partnershipService.create(PartnershipType.AUTHORITY_PROVIDER, fintraffic, newOperator);
+                        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, fintraffic, newOperator);
                     });
                 });
             } else {
@@ -120,9 +116,11 @@ public class QueueHandlerService {
     }
 
     public Optional<Entry> findEntry(String publicId, boolean skipErrorsField) {
-        return cachingService.cacheEntry(
-            cachingService.keyForEntry(publicId, skipErrorsField),
-            key -> entryRepository.findByPublicId(publicId, skipErrorsField).orElse(null));
+        return entryRepository.findByPublicId(publicId, skipErrorsField)
+            .map(e -> {
+                cachingService.invalidateEntry(e);
+                return e;
+            });
     }
 
     public Entry getEntry(String publicId, boolean skipErrorsField) {
@@ -144,7 +142,7 @@ public class QueueHandlerService {
     public List<Entry> getAllEntriesVisibleForCurrentUser(boolean full) {
         Set<String> allAccessibleBusinessIds = new HashSet<>();
         meService.findCompanies().forEach(company ->
-            allAccessibleBusinessIds.addAll(companyService.listAllChildren(company).keySet()));
+            allAccessibleBusinessIds.addAll(companyHierarchyService.listAllChildren(company).keySet()));
 
         List<Entry> entries = entryRepository.findAllForBusinessIds(allAccessibleBusinessIds, full);
         entries.forEach(entry -> cachingService.cacheEntry(

@@ -87,7 +87,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     }
 
     private Entry createEntryForTesting() {
-        return entryRepository.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL_4_0_0)).build());
+        return entryRepository.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)).build());
     }
 
     @Test
@@ -105,7 +105,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
             task,
             // DownloadRule produces just a single file so this is OK
             Set.of(TestObjects.aRuleset()
-                .identifyingName(RuleName.GTFS_CANONICAL_4_0_0)
+                .identifyingName(RuleName.GTFS_CANONICAL)
                 .description("running rule from tests")
                 .category(Category.SPECIFIC)
                 .format(TransitDataFormat.GTFS)
@@ -125,14 +125,14 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         ValidationRuleJobMessage message = messages.get(0);
         // S3 path references are correctly set
         // NOTE: the task name repeats the matching task name on purpose
-        assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL_4_0_0 + "/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/input"));
-        assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL_4_0_0 + "/rules/" + RuleName.GTFS_CANONICAL_4_0_0 + "/output"));
+        assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL + "/rules/" + RuleName.GTFS_CANONICAL + "/input"));
+        assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL + "/rules/" + RuleName.GTFS_CANONICAL + "/output"));
         assertThat(message.source(), equalTo(RulesetSubmissionService.VALIDATE_TASK));
     }
 
     @NotNull
     private static String createSqsQueue() {
-        String testQueueName = MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL_4_0_0);
+        String testQueueName = MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL);
         CreateQueueResponse r = sqsClient.createQueue(CreateQueueRequest.builder().queueName(testQueueName).build());
         return testQueueName;
     }

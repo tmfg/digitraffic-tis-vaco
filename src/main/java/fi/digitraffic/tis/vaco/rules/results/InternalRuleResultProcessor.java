@@ -10,7 +10,6 @@ import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +26,11 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
     private final PackagesService packagesService;
     private final TaskService taskService;
 
-    public InternalRuleResultProcessor(VacoProperties vacoProperties, PackagesService packagesService, S3Client s3Client, TaskService taskService, FindingService findingService) {
+    public InternalRuleResultProcessor(VacoProperties vacoProperties,
+                                       PackagesService packagesService,
+                                       S3Client s3Client,
+                                       TaskService taskService,
+                                       FindingService findingService) {
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -38,16 +41,19 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
         // use downloaded result file as is instead of repackaging the zip
         ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
         if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
-            throw new RuleExecutionException("Entry " + resultMessage.entryId() + " internal task " + task.name() + " does not contain 'result' package.");
-        }
-        String sourceFile = packages.get("result").get(0);
-        S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
-        packagesService.registerPackage(ImmutablePackage.of(
-            task.id(),
-            "result",
-            dlFile.toString()));
-        taskService.markStatus(entry, task, Status.SUCCESS);
+            logger.warn("Entry {} internal task {} does not contain 'result' package.", resultMessage.entryId(), task.name());
+            taskService.markStatus(entry, task, Status.FAILED);
+            return false;
+        } else {
+            String sourceFile = packages.get("result").get(0);
+            S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
+            packagesService.registerPackage(ImmutablePackage.of(
+                task.id(),
+                "result",
+                dlFile.toString()));
+            taskService.markStatus(entry, task, Status.SUCCESS);
 
-        return true;
+            return true;
+        }
     }
 }

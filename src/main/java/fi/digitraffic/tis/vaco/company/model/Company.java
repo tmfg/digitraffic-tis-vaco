@@ -25,7 +25,6 @@ public interface Company {
     String name();
 
     @Value.Default
-    @JsonView(DataVisibility.Internal.class)
     default List<String> contactEmails() {
         return List.of();
     }
@@ -36,6 +35,5 @@ public interface Company {
     }
 
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
     String adGroupId();
 }

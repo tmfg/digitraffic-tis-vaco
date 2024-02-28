@@ -8,7 +8,7 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.service.CompanyService;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -51,7 +51,7 @@ class EntryRepositoryTests extends SpringBootIntegrationTestBase {
     private RulesetService rulesetService;
 
     @Autowired
-    private CompanyService companyService;
+    private CompanyHierarchyService companyHierarchyService;
 
     private ImmutableEntry entry;
     private JsonNode metadata;
@@ -113,7 +113,7 @@ class EntryRepositoryTests extends SpringBootIntegrationTestBase {
     @Test
     void entryWithConversionsGetsGeneratedValidationAndConversionTasks() {
         // matching Ruleset must exist for the task to be generated
-        Optional<Company> org = companyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID);
+        Optional<Company> org = companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID);
         assertThat(org.isPresent(), equalTo(true));
         Ruleset bananasRule = rulesetService.createRuleset(
             ImmutableRuleset.of(

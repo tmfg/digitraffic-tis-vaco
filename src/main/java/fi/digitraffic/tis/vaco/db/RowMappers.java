@@ -13,6 +13,7 @@ import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
+import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
@@ -40,7 +41,11 @@ import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.ui.EntryStateService;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
+import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
+import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import org.postgresql.util.PGobject;
@@ -99,13 +104,14 @@ public final class RowMappers {
             .id(rs.getLong(alias + "id"))
             .businessId(rs.getString(alias + "business_id"))
             .name(rs.getString(alias + "name"))
+            .language(rs.getString(alias + "language"))
             .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
             .adGroupId(rs.getString(alias + "ad_group_id"))
             .build();
 
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
-    public static final RowMapper<ImmutablePartnership> PARTNERSHIP = (rs, rowNum) -> ImmutablePartnership.builder()
+    public static final RowMapper<Partnership> PARTNERSHIP = (rs, rowNum) -> ImmutablePartnership.builder()
             .type(PartnershipType.forField(rs.getString("type")))
             .partnerA(ALIASED_COMPANY.apply("partner_a_").mapRow(rs, rowNum))
             .partnerB(ALIASED_COMPANY.apply("partner_b_").mapRow(rs, rowNum))
@@ -190,6 +196,7 @@ public final class RowMappers {
     public static RowMapper<IntermediateHierarchyLink> INTERMEDIATE_HIERARCHY_LINK = (rs, rowNum) -> ImmutableIntermediateHierarchyLink.builder()
         .parentId(nullableLong(rs, "parent_id"))
         .childId(nullableLong(rs, "child_id"))
+        .company(COMPANY.mapRow(rs, rowNum))
         .build();
 
     private static Long nullableLong(ResultSet rs, String columnLabel) throws SQLException {
@@ -219,6 +226,22 @@ public final class RowMappers {
             .status(Status.forField(rs.getString("status")))
             .build();
     }
+
+    public static final RowMapper<CompanyLatestEntry> COMPANY_LATEST_ENTRY = (rs, rowNum) -> ImmutableCompanyLatestEntry.builder()
+        .companyName(rs.getString("company_name"))
+        .businessId(rs.getString("business_id"))
+        .publicId(rs.getString("public_id"))
+        .format(rs.getString("format"))
+        .convertedFormat(rs.getString("converted_format"))
+        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
+        .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
+        .build();
+
+    public static final RowMapper<CompanyWithFormatSummary> COMPANY_WITH_FORMATS = (rs, rowNum) -> ImmutableCompanyWithFormatSummary.builder()
+        .businessId(rs.getString("business_id"))
+        .name(rs.getString("name"))
+        .formatSummary(rs.getString("format_summary"))
+        .build();
 
     @SuppressWarnings("unchecked")
     private static RowMapper<ImmutableValidationInput> mapValidationInput(ObjectMapper objectMapper) {

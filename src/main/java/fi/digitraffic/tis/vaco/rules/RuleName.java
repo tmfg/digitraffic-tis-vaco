@@ -5,25 +5,23 @@ import java.util.Set;
 
 public final class RuleName {
     private RuleName() {}
-    public static final String GTFS_CANONICAL_4_0_0 = "gtfs.canonical.v4_0_0";
-    public static final String GTFS_CANONICAL_4_1_0 = "gtfs.canonical.v4_1_0";
-    public static final String NETEX_ENTUR_1_0_1 = "netex.entur.v1_0_1";
-    public static final String NETEX2GTFS_ENTUR_2_0_6 = "netex2gtfs.entur.v2_0_6";
-    public static final String GTFS2NETEX_FINTRAFFIC_1_0_0 = "gtfs2netex.fintraffic.v1_0_0";
+    public static final String GTFS_CANONICAL_4_0_0 = "gtfs.canonical";
+    public static final String GTFS_CANONICAL = "gtfs.canonical";
+    public static final String NETEX_ENTUR = "netex.entur";
+    public static final String NETEX2GTFS_ENTUR = "netex2gtfs.entur";
+    public static final String GTFS2NETEX_FINTRAFFIC = "gtfs2netex.fintraffic";
 
     public static final List<String> ALL_EXTERNAL_VALIDATION_RULES = List.of(
-        GTFS_CANONICAL_4_0_0,
-        GTFS_CANONICAL_4_1_0,
-        NETEX_ENTUR_1_0_1);
+        GTFS_CANONICAL,
+        NETEX_ENTUR);
 
     public static final Set<String> VALIDATION_RULES = Set.of(
-        RuleName.GTFS_CANONICAL_4_0_0,
-        RuleName.GTFS_CANONICAL_4_1_0,
-        RuleName.NETEX_ENTUR_1_0_1
+        RuleName.GTFS_CANONICAL,
+        RuleName.NETEX_ENTUR
     );
 
     public static Set<String> CONVERSION_RULES = Set.of(
-        RuleName.GTFS2NETEX_FINTRAFFIC_1_0_0,
-        RuleName.NETEX2GTFS_ENTUR_2_0_6
+        RuleName.GTFS2NETEX_FINTRAFFIC,
+        RuleName.NETEX2GTFS_ENTUR
     );
 }

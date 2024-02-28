@@ -202,6 +202,19 @@ public final class Streams {
     }
 
     /**
+     * {@link Set} overload of {@link #collect(Collection, Function)} to keep the type as close to original as possible.
+
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Set of converted objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
+     */
+    public static <I, O> Set<O> collect(Set<I> objects, Function<? super I, O> mapper) {
+        return map(objects, mapper).toSet();
+    }
+
+    /**
      * Create one concatenated stream from given collections. Non-recursive, eager implementation.
      * @param first First collection to wrap. This is provided separately to make the compiler do some helpful work for
      *              us.
