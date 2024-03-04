@@ -38,7 +38,7 @@
         <awspringcloud.version>3.0.2</awspringcloud.version>
         <azurespring.version>5.8.0</azurespring.version>
         <oauth2server.version>3.2.2</oauth2server.version>
-        <immutables.version>2.10.0</immutables.version>
+        <immutables.version>2.10.1</immutables.version>
         <jackson.version>2.16.1</jackson.version>
         <mockito.version>5.8.0</mockito.version>
         <caffeine.version>3.1.8</caffeine.version>
