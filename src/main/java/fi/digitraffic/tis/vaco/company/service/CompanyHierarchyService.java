@@ -140,7 +140,7 @@ public class CompanyHierarchyService {
     }
 
     public Optional<Partnership> createPartnership(PartnershipType partnershipType, Company partnerA, Company partnerB) {
-        if (companyHierarchyRepository.findByIds(partnershipType, partnerA.id(), partnerB.id()).isPresent()) {
+        if (findPartnership(partnerA, partnerB).isPresent()) {
             return Optional.empty();
         }
         Optional<Partnership> partnership = Optional.of(companyHierarchyRepository.create(
@@ -179,5 +179,9 @@ public class CompanyHierarchyService {
         companyHierarchyRepository.deletePartnership(partnership);
         reloadRootHierarchies();
         return getHierarchiesContainingCompany(partnership.partnerB().businessId());
+    }
+
+    public Optional<Partnership> findPartnership(Company from, Company to) {
+        return companyHierarchyRepository.findByIds(PartnershipType.AUTHORITY_PROVIDER, from.id(), to.id());
     }
 }

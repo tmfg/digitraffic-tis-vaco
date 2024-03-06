@@ -12,7 +12,6 @@ import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.AfterEach;
@@ -24,6 +23,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -43,7 +46,6 @@ class QueueHandlerServiceTests {
     private QueueHandlerService queueHandlerService;
 
     private ObjectMapper objectMapper;
-    private EntryRequestMapper entryRequestMapper;
 
     @Mock
     private CachingService cachingService;
@@ -59,6 +61,9 @@ class QueueHandlerServiceTests {
 
     @Mock
     private CompanyHierarchyService companyHierarchyService;
+
+    @Mock
+    private TransactionTemplate transactionTemplate;
 
     @Captor
     private ArgumentCaptor<DelegationJobMessage> delegationJobCaptor;
@@ -76,15 +81,14 @@ class QueueHandlerServiceTests {
     void setUp() {
         // simple dependencies don't need to be mocked
         objectMapper = new ObjectMapper();
-        entryRequestMapper = new EntryRequestMapper(objectMapper);
 
         queueHandlerService = new QueueHandlerService(
             cachingService,
             meService,
             entryService,
-            entryRequestMapper,
             messagingService,
-            companyHierarchyService);
+            companyHierarchyService,
+            transactionTemplate);
 
         operatorBusinessId = "123-4";
         operatorName = "Oppypop Oy";
@@ -111,7 +115,8 @@ class QueueHandlerServiceTests {
             meService,
             entryService,
             messagingService,
-            companyHierarchyService);
+            companyHierarchyService,
+            transactionTemplate);
     }
 
     private <T> Answer<T> withArg(int i) {
@@ -125,6 +130,7 @@ class QueueHandlerServiceTests {
     @Test
     void autocreatesCompanyOnNewEntryIfSourceIsFinap() {
         // given
+        givenTransactionRunsSuccessfully();
         given(entryService.create(any(Entry.class))).willAnswer(withArg(0));
         given(companyHierarchyService.createCompany(any(ImmutableCompany.class))).willAnswer(withArgInOptional(0));
         given(companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID)).willReturn(Optional.of(fintrafficCompany));
@@ -149,6 +155,7 @@ class QueueHandlerServiceTests {
     @Test
     void wontAutocreateCompanyIfCallerIsNotFinap() {
         // given
+        givenTransactionRunsSuccessfully();
         given(entryService.create(any(Entry.class))).willAnswer(withArg(0));
         givenCachesResult();
 
@@ -163,6 +170,7 @@ class QueueHandlerServiceTests {
     @Test
     void wontAutocreateCompanyIfOperatorNameIsMissing() {
         // given
+        givenTransactionRunsSuccessfully();
         given(entryService.create(any(Entry.class))).willAnswer(withArg(0));
         givenCachesResult();
 
@@ -172,6 +180,27 @@ class QueueHandlerServiceTests {
 
         // then
         thenSubmitProcessingJob(result);
+    }
+
+    private void givenTransactionRunsSuccessfully() {
+        given(transactionTemplate.execute(any(TransactionCallback.class))).will(a -> {
+            return ((TransactionCallback<Entry>) a.getArgument(0)).doInTransaction(new TransactionStatus() {
+                @Override
+                public Object createSavepoint() throws TransactionException {
+                    return null;
+                }
+
+                @Override
+                public void rollbackToSavepoint(Object savepoint) throws TransactionException {
+
+                }
+
+                @Override
+                public void releaseSavepoint(Object savepoint) throws TransactionException {
+
+                }
+            });
+        });
     }
 
     private void thenSubmitProcessingJob(Entry result) {

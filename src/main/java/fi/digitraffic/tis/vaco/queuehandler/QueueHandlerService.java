@@ -12,12 +12,11 @@ import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.HashSet;
 import java.util.List;
@@ -37,27 +36,27 @@ public class QueueHandlerService {
     private final MessagingService messagingService;
     private final CompanyHierarchyService companyHierarchyService;
     private final EntryService entryService;
-    private final EntryRequestMapper entryRequestMapper;
+    private final TransactionTemplate transactionTemplate;
 
     public QueueHandlerService(CachingService cachingService,
                                MeService meService,
                                EntryService entryService,
-                               EntryRequestMapper entryRequestMapper,
                                MessagingService messagingService,
-                               CompanyHierarchyService companyHierarchyService) {
+                               CompanyHierarchyService companyHierarchyService,
+                               TransactionTemplate transactionTemplate) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.meService = Objects.requireNonNull(meService);
         this.entryService = Objects.requireNonNull(entryService);
-        this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
         this.messagingService = Objects.requireNonNull(messagingService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
+        this.transactionTemplate = Objects.requireNonNull(transactionTemplate);
     }
 
-    @Transactional
     public Entry processQueueEntry(Entry entry) {
-        autoregisterCompany(entry.metadata(), entry.businessId());
-
-        Entry result = entryService.create(entry);
+        Entry result = transactionTemplate.execute(status -> {
+            autoregisterCompany(entry.metadata(), entry.businessId());
+            return entryService.create(entry);
+        });
 
         logger.debug("Processing done for entry request and new entry created as {}, submitting to delegation", result.publicId());
 
