@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.ruleset;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
@@ -89,13 +90,25 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Ruleset enturNetex2GtfsConverter = rulesetService.findByName(RuleName.NETEX2GTFS_ENTUR).get();
         Ruleset fintrafficGtfs2NetexConverter = rulesetService.findByName(RuleName.GTFS2NETEX_FINTRAFFIC).get();
 
+        // XXX: Old ones are kept until we have cleaned up rest of the data. See TIS-193
+        Ruleset oldVersionedCanonicalGtfsValidator400 = rulesetService.findByName(RuleName.GTFS_CANONICAL + ".v4_0_0").get();
+        Ruleset oldVersionedCanonicalGtfsValidator410 = rulesetService.findByName(RuleName.GTFS_CANONICAL + ".v4_1_0").get();
+        Ruleset oldEnturNetexValidator101 = rulesetService.findByName(RuleName.NETEX_ENTUR + ".v1_0_1").get();
+        Ruleset oldEnturNetex2GtfsConverter206 = rulesetService.findByName(RuleName.NETEX2GTFS_ENTUR + ".v2_0_6").get();
+        Ruleset oldFintrafficGtfs2NetexConverter100 = rulesetService.findByName(RuleName.GTFS2NETEX_FINTRAFFIC + ".v1_0_0").get();
         assertThat(
-            rulesetService.selectRulesets(fintraffic.businessId()),
-            equalTo(Set.of(
-                canonicalGtfsValidator,
-                enturNetexValidator,
-                enturNetex2GtfsConverter,
-                fintrafficGtfs2NetexConverter)));
+            Streams.collect(rulesetService.selectRulesets(fintraffic.businessId()), Ruleset::identifyingName),
+            equalTo(Streams.collect(Set.of(
+                    canonicalGtfsValidator,
+                    enturNetexValidator,
+                    enturNetex2GtfsConverter,
+                    fintrafficGtfs2NetexConverter,
+                    oldVersionedCanonicalGtfsValidator400,
+                    oldVersionedCanonicalGtfsValidator410,
+                    oldEnturNetexValidator101,
+                    oldEnturNetex2GtfsConverter206,
+                    oldFintrafficGtfs2NetexConverter100),
+                Ruleset::identifyingName)));
     }
 
     @Test
