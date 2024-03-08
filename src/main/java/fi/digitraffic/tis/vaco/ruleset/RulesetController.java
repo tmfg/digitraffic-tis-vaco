@@ -27,7 +27,7 @@ public class RulesetController {
 
     public RulesetController(RulesetService rulesetService, MeService meService) {
         this.rulesetService = Objects.requireNonNull(rulesetService);
-        this.meService = meService;
+        this.meService = Objects.requireNonNull(meService);
     }
 
     @GetMapping(path = "")

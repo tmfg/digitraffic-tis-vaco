@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
-import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
+import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +25,7 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void canFetchEntryStateWithPublicId() throws Exception {
-        EntryRequest request = TestObjects.aValidationEntryRequest().build();
+        CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
         JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken("Joh Rnado");
         SecurityContextHolder.getContext().setAuthentication(johRnado);
         injectGroupIdToCompany(johRnado);

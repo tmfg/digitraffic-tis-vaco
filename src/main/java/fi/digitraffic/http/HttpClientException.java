@@ -1,8 +1,8 @@
-package fi.digitraffic.tis.http;
+package fi.digitraffic.http;
 
-import fi.digitraffic.tis.exceptions.LibraryException;
+import fi.digitraffic.exceptions.LibraryException;
 
-class HttpClientException extends LibraryException {
+public class HttpClientException extends LibraryException {
     public HttpClientException(String message) {
         super(message);
     }

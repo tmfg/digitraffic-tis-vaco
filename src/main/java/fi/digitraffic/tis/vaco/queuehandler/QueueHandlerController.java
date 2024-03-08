@@ -7,10 +7,12 @@ import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
+import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -29,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -44,21 +45,28 @@ public class QueueHandlerController {
 
     private final MeService meService;
     private final QueueHandlerService queueHandlerService;
+    private final EntryService entryService;
     private final VacoProperties vacoProperties;
+    private final EntryRequestMapper entryRequestMapper;
 
     public QueueHandlerController(MeService meService,
                                   QueueHandlerService queueHandlerService,
-                                  VacoProperties vacoProperties) {
+                                  EntryService entryService,
+                                  VacoProperties vacoProperties,
+                                  EntryRequestMapper entryRequestMapper) {
         this.meService = Objects.requireNonNull(meService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
+        this.entryService = Objects.requireNonNull(entryService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
     }
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody EntryRequest entryRequest) {
-        Entry entry = queueHandlerService.processQueueEntry(entryRequest);
-        return ResponseEntity.ok(asQueueHandlerResource(entry));
+    public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
+        Entry converted = entryRequestMapper.toEntry(createEntryRequest);
+        Entry processed = queueHandlerService.processQueueEntry(converted);
+        return ResponseEntity.ok(asQueueHandlerResource(processed));
     }
 
     @GetMapping(path = "")
@@ -76,9 +84,7 @@ public class QueueHandlerController {
     @GetMapping(path = "/{publicId}")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Entry>> fetchEntry(@PathVariable("publicId") String publicId) {
-        Optional<Entry> entry = queueHandlerService.findEntry(publicId);
-
-        return entry
+        return entryService.findEntry(publicId, true)
             .filter(meService::isAllowedToAccess)
             .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
             .orElse(Responses.notFound(String.format("Entry with public id %s does not exist", publicId)));

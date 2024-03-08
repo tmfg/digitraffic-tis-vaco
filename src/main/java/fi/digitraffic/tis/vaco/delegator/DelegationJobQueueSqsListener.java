@@ -87,7 +87,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, stopsAndQuaysRule.execute(entry).join());
                 } else if (name.equals(RulesetSubmissionService.VALIDATE_TASK)) {
                     logger.debug("Internal category {} detected, delegating...", name);
-                    taskService.findTask(entry.id(), name)
+                    taskService.findTask(entry.publicId(), name)
                         .ifPresent(t -> {
                             taskService.trackTask(entry, t, ProcessingState.START);
                             validationJob(entry);
@@ -95,7 +95,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                         });
                 } else if (name.equals(RulesetSubmissionService.CONVERT_TASK)) {
                     logger.debug("Internal category {} detected, delegating...", name);
-                    taskService.findTask(entry.id(), name)
+                    taskService.findTask(entry.publicId(), name)
                         .ifPresent(t -> {
                             taskService.trackTask(entry, t, ProcessingState.START);
                             conversionJob(entry);

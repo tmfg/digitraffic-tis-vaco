@@ -62,4 +62,11 @@ class MessageMapperTests {
             );
         });
     }
+
+    @Test
+    void convertsRequestWithNoRecipientsToEmptyList() {
+        List<SendEmailRequest> reqs = mapper.toSendEmailRequests(ImmutableRecipients.builder().build(), ImmutableMessage.of("sub", "msg"));
+
+        assertThat(reqs.size(), equalTo(0));
+    }
 }

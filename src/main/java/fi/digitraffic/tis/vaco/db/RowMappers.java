@@ -24,10 +24,12 @@ import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -40,7 +42,6 @@ import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.ui.EntryStateService;
-import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
@@ -117,11 +118,9 @@ public final class RowMappers {
             .partnerB(ALIASED_COMPANY.apply("partner_b_").mapRow(rs, rowNum))
             .build();
 
-    public static final Function<ObjectMapper, RowMapper<Entry>> ENTRY = RowMappers::mapQueueEntry;
-    public static final Function<ObjectMapper, RowMapper<ImmutableValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
-    public static final Function<ObjectMapper, RowMapper<ImmutableConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
-    public static final Function<ObjectMapper, RowMapper<AggregatedFinding>> UI_AGGREGATED_FINDINGS = RowMappers::mapUiAggregatedFinding;
-    public static final Function<ObjectMapper, RowMapper<ItemCounter>> UI_FINDING_COUNTERS = RowMappers::mapUiFindingCounters;
+    public static final Function<ObjectMapper, RowMapper<PersistentEntry>> PERSISTENT_ENTRY = RowMappers::mapEntryEntity;
+    public static final Function<ObjectMapper, RowMapper<ValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
+    public static final Function<ObjectMapper, RowMapper<ConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
 
     public static final RowMapper<Finding> FINDING = (rs, rowNum) -> ImmutableFinding.builder()
         .id(rs.getLong("id"))
@@ -193,7 +192,7 @@ public final class RowMappers {
         .enabled(rs.getBoolean("enabled"))
         .build();
 
-    public static RowMapper<IntermediateHierarchyLink> INTERMEDIATE_HIERARCHY_LINK = (rs, rowNum) -> ImmutableIntermediateHierarchyLink.builder()
+    public static final RowMapper<IntermediateHierarchyLink> INTERMEDIATE_HIERARCHY_LINK = (rs, rowNum) -> ImmutableIntermediateHierarchyLink.builder()
         .parentId(nullableLong(rs, "parent_id"))
         .childId(nullableLong(rs, "child_id"))
         .company(COMPANY.mapRow(rs, rowNum))
@@ -208,8 +207,8 @@ public final class RowMappers {
         }
     }
 
-    private static RowMapper<Entry> mapQueueEntry(ObjectMapper objectMapper) {
-        return (rs, rowNum) -> ImmutableEntry.builder()
+    private static RowMapper<PersistentEntry> mapEntryEntity(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutablePersistentEntry.builder()
             .id(rs.getLong("id"))
             .publicId(rs.getString("public_id"))
             .businessId(rs.getString("business_id"))
@@ -244,7 +243,7 @@ public final class RowMappers {
         .build();
 
     @SuppressWarnings("unchecked")
-    private static RowMapper<ImmutableValidationInput> mapValidationInput(ObjectMapper objectMapper) {
+    private static RowMapper<ValidationInput> mapValidationInput(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
             String name = rs.getString("name");
 
@@ -259,7 +258,7 @@ public final class RowMappers {
     }
 
     @SuppressWarnings("unchecked")
-    private static RowMapper<ImmutableConversionInput> mapConversionInput(ObjectMapper objectMapper) {
+    private static RowMapper<ConversionInput> mapConversionInput(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
             String name = rs.getString("name");
 
@@ -271,23 +270,6 @@ public final class RowMappers {
                     .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
                     .build();
         };
-    }
-
-    @SuppressWarnings("unchecked")
-    private static RowMapper<AggregatedFinding> mapUiAggregatedFinding(ObjectMapper objectMapper) {
-        return (rs, rowNum) -> ImmutableAggregatedFinding.builder()
-            .code(rs.getString("code"))
-            .severity(rs.getString("severity"))
-            .total(rs.getInt("total"))
-            .build();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static RowMapper<ItemCounter> mapUiFindingCounters(ObjectMapper objectMapper) {
-        return (rs, rowNum) -> ImmutableItemCounter.builder()
-            .name(rs.getString("name"))
-            .total(rs.getInt("total"))
-            .build();
     }
 
     /**

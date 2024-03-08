@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = { UniquePartners.Validator.class })
 public @interface UniquePartners {
-    // TODO: move to a proper centralized place for error messages
+
     String message() default "Provided partners' business ID are the same";
 
     Class<?>[] groups() default {};

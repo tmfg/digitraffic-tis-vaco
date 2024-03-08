@@ -2,12 +2,12 @@ package fi.digitraffic.tis.vaco.rules.internal;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
-import fi.digitraffic.tis.http.HttpClient;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -46,7 +46,7 @@ class DownloadRuleTests {
     private TaskService taskService;
 
     @Mock
-    private HttpClient httpClient;
+    private VacoHttpClient httpClient;
     @Mock
     private S3Client s3Client;
     @Mock
@@ -74,11 +74,11 @@ class DownloadRuleTests {
 
     @Test
     void ruleExecution() {
-        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs").id(9500000L);
+        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
         Task dlTask = ImmutableTask.of(-1L, DownloadRule.DOWNLOAD_SUBTASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
 
-        given(taskService.findTask(entry.id(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
+        given(taskService.findTask(entry.publicId(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(Optional.ofNullable(gtfsTestFile)));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);

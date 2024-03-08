@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.queuehandler.mapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Strings;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
+import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,13 +14,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 class EntryRequestMapperTests {
 
     private EntryRequestMapper entryRequestMapper;
-    private ImmutableEntryRequest entryRequest;
+    private ImmutableCreateEntryRequest entryRequest;
 
     @BeforeEach
     void setUp() {
         entryRequestMapper = new EntryRequestMapper(new ObjectMapper());
         // entry request with all required fields
-        entryRequest = ImmutableEntryRequest.builder()
+        entryRequest = ImmutableCreateEntryRequest.builder()
             .name("mapper tests")
             .format("gtfs")
             .url("http://fintraffic.example")

@@ -48,7 +48,7 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
     @Override
     public CompletableFuture<ResultMessage> execute(Entry entry) {
         return CompletableFuture.supplyAsync(() -> {
-            Optional<Task> task = taskService.findTask(entry.id(), STOPS_AND_QUAYS_TASK);
+            Optional<Task> task = taskService.findTask(entry.publicId(), STOPS_AND_QUAYS_TASK);
             return task.map(t -> {
                 Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
 

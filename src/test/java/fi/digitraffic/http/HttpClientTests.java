@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.http;
+package fi.digitraffic.http;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ class HttpClientTests {
 
     @BeforeEach
     void setUp() {
-        httpClient = new HttpClient();
+        httpClient = new HttpClient(ImmutableHttpClientConfiguration.builder().build());
     }
 
     @Test

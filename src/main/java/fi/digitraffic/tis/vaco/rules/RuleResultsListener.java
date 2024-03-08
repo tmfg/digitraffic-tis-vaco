@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.rules;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -47,6 +48,7 @@ public class RuleResultsListener {
     private final ObjectMapper objectMapper;
     private final TaskService taskService;
     private final QueueHandlerService queueHandlerService;
+    private final EntryService entryService;
     private final NetexEnturValidatorResultProcessor netexEnturValidator;
     private final GtfsCanonicalResultProcessor gtfsCanonicalValidator;
     private final SimpleResultProcessor simpleResultProcessor;
@@ -58,7 +60,7 @@ public class RuleResultsListener {
                                ObjectMapper objectMapper,
                                QueueHandlerService queueHandlerService,
                                TaskService taskService,
-                               NetexEnturValidatorResultProcessor netexEnturValidator,
+                               EntryService entryService, NetexEnturValidatorResultProcessor netexEnturValidator,
                                GtfsCanonicalResultProcessor gtfsCanonicalValidator,
                                SimpleResultProcessor simpleResultProcessor,
                                InternalRuleResultProcessor internalRuleResultProcessor, SummaryService summaryService) {
@@ -67,11 +69,12 @@ public class RuleResultsListener {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.taskService = Objects.requireNonNull(taskService);
+        this.entryService = Objects.requireNonNull(entryService);
         this.netexEnturValidator = Objects.requireNonNull(netexEnturValidator);
         this.gtfsCanonicalValidator = Objects.requireNonNull(gtfsCanonicalValidator);
         this.simpleResultProcessor = Objects.requireNonNull(simpleResultProcessor);
         this.internalRuleResultProcessor = Objects.requireNonNull(internalRuleResultProcessor);
-        this.summaryService = summaryService;
+        this.summaryService = Objects.requireNonNull(summaryService);
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.findings.poll-rate}")
@@ -115,7 +118,7 @@ public class RuleResultsListener {
                 logger.warn("Handling rule result failed due to unhandled exception", maybeEx);
             }
             // resubmit to processing queue to continue general logic
-            Optional<Entry> entry = queueHandlerService.findEntry(resultMessage.entryId());
+            Optional<Entry> entry = entryService.findEntry(resultMessage.entryId());
             entry.ifPresent(value -> messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
                     .entry(queueHandlerService.getEntry(value.publicId(), true))
                     .retryStatistics(ImmutableRetryStatistics.of(5))
@@ -148,17 +151,17 @@ public class RuleResultsListener {
     }
 
     private boolean processRule(String ruleName, ResultMessage resultMessage, ResultProcessor resultProcessor) {
-        Optional<Entry> e = queueHandlerService.findEntry(resultMessage.entryId());
+        Optional<Entry> e = entryService.findEntry(resultMessage.entryId());
 
         if (e.isPresent()) {
             Entry entry = e.get();
-            Optional<Task> task = taskService.findTask(entry.id(), resultMessage.ruleName());
+            Optional<Task> task = taskService.findTask(entry.publicId(), resultMessage.ruleName());
             return task.map(t -> {
                 Task tracked = taskService.trackTask(entry, t, ProcessingState.UPDATE);
                 try {
                     logger.info("Processing result from {} for entry {}/task {}", ruleName, entry.publicId(), tracked.name());
                     boolean result = resultProcessor.processResults(resultMessage, entry, tracked);
-                    Task taskWithLatestStatus = taskService.findTask(entry.id(), resultMessage.ruleName()).get();
+                    Task taskWithLatestStatus = taskService.findTask(entry.publicId(), resultMessage.ruleName()).get();
 
                     if (result && Status.isNotCompleted(taskWithLatestStatus.status())) {
                         tracked = taskService.markStatus(entry, tracked, Status.SUCCESS);

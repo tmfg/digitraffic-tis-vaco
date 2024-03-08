@@ -12,33 +12,15 @@ client_id={{clientId}}&grant_type=client_credentials&scope={{scope}}&client_secr
 
 ###
 
-POST {{serviceRootUri}}/api/queue
+POST {{serviceRootUri}}/api/feature-flags/emails.entryCompleteEmail/enable
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}
-
-{
-  "url": "https://tvv.fra1.digitaloceanspaces.com/237.zip",
-  "format": "gtfs",
-  "businessId": "2942108-7",
-  "etag": "etagg",
-  "name": "splörörröö - GTFS",
-  "validations": [
-    {
-      "name": "gtfs.canonical",
-      "config": {}
-    }
-  ],
-  "conversions": [
-  ],
-  "metadata": {}
-}
-
-> {%
-    client.global.set("entry_details_link", response.body.links.refs.self.href)
-%}
 
 ###
 
-GET {{entry_details_link}}
+POST {{serviceRootUri}}/api/feature-flags/emails.feedStatusEmail/enable
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}
+
+
+

@@ -3,19 +3,20 @@ package fi.digitraffic.tis.vaco;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
+import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;
+import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
-import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -33,7 +34,6 @@ public class TestObjects {
 
     public static ImmutableEntry.Builder anEntry(String format) {
         return ImmutableEntry.builder()
-            .id(new Random().nextLong())
             .name("testName")
             .format(format)
             .url("https://testfile")
@@ -41,8 +41,17 @@ public class TestObjects {
             .businessId(Constants.FINTRAFFIC_BUSINESS_ID);
     }
 
-    public static ImmutableEntryRequest.Builder aValidationEntryRequest() {
-        return ImmutableEntryRequest.builder()
+    public static ImmutablePersistentEntry.Builder persistentEntry(String format) {
+        return ImmutablePersistentEntry.builder()
+            .name("testName")
+            .format(format)
+            .url("https://testfile")
+            .publicId(NanoIdUtils.randomNanoId())
+            .businessId(Constants.FINTRAFFIC_BUSINESS_ID);
+    }
+
+    public static ImmutableCreateEntryRequest.Builder aValidationEntryRequest() {
+        return ImmutableCreateEntryRequest.builder()
             .format("gtfs")
             .name("fileName")
             .url("https://example.fi")
@@ -91,7 +100,7 @@ public class TestObjects {
     public static ImmutableTask.Builder aTask(Entry entry) {
         return ImmutableTask.builder()
             .id(new Random().nextLong())
-            .entryId(entry.id())
+            .entryId(new Random().nextLong())
             .name("task:name:" + UUID.randomUUID())
             .priority(new Random().nextInt());
     }
@@ -141,4 +150,5 @@ public class TestObjects {
 
         return new JwtAuthenticationToken(jwt);
     }
+
 }

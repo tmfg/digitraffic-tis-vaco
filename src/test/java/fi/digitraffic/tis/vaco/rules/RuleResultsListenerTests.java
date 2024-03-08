@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
@@ -36,6 +37,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -58,6 +60,7 @@ class RuleResultsListenerTests {
     @Mock private MessagingService messagingService;
     @Mock private FindingService findingService;
     @Mock private QueueHandlerService queueHandlerService;
+    @Mock private EntryService entryService;
     @Mock private TaskService taskService;
     @Mock private NetexEnturValidatorResultProcessor netexEnturValidator;
     @Mock private GtfsCanonicalResultProcessor gtfsCanonicalValidator;
@@ -77,6 +80,7 @@ class RuleResultsListenerTests {
             objectMapper,
             queueHandlerService,
             taskService,
+            entryService,
             netexEnturValidator,
             gtfsCanonicalValidator,
             simpleResultProcessor,
@@ -90,6 +94,7 @@ class RuleResultsListenerTests {
             messagingService,
             findingService,
             queueHandlerService,
+            entryService,
             taskService,
             netexEnturValidator,
             gtfsCanonicalValidator,
@@ -138,7 +143,7 @@ class RuleResultsListenerTests {
 
     @NotNull
     private static Entry entryForRule(String ruleName) {
-        return entryWithTask(e -> ImmutableTask.of(e.id(), ruleName, 100).withId(9_000_000L));
+        return entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), ruleName, 100).withId(9_000_000L));
     }
 
     private void givenMessageIsInQueue(String queueName, Message gtfs2netexMessage) {
@@ -166,11 +171,11 @@ class RuleResultsListenerTests {
 
     @NotNull
     private BDDMockito.BDDMyOngoingStubbing<Optional<Entry>> givenFindEntry(Entry entry) {
-        return given(queueHandlerService.findEntry(entry.publicId()));
+        return given(entryService.findEntry(entry.publicId()));
     }
 
     private BDDMockito.BDDMyOngoingStubbing<Optional<Task>> givenFindTask(String ruleName, Entry entry) {
-        return given(taskService.findTask(entry.id(), ruleName));
+        return given(taskService.findTask(entry.publicId(), ruleName));
     }
 
     /**

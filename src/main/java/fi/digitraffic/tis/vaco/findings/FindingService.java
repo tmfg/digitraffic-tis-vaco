@@ -33,10 +33,6 @@ public class FindingService {
         }).toList());
     }
 
-    public boolean hasErrors(Entry entry) {
-        return findingRepository.hasErrors(entry);
-    }
-
     public Map<String, Long> summarizeFindingsSeverities(Entry entry, Task task) {
         return findingRepository.getSeverityCounts(entry, task);
     }

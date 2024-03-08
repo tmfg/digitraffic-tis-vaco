@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.packages;
 
-import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
+import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ContentDisposition;
@@ -23,12 +23,15 @@ import java.util.Objects;
 public class PackagesController {
 
     private final PackagesService packagesService;
-    private final QueueHandlerService queueHandlerService;
+    private final EntryService entryService;
+    private final TaskService taskService;
 
     public PackagesController(PackagesService packagesService,
-                              QueueHandlerService queueHandlerService) {
+                              EntryService entryService,
+                              TaskService taskService) {
         this.packagesService = Objects.requireNonNull(packagesService);
-        this.queueHandlerService = queueHandlerService;
+        this.entryService = Objects.requireNonNull(entryService);
+        this.taskService = Objects.requireNonNull(taskService);
     }
 
     @GetMapping(path = "/{entryId}/{taskName}/{packageName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -37,9 +40,10 @@ public class PackagesController {
         @PathVariable("taskName") String taskName,
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
-        return queueHandlerService.findEntry(entryPublicId)
-            .flatMap(e -> Streams.filter(e.tasks(), t -> t.name().equals(taskName))
-                    .findFirst()
+
+        return entryService.findEntry(entryPublicId)
+            .flatMap(e ->
+                taskService.findTask(entryPublicId, taskName)
                     .flatMap(t -> packagesService.downloadPackage(e, t, packageName)))
             .map(filePath -> {
                 ContentDisposition contentDisposition = ContentDisposition.builder("inline")

@@ -4,14 +4,15 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,8 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Autowired
     EntryRepository entryRepository;
     @Autowired
+    PersistentEntryMapper persistentEntryMapper;
+    @Autowired
     private TaskRepository taskRepository;
     @Autowired
     private TaskService taskService;
@@ -44,9 +47,9 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void roundtrippingPackageEntityWorks() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
-        Entry createdEntry = entryRepository.create(entry);
+        PersistentEntry createdEntry = entryRepository.create(entry);
         Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
-        Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
+        Package saved = packagesService.createPackage(persistentEntryMapper.toEntryBuilder(createdEntry).build(), task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Package> loaded = packagesService.findPackage(task, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
@@ -57,9 +60,9 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void providesHelperForDownloadingReferencedFile() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
-        Entry createdEntry = entryRepository.create(entry);
+        PersistentEntry createdEntry = entryRepository.create(entry);
         Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
-        Package saved = packagesService.createPackage(createdEntry, task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
+        Package saved = packagesService.createPackage(persistentEntryMapper.toEntryBuilder(createdEntry).build(), task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Path> loaded = packagesService.downloadPackage(entry, task, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
@@ -75,7 +78,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
      * @param task
      * @return
      */
-    private Task forceTaskCreation(Entry createdEntry, Task task) {
+    private Task forceTaskCreation(PersistentEntry createdEntry, Task task) {
         taskRepository.createTasks(List.of(task));
         return taskService.findTask(createdEntry.id(), task.name()).get();
     }

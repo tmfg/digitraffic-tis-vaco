@@ -3,11 +3,13 @@ package fi.digitraffic.tis.vaco.entries;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.FindingRepository;
+import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +22,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Random;
 
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -32,7 +35,9 @@ class EntryServiceTests {
     @Mock
     private TaskService taskService;
     @Mock
-    private FindingService findingService;
+    private FindingRepository findingRepository;
+    @Mock
+    private PackagesService packagesService;
     @Mock
     private CachingService cachingService;
     @Mock
@@ -43,18 +48,25 @@ class EntryServiceTests {
     // InOrder enables reusing simple verifications in order
     private InOrder inOrderRepository;
     private InOrder inOrderCaching;
+    private PersistentEntryMapper persistentEntryMapper = new PersistentEntryMapper();
 
     @BeforeEach
     void setUp() {
-        entryService = new EntryService(entryRepository, cachingService, queueHandlerService, taskService);
-        entry = ImmutableEntry.copyOf(TestObjects.anEntry().id(99999999L).build());
+        entryService = new EntryService(
+            entryRepository,
+            findingRepository,
+            cachingService,
+            taskService,
+            packagesService,
+            persistentEntryMapper);
+        entry = ImmutableEntry.copyOf(TestObjects.anEntry().build());
         inOrderRepository = Mockito.inOrder(entryRepository);
         inOrderCaching = Mockito.inOrder(cachingService);
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(entryRepository, taskService, findingService, cachingService, queueHandlerService);
+        verifyNoMoreInteractions(entryRepository, taskService, findingRepository, cachingService, queueHandlerService);
     }
 
     @Test
@@ -87,7 +99,7 @@ class EntryServiceTests {
     }
 
     private void givenTaskInStatus(Status status) {
-        Task failed = ImmutableTask.of(entry.id(), "failed", 100).withStatus(status);
+        Task failed = ImmutableTask.of(new Random().nextLong(), "failed", 100).withStatus(status);
         BDDMockito.given(taskService.findTasks(entry)).willReturn(List.of(failed));
     }
 

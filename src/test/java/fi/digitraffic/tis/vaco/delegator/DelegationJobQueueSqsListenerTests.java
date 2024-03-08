@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.TaskService;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
@@ -34,6 +35,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     private Entry entry;
 
+    @Autowired
+    PersistentEntryMapper persistentEntryMapper;
     @Autowired
     private EntryRepository entryRepository;
     @Autowired
@@ -75,7 +78,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     }
 
     private Entry createQueueEntryForTesting() {
-        return entryRepository.create(TestObjects.anEntry("gtfs").build());
+        return entryService.create(TestObjects.anEntry("gtfs").build());
     }
 
     @AfterEach
@@ -93,7 +96,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
         listener.listen(tooManyRetries, acknowledgement);
 
-        Entry result = entryRepository.findByPublicId(entry.publicId(), true).get();
+        Entry result = entryService.findEntry(entry.publicId(), true).get();
 
         assertThat(result.completed(), notNullValue());
     }

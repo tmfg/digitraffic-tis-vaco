@@ -15,8 +15,10 @@ import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.email.model.Message;
 import fi.digitraffic.tis.vaco.email.model.Recipients;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,22 +36,22 @@ public class EmailService {
     private final VacoProperties vacoProperties;
     private final MessageMapper messageMapper;
     private final SesClient sesClient;
-    private final EmailRepository emailRepository;
     private final CompanyHierarchyService companyHierarchyService;
     private final FeatureFlagsService featureFlagsService;
+    private final EntryRepository entryRepository;
 
     public EmailService(VacoProperties vacoProperties,
                         MessageMapper messageMapper,
                         SesClient sesClient,
-                        EmailRepository emailRepository,
                         CompanyHierarchyService companyHierarchyService,
-                        FeatureFlagsService featureFlagsService) {
+                        FeatureFlagsService featureFlagsService,
+                        EntryRepository entryRepository) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
-        this.emailRepository = Objects.requireNonNull(emailRepository);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
+        this.entryRepository = Objects.requireNonNull(entryRepository);
     }
 
     @VisibleForTesting
@@ -84,7 +86,7 @@ public class EmailService {
         if (!featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")) {
             logger.info("Feature flag 'emails.feedStatusEmail' is currently disabled, feed status email sending for {} skipped.", company.businessId());
         } else {
-            List<Entry> latestEntries = emailRepository.findLatestEntries(company);
+            List<PersistentEntry> latestEntries = entryRepository.findLatestEntries(company);
             if (latestEntries.isEmpty()) {
                 logger.debug("No entries available for company '{}', feed status email sending skipped", company.businessId());
             } else {
@@ -146,7 +148,7 @@ public class EmailService {
         return builder.build(buildOptions);
     }
 
-    private String createFeedStatusEmailHtml(Translations translations, List<Entry> entries) {
+    private String createFeedStatusEmailHtml(Translations translations, List<PersistentEntry> entries) {
         HtmlBuilder builder = new HtmlBuilder();
         HtmlBuildOptions buildOptions = new HtmlBuildOptions(0, false);
 
@@ -167,7 +169,7 @@ public class EmailService {
         return builder.build(buildOptions);
     }
 
-    private Element table(ContentBuilder c, Translations translations, List<Entry> entries) {
+    private Element table(ContentBuilder c, Translations translations, List<PersistentEntry> entries) {
         Element headers = c.element("tr")
             .children(
                 c.element("th").text(translations.get("message.feeds.labels.feed")),

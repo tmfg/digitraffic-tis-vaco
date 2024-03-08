@@ -68,14 +68,14 @@ public class RulesetSubmissionService {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messagingService = Objects.requireNonNull(messagingService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
-        this.packagesService = packagesService;
+        this.packagesService = Objects.requireNonNull(packagesService);
     }
 
     public void submit(ValidationJobMessage message) throws RuleExecutionException {
         Entry entry = message.entry();
         RulesetSubmissionConfiguration configuration = message.configuration();
 
-        taskService.findTask(entry.id(), configuration.submissionTask())
+        taskService.findTask(entry.publicId(), configuration.submissionTask())
             .map(task -> {
                 Set<Ruleset> rulesets = selectRulesets(entry, configuration);
 
@@ -148,14 +148,14 @@ public class RulesetSubmissionService {
                     // mark the processing of matching task as started
                     // 1) shows in API response that the processing has started
                     // 2) this prevents unintended retrying of the task
-                    Optional<Task> ruleTask = taskService.findTask(entry.id(), identifyingName);
+                    Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
                     ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
                         .orElseThrow();
                     return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
                 } else {
                     logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
                     // dependencies failed or were cancelled, mark this one as cancelled and complete
-                    taskService.findTask(entry.id(), identifyingName)
+                    taskService.findTask(entry.publicId(), identifyingName)
                         .map(t -> taskService.trackTask(entry, t, ProcessingState.START))
                         .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
                         .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
@@ -208,7 +208,7 @@ public class RulesetSubmissionService {
     }
 
     private Optional<S3Path> lookupDownloadedFile(Entry entry, String taskName) {
-        return taskService.findTask(entry.id(), taskName)
+        return taskService.findTask(entry.publicId(), taskName)
             .flatMap(task -> packagesService.findPackage(task, "result"))
             .map(downloadResult -> S3Path.of(URI.create(downloadResult.path()).getPath()));
     }

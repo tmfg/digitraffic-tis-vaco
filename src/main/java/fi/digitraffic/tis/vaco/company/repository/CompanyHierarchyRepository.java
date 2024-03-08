@@ -4,7 +4,6 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
-import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
@@ -237,7 +236,7 @@ public class CompanyHierarchyRepository {
     }
 
 
-    public Partnership create(ImmutablePartnership partnership) {
+    public Partnership create(Partnership partnership) {
         jdbc.update("""
                 INSERT INTO partnership(type, partner_a_id, partner_b_id)
                      VALUES (?::partnership_type, ?, ?)
@@ -254,8 +253,8 @@ public class CompanyHierarchyRepository {
     }
 
     public Optional<Partnership> findByIds(PartnershipType type,
-                                                    Long partnerAId,
-                                                    Long partnerBId) {
+                                           Long partnerAId,
+                                           Long partnerBId) {
         return jdbc.query("""
                 SELECT c.type AS type,
                        o_a.id as partner_a_id,
