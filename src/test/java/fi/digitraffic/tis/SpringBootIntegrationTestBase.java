@@ -139,4 +139,9 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
             token.getToken().getClaimAsStringList("groups").get(0));
     }
 
+    protected void injectGroupIdToCompany(JwtAuthenticationToken token, String businessId) {
+        companyHierarchyService.updateAdGroupId(
+            companyHierarchyService.findByBusinessId(businessId).get(),
+            token.getToken().getClaimAsStringList("groups").get(0));
+    }
 }

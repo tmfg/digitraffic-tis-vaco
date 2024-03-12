@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.delegator;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.email.EmailService;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -37,8 +36,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     PersistentEntryMapper persistentEntryMapper;
-    @Autowired
-    private EntryRepository entryRepository;
+
     @Autowired
     private TaskService taskService;
     @Autowired

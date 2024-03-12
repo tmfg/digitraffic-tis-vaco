@@ -402,7 +402,7 @@ public class UiController {
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<CompanyWithFormatSummary>>> listCompanies() {
-        return ResponseEntity.ok(new Resource<>(adminToolsService.getRelevantCompanies(), null, null));
+        return ResponseEntity.ok(new Resource<>(adminToolsService.getCompaniesWithFormatInfos(), null, null));
     }
 
     private Resource<CompanyLatestEntry> asCompanyLatestEntryResource(CompanyLatestEntry companyLatestEntry) {

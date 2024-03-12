@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.FindingSeverity;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -103,10 +104,10 @@ public abstract class RuleResultProcessor implements ResultProcessor {
             findingService.reportFindings(findings);
             Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
             logger.debug("{}/{} produced findings {}", entry.publicId(), task.name(), severities);
-            if (severities.getOrDefault("ERROR", 0L) > 0
-                || severities.getOrDefault("CRITICAL", 0L) > 0) {
+            if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
+                || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
                 taskService.markStatus(entry, task, Status.ERRORS);
-            } else if (severities.getOrDefault("WARNING", 0L) > 0) {
+            } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
                 taskService.markStatus(entry, task, Status.WARNINGS);
             } else {
                 taskService.markStatus(entry, task, Status.SUCCESS);
