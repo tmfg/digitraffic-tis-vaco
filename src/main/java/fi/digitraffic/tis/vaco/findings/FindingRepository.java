@@ -125,17 +125,6 @@ public class FindingRepository {
         }
     }
 
-    public boolean hasErrors(Entry entry) {
-        return Boolean.TRUE.equals(jdbc.queryForObject("""
-            SELECT COUNT(id) = 0
-              FROM finding
-             WHERE entry_id = ?
-               AND severity = 'ERROR'
-            """,
-            Boolean.class,
-            entry.id()));
-    }
-
     public Map<String, Long> getSeverityCounts(Entry entry, Task task) {
         List<Map<String, Object>> mapList = jdbc.queryForList("""
                   SELECT severity,

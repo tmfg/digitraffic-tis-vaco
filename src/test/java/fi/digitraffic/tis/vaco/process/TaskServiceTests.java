@@ -8,7 +8,7 @@ import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
@@ -53,19 +53,14 @@ class TaskServiceTests {
     @Mock
     private CachingService cachingService;
 
-    @Mock
-    private JdbcTemplate jdbc;
+    private ImmutablePersistentEntry entry;
 
-    @Mock
-    ObjectMapper objectMapper;
-
-    private ImmutableEntry entry;
     private ImmutableRuleset gtfsCanonicalRuleset;
 
     @BeforeEach
     void setUp() {
         taskService = new TaskService(taskRepository, packagesService, rulesetService, cachingService);
-        entry = ImmutableEntry.of(
+        entry = ImmutablePersistentEntry.of(
                 "entry",
                 TransitDataFormat.GTFS.fieldName(),
                 TestConstants.EXAMPLE_URL,
@@ -89,14 +84,14 @@ class TaskServiceTests {
 
     @Test
     void generatesAllAppropriateTasks() {
-        entry = entry.withValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL));
-
         givenAvailableRulesets(Type.VALIDATION_SYNTAX, TransitDataFormat.GTFS, Set.of(gtfsCanonicalRuleset));
+        given(taskRepository.findValidationInputs(entry)).willReturn(List.of(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)));
+        given(taskRepository.findConversionInputs(entry)).willReturn(List.of());
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
 
         List<Task> tasks = taskService.resolveTasks(entry);
-        tasks.forEach(System.out::println);
-        List<Task> expectedTasks = List.of(
+
+        List<ImmutableTask> expectedTasks = List.of(
             ImmutableTask.of(entry.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
             ImmutableTask.of(entry.id(), RulesetSubmissionService.VALIDATE_TASK, 200),
             ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 201)

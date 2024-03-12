@@ -2,19 +2,14 @@ package fi.digitraffic.tis.vaco.entries;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.FindingRepository;
-import fi.digitraffic.tis.vaco.packages.PackagesService;
-import fi.digitraffic.tis.vaco.packages.model.Package;
-import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
@@ -39,41 +34,30 @@ public class EntryRepository {
     private final JdbcTemplate jdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
     private final ObjectMapper objectMapper;
-    private final FindingRepository findingRepository;
-    private final TaskService taskService;
-    private final PackagesService packagesService;
+    private final PersistentEntryMapper persistentEntryMapper;
 
     public EntryRepository(JdbcTemplate jdbc,
                            NamedParameterJdbcTemplate namedJdbc,
                            ObjectMapper objectMapper,
-                           FindingRepository findingRepository,
-                           TaskService taskService,
-                           PackagesService packagesService) {
+                           PersistentEntryMapper persistentEntryMapper) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.findingRepository = Objects.requireNonNull(findingRepository);
-        this.taskService = Objects.requireNonNull(taskService);
-        this.packagesService = Objects.requireNonNull(packagesService);
+        this.persistentEntryMapper = Objects.requireNonNull(persistentEntryMapper);
     }
 
     @Transactional
-    public Entry create(Entry entry) {
-        Entry baseValues = createEntry(entry);
-        ImmutableEntry withRules = ImmutableEntry.copyOf(baseValues)
-            .withValidations(createValidationInputs(baseValues.id(), entry.validations()))
-            .withConversions(createConversionInputs(baseValues.id(), entry.conversions()));
-        // createTasks requires validations and conversions to exist at this point
-        return withRules.withTasks(taskService.createTasks(withRules));
+    public PersistentEntry create(Entry entry) {
+        return createEntry(entry);
     }
 
-    private Entry createEntry(Entry entry) {
+    private PersistentEntry createEntry(Entry entry) {
         return jdbc.queryForObject("""
                 INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications)
                      VALUES (?, ?, ?, ?, ?, ?, ?)
                   RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications, status
                 """,
-            RowMappers.ENTRY.apply(objectMapper),
+            RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
             entry.businessId(),
             entry.format(),
             entry.url(),
@@ -83,7 +67,11 @@ public class EntryRepository {
             ArraySqlValue.create(entry.notifications().toArray(new String[0])));
     }
 
-    private List<ImmutableValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {
+    public List<ValidationInput> createValidationInputs(PersistentEntry entry, List<ValidationInput> validations) {
+        return createValidationInputs(entry.id(), validations);
+    }
+
+    private List<ValidationInput> createValidationInputs(Long entryId, List<ValidationInput> validations) {
         if (validations == null) {
             return List.of();
         }
@@ -94,7 +82,11 @@ public class EntryRepository {
             .toList();
     }
 
-    private List<ImmutableConversionInput> createConversionInputs(Long entryId, List<ConversionInput> conversions) {
+    public List<ConversionInput> createConversionInputs(PersistentEntry result, List<ConversionInput> conversions) {
+        return createConversionInputs(result.id(), conversions);
+    }
+
+    private List<ConversionInput> createConversionInputs(Long entryId, List<ConversionInput> conversions) {
         if (conversions == null) {
             return List.of();
         }
@@ -105,35 +97,22 @@ public class EntryRepository {
             .toList();
     }
 
-    @Transactional
-    public Optional<Entry> findByPublicId(String publicId, boolean skipErrors) {
-        return findEntry(publicId).map(e -> buildCompleteEntry(e, skipErrors));
+    public Optional<PersistentEntry> findByPublicId(String publicId) {
+        return findEntry(publicId);
     }
 
-    private Optional<Entry> findEntry(String publicId) {
+    private Optional<PersistentEntry> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                         SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications, status
                           FROM entry qe
                          WHERE qe.public_id = ?
                         """,
-                        RowMappers.ENTRY.apply(objectMapper),
+                        RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
                         publicId));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }
-    }
-
-    private List<ImmutableValidationInput> findValidationInputs(Long entryId) {
-        return jdbc.query("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
-            RowMappers.VALIDATION_INPUT.apply(objectMapper),
-            entryId);
-    }
-
-    private List<ImmutableConversionInput> findConversionInputs(Long entryId) {
-        return jdbc.query("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
-            RowMappers.CONVERSION_INPUT.apply(objectMapper),
-            entryId);
     }
 
     public void startEntryProcessing(Entry entry) {
@@ -141,18 +120,18 @@ public class EntryRepository {
                 UPDATE entry
                    SET started=NOW(),
                        updated=NOW()
-                 WHERE id = ?
+                 WHERE public_id = ?
                 """,
-                entry.id());
+                entry.publicId());
     }
 
     public void updateEntryProcessing(Entry entry) {
         jdbc.update("""
                 UPDATE entry
                    SET updated=NOW()
-                 WHERE id = ?
+                 WHERE public_id = ?
                 """,
-                entry.id());
+                entry.publicId());
     }
 
     public void completeEntryProcessing(Entry entry) {
@@ -160,86 +139,71 @@ public class EntryRepository {
                 UPDATE entry
                    SET updated=NOW(),
                        completed=NOW()
-                 WHERE id = ?
+                 WHERE public_id = ?
                 """,
-                entry.id());
+                entry.publicId());
     }
 
     public void markStatus(Entry entry, Status status) {
         jdbc.update("""
                UPDATE entry
                   SET status = (?)::status
-                WHERE id = ?
+                WHERE public_id = ?
             """,
             status.fieldName(),
-            entry.id());
+            entry.publicId());
     }
 
-    public List<Entry> findAllByBusinessId(String businessId, boolean full) {
+    public List<PersistentEntry> findAllByBusinessId(String businessId) {
         try {
-            List<Entry> entries = jdbc.query("""
+            return jdbc.query("""
                     SELECT *
                       FROM entry
                      WHERE business_id = ?
                      ORDER BY created DESC
                     """,
-                RowMappers.ENTRY.apply(objectMapper),
+                RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
                 businessId);
-
-            if (full) {
-                return Streams.map(entries, e -> buildCompleteEntry(e, true)).toList();
-            } else {
-                return entries;
-            }
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
         }
     }
 
-    public List<Entry> findAllForBusinessIds(Set<String> businessIds, boolean full) {
+    public List<PersistentEntry> findAllForBusinessIds(Set<String> businessIds) {
         try {
-            List<Entry> entries = namedJdbc.query("""
+            return namedJdbc.query("""
                 SELECT e.*
                   FROM entry e
                  WHERE e.business_id IN (:businessIds)
                 """,
                 new MapSqlParameterSource()
                     .addValue("businessIds", businessIds),
-                RowMappers.ENTRY.apply(objectMapper));
-
-            if (full) {
-                return Streams.map(entries, e -> buildCompleteEntry(e, true)).toList();
-            } else {
-                return entries;
-            }
+                RowMappers.PERSISTENT_ENTRY.apply(objectMapper));
+            //if (full) {
+            //    return Streams.map(entries, e -> buildCompleteEntry(e, true)).toList();
+            //} else {
+            //    return Streams.map(entries,e -> (Entry) persistentEntryMapper.toEntryBuilder(e).build()).toList();
+            //}
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
         }
     }
 
-    /**
-     * Call this to complete {@link Entry} object's fields if needed.
-     *
-     * @param entry Entry to complete.
-     * @return Fully completed entry.
-     */
-    private Entry buildCompleteEntry(Entry entry, boolean skipErrors) {
-        List<Task> tasks = taskService.findTasks(entry);
-        List<Package> packages = Streams.flatten(tasks, packagesService::findPackages).toList();
-        ImmutableEntry e = ImmutableEntry.copyOf(entry)
-            .withTasks(tasks)
-            .withValidations(findValidationInputs(entry.id()))
-            .withConversions(findConversionInputs(entry.id()))
-            .withPackages(packages);
-        if (!skipErrors) {
-            e = e.withFindings(findingRepository.findFindingsByEntryId(entry.id()));
-        }
-        return e;
+    @Transactional
+    public PersistentEntry reload(Entry entry) {
+        return findByPublicId(entry.publicId())
+            .orElseThrow(() -> new RuleExecutionException("Failed to reload entry with public id " + entry.publicId() + " from database, corrupt entry?"));
     }
 
-    @Transactional
-    public Entry reload(Entry entry) {
-        return findByPublicId(entry.publicId(), true)
-            .orElseThrow(() -> new RuleExecutionException("Failed to reload entry with public id " + entry.publicId() + " from database, corrupt entry?"));
+    public List<PersistentEntry> findLatestEntries(Company company) {
+        return jdbc.query("""
+            SELECT e.*
+              FROM (SELECT e.*, ROW_NUMBER() OVER (PARTITION BY format ORDER BY created DESC) r
+                      FROM entry e
+                      WHERE e.business_id = ?) AS e
+             WHERE e.r = 1
+            """,
+            RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
+            company.businessId());
     }
 }

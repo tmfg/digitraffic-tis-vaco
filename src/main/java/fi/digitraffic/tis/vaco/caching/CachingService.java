@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,10 @@ public class CachingService {
 
     public Optional<Entry> cacheEntry(String key, Function<String, Entry> loader) {
         return Optional.ofNullable(entryCache.get(key, loader));
+    }
+
+    public void invalidateEntry(PersistentEntry entry) {
+        invalidateEntry(entry.publicId());
     }
 
     public void invalidateEntry(Entry entry) {
@@ -179,6 +184,7 @@ public class CachingService {
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
             "hierarchies", cacheStatsMapper.toCacheSummaryStatistics(companyHierarchyCache));
     }
+
 
 
 }

@@ -1,9 +1,13 @@
 package fi.digitraffic.tis.vaco.process;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -14,6 +18,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,10 +30,12 @@ public class TaskRepository {
 
     private final JdbcTemplate jdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
+    private final ObjectMapper objectMapper;
 
-    public TaskRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
+    public TaskRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc, ObjectMapper objectMapper) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     @Transactional
@@ -90,6 +97,21 @@ public class TaskRepository {
             task.id());
     }
 
+    public Collection<Task> findTasks(String publicId) {
+        try {
+            return jdbc.query("""
+                SELECT *
+                  FROM task
+                 WHERE entry_id = (SELECT id FROM entry WHERE public_id = ?)
+                 ORDER BY priority ASC
+                """,
+                RowMappers.TASK,
+                publicId);
+        } catch (EmptyResultDataAccessException e) {
+            return List.of();
+        }
+    }
+
     /**
      * Finds all tasks for given entry, if any, ordered by priority.
      * <p>
@@ -110,6 +132,17 @@ public class TaskRepository {
                 entryId);
         } catch (EmptyResultDataAccessException e) {
             return List.of();
+        }
+    }
+
+    public Optional<Task> findTask(String publicId, String taskName) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                "SELECT * FROM task WHERE entry_id = (SELECT id FROM entry WHERE public_id = ?) AND name = ?",
+                RowMappers.TASK,
+                publicId, taskName));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
         }
     }
 
@@ -142,15 +175,18 @@ public class TaskRepository {
      */
     public List<Task> findAvailableTasksToExecute(Entry entry) {
         return namedJdbc.query("""
-              WITH first_available AS (SELECT FLOOR(priority / 100) AS priority_group
-                                         FROM task
-                                        WHERE entry_id = :entryId
+              WITH entry AS (SELECT id
+                               FROM entry
+                               WHERE public_id = :publicId),
+                   first_available AS (SELECT FLOOR(priority / 100) AS priority_group
+                                         FROM task, entry
+                                        WHERE entry_id = entry.id
                                           AND started IS NULL
                                         ORDER BY priority ASC
                                         LIMIT 1),
                    first_incomplete AS (SELECT FLOOR(priority / 100) AS priority_group
-                                          FROM task
-                                         WHERE entry_id = :entryId
+                                          FROM task, entry
+                                         WHERE entry_id = entry.id
                                            AND completed IS NULL
                                          ORDER BY priority ASC
                                          LIMIT 1)
@@ -158,17 +194,18 @@ public class TaskRepository {
                    first_incomplete.priority_group,
                    t.*
               FROM task t,
+                   entry e,
                    first_available,
                    first_incomplete
              WHERE FLOOR(t.priority / 100) = first_available.priority_group
                AND FLOOR(t.priority / 100) = first_incomplete.priority_group
-               AND t.entry_id = :entryId
+               AND t.entry_id = e.id
                AND t.started IS NULL
              ORDER BY priority ASC
             """,
 
             new MapSqlParameterSource()
-                .addValue("entryId", entry.id()),
+                .addValue("publicId", entry.publicId()),
         RowMappers.TASK);
     }
 
@@ -176,11 +213,11 @@ public class TaskRepository {
         return Boolean.TRUE.equals(jdbc.queryForObject("""
             SELECT NOT EXISTS(SELECT 1
                             FROM task
-                           WHERE entry_id = ?
+                           WHERE entry_id = (SELECT id FROM entry WHERE public_id = ?)
                              AND completed IS NULL);
             """,
             Boolean.class,
-            entry.id()));
+            entry.publicId()));
     }
 
     public Task markStatus(Task task, Status status) {
@@ -194,4 +231,18 @@ public class TaskRepository {
             status.fieldName(),
             task.id());
     }
+
+    public List<ValidationInput> findValidationInputs(PersistentEntry entry) {
+        return jdbc.query("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
+            RowMappers.VALIDATION_INPUT.apply(objectMapper),
+            entry.id());
+    }
+
+    public List<ConversionInput> findConversionInputs(PersistentEntry entry) {
+        return jdbc.query("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
+            RowMappers.CONVERSION_INPUT.apply(objectMapper),
+            entry.id());
+    }
+
+
 }

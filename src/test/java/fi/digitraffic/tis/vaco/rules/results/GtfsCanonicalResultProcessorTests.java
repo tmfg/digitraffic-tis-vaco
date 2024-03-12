@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.entryWithTask;
@@ -85,12 +86,12 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
                 }
             }
         };
-        entry = entryWithTask(e -> ImmutableTask.of(e.id(), RuleName.GTFS_CANONICAL, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), RuleName.GTFS_CANONICAL, 100).withId(9_000_000L));
         task = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of("report.json", List.of("report"));
         resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, uploadedFiles);
         gtfsCanonicalRuleset = ImmutableRuleset.of(
-                entry.id(),
+                new Random().nextLong(),
                 RuleName.GTFS_CANONICAL,
                 "bleh",
                 Category.GENERIC,

@@ -20,10 +20,6 @@ import java.util.List;
 @JsonDeserialize(as = ImmutableEntry.class)
 public interface Entry {
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
-    Long id();
-
-    @Nullable
     String publicId();
 
     @Value.Parameter

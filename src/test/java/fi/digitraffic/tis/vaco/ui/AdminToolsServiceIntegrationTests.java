@@ -34,7 +34,6 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private CompanyHierarchyRepository companyHierarchyRepository;
     @Autowired
     EntryRepository entryRepository;
-    private JwtAuthenticationToken token;
 
     @BeforeEach
     void setUp() {

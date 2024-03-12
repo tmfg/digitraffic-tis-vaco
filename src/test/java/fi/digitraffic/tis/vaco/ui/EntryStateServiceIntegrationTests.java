@@ -9,8 +9,9 @@ import fi.digitraffic.tis.vaco.findings.FindingSeverity;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -52,9 +53,11 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private RulesetRepository rulesetRepository;
     @Autowired
     private FindingRepository findingRepository;
+    @Autowired
+    PersistentEntryMapper persistentEntryMapper;
     private Path inputPath;
     private Task task;
-    private Entry entry;
+    private PersistentEntry entry;
     private Ruleset rule;
 
     @BeforeEach
@@ -115,7 +118,7 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     void testGetRuleReport() {
         Map<String, Ruleset> rulesetMap = new HashMap<>();
         rulesetMap.put(task.name(), rule);
-        RuleReport ruleReport = entryStateService.getRuleReport(task, entry, rulesetMap);
+        RuleReport ruleReport = entryStateService.getRuleReport(task, persistentEntryMapper.toEntryBuilder(entry).build(), rulesetMap);
         assertThat(ruleReport.ruleName(), equalTo(rule.identifyingName()));
         assertThat(ruleReport.ruleDescription(), equalTo(rule.description()));
 
@@ -166,7 +169,7 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testGettingSummaries() {
         assertDoesNotThrow(() -> gtfsInputSummaryService.generateGtfsInputSummaries(inputPath, task.id()));
-        List<Summary> summaries = entryStateService.getTaskSummaries(entry);
+        List<Summary> summaries = entryStateService.getTaskSummaries(persistentEntryMapper.toEntryBuilder(entry).build());
         assertThat(summaries.size(), equalTo(5));
         // Order matters
         Summary agencies = summaries.get(0);

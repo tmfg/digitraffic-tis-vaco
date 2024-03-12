@@ -26,7 +26,7 @@ class CompanyHierarchyRepositoryIntegrationTests extends SpringBootIntegrationTe
 
     @Test
     void loadHierarchyWorks() {
-        Company root = companyHierarchyService.createCompany(ImmutableCompany.of("112233-4", "Kompany Ky")).get();
+        Company root = companyHierarchyService.createCompany(ImmutableCompany.of("312233-4", "Kompany Ky")).get();
         Company childA = companyHierarchyService.createCompany(ImmutableCompany.of("112233-5", "Virma Oy")).get();
         Company childB = companyHierarchyService.createCompany(ImmutableCompany.of("112233-6", "Puulaaki Oyj")).get();
         Company grandchildC = companyHierarchyService.createCompany(ImmutableCompany.of("112233-7", "Limited Ltd.")).get();

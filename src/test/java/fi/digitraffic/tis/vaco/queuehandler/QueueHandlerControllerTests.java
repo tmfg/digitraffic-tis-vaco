@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.queuehandler.dto.EntryRequest;
+import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -21,7 +21,7 @@ class QueueHandlerControllerTests extends SpringBootIntegrationTestBase {
     @Test
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
-        EntryRequest request = TestObjects.aValidationEntryRequest().build();
+        CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
         JwtAuthenticationToken rohnMnadoj = TestObjects.jwtAuthenticationToken("Rohn Mnadoj");
         SecurityContextHolder.getContext().setAuthentication(rohnMnadoj);
         injectGroupIdToCompany(rohnMnadoj);
