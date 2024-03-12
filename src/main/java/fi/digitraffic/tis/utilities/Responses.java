@@ -18,4 +18,8 @@ public final class Responses {
     public static ResponseEntity<Resource<Partnership>> conflict(String error) {
         return new ResponseEntity<>(new Resource<>(null, error, null), HttpStatus.CONFLICT);
     }
+
+    public static <D> ResponseEntity<Resource<D>> unauthorized(String error) {
+        return new ResponseEntity<>(new Resource<>(null, error, null), HttpStatus.UNAUTHORIZED);
+    }
 }

@@ -47,7 +47,14 @@ public class AadOAuth2LoginSecurityConfig {
 
         http.authorizeHttpRequests(auth ->
             // public endpoints with no authentication
-            auth.requestMatchers("/health/**", "/ui/bootstrap/**", "/badge/**").permitAll()
+            auth.requestMatchers(
+                "/health/**",                // load balancer health endpoint
+                "/ui/bootstrap/**",          // frontend bootstrapping endpoint
+                "/badge/**",                 // status badges
+                // magic link exceptions:
+                "/ui/processing-results/**", // Entry processing result page may be accessed with magic link
+                "/ui/entries/*/state"        // entry state checks its own permissions internally
+                ).permitAll()
                 // private endpoints (=everything else)
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 ->

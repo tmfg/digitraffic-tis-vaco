@@ -6,6 +6,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
 import fi.digitraffic.tis.vaco.company.CompanyController;
 import fi.digitraffic.tis.vaco.company.dto.PartnershipRequest;
@@ -15,6 +16,7 @@ import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
@@ -23,7 +25,6 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerController;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
-import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
@@ -34,6 +35,11 @@ import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyInfo;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicTokenResponse;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableProcessingResultsPage;
+import fi.digitraffic.tis.vaco.ui.model.MagicToken;
+import fi.digitraffic.tis.vaco.ui.model.MagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -77,37 +83,33 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 @RequestMapping("/ui")
 public class UiController {
 
-    private final VacoProperties vacoProperties;
-
-    private final EntryService entryService;
-
-    private final TaskService taskService;
-
-    private final EntryStateService entryStateService;
-
-    private final QueueHandlerService queueHandlerService;
-
-    private final RulesetService rulesetService;
-
-    private final MeService meService;
-
-    private final CompanyHierarchyService companyHierarchyService;
-
-    private final PackagesService packagesService;
-
-    private final AdminToolsService adminToolsService;
-    private final EntryRequestMapper entryRequestMapper;
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private final VacoProperties vacoProperties;
+    private final EntryService entryService;
+    private final TaskService taskService;
+    private final EntryStateService entryStateService;
+    private final QueueHandlerService queueHandlerService;
+    private final RulesetService rulesetService;
+    private final MeService meService;
+    private final CompanyHierarchyService companyHierarchyService;
+    private final PackagesService packagesService;
+    private final AdminToolsService adminToolsService;
+    private final EntryRequestMapper entryRequestMapper;
+    private final EncryptionService encryptionService;
+
     public UiController(VacoProperties vacoProperties,
-                        EntryService entryService, TaskService taskService, EntryStateService entryStateService,
+                        EntryService entryService,
+                        TaskService taskService,
+                        EntryStateService entryStateService,
                         QueueHandlerService queueHandlerService,
                         RulesetService rulesetService,
                         MeService meService,
                         CompanyHierarchyService companyHierarchyService,
                         PackagesService packagesService,
-                        AdminToolsService adminToolsService, EntryRequestMapper entryRequestMapper) {
+                        AdminToolsService adminToolsService,
+                        EntryRequestMapper entryRequestMapper,
+                        EncryptionService encryptionService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -119,6 +121,7 @@ public class UiController {
         this.packagesService = Objects.requireNonNull(packagesService);
         this.adminToolsService = Objects.requireNonNull(adminToolsService);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
+        this.encryptionService = Objects.requireNonNull(encryptionService);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -153,12 +156,37 @@ public class UiController {
         }
     }
 
-    @GetMapping(path = "/entries/{publicId}/state")
+    /**
+     * Handler for returning the initial state for Processing Results Page.
+     *
+     * @param publicId Mandatory public id of the page
+     * @return {@link fi.digitraffic.tis.vaco.ui.model.ProcessingResultsPage}
+     */
+    /*
+     * TODO: This same response should also include the entry itself, but as that is now quite a hodge-podge of nested
+     *       things instead of well-defined type structure, this won't be used for that at this time.
+     */
+    @GetMapping(path = "/processing-results/{publicId}")
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
-    public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId) {
+    public ResponseEntity<Resource<ImmutableProcessingResultsPage>> processingResultsPage(@PathVariable("publicId") String publicId) {
         return entryService.findEntry(publicId, true)
-            .filter(meService::isAllowedToAccess)
+            .map(entry -> ResponseEntity.ok(
+                Resource.resource(
+                    ImmutableProcessingResultsPage.of(
+                        encryptionService.encrypt(ImmutableMagicToken.of(publicId))
+                    )
+                )
+            ))
+            .orElseGet(() -> Responses.unauthorized(String.format("Not allowed to access %s", publicId)));
+    }
+
+    @GetMapping(path = "/entries/{publicId}/state")
+    @JsonView(DataVisibility.External.class)
+    public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId,
+                                                                         @RequestParam(value = "magic", required = false) String magicToken) {
+        return entryService.findEntry(publicId, true)
+            .filter(e -> magicTokenMatches(magicToken, publicId) || meService.isAllowedToAccess(e))
             .map(entry -> {
                 Map<String, Ruleset> rulesets = Streams.collect(rulesetService.selectRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
                 List<RuleReport> reports =  new ArrayList<>();
@@ -181,6 +209,16 @@ public class UiController {
                         .company(company.map(c -> c.name() + " (" +c.businessId() + ")").orElse(entry.businessId()))
                         .build()));
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));
+    }
+
+    private boolean magicTokenMatches(String magicToken, String publicId) {
+        boolean success = false;
+        if (magicToken != null) {
+            MagicToken decrypted = encryptionService.decrypt(magicToken, MagicToken.class);
+            success = decrypted.token().equals(publicId);
+        }
+        logger.info("{} access to {} with magic link {}", meService.alertText(), publicId, success ? "allowed" : "denied");
+        return success;
     }
 
     @GetMapping(path = "/entries")
@@ -213,6 +251,14 @@ public class UiController {
             })
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                 String.format("Unknown package '%s' for entry '%s'", packageName, entryPublicId)));
+    }
+
+    @GetMapping(path = "/magiclink/{publicId}")
+    @JsonView(DataVisibility.External.class)
+    @PreAuthorize("hasAuthority('vaco.user')")
+    public ResponseEntity<MagicTokenResponse> generateMagicToken(@PathVariable("publicId") String publicId) {
+        String encrypted = encryptionService.encrypt(ImmutableMagicToken.of(publicId));
+        return ResponseEntity.ok(ImmutableMagicTokenResponse.of(encrypted));
     }
 
     @GetMapping(path = "/admin/data-delivery")
@@ -422,7 +468,7 @@ public class UiController {
         Map<String, Link> linkInstances = new HashMap<>();
         linkInstances.put("self", Link.to(vacoProperties.baseUrl(),
             RequestMethod.GET,
-            fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId()))));
+            fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId(), null))));
         linkInstances.put("badge", Link.to(vacoProperties.baseUrl(),
             RequestMethod.GET,
             fromMethodCall(on(BadgeController.class).entryBadge(entry.publicId(), null))));
