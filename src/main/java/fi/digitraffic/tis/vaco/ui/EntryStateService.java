@@ -6,6 +6,7 @@ import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingRepository;
+import fi.digitraffic.tis.vaco.findings.FindingSeverity;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -86,7 +87,9 @@ public class EntryStateService {
         // aggregatedWithFindings should also be ordered from highest to lowest severity:
         aggregatedWithFindings.sort(new SortFindingsBySeverity());
 
-        List<Package> taskPackages = Streams.filter(entry.packages(), p -> p.taskId().equals(task.id())).toList();
+        List<Package> taskPackages = entry.packages() != null
+            ? Streams.filter(entry.packages(), p -> p.taskId().equals(task.id())).toList()
+            : List.of();
         Ruleset rule = rulesets.get(task.name());
 
         return ImmutableRuleReport.builder()
@@ -163,10 +166,10 @@ public class EntryStateService {
 
     private static int severityToInt(String severity) {
         return switch (severity) {
-            case "CRITICAL" -> 1;
-            case "ERROR" -> 2;
-            case "WARNING" -> 3;
-            case "INFO" -> 4;
+            case FindingSeverity.CRITICAL -> 1;
+            case FindingSeverity.ERROR -> 2;
+            case FindingSeverity.WARNING -> 3;
+            case FindingSeverity.INFO -> 4;
             default -> 5;
         };
     }

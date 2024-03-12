@@ -74,10 +74,10 @@ public class AdminToolsRepository {
             LEFT JOIN (
                     (select distinct e.business_id,
                              CASE
-                               WHEN upper(e.format) = 'GTFS' THEN 'NeTEx'
-                               WHEN upper(e.format) = 'NETEX' THEN 'GTFS'
+                               WHEN upper(e.format) = 'GTFS' THEN 'GTFS'
+                               WHEN upper(e.format) = 'NETEX' THEN 'NeTEx'
                                WHEN upper(e.format) = 'GBFS' THEN 'GBFS'
-                               ELSE 'Unknown format'
+                               ELSE upper(e.format)
                              END as format
                      from  vaco.vaco.entry e)
                     UNION

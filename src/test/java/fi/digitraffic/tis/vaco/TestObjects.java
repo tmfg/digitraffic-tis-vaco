@@ -12,6 +12,7 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
+import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.dto.ImmutableEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -140,5 +141,12 @@ public class TestObjects {
         Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("groups", List.of(fakeGroupId), "oid", oid));
 
         return new JwtAuthenticationToken(jwt);
+    }
+
+    public static ImmutableFinding.Builder aFinding(String entryId, long rulesetId, long taskId) {
+        return ImmutableFinding.builder()
+            .entryId(entryId)
+            .rulesetId(rulesetId)
+            .taskId(taskId);
     }
 }

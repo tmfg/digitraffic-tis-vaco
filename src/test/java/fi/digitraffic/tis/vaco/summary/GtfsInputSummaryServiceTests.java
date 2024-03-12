@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class GtfsInputSummaryServiceTests extends SpringBootIntegrationTestBase {
+class GtfsInputSummaryServiceTests extends SpringBootIntegrationTestBase {
 
     private Path inputPath;
     private Task task;
@@ -52,7 +52,7 @@ public class GtfsInputSummaryServiceTests extends SpringBootIntegrationTestBase 
     }
 
     @Test
-    void testGtfsSummariesGeneration() {
+    public void testGtfsSummariesGeneration() {
         assertDoesNotThrow(() -> gtfsInputSummaryService.generateGtfsInputSummaries(inputPath, task.id()));
         List<Summary> summaries = summaryRepository.findTaskSummaryByTaskId(task.id());
         summaries.forEach(summary -> {
