@@ -52,11 +52,19 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
         Map<String, String> fileNames = collectOutputFileNames(resultMessage);
 
         // file specific handling
-        return processFile(resultMessage, entry, task, fileNames, "report.json", reportFile -> {
+        boolean reportProcessed = processFile(resultMessage, entry, task, fileNames, "report.json", reportFile -> {
             List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
             storeFindings(entry, task, findings);
             return true;
         });
+
+        boolean errorsProcessed = processFile(resultMessage, entry, task, fileNames, "system_errors.json", errorFile -> {
+            List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), errorFile));
+            storeFindings(entry, task, findings);
+            return true;
+        });
+
+        return reportProcessed && errorsProcessed;
     }
 
     private List<ImmutableFinding> scanReportFile(Entry entry, Task task, String ruleName, Path reportFile) {

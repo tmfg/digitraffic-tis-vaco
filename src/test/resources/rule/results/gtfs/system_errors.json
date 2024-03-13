@@ -1,0 +1,16 @@
+{
+  "notices": [
+    {
+      "code": "runtime_exception_in_validator_error",
+      "severity": "ERROR",
+      "totalNotices": 1,
+      "sampleNotices": [
+        {
+          "validator": "org.mobilitydata.gtfsvalidator.validator.AgencyConsistencyValidator",
+          "exception": "java.lang.IndexOutOfBoundsException",
+          "message": "Index 0 out of bounds for length 0"
+        }
+      ]
+    }
+  ]
+}
