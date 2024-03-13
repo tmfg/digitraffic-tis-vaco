@@ -88,8 +88,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         };
         entry = entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), RuleName.GTFS_CANONICAL, 100).withId(9_000_000L));
         task = entry.tasks().get(0);
-        Map<String, List<String>> uploadedFiles = Map.of("report.json", List.of("report"));
-        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, uploadedFiles);
+
         gtfsCanonicalRuleset = ImmutableRuleset.of(
                 new Random().nextLong(),
                 RuleName.GTFS_CANONICAL,
@@ -107,6 +106,8 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
 
     @Test
     void mapsGtfsCanonicalNoticesToFindings() {
+        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("report.json", List.of("report")));
+
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
@@ -122,4 +123,22 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.GTFS_CANONICAL)));
     }
 
+    @Test
+    void mapsGtfsCanonicalSystemErrorsToFindings() {
+        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("system_errors.json", List.of("report")));
+
+        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
+        given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
+        given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
+        given(findingService.summarizeFindingsSeverities(entry, task)).willReturn(Map.of());
+        givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
+
+        resultProcessor.processResults(resultMessage, entry, task);
+
+        List<Finding> findings = generatedFindings.getValue();
+
+        // TODO: chore for the bored yet excited: better assertions for these
+        assertThat(findings.size(), equalTo(1));
+        findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.GTFS_CANONICAL)));
+    }
 }
