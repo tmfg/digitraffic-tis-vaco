@@ -18,6 +18,7 @@ import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.rules.results.GbfsEnturResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
@@ -50,7 +51,8 @@ public class RuleResultsListener {
     private final QueueHandlerService queueHandlerService;
     private final EntryService entryService;
     private final NetexEnturValidatorResultProcessor netexEnturValidator;
-    private final GtfsCanonicalResultProcessor gtfsCanonicalValidator;
+    private final GbfsEnturResultProcessor gbfsResultProcessor;
+    private final GtfsCanonicalResultProcessor gtfsResultProcessor;
     private final SimpleResultProcessor simpleResultProcessor;
     private final InternalRuleResultProcessor internalRuleResultProcessor;
     private final SummaryService summaryService;
@@ -60,10 +62,13 @@ public class RuleResultsListener {
                                ObjectMapper objectMapper,
                                QueueHandlerService queueHandlerService,
                                TaskService taskService,
-                               EntryService entryService, NetexEnturValidatorResultProcessor netexEnturValidator,
-                               GtfsCanonicalResultProcessor gtfsCanonicalValidator,
+                               EntryService entryService,
+                               NetexEnturValidatorResultProcessor netexEnturValidator,
+                               GbfsEnturResultProcessor gbfsResultProcessor,
+                               GtfsCanonicalResultProcessor gtfsResultProcessor,
                                SimpleResultProcessor simpleResultProcessor,
-                               InternalRuleResultProcessor internalRuleResultProcessor, SummaryService summaryService) {
+                               InternalRuleResultProcessor internalRuleResultProcessor,
+                               SummaryService summaryService) {
         this.messagingService = Objects.requireNonNull(messagingService);
         this.findingService = Objects.requireNonNull(findingService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -71,7 +76,8 @@ public class RuleResultsListener {
         this.taskService = Objects.requireNonNull(taskService);
         this.entryService = Objects.requireNonNull(entryService);
         this.netexEnturValidator = Objects.requireNonNull(netexEnturValidator);
-        this.gtfsCanonicalValidator = Objects.requireNonNull(gtfsCanonicalValidator);
+        this.gbfsResultProcessor = Objects.requireNonNull(gbfsResultProcessor);
+        this.gtfsResultProcessor = Objects.requireNonNull(gtfsResultProcessor);
         this.simpleResultProcessor = Objects.requireNonNull(simpleResultProcessor);
         this.internalRuleResultProcessor = Objects.requireNonNull(internalRuleResultProcessor);
         this.summaryService = Objects.requireNonNull(summaryService);
@@ -105,6 +111,7 @@ public class RuleResultsListener {
                 case RuleName.GTFS_CANONICAL -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL, resultMessage);
                 case RuleName.NETEX2GTFS_ENTUR -> processNetex2GtfsEntur206(resultMessage);
                 case RuleName.GTFS2NETEX_FINTRAFFIC -> processGtfs2NetexFintraffic100(resultMessage);
+                case RuleName.GBFS_ENTUR ->  processGbfsEntur(resultMessage);
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -126,11 +133,11 @@ public class RuleResultsListener {
         });
     }
 
-    private Boolean processDownloadRuleResults(ResultMessage resultMessage) {
+    private boolean processDownloadRuleResults(ResultMessage resultMessage) {
         return processRule(DownloadRule.DOWNLOAD_SUBTASK, resultMessage, internalRuleResultProcessor);
     }
 
-    private Boolean processStopsAndQuaysResults(ResultMessage resultMessage) {
+    private boolean processStopsAndQuaysResults(ResultMessage resultMessage) {
         return processRule(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, resultMessage, internalRuleResultProcessor);
     }
 
@@ -139,15 +146,19 @@ public class RuleResultsListener {
     }
 
     private boolean processResultFromGtfsCanonical(String ruleName, ResultMessage resultMessage) {
-        return processRule(ruleName, resultMessage, gtfsCanonicalValidator);
+        return processRule(ruleName, resultMessage, gtfsResultProcessor);
     }
 
-    private Boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
+    private boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
         return processRule(RuleName.NETEX2GTFS_ENTUR, resultMessage, simpleResultProcessor);
     }
 
     private boolean processGtfs2NetexFintraffic100(ResultMessage resultMessage) {
         return processRule(RuleName.GTFS2NETEX_FINTRAFFIC, resultMessage, simpleResultProcessor);
+    }
+
+    private boolean processGbfsEntur(ResultMessage resultMessage) {
+        return processRule(RuleName.GBFS_ENTUR, resultMessage, gbfsResultProcessor);
     }
 
     private boolean processRule(String ruleName, ResultMessage resultMessage, ResultProcessor resultProcessor) {

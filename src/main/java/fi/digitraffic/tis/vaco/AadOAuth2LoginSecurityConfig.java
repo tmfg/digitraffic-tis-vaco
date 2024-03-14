@@ -53,7 +53,8 @@ public class AadOAuth2LoginSecurityConfig {
                 "/badge/**",                 // status badges
                 // magic link exceptions:
                 "/ui/processing-results/**", // Entry processing result page may be accessed with magic link
-                "/ui/entries/*/state"        // entry state checks its own permissions internally
+                "/ui/entries/*/state",       // entry state checks its own permissions internally
+                "/static/**"                 // allow unauthenticated access to static resources for testing
                 ).permitAll()
                 // private endpoints (=everything else)
                 .anyRequest().authenticated())

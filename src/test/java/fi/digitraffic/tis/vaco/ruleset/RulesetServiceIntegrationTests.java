@@ -89,6 +89,7 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Ruleset enturNetexValidator = rulesetService.findByName(RuleName.NETEX_ENTUR).get();
         Ruleset enturNetex2GtfsConverter = rulesetService.findByName(RuleName.NETEX2GTFS_ENTUR).get();
         Ruleset fintrafficGtfs2NetexConverter = rulesetService.findByName(RuleName.GTFS2NETEX_FINTRAFFIC).get();
+        Ruleset enturGbfsValidator = rulesetService.findByName(RuleName.GBFS_ENTUR).get();
 
         // XXX: Old ones are kept until we have cleaned up rest of the data. See TIS-193
         Ruleset oldVersionedCanonicalGtfsValidator400 = rulesetService.findByName(RuleName.GTFS_CANONICAL + ".v4_0_0").get();
@@ -103,6 +104,7 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
                     enturNetexValidator,
                     enturNetex2GtfsConverter,
                     fintrafficGtfs2NetexConverter,
+                    enturGbfsValidator,
                     oldVersionedCanonicalGtfsValidator400,
                     oldVersionedCanonicalGtfsValidator410,
                     oldEnturNetexValidator101,

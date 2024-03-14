@@ -1,0 +1,24 @@
+{
+  "last_updated": 1710347940,
+  "ttl": 300,
+  "version": "2.3",
+  "data": {
+    "vehicle_types": [
+      {
+        "vehicle_type_id": "Freebike_ebike",
+        "form_factor": "bicycle",
+        "propulsion_type": "electric_assist",
+        "name": "Freebike",
+        "max_range_meters": 100000
+      },
+      {
+        "vehicle_type_id": "Kulta-Hannes",
+        "form_factor": "bicycle",
+        "propulsion_type": "electric_assist",
+        "name": "Kulta-Hannes",
+        "max_range_meters": 100000
+      }
+    ]
+  }
+}
+

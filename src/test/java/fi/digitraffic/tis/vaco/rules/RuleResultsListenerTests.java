@@ -17,6 +17,7 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.rules.results.GbfsEnturResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
@@ -62,8 +63,9 @@ class RuleResultsListenerTests {
     @Mock private QueueHandlerService queueHandlerService;
     @Mock private EntryService entryService;
     @Mock private TaskService taskService;
-    @Mock private NetexEnturValidatorResultProcessor netexEnturValidator;
-    @Mock private GtfsCanonicalResultProcessor gtfsCanonicalValidator;
+    @Mock private NetexEnturValidatorResultProcessor netexEnturProcessor;
+    @Mock private GbfsEnturResultProcessor gbfsResultProcessor;
+    @Mock private GtfsCanonicalResultProcessor gtfsCanonicalProcessor;
     @Mock private SimpleResultProcessor simpleResultProcessor;
     @Mock private InternalRuleResultProcessor internalRuleResultProcessor;
     @Mock private SummaryService summaryService;
@@ -81,8 +83,9 @@ class RuleResultsListenerTests {
             queueHandlerService,
             taskService,
             entryService,
-            netexEnturValidator,
-            gtfsCanonicalValidator,
+            netexEnturProcessor,
+            gbfsResultProcessor,
+            gtfsCanonicalProcessor,
             simpleResultProcessor,
             internalRuleResultProcessor,
             summaryService);
@@ -96,20 +99,21 @@ class RuleResultsListenerTests {
             queueHandlerService,
             entryService,
             taskService,
-            netexEnturValidator,
-            gtfsCanonicalValidator,
+            netexEnturProcessor,
+            gbfsResultProcessor,
+            gtfsCanonicalProcessor,
             simpleResultProcessor,
             internalRuleResultProcessor);
     }
 
     @Test
     void canonicalGtfsValidator410UsesCanonicalResultProcessor() throws JsonProcessingException {
-        assertResultProcessorIsUsed(RuleName.GTFS_CANONICAL, gtfsCanonicalValidator);
+        assertResultProcessorIsUsed(RuleName.GTFS_CANONICAL, gtfsCanonicalProcessor);
     }
 
     @Test
     void netexEnturValidatorUsesEnturResultProcessor() throws JsonProcessingException {
-        assertResultProcessorIsUsed(RuleName.NETEX_ENTUR, netexEnturValidator);
+        assertResultProcessorIsUsed(RuleName.NETEX_ENTUR, netexEnturProcessor);
     }
 
     @Test

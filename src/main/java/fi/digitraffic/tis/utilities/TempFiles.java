@@ -30,25 +30,19 @@ public final class TempFiles {
             ));
     }
 
-    public static Path getTaskTempDirectory(VacoProperties vacoProperties, Entry entry, String taskName) {
+    public static Path getTaskTempDirectory(VacoProperties vacoProperties, Entry entry, Task task) {
         return tempDir(vacoProperties,
             Paths.get(
                 "entries",
                 entry.publicId(),
                 "tasks",
-                taskName
+                task.name()
             ));
     }
 
-    public static Path getTaskTempFile(VacoProperties vacoProperties, Entry entry, Task task, String fileName) {
+    public static Path getTaskTempFile(Path taskTempDir, String fileName) {
         return tempFile(
-            tempDir(vacoProperties,
-                Paths.get(
-                    "entries",
-                    entry.publicId(),
-                    "tasks",
-                    task.name()
-                )),
+            taskTempDir,
             fileName,
             true);
     }

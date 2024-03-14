@@ -1,0 +1,444 @@
+{
+  "last_updated": 1710347940,
+  "ttl": 300,
+  "version": "2.3",
+  "data": {
+    "stations": [
+      {
+        "station_id": 1,
+        "name": "Marskinaukio",
+        "lat": 60.9776472222,
+        "lon": 25.6582652778,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 2,
+        "name": "Loviisanpässi",
+        "lat": 60.9814494444,
+        "lon": 25.6613175,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 3,
+        "name": "Karjalankatu",
+        "lat": 60.9807372222,
+        "lon": 25.6704941667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 4,
+        "name": "Möysä",
+        "lat": 60.9792733333,
+        "lon": 25.6819775,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 5,
+        "name": "Tonttila",
+        "lat": 60.9797586111,
+        "lon": 25.7101761111,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 6,
+        "name": "Kiveriö",
+        "lat": 60.9893488889,
+        "lon": 25.6813541667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 7,
+        "name": "Kivistönmäki",
+        "lat": 60.9960947222,
+        "lon": 25.6648680556,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 8,
+        "name": "Lahden kampus ",
+        "lat": 61.0050411111,
+        "lon": 25.6631991667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 9,
+        "name": "Tiedepuisto",
+        "lat": 61.0054238889,
+        "lon": 25.6533027778,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 10,
+        "name": "Satama",
+        "lat": 60.9939988889,
+        "lon": 25.6510419444,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 11,
+        "name": "Kariniemi",
+        "lat": 60.9898663889,
+        "lon": 25.66082,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 12,
+        "name": "Pääkirjasto",
+        "lat": 60.9836697222,
+        "lon": 25.6679847222,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 13,
+        "name": "Tori",
+        "lat": 60.9836133333,
+        "lon": 25.6552852778,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 14,
+        "name": "Rantakartano",
+        "lat": 60.9839575,
+        "lon": 25.6500425,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 15,
+        "name": "Salpaus",
+        "lat": 60.9860305556,
+        "lon": 25.644175,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 16,
+        "name": "Jalkaranta",
+        "lat": 60.9965955556,
+        "lon": 25.5936466667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 17,
+        "name": "Urheilukeskus",
+        "lat": 60.9831375,
+        "lon": 25.6373786111,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 19,
+        "name": "Keijupuisto",
+        "lat": 60.9690858333,
+        "lon": 25.6312183333,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 20,
+        "name": "Perhepuisto",
+        "lat": 60.968825,
+        "lon": 25.6467930556,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 21,
+        "name": "Ajokatu",
+        "lat": 60.9611255556,
+        "lon": 25.6579825,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 22,
+        "name": "Liipola",
+        "lat": 60.9624969444,
+        "lon": 25.667145,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 23,
+        "name": "Kerinkallio",
+        "lat": 60.9702963889,
+        "lon": 25.6701916667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 24,
+        "name": "Asemantausta",
+        "lat": 60.9763836111,
+        "lon": 25.647055,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 25,
+        "name": "Matkakeskus",
+        "lat": 60.9756947222,
+        "lon": 25.6589172222,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 26,
+        "name": "Trio",
+        "lat": 60.9825055556,
+        "lon": 25.6619419444,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 27,
+        "name": "Malski",
+        "lat": 60.9868341667,
+        "lon": 25.6591105556,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 29,
+        "name": "Kauppakatu",
+        "lat": 60.9872575,
+        "lon": 25.6654969444,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 30,
+        "name": "Laune",
+        "lat": 60.9656177778,
+        "lon": 25.6575669444,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 31,
+        "name": "Metsäkangas",
+        "lat": 60.97967,
+        "lon": 25.5926238889,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 32,
+        "name": "Mukkula",
+        "lat": 61.0162038889,
+        "lon": 25.6627130556,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 33,
+        "name": "Kärpänen",
+        "lat": 60.977225,
+        "lon": 25.6023563889,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 34,
+        "name": "Sykekatu",
+        "lat": 60.9904577778,
+        "lon": 25.5713577778,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 37,
+        "name": "Ahtiala",
+        "lat": 60.9995413889,
+        "lon": 25.7573252778,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 38,
+        "name": "Ala-Tonttilankatu",
+        "lat": 60.9834636111,
+        "lon": 25.7032422222,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 39,
+        "name": "Ankkuri",
+        "lat": 60.9974827778,
+        "lon": 25.6558138889,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 40,
+        "name": "Gaudia",
+        "lat": 60.9833438889,
+        "lon": 25.6749727778,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 41,
+        "name": "Harjukatu",
+        "lat": 60.9810044444,
+        "lon": 25.6497405556,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 42,
+        "name": "Hennala",
+        "lat": 60.9720555556,
+        "lon": 25.6283230556,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 43,
+        "name": "Holma",
+        "lat": 61.0067352778,
+        "lon": 25.6789122222,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 44,
+        "name": "Ilmarisentie",
+        "lat": 60.99127,
+        "lon": 25.7033216667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 45,
+        "name": "Karisma",
+        "lat": 60.9828341667,
+        "lon": 25.738485,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 46,
+        "name": "Karisto",
+        "lat": 60.9726258333,
+        "lon": 25.7542766667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 47,
+        "name": "Kärpäsenkatu",
+        "lat": 60.9748858333,
+        "lon": 25.6134777778,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 48,
+        "name": "Kilpiäinen",
+        "lat": 61.0206388889,
+        "lon": 25.6613875,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 49,
+        "name": "Lähde",
+        "lat": 60.9537169444,
+        "lon": 25.6562430556,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 50,
+        "name": "Launeen kirjasto",
+        "lat": 60.9628786111,
+        "lon": 25.6483052778,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 51,
+        "name": "Lotila",
+        "lat": 60.9669858333,
+        "lon": 25.6915963889,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 52,
+        "name": "Metsäpelto",
+        "lat": 60.9984547222,
+        "lon": 25.6847983333,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 53,
+        "name": "Möysän uimaranta",
+        "lat": 60.9800069444,
+        "lon": 25.6869886111,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 54,
+        "name": "Mukkulan kartano",
+        "lat": 61.0143897222,
+        "lon": 25.6458575,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 55,
+        "name": "Myllysaari",
+        "lat": 60.9906383333,
+        "lon": 25.6077111111,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 56,
+        "name": "Mytäjäinen",
+        "lat": 60.9801969444,
+        "lon": 25.6339108333,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 57,
+        "name": "Poliisiasema",
+        "lat": 60.9687527778,
+        "lon": 25.6187608333,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 58,
+        "name": "Pyhätön",
+        "lat": 60.98386,
+        "lon": 25.6839416667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 59,
+        "name": "Renkomäki",
+        "lat": 60.9339225,
+        "lon": 25.6292363889,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 60,
+        "name": "Riihelä",
+        "lat": 60.9834644444,
+        "lon": 25.5655391667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 61,
+        "name": "Ruoriniemi",
+        "lat": 61.0019208333,
+        "lon": 25.6476791667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 62,
+        "name": "Saksala",
+        "lat": 60.9696116667,
+        "lon": 25.6815955556,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 63,
+        "name": "Tarjantie",
+        "lat": 60.9911675,
+        "lon": 25.5938313889,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 64,
+        "name": "Teivaan satama",
+        "lat": 60.9896166667,
+        "lon": 25.6359894444,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 65,
+        "name": "Vahva-Jussi",
+        "lat": 60.9746583333,
+        "lon": 25.6385766667,
+        "is_virtual_station": true
+      },
+      {
+        "station_id": 66,
+        "name": "Vipusenkatu",
+        "lat": 61.0013711111,
+        "lon": 25.6990916667,
+        "is_virtual_station": true
+      }
+    ]
+  }
+}
+
