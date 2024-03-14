@@ -14,6 +14,7 @@ import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.MagicLink;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -153,4 +154,10 @@ public class TestObjects {
         return new JwtAuthenticationToken(jwt);
     }
 
+    public static ImmutableFinding.Builder aFinding(String entryId, long rulesetId, long taskId) {
+        return ImmutableFinding.builder()
+            .entryId(entryId)
+            .rulesetId(rulesetId)
+            .taskId(taskId);
+    }
 }

@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.ui;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.repository.CompanyHierarchyRepository;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
@@ -18,12 +17,10 @@ import java.util.stream.Collectors;
 public class AdminToolsService {
     private final AdminToolsRepository adminToolsRepository;
     private final MeService meService;
-    private final CompanyHierarchyRepository companyHierarchyRepository;
 
-    public AdminToolsService(AdminToolsRepository adminToolsRepository, MeService meService, CompanyHierarchyRepository companyHierarchyRepository) {
+    public AdminToolsService(AdminToolsRepository adminToolsRepository, MeService meService) {
         this.adminToolsRepository = Objects.requireNonNull(adminToolsRepository);
         this.meService = Objects.requireNonNull(meService);
-        this.companyHierarchyRepository = Objects.requireNonNull(companyHierarchyRepository);
     }
 
     public List<CompanyLatestEntry> listLatestEntriesPerCompany(@Nullable Set<Company> userCompanies) {
@@ -33,13 +30,13 @@ public class AdminToolsService {
         return adminToolsRepository.listCompanyLatestEntries(businessIds);
     }
 
-    public List<CompanyWithFormatSummary> getRelevantCompanies() {
+    public List<CompanyWithFormatSummary> getCompaniesWithFormatInfos() {
         List<CompanyWithFormatSummary> all = adminToolsRepository.getCompaniesWithFormats();
         if (meService.isAdmin()) {
             return all;
         } else {
             Set<String> userCompanies = Streams.collect(meService.findCompanies(), Company::businessId);
-            return all.stream().filter(c -> userCompanies.contains(c.businessId())).collect(Collectors.toList());
+            return all.stream().filter(c -> userCompanies.contains(c.businessId())).toList();
         }
     }
 }

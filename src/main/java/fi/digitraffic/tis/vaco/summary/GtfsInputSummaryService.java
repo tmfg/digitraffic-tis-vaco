@@ -124,7 +124,7 @@ public class GtfsInputSummaryService {
                 .withAgencies(agencies)
                 .withCounts(Streams.append(
                     gtfsTaskSummary.counts(),
-                    "Agencies:  " + agencies.size()));
+                    "Agencies: " + agencies.size()));
         } catch (Exception e) {
             logger.error("Failed to process agencies for task {}", taskId, e);
         }
@@ -168,7 +168,7 @@ public class GtfsInputSummaryService {
             }
 
             return gtfsTaskSummary
-                .withCounts(Streams.append(gtfsTaskSummary.counts(), "Routes:  " + routes.size()))
+                .withCounts(Streams.append(gtfsTaskSummary.counts(), "Routes: " + routes.size()))
                 .withComponents(Streams.concat(gtfsTaskSummary.components(), newComponents).toList());
         }
         catch (Exception e) {
@@ -187,7 +187,7 @@ public class GtfsInputSummaryService {
             gtfsTaskSummary = gtfsTaskSummary
                 .withCounts(Streams.append(
                     gtfsTaskSummary.counts(),
-                    "Shapes:  " + uniqueShapesCount));
+                    "Shapes: " + uniqueShapesCount));
 
             if (!shapes.isEmpty()) {
                 return gtfsTaskSummary.withComponents(Streams.append(gtfsTaskSummary.components(), "Shapes"));
@@ -213,7 +213,7 @@ public class GtfsInputSummaryService {
             }
             return gtfsTaskSummary
                 .withComponents(Streams.concat(gtfsTaskSummary.components(), components).toList())
-                .withCounts(Streams.append(gtfsTaskSummary.counts(), "Stops:  " + stops.size()));
+                .withCounts(Streams.append(gtfsTaskSummary.counts(), "Stops: " + stops.size()));
         }
         catch (Exception e) {
             logger.error("Failed to process stops for task {}", taskId, e);
@@ -226,7 +226,7 @@ public class GtfsInputSummaryService {
         try {
             List<Trip> trips = getCsvBeans(inputStream, Trip.class);
             gtfsTaskSummary = gtfsTaskSummary
-                .withCounts(Streams.append(gtfsTaskSummary.counts(), "Trips:  " +trips.size()));
+                .withCounts(Streams.append(gtfsTaskSummary.counts(), "Trips: " +trips.size()));
 
             if (!trips.isEmpty()) {
                 List<String> newComponents = new ArrayList<>();
@@ -247,7 +247,7 @@ public class GtfsInputSummaryService {
                 long blocks = trips.stream()
                     .filter(trip -> trip.getBlockId() != null && !trip.getBlockId().isBlank())
                     .map(Trip::getBlockId).distinct().count();
-                newCounts.add("Blocks:  " + blocks);
+                newCounts.add("Blocks: " + blocks);
                 if (blocks > 0) {
                     newComponents.add("Blocks");
                 }

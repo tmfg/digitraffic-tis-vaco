@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.process;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.caching.CachingService;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +54,7 @@ class TaskServiceTests {
     private CachingService cachingService;
 
     private ImmutablePersistentEntry entry;
+
     private ImmutableRuleset gtfsCanonicalRuleset;
 
     @BeforeEach
