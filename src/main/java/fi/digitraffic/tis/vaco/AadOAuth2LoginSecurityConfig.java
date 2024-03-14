@@ -47,7 +47,11 @@ public class AadOAuth2LoginSecurityConfig {
 
         http.authorizeHttpRequests(auth ->
             // public endpoints with no authentication
-            auth.requestMatchers("/health/**", "/ui/bootstrap/**", "/badge/**").permitAll()
+            auth.requestMatchers("/health/**",
+                    "/ui/bootstrap/**",
+                    "/badge/**",
+                    "/static/**")
+                .permitAll()
                 // private endpoints (=everything else)
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 ->

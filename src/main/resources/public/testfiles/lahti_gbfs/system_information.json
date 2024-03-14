@@ -1,0 +1,24 @@
+{
+  "last_updated": 1710347940,
+  "ttl": 300,
+  "version": "2.3",
+  "data": {
+    "phone_number": "1-800-555-1234",
+    "name": "TKHS-Lahti",
+    "timezone": "Europe/Chisinau",
+    "feed_contact_email": "1",
+    "system_id": "freebike-lahti",
+    "language": "fi",
+    "rental_apps": {
+      "android": {
+        "store_uri": "https://play.google.com/store/apps/details?id=com.freebike.app",
+        "discovery_uri": "com.freebike.app://"
+      },
+      "ios": {
+        "store_uri": "https://apps.apple.com/us/app/freebike-2-0/id1536716741",
+        "discovery_uri": "com.freebike.app://"
+      }
+    }
+  }
+}
+

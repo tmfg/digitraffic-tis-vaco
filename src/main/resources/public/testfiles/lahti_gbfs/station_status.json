@@ -1,0 +1,1746 @@
+{
+  "last_updated": 1710347940,
+  "ttl": 300,
+  "version": "2.3",
+  "data": {
+    "stations": [
+      {
+        "station_id": 1,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 2,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 3,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 4,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 5,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 6,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 7,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 8,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 9,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 10,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 11,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 12,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 13,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 14,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 15,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 16,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 17,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 19,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 20,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 21,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 22,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 23,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 24,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 25,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 26,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 27,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 29,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 30,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 31,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 32,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 33,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 34,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 37,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 38,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 39,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 40,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 41,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 42,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 43,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 44,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 45,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 46,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 47,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 48,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 49,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 50,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 51,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 52,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 53,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 54,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 55,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 56,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 57,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 58,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 59,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 60,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 61,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 62,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 63,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 64,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 65,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "station_id": 66,
+        "is_installed": true,
+        "is_renting": true,
+        "is_returning": true,
+        "last_reported": 1710347940,
+        "vehicle_docks_available": [
+          {
+            "vehicle_type_ids": [
+              "Freebike_ebike",
+              "Kulta-Hannes"
+            ],
+            "count": -1
+          }
+        ],
+        "num_bikes_available": 0,
+        "num_bikes_disabed": 0,
+        "vehicle_types_available": [
+          {
+            "vehicle_type_id": "Freebike_ebike",
+            "count": 0
+          },
+          {
+            "vehicle_type_id": "Kulta-Hannes",
+            "count": 0
+          }
+        ]
+      }
+    ]
+  }
+}
+

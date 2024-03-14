@@ -1,8 +1,10 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.findings.Finding;
@@ -13,7 +15,9 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
-import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
+import fi.digitraffic.tis.vaco.rules.model.gbfs.FileValidationResult;
+import fi.digitraffic.tis.vaco.rules.model.gbfs.GbfsError;
+import fi.digitraffic.tis.vaco.rules.model.gbfs.Report;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,22 +31,22 @@ import java.util.Map;
 import java.util.Objects;
 
 @Component
-public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements ResultProcessor {
-
+public class GbfsEnturResultProcessor extends RuleResultProcessor implements ResultProcessor {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final RulesetService rulesetService;
     private final ObjectMapper objectMapper;
+    private final RulesetService rulesetService;
 
-    public GtfsCanonicalResultProcessor(VacoProperties vacoProperties, PackagesService packagesService,
-                                        S3Client s3Client,
-                                        TaskService taskService,
-                                        FindingService findingService,
-                                        RulesetService rulesetService,
-                                        ObjectMapper objectMapper) {
+    public GbfsEnturResultProcessor(VacoProperties vacoProperties,
+                                    PackagesService packagesService,
+                                    S3Client s3Client,
+                                    TaskService taskService,
+                                    FindingService findingService,
+                                    ObjectMapper objectMapper,
+                                    RulesetService rulesetService) {
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
-        this.rulesetService = Objects.requireNonNull(rulesetService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
     }
 
     @Override
@@ -51,47 +55,42 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
 
         Map<String, String> fileNames = collectOutputFileNames(resultMessage);
 
-        // file specific handling
-        boolean reportProcessed = processFile(resultMessage, entry, task, fileNames, "report.json", reportFile -> {
-            List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
+        boolean reportsProcessed = processFile(resultMessage, entry, task, fileNames, "reports.json", reportsFile -> {
+            List<Finding> findings = new ArrayList<>(scanReportsFile(entry, task, resultMessage.ruleName(), reportsFile));
             storeFindings(entry, task, findings);
             return true;
         });
-
-        boolean errorsProcessed = processFile(resultMessage, entry, task, fileNames, "system_errors.json", errorFile -> {
-            List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), errorFile));
-            storeFindings(entry, task, findings);
-            return true;
-        });
-
-        return reportProcessed && errorsProcessed;
+        return reportsProcessed;
     }
 
-    private List<ImmutableFinding> scanReportFile(Entry entry, Task task, String ruleName, Path reportFile) {
+    private List<Finding> scanReportsFile(Entry entry, Task task, String ruleName, Path reportsFile) {
         try {
             Long rulesetId = rulesetService.findByName(ruleName)
                 .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
                 .id();
-            Report report = objectMapper.readValue(reportFile.toFile(), Report.class);
-            return report.notices()
-                .stream()
-                .flatMap(notice -> notice.sampleNotices()
-                    .stream()
-                    .map(sn -> {
+            List<Report> reports = objectMapper.readValue(reportsFile.toFile(), new TypeReference<>() {});
+            return Streams.flatten(reports, report -> {
+                    //report.errors(); // TODO: what is this?
+                    FileValidationResult fileValidationResult = report.fileValidationResult();
+                    List<GbfsError> errors = fileValidationResult.errors();
+                    return Streams.collect(errors, error -> {
+                        String trimmedMessage = error.message();
+                        trimmedMessage = trimmedMessage.substring(trimmedMessage.indexOf(":") + 1).trim();
                         try {
-                            return ImmutableFinding.of(
+                            return (Finding) ImmutableFinding.of(
                                     entry.publicId(),
                                     task.id(),
                                     rulesetId,
-                                    ruleName,
-                                    notice.code(),
-                                    notice.severity())
-                                .withRaw(objectMapper.writeValueAsBytes(sn));
+                                    fileValidationResult.file(),
+                                    trimmedMessage,
+                                    (fileValidationResult.required() ? "ERROR" : "WARNING"))
+                                .withRaw(objectMapper.writeValueAsBytes(error));
                         } catch (JsonProcessingException e) {
                             logger.warn("Failed to convert tree to bytes", e);
                             return null;
                         }
-                    }))
+                    });
+                })
                 .filter(Objects::nonNull)
                 .toList();
         } catch (IOException e) {

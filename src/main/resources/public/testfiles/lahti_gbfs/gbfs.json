@@ -1,0 +1,36 @@
+{
+  "last_updated": 1710339660,
+  "ttl": 0,
+  "version": "2.3",
+  "data": {
+    "en": {
+      "feeds": [
+        {
+          "name": "system_information",
+          "url": "http://localhost:8080/api/static/testfiles/lahti_gbfs/system_information.json"
+        },
+        {
+          "name": "station_information",
+          "url": "http://localhost:8080/api/static/testfiles/lahti_gbfs/station_information.json"
+        },
+        {
+          "name": "vehicle_types",
+          "url": "http://localhost:8080/api/static/testfiles/lahti_gbfs/vehicle_types.json"
+        },
+        {
+          "name": "station_status",
+          "url": "http://localhost:8080/api/static/testfiles/lahti_gbfs/station_status.json"
+        },
+        {
+          "name": "free_bike_status",
+          "url": "http://localhost:8080/api/static/testfiles/lahti_gbfs/free_bike_status.json"
+        },
+        {
+          "name": "system_pricing_plans",
+          "url": "http://localhost:8080/api/static/testfiles/lahti_gbfs/system_pricing_plans.json"
+        }
+      ]
+    }
+  }
+}
+

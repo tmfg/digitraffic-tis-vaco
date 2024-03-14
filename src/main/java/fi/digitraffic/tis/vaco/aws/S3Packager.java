@@ -5,6 +5,7 @@ import fi.digitraffic.tis.aws.s3.AwsS3Exception;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.Archiver;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -13,15 +14,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Component
 public class S3Packager {
@@ -35,38 +33,6 @@ public class S3Packager {
                       VacoProperties vacoProperties) {
         this.s3Client = Objects.requireNonNull(s3Client);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
-    }
-
-    private void createZip(Path sourceFolder, Path targetFile) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(targetFile.toFile());
-             ZipOutputStream zipOut = new ZipOutputStream(fos)) {
-            addItemToZip(sourceFolder, sourceFolder, zipOut);
-        }
-    }
-
-    private void addItemToZip(Path root, Path itemToZip, ZipOutputStream zipOut) throws IOException {
-        Path relativized = root.relativize(itemToZip);
-
-        if (Files.isDirectory(itemToZip)) {
-            String folderName = relativized.toString();
-            // Avoiding root "downloads" folder being included in the zip's file structure
-            boolean isRootFolder = folderName.isBlank();
-            if (!isRootFolder) {
-                zipOut.putNextEntry(new ZipEntry(folderName + "/"));
-                zipOut.closeEntry();
-            }
-            File[] folderContents = itemToZip.toFile().listFiles();
-            if (folderContents != null) {
-                for (File file : folderContents) {
-                    addItemToZip(root, file.toPath(), zipOut);
-                }
-            }
-        } else {
-            ZipEntry zipEntry = new ZipEntry(relativized.toString());
-            zipOut.putNextEntry(zipEntry);
-            Files.copy(itemToZip, zipOut);
-            zipOut.closeEntry();
-        }
     }
 
     /**
@@ -94,7 +60,7 @@ public class S3Packager {
             logger.debug("Starting to package s3://{}/{} into {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, localTargetFile);
             try {
                 s3Client.downloadDirectory(vacoProperties.s3ProcessingBucket(), s3SourcePath, localArtifactTemp, filter).join();
-                createZip(localArtifactTemp, localTargetFile);
+                Archiver.createZip(localArtifactTemp, localTargetFile);
                 S3Path
                     s3FullTargetPath = ImmutableS3Path.builder()
                     .from(s3TargetPath)
