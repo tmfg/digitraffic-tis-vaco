@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Email;
+import fi.digitraffic.tis.vaco.configuration.MagicLink;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
@@ -115,13 +116,13 @@ public class TestObjects {
     }
 
     public static VacoProperties vacoProperties() {
-        return vacoProperties(null, null, null);
+        return vacoProperties(null, null, null, null);
     }
 
     /**
      * Override specific configuration subtypes. Provide nulls for those values which should use defaults.
      */
-    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email) {
+    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, MagicLink magicLink) {
         String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
 
         return new VacoProperties(
@@ -132,7 +133,8 @@ public class TestObjects {
             "biz",
             aws != null ? aws : new Aws("eu-north-1", null, null, null, new S3(null)),
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
-            email != null ? email : new Email("king@commonwealth", null));
+            email != null ? email : new Email("king@commonwealth", null),
+            magicLink != null ? magicLink : new MagicLink("C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"));
     }
 
     public static ImmutableGroupIdMappingTask.Builder adminGroupId() {

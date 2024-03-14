@@ -24,7 +24,7 @@ class MessageMapperTests {
     @BeforeEach
     void setUp() {
         email = new Email("from@example.fi", List.of("replyTo+a@example.fi", "replyTo+b@example.fi"));
-        mapper = new MessageMapper(TestObjects.vacoProperties(null, null, email));
+        mapper = new MessageMapper(TestObjects.vacoProperties(null, null, email, null));
     }
 
     @Test

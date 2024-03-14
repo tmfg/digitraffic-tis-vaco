@@ -18,7 +18,7 @@ Authorization: Bearer {{tis_token}}
 
 ###
 #
-POST {{serviceRootUri}}/api/admin-tasks/group-ids/jCn0-dPPHYIOWzxl_O0wK/assign?businessId=2560184-9
+POST {{serviceRootUri}}/api/admin-tasks/group-ids/umvNSN5pzX5p4GI7bgFXc/assign?businessId=2942108-7
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
