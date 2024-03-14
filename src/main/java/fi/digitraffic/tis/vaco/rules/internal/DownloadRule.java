@@ -238,7 +238,6 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     }
                     return CompletableFuture.completedFuture(path);
                 } catch (IOException e) {
-                    e.printStackTrace();
                     findingService.reportFinding(ImmutableFinding.of(entry.publicId(), task.id(), null, DOWNLOAD_SUBTASK, e.getMessage(), "ERROR"));
                     return CompletableFuture.completedFuture(Optional.empty());
                 }
