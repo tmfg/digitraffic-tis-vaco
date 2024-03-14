@@ -12,6 +12,7 @@ echo $(awslocal sqs create-queue --queue-name 'rules-processing-gtfs-canonical')
 echo $(awslocal sqs create-queue --queue-name 'rules-processing-netex-entur')
 echo $(awslocal sqs create-queue --queue-name 'rules-processing-netex2gtfs-entur')
 echo $(awslocal sqs create-queue --queue-name 'rules-processing-gtfs2netex-fintraffic')
+echo $(awslocal sqs create-queue --queue-name 'rules-processing-gbfs-entur')
 
 # --> List SQS Queues
 echo Listing queues ...
