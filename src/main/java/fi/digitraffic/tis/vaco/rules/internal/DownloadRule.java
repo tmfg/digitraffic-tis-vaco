@@ -1,7 +1,10 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.Archiver;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
@@ -14,8 +17,11 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.Rule;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.rules.model.gbfs.Discovery;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -25,31 +31,37 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 @Component
 public class DownloadRule implements Rule<Entry, ResultMessage> {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
     public static final String DOWNLOAD_SUBTASK = "prepare.download";
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final ObjectMapper objectMapper;
     private final TaskService taskService;
     private final VacoProperties vacoProperties;
     private final VacoHttpClient httpClient;
     private final S3Client s3Client;
     private final FindingService findingService;
 
-    public DownloadRule(TaskService taskService,
+    public DownloadRule(ObjectMapper objectMapper, TaskService taskService,
                         VacoProperties vacoProperties,
                         VacoHttpClient httpClient,
                         S3Client s3Client,
                         FindingService findingService) {
+        this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.httpClient = Objects.requireNonNull(httpClient);
@@ -68,20 +80,15 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             Optional<Task> task = taskService.findTask(entry.publicId(), DOWNLOAD_SUBTASK);
             return task.map(t -> {
                 Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
-                Path tempFilePath = TempFiles.getTaskTempFile(vacoProperties, entry, tracked, entry.format() + ".zip");
+                Path tempDirPath = TempFiles.getTaskTempDirectory(vacoProperties, entry, tracked);
 
                 try {
                     S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), DOWNLOAD_SUBTASK, DOWNLOAD_SUBTASK);
                     S3Path ruleS3Input = ruleBasePath.resolve("input");
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
 
-                    // generic download: maybe fetch file and validate it
-                    Optional<S3Path> result = httpClient.downloadFile(tempFilePath, entry.url(), entry.etag())
-                        .thenApply(track(entry, tracked, ProcessingState.UPDATE))
-                        .thenCompose(validateZip(entry, tracked))
-                        .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
-                        .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
-                        .join();
+                    // download: maybe fetch files and validate it
+                    Optional<S3Path> result = download(entry, tempDirPath, tracked, ruleS3Output);
 
                     // inspect result: did download result in file(s) in S3?
                     String downloadedFilePackage = "result";
@@ -109,14 +116,82 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     taskService.markStatus(entry, tracked, Status.FAILED);
                     return null;
                 } finally {
-                    try {
-                        Files.deleteIfExists(tempFilePath);
+                    try (Stream<Path> tempFiles = Files.walk(tempDirPath)) {
+                        tempFiles.sorted(Comparator.reverseOrder())
+                            .forEach(path -> {
+                                try {
+                                    Files.deleteIfExists(path);
+                                } catch (IOException ignored) {
+                                    /* ignored on purpose */
+                                }
+                            });
                     } catch (IOException ignored) {
-                        // NOTE: ignored exception on purpose, although we could re-throw
+                        /* ignored on purpose */
                     }
                 }
             }).orElseThrow();
         });
+    }
+
+    private Optional<S3Path> download(Entry entry, Path tempDirPath, Task tracked, S3Path ruleS3Output) {
+        CompletableFuture<Optional<Path>> feedArchive;
+        if (TransitDataFormat.GBFS.fieldName().equalsIgnoreCase(entry.format())) {
+            // GBFS feed is a directive pointing out to more files, so need to download them all separately and build a ZIP
+            feedArchive = httpClient.downloadFile(
+                TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".json"),
+                entry.url(),
+                entry.etag())
+            .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
+        } else {
+            // by default we assume single ZIP files, this applies to e.g. GTFS and NeTEx
+            feedArchive = httpClient.downloadFile(
+                TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip"),
+                entry.url(),
+                entry.etag());
+        }
+
+        return feedArchive.thenCompose(validateZip(entry, tracked))
+            .thenApply(track(entry, tracked, ProcessingState.UPDATE))
+            .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
+            .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
+            .join();
+    }
+
+    private Function<Optional<Path>, CompletionStage<Optional<Path>>> downloadGbfsDiscovery(Entry entry, Path tempDirPath) {
+        return discoveryFile -> {
+            if (discoveryFile.isPresent()) {
+                try {
+                    Path discoveryDir = Files.createDirectories(tempDirPath.resolve("discovery"));
+                    Discovery discovery = objectMapper.readValue(discoveryFile.get().toFile(), Discovery.class);
+
+                    List<CompletableFuture<Optional<Path>>> contents = Streams.flatten(discovery.data().values(), Map::values)
+                        .flatten(Function.identity())
+                        .map(feed -> httpClient.downloadFile(
+                            TempFiles.getTaskTempFile(discoveryDir, feed.name() + ".json"),
+                            feed.url(),
+                            null))
+                        .filter(Objects::nonNull)
+                        .toList();
+
+                    CompletableFuture<Void> all = CompletableFuture.allOf(contents.toArray(new CompletableFuture[0]));
+                    return all.thenApply(v -> {
+                        Path finalFile = TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip");
+                        try {
+                            Archiver.createZip(discoveryDir, finalFile);
+                        } catch (IOException e) {
+                            throw new RuleExecutionException("Could not create ZIP archive for GBFS content", e);
+                        }
+                        return Optional.of(finalFile);
+                    });
+                } catch (IOException e) {
+                    logger.warn("Failed to deserialize assumed GBFS content", e);
+                    return CompletableFuture.completedFuture(Optional.empty());
+                }
+            } else {
+                logger.info("GBFS discovery file not present");
+                return CompletableFuture.completedFuture(Optional.empty());
+            }
+        };
     }
 
     private <T> Function<T, T> track(Entry entry, Task task, ProcessingState state) {
@@ -150,6 +225,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
                     ZipEntry ze = zis.getNextEntry();
                     if (ze == null) {
+                        logger.warn("Entry {} processed ZIP file at path {} is empty", entry.publicId(), file);
                         return CompletableFuture.completedFuture(Optional.empty());
                     }
                     while (ze != null) {
@@ -162,6 +238,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     }
                     return CompletableFuture.completedFuture(path);
                 } catch (IOException e) {
+                    e.printStackTrace();
                     findingService.reportFinding(ImmutableFinding.of(entry.publicId(), task.id(), null, DOWNLOAD_SUBTASK, e.getMessage(), "ERROR"));
                     return CompletableFuture.completedFuture(Optional.empty());
                 }

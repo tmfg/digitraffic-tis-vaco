@@ -1,0 +1,5378 @@
+{
+  "last_updated": 1710347940,
+  "ttl": 300,
+  "version": "2.3",
+  "data": {
+    "bikes": [
+      {
+        "bike_id": "197",
+        "last_reported": 1710154187,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "271",
+        "last_reported": 1709724702,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "259",
+        "last_reported": 1710154122,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "4",
+        "last_reported": 1709637482,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "2",
+        "last_reported": 1709894899,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "258",
+        "last_reported": 1709556804,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "1",
+        "last_reported": 1700301908,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "275",
+        "last_reported": 1709725838,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "273",
+        "last_reported": 1708690247,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "3",
+        "last_reported": 1710154599,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "257",
+        "last_reported": 1708686778,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "256",
+        "last_reported": 1708946100,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "260",
+        "last_reported": 1708603215,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "5",
+        "last_reported": 1709812757,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "274",
+        "last_reported": 1710242693,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "231",
+        "last_reported": 1709726178,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "232",
+        "last_reported": 1709811714,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "233",
+        "last_reported": 1709553134,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "234",
+        "last_reported": 1709033751,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "235",
+        "last_reported": 1710241725,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "236",
+        "last_reported": 1710231853,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 75556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.78
+      },
+      {
+        "bike_id": "237",
+        "last_reported": 1708507263,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "238",
+        "last_reported": 1709205074,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "239",
+        "last_reported": 1709205139,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "240",
+        "last_reported": 1710155257,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 84444.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.86
+      },
+      {
+        "bike_id": "241",
+        "last_reported": 1701098237,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "242",
+        "last_reported": 1709205392,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "243",
+        "last_reported": 1709205122,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "244",
+        "last_reported": 1709206335,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "245",
+        "last_reported": 1710222715,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "246",
+        "last_reported": 1708945768,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "247",
+        "last_reported": 1709120218,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "249",
+        "last_reported": 1709811775,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "250",
+        "last_reported": 1709556770,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "251",
+        "last_reported": 1709205502,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "252",
+        "last_reported": 1709552942,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "253",
+        "last_reported": 1709552731,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "254",
+        "last_reported": 1708693295,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "255",
+        "last_reported": 1710245268,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "262",
+        "last_reported": 1710154512,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "263",
+        "last_reported": 1709033569,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "264",
+        "last_reported": 1709553301,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "266",
+        "last_reported": 1709726212,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "267",
+        "last_reported": 1700548531,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "268",
+        "last_reported": 1709639794,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "269",
+        "last_reported": 1709813367,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "270",
+        "last_reported": 1709119408,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "276",
+        "last_reported": 1709811445,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "277",
+        "last_reported": 1709894878,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "278",
+        "last_reported": 1709033775,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "279",
+        "last_reported": 1700821322,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "280",
+        "last_reported": 1709811405,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "171",
+        "last_reported": 1702576755,
+        "lat": 60.967245,
+        "lon": 25.71788333,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "172",
+        "last_reported": 1709637247,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "173",
+        "last_reported": 1710323067,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 77778.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.8
+      },
+      {
+        "bike_id": "174",
+        "last_reported": 1709206227,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "175",
+        "last_reported": 1708690594,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "176",
+        "last_reported": 1708437840,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "177",
+        "last_reported": 1709724762,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "178",
+        "last_reported": 1710323220,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "180",
+        "last_reported": 1710160313,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "181",
+        "last_reported": 1708600853,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "182",
+        "last_reported": 1709034448,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "183",
+        "last_reported": 1709812703,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "184",
+        "last_reported": 1708437582,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "185",
+        "last_reported": 1709206348,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "186",
+        "last_reported": 1708946499,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "187",
+        "last_reported": 1708600761,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "188",
+        "last_reported": 1708437627,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "189",
+        "last_reported": 1708946537,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "190",
+        "last_reported": 1700302131,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "191",
+        "last_reported": 1709137097,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "192",
+        "last_reported": 1709291790,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "193",
+        "last_reported": 1710245057,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "194",
+        "last_reported": 1709033585,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "195",
+        "last_reported": 1709637468,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "196",
+        "last_reported": 1700829167,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "198",
+        "last_reported": 1709291703,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "199",
+        "last_reported": 1709630065,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "200",
+        "last_reported": 1709724615,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "201",
+        "last_reported": 1709813020,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "202",
+        "last_reported": 1710154038,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "203",
+        "last_reported": 1700547929,
+        "lat": 60.96724833,
+        "lon": 25.71786,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "204",
+        "last_reported": 1708507417,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "205",
+        "last_reported": 1709638012,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "206",
+        "last_reported": 1701172031,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "207",
+        "last_reported": 1709291278,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "208",
+        "last_reported": 1709120467,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "210",
+        "last_reported": 1710135017,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "211",
+        "last_reported": 1709637533,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "212",
+        "last_reported": 1709119666,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "213",
+        "last_reported": 1708947792,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "214",
+        "last_reported": 1710323201,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "215",
+        "last_reported": 1702576894,
+        "lat": 60.967265,
+        "lon": 25.71791667,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "216",
+        "last_reported": 1710155206,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "217",
+        "last_reported": 1709552636,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "218",
+        "last_reported": 1710153987,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "219",
+        "last_reported": 1709291199,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "220",
+        "last_reported": 1708683888,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "221",
+        "last_reported": 1700548912,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "222",
+        "last_reported": 1710242809,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "223",
+        "last_reported": 1709291183,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "224",
+        "last_reported": 1708600965,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "225",
+        "last_reported": 1709637378,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "226",
+        "last_reported": 1709724531,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "227",
+        "last_reported": 1708690520,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "228",
+        "last_reported": 1708693381,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "229",
+        "last_reported": 1710326621,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 1111.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.11
+      },
+      {
+        "bike_id": "230",
+        "last_reported": 1709900341,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "10",
+        "last_reported": 1709205108,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "248",
+        "last_reported": 1708507296,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "100",
+        "last_reported": 1709205453,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "101",
+        "last_reported": 1708437705,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "102",
+        "last_reported": 1709812678,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "103",
+        "last_reported": 1708947547,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "104",
+        "last_reported": 1709205090,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "105",
+        "last_reported": 1708603331,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "106",
+        "last_reported": 1709552698,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "107",
+        "last_reported": 1710153807,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "108",
+        "last_reported": 1708686310,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "109",
+        "last_reported": 1709811378,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "11",
+        "last_reported": 1700547991,
+        "lat": 60.96721167,
+        "lon": 25.71788167,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 28889.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": 0.36
+      },
+      {
+        "bike_id": "110",
+        "last_reported": 1710323302,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 84444.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.86
+      },
+      {
+        "bike_id": "111",
+        "last_reported": 1709206272,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "112",
+        "last_reported": 1710305870,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "113",
+        "last_reported": 1710153772,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "114",
+        "last_reported": 1709724837,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "115",
+        "last_reported": 1709206202,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "116",
+        "last_reported": 1708946638,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "117",
+        "last_reported": 1709034334,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "118",
+        "last_reported": 1702538445,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.0
+      },
+      {
+        "bike_id": "119",
+        "last_reported": 1708946060,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "12",
+        "last_reported": 1709811847,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "120",
+        "last_reported": 1708946159,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "121",
+        "last_reported": 1710323040,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 85556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.87
+      },
+      {
+        "bike_id": "122",
+        "last_reported": 1710134063,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "123",
+        "last_reported": 1700298232,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "124",
+        "last_reported": 1710323120,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 73333.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.76
+      },
+      {
+        "bike_id": "125",
+        "last_reported": 1710326469,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "126",
+        "last_reported": 1708426236,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "127",
+        "last_reported": 1708690286,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "128",
+        "last_reported": 1709120198,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "129",
+        "last_reported": 1708507434,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "13",
+        "last_reported": 1710307002,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 70000.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": 0.73
+      },
+      {
+        "bike_id": "130",
+        "last_reported": 1709813224,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "131",
+        "last_reported": 1708690270,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "132",
+        "last_reported": 1710154467,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "133",
+        "last_reported": 1710323286,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 75556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.78
+      },
+      {
+        "bike_id": "134",
+        "last_reported": 1710323417,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "135",
+        "last_reported": 1708507550,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "14",
+        "last_reported": 1708946263,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "140",
+        "last_reported": 1709900685,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "141",
+        "last_reported": 1708945796,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "142",
+        "last_reported": 1709552990,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "143",
+        "last_reported": 1709894756,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "144",
+        "last_reported": 1708507239,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "145",
+        "last_reported": 1708519156,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "146",
+        "last_reported": 1709291259,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "147",
+        "last_reported": 1701250147,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "149",
+        "last_reported": 1710155165,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "15",
+        "last_reported": 1704295494,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "150",
+        "last_reported": 1709900554,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "151",
+        "last_reported": 1700813323,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "152",
+        "last_reported": 1708686258,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "153",
+        "last_reported": 1708946183,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "154",
+        "last_reported": 1709556876,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "155",
+        "last_reported": 1708519355,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "156",
+        "last_reported": 1702480684,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "157",
+        "last_reported": 1708437162,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "158",
+        "last_reported": 1710154101,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "159",
+        "last_reported": 1709900584,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "16",
+        "last_reported": 1709037650,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "160",
+        "last_reported": 1709033827,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "161",
+        "last_reported": 1708426047,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "162",
+        "last_reported": 1709120162,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "163",
+        "last_reported": 1709291372,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "164",
+        "last_reported": 1700548912,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "165",
+        "last_reported": 1701348091,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "166",
+        "last_reported": 1708601220,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "167",
+        "last_reported": 1710241773,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 77778.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.8
+      },
+      {
+        "bike_id": "168",
+        "last_reported": 1710323020,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 78889.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.81
+      },
+      {
+        "bike_id": "169",
+        "last_reported": 1708684373,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "17",
+        "last_reported": 1708690543,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "170",
+        "last_reported": 1708683632,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "179",
+        "last_reported": 1708425919,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "18",
+        "last_reported": 1709724550,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "19",
+        "last_reported": 1709292275,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "20",
+        "last_reported": 1709811359,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "21",
+        "last_reported": 1709033640,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "22",
+        "last_reported": 1709119435,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "23",
+        "last_reported": 1709899919,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "24",
+        "last_reported": 1709724740,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Kulta-Hannes",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "25",
+        "last_reported": 1709900777,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "26",
+        "last_reported": 1710155303,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "27",
+        "last_reported": 1710323482,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "28",
+        "last_reported": 1709811823,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "29",
+        "last_reported": 1708519036,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "36",
+        "last_reported": 1709637579,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "37",
+        "last_reported": 1708946545,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "38",
+        "last_reported": 1710306714,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "39",
+        "last_reported": 1709746420,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "40",
+        "last_reported": 1709637767,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "41",
+        "last_reported": 1708600930,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "43",
+        "last_reported": 1709725593,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "44",
+        "last_reported": 1708946607,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "45",
+        "last_reported": 1710243643,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "46",
+        "last_reported": 1709637390,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "47",
+        "last_reported": 1708601061,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "48",
+        "last_reported": 1708686241,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "49",
+        "last_reported": 1708600875,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "50",
+        "last_reported": 1709724765,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "61",
+        "last_reported": 1708946473,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "62",
+        "last_reported": 1682989845,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "63",
+        "last_reported": 1710154169,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "64",
+        "last_reported": 1709812693,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "65",
+        "last_reported": 1709724721,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "66",
+        "last_reported": 1710134039,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "67",
+        "last_reported": 1709033476,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "68",
+        "last_reported": 1709205424,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "69",
+        "last_reported": 1708521281,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "7",
+        "last_reported": 1709637281,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "70",
+        "last_reported": 1709724822,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "71",
+        "last_reported": 1709553073,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "72",
+        "last_reported": 1710326501,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 85556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.87
+      },
+      {
+        "bike_id": "73",
+        "last_reported": 1709206289,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "74",
+        "last_reported": 1708945728,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "75",
+        "last_reported": 1708686754,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "76",
+        "last_reported": 1708519183,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "77",
+        "last_reported": 1660653790,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "78",
+        "last_reported": 1709724725,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "79",
+        "last_reported": 1702302271,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "8",
+        "last_reported": 1700547922,
+        "lat": 60.967185,
+        "lon": 25.71784167,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "80",
+        "last_reported": 1710326531,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 82222.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.84
+      },
+      {
+        "bike_id": "9",
+        "last_reported": 1708693334,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "91",
+        "last_reported": 1709900520,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "92",
+        "last_reported": 1710154537,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "93",
+        "last_reported": 1709137897,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "94",
+        "last_reported": 1709637711,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "95",
+        "last_reported": 1709033517,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "96",
+        "last_reported": 1710157330,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "97",
+        "last_reported": 1709553162,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "98",
+        "last_reported": 1709552792,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "99",
+        "last_reported": 1710242720,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "86",
+        "last_reported": 1700313222,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "87",
+        "last_reported": 1709119775,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "88",
+        "last_reported": 1709553319,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "89",
+        "last_reported": 1700518816,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "90",
+        "last_reported": 1710222697,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 77778.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": 0.8
+      },
+      {
+        "bike_id": "136",
+        "last_reported": 1709894820,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "137",
+        "last_reported": 1709813068,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "138",
+        "last_reported": 1709894840,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "139",
+        "last_reported": 1709811492,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "30",
+        "last_reported": 1709034584,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "31",
+        "last_reported": 1708946226,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "32",
+        "last_reported": 1709637333,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "33",
+        "last_reported": 1709033621,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "34",
+        "last_reported": 1709895868,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "35",
+        "last_reported": 1700635273,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "51",
+        "last_reported": 1708686290,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "52",
+        "last_reported": 1700541015,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "53",
+        "last_reported": 1709637315,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "54",
+        "last_reported": 1709292481,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "55",
+        "last_reported": 1709556147,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "56",
+        "last_reported": 1709034022,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "57",
+        "last_reported": 1709119734,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "58",
+        "last_reported": 1710222705,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "59",
+        "last_reported": 1708690214,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "6",
+        "last_reported": 1710323247,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 2222.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.12
+      },
+      {
+        "bike_id": "60",
+        "last_reported": 1708603290,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "81",
+        "last_reported": 1709637908,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "82",
+        "last_reported": 1709724743,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "83",
+        "last_reported": 1710323441,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "84",
+        "last_reported": 1709813383,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "85",
+        "last_reported": 1709291280,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "261",
+        "last_reported": 1709118585,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "438",
+        "last_reported": 1710242756,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "281",
+        "last_reported": 1708690312,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "282",
+        "last_reported": 1708507328,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "283",
+        "last_reported": 1709034147,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "284",
+        "last_reported": 1708600832,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "285",
+        "last_reported": 1710131397,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": 0.01
+      },
+      {
+        "bike_id": "286",
+        "last_reported": 1710323272,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 77778.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.8
+      },
+      {
+        "bike_id": "287",
+        "last_reported": 1708508123,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "288",
+        "last_reported": 1708690248,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "289",
+        "last_reported": 1708437090,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "290",
+        "last_reported": 1701436692,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.03
+      },
+      {
+        "bike_id": "291",
+        "last_reported": 1709119555,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "292",
+        "last_reported": 1708507515,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "293",
+        "last_reported": 1709895061,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "294",
+        "last_reported": 1708686739,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "295",
+        "last_reported": 1708519397,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "296",
+        "last_reported": 1709205583,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "297",
+        "last_reported": 1710243178,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "298",
+        "last_reported": 1709724517,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "299",
+        "last_reported": 1709811691,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "300",
+        "last_reported": 1709552712,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "301",
+        "last_reported": 1709724516,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "302",
+        "last_reported": 1710242626,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 78889.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.81
+      },
+      {
+        "bike_id": "303",
+        "last_reported": 1708946017,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "304",
+        "last_reported": 1710241823,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 81111.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.83
+      },
+      {
+        "bike_id": "305",
+        "last_reported": 1709205555,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "306",
+        "last_reported": 1709637725,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "307",
+        "last_reported": 1708686333,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "308",
+        "last_reported": 1709900098,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "309",
+        "last_reported": 1708603151,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "310",
+        "last_reported": 1710307089,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 56667.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": 0.61
+      },
+      {
+        "bike_id": "311",
+        "last_reported": 1709119530,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "312",
+        "last_reported": 1709119689,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "313",
+        "last_reported": 1709291883,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "314",
+        "last_reported": 1710326968,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 60000.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.64
+      },
+      {
+        "bike_id": "315",
+        "last_reported": 1708425918,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "316",
+        "last_reported": 1709637590,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "317",
+        "last_reported": 1708425881,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "318",
+        "last_reported": 1709638568,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "319",
+        "last_reported": 1709137067,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "320",
+        "last_reported": 1709205483,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "321",
+        "last_reported": 1708603289,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "322",
+        "last_reported": 1708686222,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "323",
+        "last_reported": 1709208050,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "324",
+        "last_reported": 1709725144,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "325",
+        "last_reported": 1709894685,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "326",
+        "last_reported": 1710132572,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "327",
+        "last_reported": 1709813111,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "328",
+        "last_reported": 1709813179,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "329",
+        "last_reported": 1710242657,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "330",
+        "last_reported": 1708507480,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "331",
+        "last_reported": 1708601026,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "332",
+        "last_reported": 1708519137,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "333",
+        "last_reported": 1695896788,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 40000.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.46
+      },
+      {
+        "bike_id": "334",
+        "last_reported": 1709900283,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "335",
+        "last_reported": 1709292124,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "336",
+        "last_reported": 1709724599,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "337",
+        "last_reported": 1708601118,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "338",
+        "last_reported": 1700549004,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "339",
+        "last_reported": 1708424659,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "340",
+        "last_reported": 1709900507,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "341",
+        "last_reported": 1708425832,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "342",
+        "last_reported": 1709291387,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "343",
+        "last_reported": 1708519310,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "344",
+        "last_reported": 1708600904,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "345",
+        "last_reported": 1709120146,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "346",
+        "last_reported": 1709812715,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "347",
+        "last_reported": 1708603039,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "348",
+        "last_reported": 1701343746,
+        "lat": 60.967165,
+        "lon": 25.71789,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "349",
+        "last_reported": 1709900677,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "350",
+        "last_reported": 1710305341,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "351",
+        "last_reported": 1709291496,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "352",
+        "last_reported": 1710347250,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 14444.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.23
+      },
+      {
+        "bike_id": "353",
+        "last_reported": 1709205516,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "354",
+        "last_reported": 1708686588,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "355",
+        "last_reported": 1709894731,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "356",
+        "last_reported": 1710154425,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "357",
+        "last_reported": 1709811738,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "358",
+        "last_reported": 1708519057,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "359",
+        "last_reported": 1709900556,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "360",
+        "last_reported": 1708519520,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "361",
+        "last_reported": 1709291522,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "362",
+        "last_reported": 1709724711,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "363",
+        "last_reported": 1710242676,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "364",
+        "last_reported": 1710134078,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "365",
+        "last_reported": 1709556445,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "366",
+        "last_reported": 1709724675,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "367",
+        "last_reported": 1709638158,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "368",
+        "last_reported": 1709034351,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "369",
+        "last_reported": 1709291666,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "370",
+        "last_reported": 1710323360,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "371",
+        "last_reported": 1708507350,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "372",
+        "last_reported": 1708437866,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "373",
+        "last_reported": 1708437656,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "374",
+        "last_reported": 1710242606,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 3333.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.13
+      },
+      {
+        "bike_id": "375",
+        "last_reported": 1710242737,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "376",
+        "last_reported": 1709812678,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "377",
+        "last_reported": 1708437301,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "378",
+        "last_reported": 1710154010,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "379",
+        "last_reported": 1700541959,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.0
+      },
+      {
+        "bike_id": "380",
+        "last_reported": 1709812737,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "381",
+        "last_reported": 1709205532,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "382",
+        "last_reported": 1701260997,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "383",
+        "last_reported": 1708945748,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "384",
+        "last_reported": 1709900356,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "385",
+        "last_reported": 1709552967,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "386",
+        "last_reported": 1709900690,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "387",
+        "last_reported": 1709205059,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "388",
+        "last_reported": 1710326531,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 85556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.87
+      },
+      {
+        "bike_id": "389",
+        "last_reported": 1708690590,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "390",
+        "last_reported": 1709119944,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "391",
+        "last_reported": 1709120238,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "392",
+        "last_reported": 1709811474,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "393",
+        "last_reported": 1709894862,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "394",
+        "last_reported": 1700635663,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "395",
+        "last_reported": 1708946129,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "396",
+        "last_reported": 1708425897,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "397",
+        "last_reported": 1709291689,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "398",
+        "last_reported": 1709813367,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "399",
+        "last_reported": 1709291217,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "400",
+        "last_reported": 1708945891,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "401",
+        "last_reported": 1709724607,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "402",
+        "last_reported": 1710307033,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 73333.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": 0.76
+      },
+      {
+        "bike_id": "403",
+        "last_reported": 1709119744,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "404",
+        "last_reported": 1709291812,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "405",
+        "last_reported": 1708426085,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "406",
+        "last_reported": 1708437907,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "407",
+        "last_reported": 1710245541,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "408",
+        "last_reported": 1700307717,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "409",
+        "last_reported": 1709034225,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "410",
+        "last_reported": 1709900038,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "411",
+        "last_reported": 1709119755,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "412",
+        "last_reported": 1708946590,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "413",
+        "last_reported": 1708603584,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "414",
+        "last_reported": 1709900351,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "415",
+        "last_reported": 1709119508,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "416",
+        "last_reported": 1708946664,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "417",
+        "last_reported": 1709035783,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "418",
+        "last_reported": 1710153874,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "419",
+        "last_reported": 1709552617,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "420",
+        "last_reported": 1709291257,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "421",
+        "last_reported": 1709811863,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "422",
+        "last_reported": 1708603255,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "423",
+        "last_reported": 1709638887,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "424",
+        "last_reported": 1710326503,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 78889.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.81
+      },
+      {
+        "bike_id": "425",
+        "last_reported": 1708600790,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "426",
+        "last_reported": 1709117018,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "427",
+        "last_reported": 1708425982,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "428",
+        "last_reported": 1710305329,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "429",
+        "last_reported": 1709811341,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "430",
+        "last_reported": 1710245540,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "431",
+        "last_reported": 1708437627,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "432",
+        "last_reported": 1710242959,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "433",
+        "last_reported": 1709291352,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "434",
+        "last_reported": 1709637698,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "435",
+        "last_reported": 1709724675,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "436",
+        "last_reported": 1708945834,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "437",
+        "last_reported": 1709552679,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "439",
+        "last_reported": 1709119742,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "440",
+        "last_reported": 1708425486,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "531",
+        "last_reported": 1710153950,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "532",
+        "last_reported": 1709637508,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "533",
+        "last_reported": 1708437328,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "534",
+        "last_reported": 1708686603,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "441",
+        "last_reported": 1710322975,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 85556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.87
+      },
+      {
+        "bike_id": "442",
+        "last_reported": 1708519112,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "443",
+        "last_reported": 1709291631,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "444",
+        "last_reported": 1708507925,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "445",
+        "last_reported": 1709034370,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "446",
+        "last_reported": 1700303777,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "447",
+        "last_reported": 1709291323,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "448",
+        "last_reported": 1709118790,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "449",
+        "last_reported": 1708697931,
+        "lat": 61.004215,
+        "lon": 25.70654333,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "450",
+        "last_reported": 1700548186,
+        "lat": 60.9672,
+        "lon": 25.71789,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "451",
+        "last_reported": 1710153849,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "452",
+        "last_reported": 1708686732,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "453",
+        "last_reported": 1710132486,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "454",
+        "last_reported": 1709811425,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "455",
+        "last_reported": 1710241680,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 85556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.87
+      },
+      {
+        "bike_id": "456",
+        "last_reported": 1710245437,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "458",
+        "last_reported": 1710154445,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "459",
+        "last_reported": 1709894774,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "460",
+        "last_reported": 1710245294,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "461",
+        "last_reported": 1709894663,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "462",
+        "last_reported": 1710323394,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "463",
+        "last_reported": 1710304674,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "464",
+        "last_reported": 1710323092,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 76667.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.79
+      },
+      {
+        "bike_id": "465",
+        "last_reported": 1709812737,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "466",
+        "last_reported": 1710347937,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 61111.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.65
+      },
+      {
+        "bike_id": "467",
+        "last_reported": 1709811649,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "468",
+        "last_reported": 1709033496,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "469",
+        "last_reported": 1709811524,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "470",
+        "last_reported": 1709034469,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "471",
+        "last_reported": 1709119695,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "472",
+        "last_reported": 1710241804,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 84444.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.86
+      },
+      {
+        "bike_id": "473",
+        "last_reported": 1708416023,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "474",
+        "last_reported": 1700303736,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 17778.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.26
+      },
+      {
+        "bike_id": "475",
+        "last_reported": 1709117075,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "476",
+        "last_reported": 1709724649,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "477",
+        "last_reported": 1709553954,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "478",
+        "last_reported": 1708603233,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "479",
+        "last_reported": 1701167554,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "480",
+        "last_reported": 1710154080,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "481",
+        "last_reported": 1709894709,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "482",
+        "last_reported": 1709206318,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "483",
+        "last_reported": 1709724682,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "484",
+        "last_reported": 1708690565,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "485",
+        "last_reported": 1708437664,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 11111.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.2
+      },
+      {
+        "bike_id": "486",
+        "last_reported": 1709119461,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "487",
+        "last_reported": 1709206244,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "488",
+        "last_reported": 1710245319,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "489",
+        "last_reported": 1709812660,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "490",
+        "last_reported": 1708425962,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "491",
+        "last_reported": 1710244352,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "492",
+        "last_reported": 1709637265,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "493",
+        "last_reported": 1710305336,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "494",
+        "last_reported": 1708603306,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "495",
+        "last_reported": 1709033553,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "496",
+        "last_reported": 1700829006,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "497",
+        "last_reported": 1709724785,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "498",
+        "last_reported": 1709291972,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "499",
+        "last_reported": 1709812845,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "500",
+        "last_reported": 1701088234,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "501",
+        "last_reported": 1710224020,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "502",
+        "last_reported": 1710241700,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 85556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.87
+      },
+      {
+        "bike_id": "503",
+        "last_reported": 1700301206,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "504",
+        "last_reported": 1709726506,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "505",
+        "last_reported": 1708690418,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "506",
+        "last_reported": 1701180438,
+        "lat": 60.96728,
+        "lon": 25.71787833,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "507",
+        "last_reported": 1710154580,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "508",
+        "last_reported": 1709552773,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "509",
+        "last_reported": 1709746374,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "510",
+        "last_reported": 1709033634,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "511",
+        "last_reported": 1709746343,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "512",
+        "last_reported": 1709034441,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "513",
+        "last_reported": 1708519266,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "514",
+        "last_reported": 1709291832,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "515",
+        "last_reported": 1701439176,
+        "lat": 60.96721833,
+        "lon": 25.71786833,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "516",
+        "last_reported": 1710223760,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "517",
+        "last_reported": 1708507879,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "518",
+        "last_reported": 1709119824,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "519",
+        "last_reported": 1709553280,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "520",
+        "last_reported": 1701430792,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "521",
+        "last_reported": 1710224867,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 68,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "522",
+        "last_reported": 1709034618,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "523",
+        "last_reported": 1708684839,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "524",
+        "last_reported": 1709894802,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "525",
+        "last_reported": 1700737647,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "526",
+        "last_reported": 1708507981,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "527",
+        "last_reported": 1710326481,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 84444.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.86
+      },
+      {
+        "bike_id": "528",
+        "last_reported": 1709120179,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "529",
+        "last_reported": 1709724803,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "530",
+        "last_reported": 1709724630,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "535",
+        "last_reported": 1709811673,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "536",
+        "last_reported": 1709553005,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "537",
+        "last_reported": 1709899630,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "538",
+        "last_reported": 1710326519,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 85556.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.87
+      },
+      {
+        "bike_id": "539",
+        "last_reported": 1710241748,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 84444.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": 0.86
+      },
+      {
+        "bike_id": "540",
+        "last_reported": 1708603326,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "station_id": 28,
+        "current_fuel_percent": null
+      },
+      {
+        "bike_id": "test",
+        "last_reported": 1710143990,
+        "lat": 0.0,
+        "lon": 0.0,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": 81111.0,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": 0.83
+      },
+      {
+        "bike_id": "Kite Test Bike 01 b",
+        "last_reported": 1693502158,
+        "lat": 61.0,
+        "lon": 25.0,
+        "is_reserved": 0,
+        "is_disabled": 0,
+        "current_range_meters": null,
+        "vehicle_type_id": "Freebike_ebike",
+        "current_fuel_percent": null
+      }
+    ]
+  }
+}
+

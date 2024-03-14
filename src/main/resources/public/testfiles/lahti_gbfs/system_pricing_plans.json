@@ -1,0 +1,34 @@
+{
+  "last_updated": 1710347940,
+  "ttl": 300,
+  "version": "2.3",
+  "data": {
+    "plans": [
+      {
+        "description": "<p> Maksa ajosta 20 senttiä/min.</p> \n<p> Taukojen ja vuokrauksen yhteenlaskettu enimmäispituus on 3 tuntia. Jos 3 tunnin enimmäiskäyttöaika ylittyy, veloitamme 100 euron viivästysmaksun.  </p>\n<p> Ostaaksesi toisen lisenssin sinun tulee ensin peruuttaa \"Minuuttihinta\" -lisenssi</p>",
+        "plan_id": "Pay_as_you_go_2024",
+        "url": "",
+        "name": "Minuuttihinta ",
+        "currency": "EUR",
+        "price": 0.0,
+        "is_taxable": false,
+        "per_min_pricing": [
+          {
+            "start": 0,
+            "rate": 0.2,
+            "interval": 1,
+            "end": 180
+          },
+          {
+            "start": 180,
+            "rate": 100.0,
+            "interval": 0,
+            "end": null
+          }
+        ],
+        "surge_pricing": false
+      }
+    ]
+  }
+}
+
