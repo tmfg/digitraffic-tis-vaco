@@ -1,0 +1,44 @@
+# To run this file, you'll need private http client environment file. Ask from your team mates.
+
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{clientId}}&grant_type=client_credentials&scope={{scope}}&client_secret={{clientSecret}}
+
+
+> {%
+  client.global.set("tis_token", response.body.access_token)
+%}
+
+###
+
+POST {{serviceRootUri}}/api/queue
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+{
+  "url": "http://localhost:8080/api/static/testfiles/lahti_gbfs/gbfs.json",
+  "format": "gbfs",
+  "businessId": "2942108-7",
+  "etag": "etagg",
+  "name": "local - GBFS",
+  "validations": [
+    {
+      "name": "gbfs.entur",
+      "config": {}
+    }
+  ],
+  "conversions": [
+  ],
+  "metadata": {}
+}
+
+> {%
+    client.global.set("entry_details_link", response.body.links.refs.self.href)
+%}
+
+###
+
+GET {{entry_details_link}}
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
