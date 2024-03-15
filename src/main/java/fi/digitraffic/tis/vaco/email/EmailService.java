@@ -142,7 +142,7 @@ public class EmailService {
                             .text(translations.get("message.body")),
                         c.element("div")
                             .children(
-                                link(c, "/ui/ticket/info/" + entry.publicId(), translations.get("entry.link.text")))
+                                link(c, "/ui/data/" + entry.publicId(), translations.get("entry.link.text")))
                     )));
 
         return builder.build(buildOptions);
@@ -184,7 +184,7 @@ public class EmailService {
                 c.element("td")
                     .children(
                         link(c,
-                            "/ui/ticket/info/" + e.publicId(),
+                            "/ui/data/" + e.publicId(),
                             translations.get("message.feeds.entries.link")))));
         return c.element("table")
             .children(headers)
