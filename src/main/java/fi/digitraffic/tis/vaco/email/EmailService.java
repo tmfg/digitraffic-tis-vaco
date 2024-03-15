@@ -70,8 +70,12 @@ public class EmailService {
 
     @Scheduled(cron = "${vaco.scheduling.weekly-feed-status.cron}")
     public void weeklyFeedStatus() {
-        List<Company> companies = companyHierarchyService.listAllWithEntries();
-        companies.forEach(this::sendFeedStatusEmail);
+        try {
+            List<Company> companies = companyHierarchyService.listAllWithEntries();
+            companies.forEach(this::sendFeedStatusEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send weekly feed status emails", e);
+        }
     }
 
     @VisibleForTesting
