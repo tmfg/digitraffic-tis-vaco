@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.ui;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.opencsv.CSVWriter;
+import com.opencsv.ICSVWriter;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
@@ -64,7 +66,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -271,6 +278,25 @@ public class UiController {
                     ? null
                     : meService.findCompanies());
         return ResponseEntity.ok(Streams.collect(companyLatestEntries, this::asCompanyLatestEntryResource));
+    }
+
+    @GetMapping(path = "/admin/data-delivery/export", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<StreamingResponseBody> exportDataDeliveryOverview(@RequestParam(name = "language") String language) {
+        StreamingResponseBody stream = outputStream -> {
+            try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+                CSVWriter csvWriter = new CSVWriter(writer, ICSVWriter.DEFAULT_SEPARATOR,
+                    ICSVWriter.NO_QUOTE_CHARACTER, ICSVWriter.DEFAULT_ESCAPE_CHARACTER, ICSVWriter.DEFAULT_LINE_END);
+                adminToolsService.exportDataDeliveryToCsv(csvWriter, language);
+            }
+        };
+
+        String filename = "dataDelivery_"+ LocalDateTime.now() +".csv";
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, String.format("attachment; filename=%s", filename))
+            .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+            .body(stream);
     }
 
     @GetMapping(path = "/admin/entries")

@@ -18,6 +18,10 @@ public interface CompanyLatestEntry {
     @Nullable
     String publicId();
     @Nullable
+    String feedName();
+    @Nullable
+    String url();
+    @Nullable
     String format();
     @Nullable
     String convertedFormat();

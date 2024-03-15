@@ -68,6 +68,7 @@ public class TestObjects {
             .name("fileName")
             .url("https://example.fi")
             .etag("etag")
+            .name("yay")
             .businessId(Constants.FINTRAFFIC_BUSINESS_ID);
     }
 

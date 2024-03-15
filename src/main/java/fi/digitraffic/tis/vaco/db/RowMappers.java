@@ -44,11 +44,8 @@ import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.ui.EntryStateService;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyWithFormatSummary;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -231,6 +228,18 @@ public final class RowMappers {
         .businessId(rs.getString("business_id"))
         .publicId(rs.getString("public_id"))
         .format(rs.getString("format"))
+        .convertedFormat(rs.getString("converted_format"))
+        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
+        .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
+        .build();
+
+    public static final RowMapper<CompanyLatestEntry> DATA_DELIVERY = (rs, rowNum) -> ImmutableCompanyLatestEntry.builder()
+        .companyName(rs.getString("company_name"))
+        .businessId(rs.getString("business_id"))
+        .publicId(rs.getString("public_id"))
+        .format(rs.getString("input_format"))
+        .url(rs.getString("source_url"))
+        .feedName(rs.getString("name"))
         .convertedFormat(rs.getString("converted_format"))
         .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
         .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
