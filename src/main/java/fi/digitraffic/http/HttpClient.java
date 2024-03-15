@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
@@ -36,7 +37,8 @@ public class HttpClient {
             .connectTimeout(configuration.connectionTimeout())
             .requestTimeout(configuration.requestTimeout())
             .headersTimeout(configuration.headersTimeout())
-            .readTimeout(configuration.readTimeout());
+            .readTimeout(configuration.readTimeout())
+            .followRedirects(Redirect.ALWAYS);
 
         configuration.userAgentExtension()
             .map(ext -> BASE_USER_AGENT + " " + ext)
