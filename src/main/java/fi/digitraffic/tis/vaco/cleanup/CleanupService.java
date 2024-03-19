@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.cleanup;
 
+import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import org.slf4j.Logger;
@@ -41,7 +42,8 @@ public class CleanupService {
         return removed;
     }
 
-    private Duration cleanupOlderThan(Duration olderThanRequest) {
+    @VisibleForTesting
+    protected Duration cleanupOlderThan(Duration olderThanRequest) {
         if (olderThanRequest == null) {
             return cleanupProperties.olderThan();
         }
@@ -52,7 +54,8 @@ public class CleanupService {
         return olderThanRequest;
     }
 
-    private int cleanupKeepAtLeast(Integer keepAtLeastRequest) {
+    @VisibleForTesting
+    protected int cleanupKeepAtLeast(Integer keepAtLeastRequest) {
         if (keepAtLeastRequest == null) {
             return cleanupProperties.keepAtLeast();
         }
