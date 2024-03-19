@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.dto.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
+import fi.digitraffic.tis.vaco.api.model.admintasks.CleanupResponse;
+import fi.digitraffic.tis.vaco.api.model.admintasks.ImmutableCleanupResponse;
+import fi.digitraffic.tis.vaco.cleanup.CleanupService;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,15 +27,21 @@ import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
 @RequestMapping("/admin-tasks")
-@PreAuthorize("hasAnyAuthority('vaco.admin' ,'vaco.apiuser')")
+@PreAuthorize("hasAuthority('vaco.admin') and hasAuthority('vaco.apiuser')")
 public class AdminTasksController {
 
     private final AdminTasksService adminTasksService;
+
     private final CompanyHierarchyService companyHierarchyService;
 
-    public AdminTasksController(AdminTasksService adminTasksService, CompanyHierarchyService companyHierarchyService) {
+    private final CleanupService cleanupService;
+
+    public AdminTasksController(AdminTasksService adminTasksService,
+                                CompanyHierarchyService companyHierarchyService,
+                                CleanupService cleanupService) {
         this.adminTasksService = Objects.requireNonNull(adminTasksService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
+        this.cleanupService = Objects.requireNonNull(cleanupService);
     }
 
     @GetMapping(path = "/group-ids")
@@ -63,4 +72,9 @@ public class AdminTasksController {
         }).orElseGet(() -> badRequest().body(resource(null, "Unknown task '" + publicId + "'")));
     }
 
+    @PostMapping(path = "/cleanup")
+    @JsonView(DataVisibility.External.class)
+    public ResponseEntity<Resource<CleanupResponse>> runCleanup() {
+        return ok(resource(ImmutableCleanupResponse.of(cleanupService.runCleanup())));
+    }
 }
