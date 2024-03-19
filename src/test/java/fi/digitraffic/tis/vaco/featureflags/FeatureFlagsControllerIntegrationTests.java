@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.featureflags;
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

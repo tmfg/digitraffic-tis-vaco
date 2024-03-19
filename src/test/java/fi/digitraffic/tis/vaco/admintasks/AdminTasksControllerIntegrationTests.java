@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;

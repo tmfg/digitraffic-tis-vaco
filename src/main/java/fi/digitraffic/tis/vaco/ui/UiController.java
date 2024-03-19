@@ -6,7 +6,7 @@ import com.opencsv.ICSVWriter;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.dto.Link;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.badges.BadgeController;

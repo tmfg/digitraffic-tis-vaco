@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.admintasks;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.api.model.admintasks.CleanupResponse;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static fi.digitraffic.tis.utilities.dto.Resource.resource;
+import static fi.digitraffic.tis.vaco.api.model.Resource.resource;
 import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.ok;
 

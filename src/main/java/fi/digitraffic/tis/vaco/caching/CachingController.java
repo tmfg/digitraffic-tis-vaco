@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.caching;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 import java.util.Objects;
 
-import static fi.digitraffic.tis.utilities.dto.Resource.resource;
+import static fi.digitraffic.tis.vaco.api.model.Resource.resource;
 import static org.springframework.http.ResponseEntity.ok;
 
 @RestController

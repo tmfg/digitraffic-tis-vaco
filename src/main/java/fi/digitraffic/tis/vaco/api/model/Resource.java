@@ -1,5 +1,6 @@
-package fi.digitraffic.tis.utilities.dto;
+package fi.digitraffic.tis.vaco.api.model;
 
+import fi.digitraffic.tis.utilities.dto.Link;
 import jakarta.annotation.Nullable;
 
 import java.util.Map;
