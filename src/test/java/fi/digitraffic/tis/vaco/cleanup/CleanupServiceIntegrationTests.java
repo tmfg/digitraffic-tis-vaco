@@ -22,13 +22,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 
-class CleanupRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
+class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private EntryService entryService;
 
     @Autowired
-    private CleanupRepository cleanupRepository;
+    private CleanupService cleanupService;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -62,7 +62,7 @@ class CleanupRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         // remove anything without timelimit, keep 10 latest
         int keepEntries = 10;
         Duration olderThan = Duration.parse("P5D");
-        List<String> removed = cleanupRepository.runCleanup(olderThan, keepEntries);
+        List<String> removed = cleanupService.runCleanup(olderThan, keepEntries);
 
         // old are removed - the smaller the sequence number in name field, the older the entry is
         removed.forEach(r -> assertThat(Integer.parseInt(entries.get(r)), lessThan(totalEntries - keepEntries)));
@@ -82,7 +82,7 @@ class CleanupRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         // keep everything newer than specified
         int keepEntries = 5;
         Duration olderThan = Duration.parse("P10D");
-        List<String> removed = cleanupRepository.runCleanup(olderThan, keepEntries);
+        List<String> removed = cleanupService.runCleanup(olderThan, keepEntries);
 
         // old are removed - the smaller the sequence number in name field, the older the entry is
         removed.forEach(r -> assertThat(Integer.parseInt(entries.get(r)), lessThan(20)));

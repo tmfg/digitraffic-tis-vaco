@@ -8,6 +8,9 @@ import fi.digitraffic.tis.vaco.api.model.admintasks.CleanupResponse;
 import fi.digitraffic.tis.vaco.api.model.admintasks.ImmutableCleanupResponse;
 import fi.digitraffic.tis.vaco.cleanup.CleanupService;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,15 +34,21 @@ import static org.springframework.http.ResponseEntity.ok;
 @PreAuthorize("hasAuthority('vaco.admin') and hasAuthority('vaco.apiuser')")
 public class AdminTasksController {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final VacoProperties vacoProperties;
+
     private final AdminTasksService adminTasksService;
 
     private final CompanyHierarchyService companyHierarchyService;
 
     private final CleanupService cleanupService;
 
-    public AdminTasksController(AdminTasksService adminTasksService,
+    public AdminTasksController(VacoProperties vacoProperties,
+                                AdminTasksService adminTasksService,
                                 CompanyHierarchyService companyHierarchyService,
                                 CleanupService cleanupService) {
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.adminTasksService = Objects.requireNonNull(adminTasksService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.cleanupService = Objects.requireNonNull(cleanupService);
@@ -74,7 +84,10 @@ public class AdminTasksController {
 
     @PostMapping(path = "/cleanup")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<CleanupResponse>> runCleanup() {
-        return ok(resource(ImmutableCleanupResponse.of(cleanupService.runCleanup())));
+    public ResponseEntity<Resource<CleanupResponse>> runCleanup(
+        @RequestParam(value = "olderThan", required = false) Duration olderThanRequest,
+        @RequestParam(value = "keepAtLeast", required = false) Integer keepAtLeastRequest
+    ) {
+        return ok(resource(ImmutableCleanupResponse.of(cleanupService.runCleanup(olderThanRequest, keepAtLeastRequest))));
     }
 }
