@@ -1,8 +1,10 @@
 package fi.digitraffic.http;
 
 import com.github.mizosoft.methanol.Methanol;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -21,11 +23,15 @@ import java.util.concurrent.CompletableFuture;
 public class HttpClient {
 
     private static final String BASE_USER_AGENT =  "DigiTraffic TIS/r2024-01";
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final HttpClientConfiguration configuration;
 
     public final Methanol methanol;
 
     public HttpClient(HttpClientConfiguration configuration) {
+        this.configuration = configuration;
         this.methanol = createMethanol(configuration);
     }
 
@@ -69,11 +75,11 @@ public class HttpClient {
         return headers;
     }
 
-    public HttpRequest get(String url, Map<String, String> headers) {
+    public HttpRequest get(String uri, Map<String, String> headers) {
         try {
             var builder = HttpRequest.newBuilder()
                 .GET()
-                .uri(new URI(url));
+                .uri(toUri(uri));
 
             for (Map.Entry<String, String> entry : headers.entrySet()) {
                 builder = builder.header(entry.getKey(), entry.getValue());
@@ -81,8 +87,21 @@ public class HttpClient {
 
             return builder.build();
         } catch (URISyntaxException e) {
-            throw new HttpClientException(String.format("Provided URI %s is invalid", url), e);
+            throw new HttpClientException("Provided URI %s is invalid".formatted(uri), e);
+        } catch (IllegalArgumentException e) {
+            throw new HttpClientException("Could not construct HTTP GET request for URI %s".formatted(uri), e);
         }
+    }
+
+    @VisibleForTesting
+    protected URI toUri(String uri) throws URISyntaxException {
+        // XXX: It's 2024 and Java still doesn't have a native URI builder, and options are all frameworky
+        URI uriObj = new URI(uri);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUri(uriObj);
+        if (uriObj.getScheme() == null) {
+            builder.scheme(configuration.defaultScheme());
+        }
+        return builder.build().toUri();
     }
 }
 

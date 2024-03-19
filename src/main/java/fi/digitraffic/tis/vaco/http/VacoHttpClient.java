@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.http;
 
 import fi.digitraffic.http.HttpClient;
+import fi.digitraffic.http.HttpClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,24 +26,28 @@ public class VacoHttpClient {
     }
 
     public CompletableFuture<Optional<Path>> downloadFile(Path targetFilePath,
-                                                          String url,
+                                                          String uri,
                                                           String etag) {
-        logger.info("Downloading file from {} to {} (eTag {})", url, targetFilePath, etag);
+        logger.info("Downloading file from {} to {} (eTag {})", uri, targetFilePath, etag);
 
-        Map<String, String> requestHeaders = httpClient.headers(
-            "If-None-Match", etag,
-            "Accept", "application/zip, */*");
+        try {
+            Map<String, String> requestHeaders = httpClient.headers(
+                "If-None-Match", etag,
+                "Accept", "application/zip, */*");
+            HttpRequest request = httpClient.get(uri, requestHeaders);
+            HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
 
-        HttpRequest request = httpClient.get(url, requestHeaders);
-        HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
-
-        return httpClient.send(request, bodyHandler).thenApply(response -> {
-            logger.info("Response for {} with ETag {} resulted in HTTP status {}", url, etag, response.statusCode());
-            if (response.statusCode() == 304) {
-                return Optional.empty();
-            } else {
-                return Optional.of(response.body());
-            }
-        });
+            return httpClient.send(request, bodyHandler).thenApply(response -> {
+                logger.info("Response for {} with ETag {} resulted in HTTP status {}", uri, etag, response.statusCode());
+                if (response.statusCode() == 304) {
+                    return Optional.empty();
+                } else {
+                    return Optional.of(response.body());
+                }
+            });
+        } catch (HttpClientException e) {
+            logger.warn("HTTP execution failure for %s".formatted(uri), e);
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
     }
 }

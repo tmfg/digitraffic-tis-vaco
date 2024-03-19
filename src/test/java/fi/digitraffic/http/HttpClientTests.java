@@ -3,6 +3,8 @@ package fi.digitraffic.http;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,5 +33,11 @@ class HttpClientTests {
     @Test
     void throwsExceptionOnUnevenNumberOfHeaderValues() {
         assertThrows(HttpClientException.class, () -> httpClient.headers("moi"), "Uneven number of values should not be allowed");
+    }
+
+    @Test
+    void usesProvidedDefaultUriSchemeForSchemelessUris() throws URISyntaxException {
+        URI uri = httpClient.toUri("exaple.org");
+        assertThat(uri.getScheme(), equalTo(HttpClientConfiguration.DEFAULT_SCHEME));
     }
 }
