@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.company;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.Responses;
-import fi.digitraffic.tis.utilities.dto.Link;
+import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.company.model.Company;

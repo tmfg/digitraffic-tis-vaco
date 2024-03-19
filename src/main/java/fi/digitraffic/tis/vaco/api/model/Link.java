@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.utilities.dto;
+package fi.digitraffic.tis.vaco.api.model;
 
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.util.UriComponentsBuilder;

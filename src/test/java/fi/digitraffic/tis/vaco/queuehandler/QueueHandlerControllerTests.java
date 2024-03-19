@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.queuehandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
-import fi.digitraffic.tis.utilities.dto.Link;
+import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import org.junit.jupiter.api.Test;
