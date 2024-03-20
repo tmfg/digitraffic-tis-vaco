@@ -49,14 +49,6 @@ public class EntryService {
         this.persistentEntryMapper = Objects.requireNonNull(persistentEntryMapper);
     }
 
-    public Optional<Status> getStatus(String publicId) {
-        return entryRepository.findByPublicId(publicId).map(PersistentEntry::status);
-    }
-
-    public Optional<Status> getStatus(String publicId, String taskName) {
-        return taskService.findTask(publicId, taskName).map(Task::status);
-    }
-
     public void markComplete(Entry entry) {
         entryRepository.completeEntryProcessing(entry);
         cachingService.invalidateEntry(entry);
