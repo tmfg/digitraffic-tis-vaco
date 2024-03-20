@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.me;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.me.model.ImmutableMe;

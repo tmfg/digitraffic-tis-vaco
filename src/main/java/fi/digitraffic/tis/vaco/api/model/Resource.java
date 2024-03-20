@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.utilities.dto;
+package fi.digitraffic.tis.vaco.api.model;
 
 import jakarta.annotation.Nullable;
 

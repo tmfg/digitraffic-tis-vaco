@@ -8,6 +8,7 @@ import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,7 @@ public class EntryRequestMapper {
         }
 
         return ImmutableEntry.builder()
+            .publicId(Entry.NON_PERSISTED_PUBLIC_ID)
             .name(createEntryRequest.getName())
             .format(safeTrim(createEntryRequest.getFormat()))
             .url(safeTrim(createEntryRequest.getUrl()))

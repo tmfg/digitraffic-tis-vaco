@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.featureflags;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static fi.digitraffic.tis.utilities.JwtHelpers.safeGet;
-import static fi.digitraffic.tis.utilities.dto.Resource.resource;
+import static fi.digitraffic.tis.vaco.api.model.Resource.resource;
 import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.ok;
 

@@ -46,6 +46,7 @@ import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyWithFormatSummary;
+import org.postgresql.util.PGInterval;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -356,5 +358,16 @@ public final class RowMappers {
         }
         // TODO: This is potentially fatal, we could re-throw instead
         return null;
+    }
+
+    public static PGInterval writeInterval(Duration duration) {
+        PGInterval pgi = new PGInterval();
+        // Java Duration is modeled as seconds and nanoseconds, so it doesn't have any higher level understanding of
+        // time than days.
+        pgi.setDays((int) duration.toDaysPart());
+        pgi.setHours(duration.toHoursPart());
+        pgi.setMinutes(duration.toMinutesPart());
+        pgi.setSeconds(duration.toSecondsPart());
+        return pgi;
     }
 }

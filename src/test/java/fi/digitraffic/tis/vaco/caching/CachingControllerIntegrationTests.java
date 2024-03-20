@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.caching;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import fi.digitraffic.tis.vaco.caching.model.ImmutableCacheSummaryStatistics;
 import fi.digitraffic.tis.vaco.caching.model.ImmutableEvictionStatistics;

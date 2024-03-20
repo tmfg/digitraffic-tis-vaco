@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.ruleset;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;

@@ -19,7 +19,13 @@ import java.util.List;
 @JsonSerialize(as = ImmutableEntry.class)
 @JsonDeserialize(as = ImmutableEntry.class)
 public interface Entry {
-    @Nullable
+    /**
+     * Temporary identifier to use when mapping between types in contexts where the public id is not available otherwise.
+     * Use with extreme caution and preferably not at all unless you really, really, REALLY have to!
+     */
+    String NON_PERSISTED_PUBLIC_ID = "<< !!! NON-PERSISTED ENTRY !!! >>";
+
+    @Value.Parameter
     String publicId();
 
     @Value.Parameter

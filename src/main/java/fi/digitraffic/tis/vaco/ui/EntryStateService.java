@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.ui;
 
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.utilities.dto.Link;
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Link;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingRepository;

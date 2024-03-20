@@ -53,6 +53,7 @@ public abstract class AwsIntegrationTestBase {
                 new S3(localstack.getEndpointOverride(LocalStackContainer.Service.S3).toString())),
             null,
             null,
+            null,
             null);
         // reuse Spring beans without Spring to keep implementations consistent
         AwsConfiguration awsConfiguration = new AwsConfiguration();

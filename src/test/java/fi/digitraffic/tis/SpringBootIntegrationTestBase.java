@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fi.digitraffic.tis.utilities.dto.Link;
+import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.VacoApplication;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import org.jetbrains.annotations.NotNull;

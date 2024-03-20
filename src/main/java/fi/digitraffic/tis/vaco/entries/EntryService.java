@@ -14,6 +14,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.Set;
 
 @Service
 public class EntryService {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final EntryRepository entryRepository;
     private final FindingRepository findingRepository;
@@ -82,19 +86,36 @@ public class EntryService {
     }
 
     private Status resolveStatus(Entry entry) {
-        for (Task t : taskService.findTasks(entry)) {
+        List<Task> tasks = taskService.findTasks(entry);
+        if (tasks.isEmpty()) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Entry {} has no tasks, resolving entry as cancelled", entry.publicId());
+            }
+            return Status.CANCELLED;
+        }
+        for (Task t : tasks) {
             if (Status.FAILED.equals(t.status())
                 || Status.CANCELLED.equals(t.status())) {
-                return Status.FAILED;
+                return resolvedStatus(entry, t, Status.FAILED);
             }
             if (Status.ERRORS.equals(t.status())) {
-                return Status.ERRORS;
+                return resolvedStatus(entry, t, Status.ERRORS);
             }
             if (Status.WARNINGS.equals(t.status())) {
-                return Status.WARNINGS;
+                return resolvedStatus(entry, t, Status.WARNINGS);
             }
         }
+        if (logger.isInfoEnabled()) {
+            logger.info("All of entry {}'s tasks are successful, resolving entry as success", entry.publicId());
+        }
         return Status.SUCCESS;
+    }
+
+    private Status resolvedStatus(Entry entry, Task t, Status status) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Entry {} has a task with status {}, resolving entry as {}}", entry.publicId(), t.status(), status);
+        }
+        return status;
     }
 
     public Entry create(Entry entry) {

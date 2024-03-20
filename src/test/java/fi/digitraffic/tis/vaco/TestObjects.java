@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
+import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.MagicLink;
 import fi.digitraffic.tis.vaco.configuration.S3;
@@ -25,6 +26,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -64,6 +66,7 @@ public class TestObjects {
 
     public static ImmutableEntry.Builder anEntry() {
         return ImmutableEntry.builder()
+            .publicId(NanoIdUtils.randomNanoId())
             .format("gtfs")
             .name("fileName")
             .url("https://example.fi")
@@ -117,13 +120,13 @@ public class TestObjects {
     }
 
     public static VacoProperties vacoProperties() {
-        return vacoProperties(null, null, null, null);
+        return vacoProperties(null, null, null, null, null);
     }
 
     /**
      * Override specific configuration subtypes. Provide nulls for those values which should use defaults.
      */
-    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, MagicLink magicLink) {
+    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, MagicLink magicLink, Cleanup cleanup) {
         String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
 
         return new VacoProperties(
@@ -135,7 +138,8 @@ public class TestObjects {
             aws != null ? aws : new Aws("eu-north-1", null, null, null, new S3(null)),
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
             email != null ? email : new Email("king@commonwealth", null),
-            magicLink != null ? magicLink : new MagicLink("C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"));
+            magicLink != null ? magicLink : new MagicLink("C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"),
+            cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), 10));
     }
 
     public static ImmutableGroupIdMappingTask.Builder adminGroupId() {

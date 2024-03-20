@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.validation;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.entries.EntryService;
@@ -49,7 +50,7 @@ class ValidationQueueSqsListenerTests {
     void setUp() {
         listener = new ValidationQueueSqsListener(messagingService, rulesetSubmissionService, entryService);
 
-        entry = ImmutableEntry.of("entry", TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, Constants.FINTRAFFIC_BUSINESS_ID);
+        entry = ImmutableEntry.of(NanoIdUtils.randomNanoId(), "entry", TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, Constants.FINTRAFFIC_BUSINESS_ID);
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
         message = ImmutableValidationJobMessage.builder()
             .entry(entry)

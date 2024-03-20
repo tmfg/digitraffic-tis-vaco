@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.utilities;
 
-import fi.digitraffic.tis.utilities.dto.Resource;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
