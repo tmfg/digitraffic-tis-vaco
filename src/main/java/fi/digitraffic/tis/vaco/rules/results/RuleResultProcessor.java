@@ -99,7 +99,7 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     }
 
     protected void resolveTaskStatus(Entry entry, Task task) {
-    Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
+    Map<String, Long> severities = findingService.summarizeFindingsSeverities(task);
         logger.debug("{}/{} produced findings {}", entry.publicId(), task.name(), severities);
         if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
             || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {

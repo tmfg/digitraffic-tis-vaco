@@ -111,7 +111,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
-        given(findingService.summarizeFindingsSeverities(entry, task)).willReturn(Map.of());
+        given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
 
         resultProcessor.processResults(resultMessage, entry, task);
@@ -130,7 +130,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
-        given(findingService.summarizeFindingsSeverities(entry, task)).willReturn(Map.of());
+        given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
 
         resultProcessor.processResults(resultMessage, entry, task);

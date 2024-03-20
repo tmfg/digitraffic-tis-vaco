@@ -4,7 +4,6 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +34,7 @@ public class FindingService {
         }).toList());
     }
 
-    public Map<String, Long> summarizeFindingsSeverities(Entry entry, Task task) {
-        return findingRepository.getSeverityCounts(entry, task);
+    public Map<String, Long> summarizeFindingsSeverities(Task task) {
+        return findingRepository.getSeverityCounts(task);
     }
 }

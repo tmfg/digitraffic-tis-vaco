@@ -57,10 +57,6 @@ public class MessagingService {
     }
 
     public CompletableFuture<DelegationJobMessage> submitProcessingJob(DelegationJobMessage delegationJobMessage) {
-        if (delegationJobMessage.entry().findings() != null
-            && !delegationJobMessage.entry().findings().isEmpty()) {
-            throw new RuntimeException("fail here" + delegationJobMessage);
-        }
         return sendMessage(MessageQueue.JOBS.getQueueName(), delegationJobMessage);
     }
 

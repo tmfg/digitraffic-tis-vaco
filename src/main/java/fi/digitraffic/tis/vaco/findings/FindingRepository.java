@@ -4,7 +4,6 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -29,9 +28,8 @@ public class FindingRepository {
 
     public Finding create(Finding finding) {
         return jdbc.queryForObject("""
-            INSERT INTO finding (entry_id, task_id, ruleset_id, source, message, severity, raw)
+            INSERT INTO finding (task_id, ruleset_id, source, message, severity, raw)
                  VALUES (
-                             (SELECT id FROM entry WHERE public_id = ?),
                              ?,
                              ?,
                              ?,
@@ -42,10 +40,9 @@ public class FindingRepository {
                                           AND rso.name = ?),
                                       ?),
                              ?)
-              RETURNING id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
+              RETURNING id, public_id, task_id, ruleset_id, source, message, severity, raw
             """,
             RowMappers.FINDING,
-            finding.entryId(),
             finding.taskId(),
             finding.rulesetId(),
             finding.source(),
@@ -60,7 +57,7 @@ public class FindingRepository {
         try {
             return jdbc.query(
                 """
-                SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
+                SELECT id, public_id, task_id, ruleset_id, source, message, severity, raw
                   FROM finding
                  WHERE task_id = ?
                 """,
@@ -75,9 +72,8 @@ public class FindingRepository {
     public boolean createFindings(List<Finding> findings) {
         try {
             jdbc.batchUpdate("""
-                        INSERT INTO finding (entry_id, task_id, ruleset_id, source, message, severity, raw)
+                        INSERT INTO finding (task_id, ruleset_id, source, message, severity, raw)
                              VALUES (
-                             (SELECT id FROM entry WHERE public_id = ?),
                              ?,
                              ?,
                              ?,
@@ -88,20 +84,19 @@ public class FindingRepository {
                                           AND rso.name = ?),
                                       ?),
                              ?)
-                          RETURNING id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
+                          RETURNING id, public_id, task_id, ruleset_id, source, message, severity, raw
                     """,
                 findings,
                 100,
                 (ps, finding) -> {
-                    ps.setString(1, finding.entryId());
-                    ps.setLong(2, finding.taskId());
-                    ps.setLong(3, finding.rulesetId());
-                    ps.setString(4, finding.source());
-                    ps.setString(5, finding.message());
-                    ps.setLong(6, finding.rulesetId());
-                    ps.setString(7, finding.message());
-                    ps.setString(8, finding.severity());
-                    ps.setObject(9, finding.raw());
+                    ps.setLong(1, finding.taskId());
+                    ps.setLong(2, finding.rulesetId());
+                    ps.setString(3, finding.source());
+                    ps.setString(4, finding.message());
+                    ps.setLong(5, finding.rulesetId());
+                    ps.setString(6, finding.message());
+                    ps.setString(7, finding.severity());
+                    ps.setObject(8, finding.raw());
                 });
             // TODO: inspect result counts to determine everything was inserted
             return true;
@@ -111,16 +106,14 @@ public class FindingRepository {
         }
     }
 
-    public Map<String, Long> getSeverityCounts(Entry entry, Task task) {
+    public Map<String, Long> getSeverityCounts(Task task) {
         List<Map<String, Object>> mapList = jdbc.queryForList("""
                   SELECT severity,
                          COUNT(severity) AS count
                     FROM finding
-                   WHERE entry_id = (SELECT id FROM entry WHERE entry.public_id = ?)
-                     AND task_id = ?
+                   WHERE task_id = ?
                 GROUP BY severity
                 """,
-            entry.publicId(),
             task.id());
         return Streams.collect(
             mapList,
