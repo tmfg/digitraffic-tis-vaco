@@ -43,8 +43,8 @@ public final class TempFiles {
     public static Path getTaskTempFile(Path taskTempDir, String fileName) {
         return tempFile(
             taskTempDir,
-            fileName,
-            true);
+            fileName
+        );
     }
 
     public static Path getArtifactDownloadDirectory(VacoProperties vacoProperties, Entry entry) {
@@ -89,9 +89,9 @@ public final class TempFiles {
         }
     }
 
-    private static Path tempFile(Path dir, String file, boolean failOnExistence) {
+    private static Path tempFile(Path dir, String file) {
         Path result = dir.resolve(file);
-        if (failOnExistence && Files.exists(result)) {
+        if (Files.exists(result)) {
             throw new RuleExecutionException("File " + result + " already exists! Is the process running twice?");
         }
         return result;

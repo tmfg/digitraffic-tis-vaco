@@ -56,12 +56,12 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Entry result = entryService.create(e);
         jdbc.update("UPDATE entry SET updated=NOW() - INTERVAL '" + result.name() + " days' WHERE public_id = ?",
             result.publicId());
-        return entryService.findEntry(result.publicId(), true).get();
+        return entryService.findEntry(result.publicId()).get();
     }
 
     @AfterEach
     void tearDown() {
-        entryService.findAllByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID, true)
+        entryService.findAllByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID)
             .forEach(e -> jdbc.update("DELETE FROM entry WHERE public_id = ?", e.publicId()));
     }
 
@@ -77,7 +77,7 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
         assertThat(removed.size(), equalTo(15));
 
-        List<Entry> remaining = entryService.findAllByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID, true);
+        List<Entry> remaining = entryService.findAllByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
 
         assertThat(remaining.size(), equalTo(10));
 
@@ -97,7 +97,7 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
         assertThat(removed.size(), equalTo(20));
 
-        List<Entry> remaining = entryService.findAllByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID, true);
+        List<Entry> remaining = entryService.findAllByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
 
         assertThat(remaining.size(), equalTo(5));
 

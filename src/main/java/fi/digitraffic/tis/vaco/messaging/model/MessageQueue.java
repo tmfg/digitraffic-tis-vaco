@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 public enum MessageQueue {
     JOBS(QueueNames.VACO_JOBS),
     JOBS_VALIDATION(QueueNames.VACO_JOBS_VALIDATION),
-    JOBS_CONVERSION(QueueNames.VACO_JOBS_CONVERSION),
     RULE_RESULTS_INGEST(QueueNames.VACO_RULES_RESULTS),
     RULE_PROCESSING(QueueNames.VACO_RULES_PROCESSING_TEMPLATE),
     // TODO: This queue needs to be renamed/migrated with more rigorous process than just direct code renaming as it

@@ -55,21 +55,6 @@ public class FindingRepository {
             finding.raw());
     }
 
-    public List<Finding> findFindingsByEntryId(Long entryId) {
-        try {
-            return jdbc.query(
-                    """
-                    SELECT id, public_id, entry_id, task_id, ruleset_id, source, message, severity, raw
-                      FROM finding
-                     WHERE entry_id = ?
-                    """,
-                    RowMappers.FINDING,
-                    entryId);
-        } catch (EmptyResultDataAccessException erdae) {
-            return List.of();
-        }
-    }
-
     public List<Finding> findFindingsByTaskId(Long taskId) {
         try {
             return jdbc.query(

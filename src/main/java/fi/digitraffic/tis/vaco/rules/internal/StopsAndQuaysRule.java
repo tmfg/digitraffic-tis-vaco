@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
  */
 @Component
 public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
-    public static final String STOPS_AND_QUAYS_TASK = "prepare.stopsAndQuays";
+    public static final String PREPARE_STOPS_AND_QUAYS_TASK = "prepare.stopsAndQuays";
     private final TaskService taskService;
     private final VacoProperties vacoProperties;
     private final S3Client s3Client;
@@ -41,19 +41,14 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
     }
 
     @Override
-    public String getIdentifyingName() {
-        return STOPS_AND_QUAYS_TASK;
-    }
-
-    @Override
     public CompletableFuture<ResultMessage> execute(Entry entry) {
         return CompletableFuture.supplyAsync(() -> {
-            Optional<Task> task = taskService.findTask(entry.publicId(), STOPS_AND_QUAYS_TASK);
+            Optional<Task> task = taskService.findTask(entry.publicId(), PREPARE_STOPS_AND_QUAYS_TASK);
             return task.map(t -> {
                 Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
 
                 try {
-                    S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), STOPS_AND_QUAYS_TASK, STOPS_AND_QUAYS_TASK);
+                    S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), PREPARE_STOPS_AND_QUAYS_TASK, PREPARE_STOPS_AND_QUAYS_TASK);
                     S3Path ruleS3Input = ruleBasePath.resolve("input");
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
 
@@ -67,7 +62,7 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
                     return ImmutableResultMessage.builder()
                         .entryId(entry.publicId())
                         .taskId(tracked.id())
-                        .ruleName(STOPS_AND_QUAYS_TASK)
+                        .ruleName(PREPARE_STOPS_AND_QUAYS_TASK)
                         .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
                         .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
                         .uploadedFiles(Map.of(target.asUri(vacoProperties.s3ProcessingBucket()), List.of("result")))

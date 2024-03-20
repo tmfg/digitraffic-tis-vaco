@@ -6,12 +6,10 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -34,16 +32,13 @@ public class EntryRepository {
     private final JdbcTemplate jdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
     private final ObjectMapper objectMapper;
-    private final PersistentEntryMapper persistentEntryMapper;
 
     public EntryRepository(JdbcTemplate jdbc,
                            NamedParameterJdbcTemplate namedJdbc,
-                           ObjectMapper objectMapper,
-                           PersistentEntryMapper persistentEntryMapper) {
+                           ObjectMapper objectMapper) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.persistentEntryMapper = Objects.requireNonNull(persistentEntryMapper);
     }
 
     @Transactional
@@ -179,20 +174,9 @@ public class EntryRepository {
                 new MapSqlParameterSource()
                     .addValue("businessIds", businessIds),
                 RowMappers.PERSISTENT_ENTRY.apply(objectMapper));
-            //if (full) {
-            //    return Streams.map(entries, e -> buildCompleteEntry(e, true)).toList();
-            //} else {
-            //    return Streams.map(entries,e -> (Entry) persistentEntryMapper.toEntryBuilder(e).build()).toList();
-            //}
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
         }
-    }
-
-    @Transactional
-    public PersistentEntry reload(Entry entry) {
-        return findByPublicId(entry.publicId())
-            .orElseThrow(() -> new RuleExecutionException("Failed to reload entry with public id " + entry.publicId() + " from database, corrupt entry?"));
     }
 
     public List<PersistentEntry> findLatestEntries(Company company) {

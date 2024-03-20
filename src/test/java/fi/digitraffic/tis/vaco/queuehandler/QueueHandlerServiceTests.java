@@ -213,7 +213,6 @@ class QueueHandlerServiceTests {
     }
 
     private void givenCachesResult() {
-        given(cachingService.keyForEntry(entryRequest.publicId(), true)).willReturn("mocked cache key");
         given(cachingService.cacheEntry(any(String.class), any(Function.class)))
             .willAnswer(a ->
                 Optional.ofNullable(((Function) a.getArgument(1)).apply(a.getArgument(0))));

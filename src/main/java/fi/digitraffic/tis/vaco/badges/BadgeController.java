@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.badges;
 
-import fi.digitraffic.tis.vaco.caching.CachingService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ContentDisposition;
@@ -21,11 +20,8 @@ public class BadgeController {
 
     private final BadgeService badgeService;
 
-    private final CachingService cachingService;
-
-    public BadgeController(BadgeService badgeService, CachingService cachingService) {
+    public BadgeController(BadgeService badgeService) {
         this.badgeService = Objects.requireNonNull(badgeService);
-        this.cachingService = Objects.requireNonNull(cachingService);
     }
 
     @GetMapping(path = "/{publicId}", produces = "image/svg+xml")

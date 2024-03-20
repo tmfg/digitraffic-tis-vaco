@@ -9,7 +9,6 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -41,16 +40,13 @@ import java.util.stream.Stream;
 public class TaskService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final TaskRepository taskRepository;
-    private final PackagesService packagesService;
     private final RulesetService rulesetService;
     private final CachingService cachingService;
 
     public TaskService(TaskRepository taskRepository,
-                       PackagesService packagesService,
                        RulesetService rulesetService,
                        CachingService cachingService) {
         this.taskRepository = Objects.requireNonNull(taskRepository);
-        this.packagesService = Objects.requireNonNull(packagesService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.cachingService = Objects.requireNonNull(cachingService);
     }
@@ -149,12 +145,12 @@ public class TaskService {
 
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
-        deps.put(DownloadRule.DOWNLOAD_SUBTASK, List.of());
-        deps.put(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, List.of());
+        deps.put(DownloadRule.PREPARE_DOWNLOAD_TASK, List.of());
+        deps.put(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, List.of());
         deps.put(RulesetSubmissionService.VALIDATE_TASK,
             List.of(
-                DownloadRule.DOWNLOAD_SUBTASK,
-                StopsAndQuaysRule.STOPS_AND_QUAYS_TASK));
+                DownloadRule.PREPARE_DOWNLOAD_TASK,
+                StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
         deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
         return deps;
     }
@@ -165,8 +161,8 @@ public class TaskService {
         // conversion rule itself
         deps.addAll(RuleName.ALL_EXTERNAL_VALIDATION_RULES);
         deps.addAll(List.of(
-            DownloadRule.DOWNLOAD_SUBTASK,
-            StopsAndQuaysRule.STOPS_AND_QUAYS_TASK,
+            DownloadRule.PREPARE_DOWNLOAD_TASK,
+            StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK,
             RulesetSubmissionService.VALIDATE_TASK));
         return deps;
     }

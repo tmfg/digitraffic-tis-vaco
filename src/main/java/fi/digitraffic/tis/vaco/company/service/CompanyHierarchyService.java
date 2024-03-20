@@ -45,9 +45,8 @@ public class CompanyHierarchyService {
     private void reloadRootHierarchies() {
         Map<Company, Hierarchy> rootHierarchies = companyHierarchyRepository.findRootHierarchies();
         Map<String, LightweightHierarchy> lightweightHierarchies = new HashMap<>();
-        rootHierarchies.forEach((company, hierarchy) -> {
-            lightweightHierarchies.put(company.businessId(), LightweightHierarchy.from(hierarchy));
-        });
+        rootHierarchies.forEach((company, hierarchy) ->
+            lightweightHierarchies.put(company.businessId(), LightweightHierarchy.from(hierarchy)));
         synchronized (this) {
             this.hierarchies = lightweightHierarchies;
         }

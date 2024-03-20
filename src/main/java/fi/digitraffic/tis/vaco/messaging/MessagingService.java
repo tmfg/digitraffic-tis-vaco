@@ -1,11 +1,9 @@
 package fi.digitraffic.tis.vaco.messaging;
 
-import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.caching.CachingFailureException;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
-import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
@@ -47,7 +45,7 @@ public class MessagingService {
     public <P> CompletableFuture<P> sendMessage(String queueName, P payload) {
         if (payload == null) {
             logger.warn("send {} !! Tried to send null payload, ignoring", queueName);
-            return CompletableFuture.completedFuture(payload);
+            return CompletableFuture.completedFuture(null);
         }
         try {
             logger.debug("send {} <- {}", queueName, payload);
@@ -68,14 +66,6 @@ public class MessagingService {
 
     public CompletableFuture<ValidationJobMessage> submitValidationJob(ValidationJobMessage jobDescription) {
         return sendMessage(MessageQueue.JOBS_VALIDATION.getQueueName(), jobDescription);
-    }
-
-    public void updateJobProcessingStatus(ImmutableDelegationJobMessage jobDescription, ProcessingState state) {
-        switch (state) {
-            case START -> entryRepository.startEntryProcessing(jobDescription.entry());
-            case UPDATE -> entryRepository.updateEntryProcessing(jobDescription.entry());
-            case COMPLETE -> entryRepository.completeEntryProcessing(jobDescription.entry());
-        }
     }
 
     public CompletableFuture<ValidationRuleJobMessage> submitRuleExecutionJob(String ruleName, ValidationRuleJobMessage ruleMessage) {

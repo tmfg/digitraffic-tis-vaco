@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
-import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -41,7 +40,6 @@ public class CachingService {
     private final Cache<String, String> sqsQueueUrlCache;
     private final Cache<Path, Path> localPathCache;
     private final Cache<String, Entry> entryCache;
-    private final Cache<String, Hierarchy> companyHierarchyCache;
     private final Cache<String, Status> statusCache;
     private final Cache<String, ClassPathResource> classPathResourceCache;
     private final CacheStatsMapper cacheStatsMapper;
@@ -53,7 +51,6 @@ public class CachingService {
         this.sqsQueueUrlCache = sqsQueueUrlCache();
         this.localPathCache = localPathCache();
         this.entryCache = entryCache();
-        this.companyHierarchyCache = companyHierarchyCache();
         this.statusCache = statusCache();
         this.classPathResourceCache = classPathResourceCache();
     }
@@ -82,11 +79,6 @@ public class CachingService {
         localPathCache.invalidate(key);
     }
 
-
-    public String keyForEntry(String publicId, boolean skipErrorsField) {
-        return publicId + " (full=" + skipErrorsField + ")";
-    }
-
     public Optional<Entry> cacheEntry(String key, Function<String, Entry> loader) {
         return Optional.ofNullable(entryCache.get(key, loader));
     }
@@ -100,16 +92,7 @@ public class CachingService {
     }
 
     protected void invalidateEntry(String publicId) {
-        entryCache.invalidate(keyForEntry(publicId, true));
-        entryCache.invalidate(keyForEntry(publicId, false));
-    }
-
-    public Hierarchy cacheCompanyHierarchy(Company company, String kind, Function<String, Hierarchy> loader) {
-        return companyHierarchyCache.get(company.businessId() + "(" + kind + ")", loader);
-    }
-
-    public void invalidateCompanyHierarchy(Company company, String kind) {
-        companyHierarchyCache.invalidate(company.businessId() + "(" + kind + ")");
+        entryCache.invalidate(publicId);
     }
 
     public GroupIdMappingTask cacheAdminTask(String key, Function<String, GroupIdMappingTask> loader) {
@@ -212,7 +195,6 @@ public class CachingService {
             "SQS queue URLs", cacheStatsMapper.toCacheSummaryStatistics(sqsQueueUrlCache),
             "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache),
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
-            "hierarchies", cacheStatsMapper.toCacheSummaryStatistics(companyHierarchyCache),
             "statuses", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
             "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache));
     }

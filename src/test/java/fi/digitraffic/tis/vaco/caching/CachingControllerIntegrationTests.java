@@ -40,7 +40,6 @@ class CachingControllerIntegrationTests extends SpringBootIntegrationTestBase {
                 "SQS queue URLs", emptyStatistics,
                 "local temporary file paths", emptyStatistics,
                 "entries", emptyStatistics,
-                "hierarchies", emptyStatistics,
                 "statuses", emptyStatistics,
                 "classpath resources", emptyStatistics)));
     }

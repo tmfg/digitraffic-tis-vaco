@@ -109,7 +109,7 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
                     Category.GENERIC,
                     Type.CONVERSION_SYNTAX,
                     TransitDataFormat.forField(entry.format()))
-                .withDependencies(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.CONVERT_TASK));
+                .withDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK, RulesetSubmissionService.CONVERT_TASK));
 
         // TODO: should be PersistentEntry for better assertions
         Entry result = entryService.create(entry.withConversions(conversion));
@@ -117,7 +117,7 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(
             Streams.map(taskService.findTasks(result), this::withoutGeneratedValues).toList(),
             equalTo(List.of(
-                ImmutableTask.of(1000000L, DownloadRule.DOWNLOAD_SUBTASK, 100),
+                ImmutableTask.of(1000000L, DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
                 ImmutableTask.of(1000000L, RulesetSubmissionService.CONVERT_TASK, 200),
                 ImmutableTask.of(1000000L, "bananas", 201)
             )));

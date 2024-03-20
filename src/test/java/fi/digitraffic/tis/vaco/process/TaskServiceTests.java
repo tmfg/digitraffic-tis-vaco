@@ -57,7 +57,7 @@ class TaskServiceTests {
 
     @BeforeEach
     void setUp() {
-        taskService = new TaskService(taskRepository, packagesService, rulesetService, cachingService);
+        taskService = new TaskService(taskRepository, rulesetService, cachingService);
         entry = ImmutablePersistentEntry.of(
                 1000000L,
                 NanoIdUtils.randomNanoId(),
@@ -72,7 +72,7 @@ class TaskServiceTests {
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
                 TransitDataFormat.GTFS)
-            .withDependencies(List.of(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.VALIDATE_TASK));
+            .withDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK, RulesetSubmissionService.VALIDATE_TASK));
     }
 
     @AfterEach
@@ -90,7 +90,7 @@ class TaskServiceTests {
         List<Task> tasks = taskService.resolveTasks(entry);
 
         List<ImmutableTask> expectedTasks = List.of(
-            ImmutableTask.of(entry.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
+            ImmutableTask.of(entry.id(), DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
             ImmutableTask.of(entry.id(), RulesetSubmissionService.VALIDATE_TASK, 200),
             ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 201)
         );

@@ -87,13 +87,6 @@ public class MeService {
             || companyHierarchyService.isChildOfAny(directMemberCompanies, businessId);
     }
 
-    public boolean isCompanyAdmin() {
-        return currentToken().map(t -> {
-            List<String> roles = t.getToken().getClaimAsStringList("roles");
-            return roles != null && Set.copyOf(roles).contains("vaco.company_admin");
-        }).orElse(false);
-    }
-
     public boolean isAdmin() {
         return currentToken().map(t -> {
             List<String> roles = t.getToken().getClaimAsStringList("roles");

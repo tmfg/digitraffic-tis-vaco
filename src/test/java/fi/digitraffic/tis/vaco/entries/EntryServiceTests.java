@@ -54,7 +54,6 @@ class EntryServiceTests {
     void setUp() {
         entryService = new EntryService(
             entryRepository,
-            findingRepository,
             cachingService,
             taskService,
             packagesService,

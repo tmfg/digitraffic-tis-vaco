@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.ruleset;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
-import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -73,7 +72,7 @@ public class RulesetService {
         return rulesetRepository.listAllNames();
     }
 
-    public boolean dependenciesCompletedSuccessfully(Entry entry, Task task, Ruleset r) {
+    public boolean dependenciesCompletedSuccessfully(Entry entry, Ruleset r) {
         return rulesetRepository.anyDependencyFailed(entry, r);
     }
 

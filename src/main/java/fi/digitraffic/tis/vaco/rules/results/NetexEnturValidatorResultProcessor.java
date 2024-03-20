@@ -32,7 +32,6 @@ import java.util.Objects;
 public class NetexEnturValidatorResultProcessor extends RuleResultProcessor implements ResultProcessor {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final VacoProperties vacoProperties;
     private final ObjectMapper objectMapper;
     private final RulesetService rulesetService;
 
@@ -44,7 +43,6 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
                                                  ObjectMapper objectMapper,
                                                  RulesetService rulesetService) {
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
-        this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.rulesetService = Objects.requireNonNull(rulesetService);
     }

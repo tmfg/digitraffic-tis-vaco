@@ -46,7 +46,7 @@ import java.util.zip.ZipInputStream;
 
 @Component
 public class DownloadRule implements Rule<Entry, ResultMessage> {
-    public static final String DOWNLOAD_SUBTASK = "prepare.download";
+    public static final String PREPARE_DOWNLOAD_TASK = "prepare.download";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
@@ -70,20 +70,15 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     }
 
     @Override
-    public String getIdentifyingName() {
-        return DOWNLOAD_SUBTASK;
-    }
-
-    @Override
     public CompletableFuture<ResultMessage> execute(Entry entry) {
         return CompletableFuture.supplyAsync(() -> {
-            Optional<Task> task = taskService.findTask(entry.publicId(), DOWNLOAD_SUBTASK);
+            Optional<Task> task = taskService.findTask(entry.publicId(), PREPARE_DOWNLOAD_TASK);
             return task.map(t -> {
                 Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
                 Path tempDirPath = TempFiles.getTaskTempDirectory(vacoProperties, entry, tracked);
 
                 try {
-                    S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), DOWNLOAD_SUBTASK, DOWNLOAD_SUBTASK);
+                    S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), PREPARE_DOWNLOAD_TASK, PREPARE_DOWNLOAD_TASK);
                     S3Path ruleS3Input = ruleBasePath.resolve("input");
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
 
@@ -106,7 +101,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     return ImmutableResultMessage.builder()
                         .entryId(entry.publicId())
                         .taskId(tracked.id())
-                        .ruleName(DOWNLOAD_SUBTASK)
+                        .ruleName(PREPARE_DOWNLOAD_TASK)
                         .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
                         .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
                         .uploadedFiles(uploadedFiles)
@@ -201,13 +196,6 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         };
     }
 
-    private <T> Function<T, T> status(Entry entry, Task task, Status status) {
-        return t -> {
-            taskService.markStatus(entry, task, status);
-            return t;
-        };
-    }
-
     /**
      * Ensure the downloaded file is a valid ZIP file, e.g. not partial, corrupted or complete nonsense.
      * <p>
@@ -238,7 +226,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     }
                     return CompletableFuture.completedFuture(path);
                 } catch (IOException e) {
-                    findingService.reportFinding(ImmutableFinding.of(entry.publicId(), task.id(), null, DOWNLOAD_SUBTASK, e.getMessage(), "ERROR"));
+                    findingService.reportFinding(ImmutableFinding.of(entry.publicId(), task.id(), null, PREPARE_DOWNLOAD_TASK, e.getMessage(), "ERROR"));
                     return CompletableFuture.completedFuture(Optional.empty());
                 }
             } else {
