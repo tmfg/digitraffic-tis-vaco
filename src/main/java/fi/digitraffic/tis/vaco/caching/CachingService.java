@@ -27,7 +27,7 @@ import java.util.function.UnaryOperator;
 
 /**
  * Centralized caching control for entire application.
- *
+ * <p>
  * If anything needs caching, pipe it through this service. This is especially important for invalidation to ensure all
  * dependent caches are also purged accordingly.
  */

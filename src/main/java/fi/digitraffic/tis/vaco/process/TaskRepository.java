@@ -170,7 +170,7 @@ public class TaskRepository {
      *
      * @param entry
      * @return
-     * @see TaskService#createTasks(Entry)
+     * @see TaskService#createTasks(PersistentEntry)
      */
     public List<Task> findAvailableTasksToExecute(Entry entry) {
         return namedJdbc.query("""
