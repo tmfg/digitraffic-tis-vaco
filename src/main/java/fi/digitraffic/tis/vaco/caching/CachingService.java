@@ -7,11 +7,13 @@ import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -40,6 +42,8 @@ public class CachingService {
     private final Cache<Path, Path> localPathCache;
     private final Cache<String, Entry> entryCache;
     private final Cache<String, Hierarchy> companyHierarchyCache;
+    private final Cache<String, Status> statusCache;
+    private final Cache<String, ClassPathResource> classPathResourceCache;
     private final CacheStatsMapper cacheStatsMapper;
 
     public CachingService(CacheStatsMapper cacheStatsMapper) {
@@ -50,6 +54,8 @@ public class CachingService {
         this.localPathCache = localPathCache();
         this.entryCache = entryCache();
         this.companyHierarchyCache = companyHierarchyCache();
+        this.statusCache = statusCache();
+        this.classPathResourceCache = classPathResourceCache();
     }
 
     public Optional<Ruleset> cacheRuleset(String key, Function<String, Ruleset> loader) {
@@ -61,7 +67,7 @@ public class CachingService {
     }
 
     public Optional<String> cacheQueueUrl(String key, UnaryOperator<String> loader) {
-        return Optional.of(sqsQueueUrlCache.get(key, loader));
+        return Optional.ofNullable(sqsQueueUrlCache.get(key, loader));
     }
 
     public void invalidateQueueUrl(String key) {
@@ -120,6 +126,14 @@ public class CachingService {
         return result;
     }
 
+    public Optional<Status> cacheStatus(String key, Function<String, Status> loader) {
+        return Optional.ofNullable(statusCache.get(key, loader));
+    }
+
+    public Optional<ClassPathResource> cacheClassPathResource(String key, Function<String, ClassPathResource> loader) {
+        return Optional.ofNullable(classPathResourceCache.get(key, loader));
+    }
+
     private Cache<String, GroupIdMappingTask> adminTasksCache() {
         return Caffeine.newBuilder()
             .recordStats()
@@ -176,15 +190,32 @@ public class CachingService {
             .build();
     }
 
+    private Cache<String, Status> statusCache() {
+        return Caffeine.newBuilder()
+            .recordStats()
+            .maximumSize(3000)
+            .expireAfterWrite(Duration.ofDays(1))
+            .build();
+    }
+
+    private Cache<String, ClassPathResource> classPathResourceCache() {
+        return Caffeine.newBuilder()
+            .recordStats()
+            .maximumSize(Status.values().length)
+            .expireAfterWrite(Duration.ofDays(1))
+            .build();
+    }
+
     public Map<String, CacheSummaryStatistics> getStats() {
         return Map.of(
             "rulesets", cacheStatsMapper.toCacheSummaryStatistics(rulesetCache),
             "SQS queue URLs", cacheStatsMapper.toCacheSummaryStatistics(sqsQueueUrlCache),
             "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache),
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
-            "hierarchies", cacheStatsMapper.toCacheSummaryStatistics(companyHierarchyCache));
+            "hierarchies", cacheStatsMapper.toCacheSummaryStatistics(companyHierarchyCache),
+            "statuses", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
+            "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache));
     }
-
 
 
 }

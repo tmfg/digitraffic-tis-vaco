@@ -90,6 +90,8 @@ public final class RowMappers {
             .status(Status.forField(rs.getString("status")))
             .build();
 
+    public static final RowMapper<Status> STATUS = (rs, rowNum) -> Status.forField(rs.getString("status"));
+
     public static final RowMapper<Package> PACKAGE = (rs, rowNum) -> (Package) ImmutablePackage.builder()
         .id(rs.getLong("id"))
         .taskId(rs.getLong("task_id"))

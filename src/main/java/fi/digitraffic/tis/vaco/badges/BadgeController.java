@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.badges;
 
-import fi.digitraffic.tis.vaco.entries.EntryService;
-import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.caching.CachingService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ContentDisposition;
@@ -20,16 +19,19 @@ import java.util.Optional;
 @RequestMapping("/badge")
 public class BadgeController {
 
-    private final EntryService entryService;
+    private final BadgeService badgeService;
 
-    public BadgeController(EntryService entryService) {
-        this.entryService = Objects.requireNonNull(entryService);
+    private final CachingService cachingService;
+
+    public BadgeController(BadgeService badgeService, CachingService cachingService) {
+        this.badgeService = Objects.requireNonNull(badgeService);
+        this.cachingService = Objects.requireNonNull(cachingService);
     }
 
     @GetMapping(path = "/{publicId}", produces = "image/svg+xml")
     public ClassPathResource entryBadge(@PathVariable("publicId") String publicId,
                                         HttpServletResponse response) {
-        return getResource(response, entryService.getStatus(publicId))
+        return getResource(response, badgeService.getBadge(publicId))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                 String.format("No status available for entry '%s'", publicId)));
     }
@@ -38,19 +40,18 @@ public class BadgeController {
     public ClassPathResource taskBadge(@PathVariable("publicId") String publicId,
                                        @PathVariable("taskName") String taskName,
                                        HttpServletResponse response) {
-        return getResource(response, entryService.getStatus(publicId, taskName))
+        return getResource(response, badgeService.getBadge(publicId, taskName))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                 String.format("No status available for entry '%s' task '%s'", publicId, taskName)));
     }
 
-    private static Optional<ClassPathResource> getResource(HttpServletResponse response, Optional<Status> statusOpt) {
+    private Optional<ClassPathResource> getResource(HttpServletResponse response, Optional<ClassPathResource> statusOpt) {
         return statusOpt.map(status -> {
                 ContentDisposition contentDisposition = ContentDisposition.builder("inline")
-                    .filename(status.fieldName() + ".svg")
+                    .filename(status.getFilename())
                     .build();
                 response.addHeader(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString());
-
-                return new ClassPathResource("badges/" + status.fieldName() + ".svg");
+                return status;
             });
     }
 }
