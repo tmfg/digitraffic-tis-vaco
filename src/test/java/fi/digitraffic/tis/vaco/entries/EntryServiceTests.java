@@ -98,6 +98,17 @@ class EntryServiceTests {
         thenCacheIsInvalidated();
     }
 
+    @Test
+    void markEntryWithoutTasksAsCancelled() {
+        givenNoTasks();
+        thenEntryIsMarkedAs(Status.CANCELLED);
+        thenCacheIsInvalidated();
+    }
+
+    private void givenNoTasks() {
+        BDDMockito.given(taskService.findTasks(entry)).willReturn(List.of());
+    }
+
     private void givenTaskInStatus(Status status) {
         Task failed = ImmutableTask.of(new Random().nextLong(), "failed", 100).withStatus(status);
         BDDMockito.given(taskService.findTasks(entry)).willReturn(List.of(failed));
