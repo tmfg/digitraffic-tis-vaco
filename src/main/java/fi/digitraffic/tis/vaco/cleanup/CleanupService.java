@@ -9,8 +9,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class CleanupService {
@@ -32,14 +34,23 @@ public class CleanupService {
         runCleanup();
     }
 
-    public List<String> runCleanup() {
+    public Set<String> runCleanup() {
         return runCleanup(cleanupProperties.olderThan(), cleanupProperties.keepAtLeast());
     }
 
-    public List<String> runCleanup(Duration olderThan, Integer keepAtLeast) {
-        List<String> removed = cleanupRepository.runCleanup(cleanupOlderThan(olderThan), cleanupKeepAtLeast(keepAtLeast));
-        logger.info("Cleanup removed {} entries {}", removed.size(), removed);
-        return removed;
+    public Set<String> runCleanup(Duration olderThan, Integer keepAtLeast) {
+        // 1. remove in-between cancelled entries no one cares about
+        List<String> removedByCompression = cleanupRepository.compressHistory();
+        // 2. run generic cleanup
+        List<String> removedByCleanup = cleanupRepository.cleanupHistory(cleanupOlderThan(olderThan), cleanupKeepAtLeast(keepAtLeast));
+        if (logger.isInfoEnabled()) {
+            int count = removedByCompression.size() + removedByCleanup.size();
+            logger.info("Cleanup removed {} entries (compressed: {}, cleaned up: {})", count, removedByCompression, removedByCleanup);
+        }
+        Set<String> allRemoved = new HashSet<>();
+        allRemoved.addAll(removedByCompression);
+        allRemoved.addAll(removedByCleanup);
+        return allRemoved;
     }
 
     @VisibleForTesting
