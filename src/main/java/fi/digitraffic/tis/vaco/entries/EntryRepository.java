@@ -43,10 +43,6 @@ public class EntryRepository {
 
     @Transactional
     public PersistentEntry create(Entry entry) {
-        return createEntry(entry);
-    }
-
-    private PersistentEntry createEntry(Entry entry) {
         return jdbc.queryForObject("""
                 INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications)
                      VALUES (?, ?, ?, ?, ?, ?, ?)

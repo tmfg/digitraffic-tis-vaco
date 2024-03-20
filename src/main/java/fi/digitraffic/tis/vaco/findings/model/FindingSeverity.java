@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.findings;
+package fi.digitraffic.tis.vaco.findings.model;
 
 public final class FindingSeverity {
 

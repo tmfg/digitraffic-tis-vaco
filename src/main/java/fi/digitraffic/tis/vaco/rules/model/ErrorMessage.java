@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.rules.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.findings.Finding;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
 import org.immutables.value.Value;
 
 import java.util.List;

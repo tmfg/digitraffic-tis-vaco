@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.validation.model;
 
-import fi.digitraffic.tis.vaco.findings.Finding;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
 import org.immutables.value.Value;
 
 import java.util.List;

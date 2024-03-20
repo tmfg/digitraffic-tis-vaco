@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.findings;
 
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
