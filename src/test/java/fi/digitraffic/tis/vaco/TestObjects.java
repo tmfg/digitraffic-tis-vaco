@@ -66,6 +66,7 @@ public class TestObjects {
 
     public static ImmutableEntry.Builder anEntry() {
         return ImmutableEntry.builder()
+            .publicId(NanoIdUtils.randomNanoId())
             .format("gtfs")
             .name("fileName")
             .url("https://example.fi")

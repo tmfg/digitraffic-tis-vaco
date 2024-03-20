@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.cleanup;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.entries.EntryService;
@@ -39,7 +40,7 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @BeforeEach
     void setUp() {
         entries = IntStream.range(0, totalEntries)
-            .mapToObj(i -> ImmutableEntry.of(Integer.toString(i), "whatever", "https://example.no/", TestConstants.FINTRAFFIC_BUSINESS_ID))
+            .mapToObj(i -> ImmutableEntry.of(NanoIdUtils.randomNanoId(), Integer.toString(i), "whatever", "https://example.no/", TestConstants.FINTRAFFIC_BUSINESS_ID))
             .map(e -> {
                 Entry result = entryService.create(e);
                 // a bit of a hack: distribute entries over time so that the time part of duration query works in more

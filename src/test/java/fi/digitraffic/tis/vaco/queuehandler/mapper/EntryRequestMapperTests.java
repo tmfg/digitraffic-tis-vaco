@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,5 +48,12 @@ class EntryRequestMapperTests {
         assertThat(entry.etag(), equalTo("etag"));
         assertThat(entry.url(), equalTo("http://fintraffic.suomi"));
         assertThat(entry.format(), equalTo("netex"));
+    }
+
+    @Test
+    void mappedEntryHasTemporaryPublicId() {
+        Entry mapped = entryRequestMapper.toEntry(entryRequest);
+
+        assertThat(mapped.publicId(), equalTo(Entry.NON_PERSISTED_PUBLIC_ID));
     }
 }

@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.Constants;
@@ -98,6 +99,7 @@ class QueueHandlerServiceTests {
             .put("operator-name", operatorName);
 
         entryRequest = ImmutableEntry.builder()
+            .publicId(NanoIdUtils.randomNanoId())
             .name("fake gtfs entry")
             .businessId(operatorBusinessId)
             .url(TestConstants.EXAMPLE_URL + "/gtfs.zip")
@@ -211,7 +213,7 @@ class QueueHandlerServiceTests {
     }
 
     private void givenCachesResult() {
-        given(cachingService.keyForEntry(null, true)).willReturn("mocked cache key");
+        given(cachingService.keyForEntry(entryRequest.publicId(), true)).willReturn("mocked cache key");
         given(cachingService.cacheEntry(any(String.class), any(Function.class)))
             .willAnswer(a ->
                 Optional.ofNullable(((Function) a.getArgument(1)).apply(a.getArgument(0))));
