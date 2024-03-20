@@ -10,10 +10,10 @@ import java.util.List;
 
 @Value.Immutable
 public interface PersistentEntry {
-    @Nullable
+    @Value.Parameter
     Long id();
 
-    @Nullable
+    @Value.Parameter
     String publicId();
 
     @Value.Parameter

@@ -18,7 +18,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -97,7 +96,7 @@ public class TaskRepository {
             task.id());
     }
 
-    public Collection<Task> findTasks(String publicId) {
+    public List<Task> findTasks(String publicId) {
         try {
             return jdbc.query("""
                 SELECT *

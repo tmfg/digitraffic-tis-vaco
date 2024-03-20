@@ -77,15 +77,11 @@ public class TaskService {
     }
 
     public List<Task> findTasks(Entry entry) {
-        return Streams.map(taskRepository.findTasks(entry.publicId()),
-                task -> (Task) ImmutableTask.copyOf(task).withPackages(packagesService.findPackages(task)))
-                .toList();
+        return taskRepository.findTasks(entry.publicId());
     }
 
     public List<Task> findTasks(PersistentEntry entry) {
-        return Streams.map(taskRepository.findTasks(entry.id()),
-                task -> (Task) ImmutableTask.copyOf(task).withPackages(packagesService.findPackages(task)))
-                .toList();
+        return taskRepository.findTasks(entry.id());
     }
 
     public List<Task> findTasksToExecute(Entry entry) {

@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.process;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.caching.CachingService;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -61,12 +59,12 @@ class TaskServiceTests {
     void setUp() {
         taskService = new TaskService(taskRepository, packagesService, rulesetService, cachingService);
         entry = ImmutablePersistentEntry.of(
+                1000000L,
+                NanoIdUtils.randomNanoId(),
                 "entry",
                 TransitDataFormat.GTFS.fieldName(),
                 TestConstants.EXAMPLE_URL,
-                Constants.FINTRAFFIC_BUSINESS_ID)
-            .withId(1000000L)
-            .withPublicId(NanoIdUtils.randomNanoId());
+                Constants.FINTRAFFIC_BUSINESS_ID);
         gtfsCanonicalRuleset = ImmutableRuleset.of(
                 entry.id(),
                 RuleName.GTFS_CANONICAL,
