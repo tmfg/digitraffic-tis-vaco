@@ -60,17 +60,17 @@ class StopsAndQuaysRuleTests {
     @Test
     void copiesStaticFileToOutputs() {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
-        Task saqTask = ImmutableTask.of(-1L, StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, -1).withId(5000000L);
+        Task saqTask = ImmutableTask.of(-1L, StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(saqTask).build();
 
-        given(taskService.findTask(entry.publicId(), StopsAndQuaysRule.STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));
+        given(taskService.findTask(entry.publicId(), StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));
         given(taskService.trackTask(entry, saqTask, ProcessingState.START)).willReturn(saqTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, saqTask, ProcessingState.COMPLETE)).willReturn(saqTask);
 
         ResultMessage result = rule.execute(entry).join();
 
-        assertThat(result.ruleName(), equalTo(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK));
+        assertThat(result.ruleName(), equalTo(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
 
         assertThat(targetPath.getValue().toString(), equalTo("entries/" + entry.publicId() + "/tasks/prepare.stopsAndQuays/rules/prepare.stopsAndQuays/output/stopsAndQuays.zip"));
     }

@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.process;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.caching.CachingService;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -59,14 +57,14 @@ class TaskServiceTests {
 
     @BeforeEach
     void setUp() {
-        taskService = new TaskService(taskRepository, packagesService, rulesetService, cachingService);
+        taskService = new TaskService(taskRepository, rulesetService, cachingService);
         entry = ImmutablePersistentEntry.of(
+                1000000L,
+                NanoIdUtils.randomNanoId(),
                 "entry",
                 TransitDataFormat.GTFS.fieldName(),
                 TestConstants.EXAMPLE_URL,
-                Constants.FINTRAFFIC_BUSINESS_ID)
-            .withId(1000000L)
-            .withPublicId(NanoIdUtils.randomNanoId());
+                Constants.FINTRAFFIC_BUSINESS_ID);
         gtfsCanonicalRuleset = ImmutableRuleset.of(
                 entry.id(),
                 RuleName.GTFS_CANONICAL,
@@ -74,7 +72,7 @@ class TaskServiceTests {
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
                 TransitDataFormat.GTFS)
-            .withDependencies(List.of(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.VALIDATE_TASK));
+            .withDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK, RulesetSubmissionService.VALIDATE_TASK));
     }
 
     @AfterEach
@@ -92,7 +90,7 @@ class TaskServiceTests {
         List<Task> tasks = taskService.resolveTasks(entry);
 
         List<ImmutableTask> expectedTasks = List.of(
-            ImmutableTask.of(entry.id(), DownloadRule.DOWNLOAD_SUBTASK, 100),
+            ImmutableTask.of(entry.id(), DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
             ImmutableTask.of(entry.id(), RulesetSubmissionService.VALIDATE_TASK, 200),
             ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 201)
         );

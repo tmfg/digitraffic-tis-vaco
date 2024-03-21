@@ -46,6 +46,7 @@ public interface HttpClientConfiguration {
 
     Optional<String> baseUri();
 
+    @Value.Default
     default String defaultScheme() {
         return DEFAULT_SCHEME;
     }

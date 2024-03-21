@@ -1,14 +1,13 @@
 package fi.digitraffic.tis.vaco.admintasks;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.api.model.admintasks.CleanupResponse;
 import fi.digitraffic.tis.vaco.api.model.admintasks.ImmutableCleanupResponse;
 import fi.digitraffic.tis.vaco.cleanup.CleanupService;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
-import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -36,19 +35,15 @@ public class AdminTasksController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final VacoProperties vacoProperties;
-
     private final AdminTasksService adminTasksService;
 
     private final CompanyHierarchyService companyHierarchyService;
 
     private final CleanupService cleanupService;
 
-    public AdminTasksController(VacoProperties vacoProperties,
-                                AdminTasksService adminTasksService,
+    public AdminTasksController(AdminTasksService adminTasksService,
                                 CompanyHierarchyService companyHierarchyService,
                                 CleanupService cleanupService) {
-        this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.adminTasksService = Objects.requireNonNull(adminTasksService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.cleanupService = Objects.requireNonNull(cleanupService);

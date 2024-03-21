@@ -5,12 +5,11 @@ import com.opencsv.CSVWriter;
 import com.opencsv.ICSVWriter;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
-import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
-import fi.digitraffic.tis.vaco.company.CompanyController;
 import fi.digitraffic.tis.vaco.company.dto.PartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
@@ -177,7 +176,7 @@ public class UiController {
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Resource<ImmutableProcessingResultsPage>> processingResultsPage(@PathVariable("publicId") String publicId) {
-        return entryService.findEntry(publicId, true)
+        return entryService.findEntry(publicId)
             .map(entry -> ResponseEntity.ok(
                 Resource.resource(
                     ImmutableProcessingResultsPage.of(
@@ -192,7 +191,7 @@ public class UiController {
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId,
                                                                          @RequestParam(value = "magic", required = false) String magicToken) {
-        return entryService.findEntry(publicId, true)
+        return entryService.findEntry(publicId)
             .filter(e -> magicTokenMatches(magicToken, publicId) || meService.isAllowedToAccess(e))
             .map(entry -> {
                 Map<String, Ruleset> rulesets = Streams.collect(rulesetService.selectRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
@@ -232,7 +231,7 @@ public class UiController {
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "full") boolean full) {
-        List<Entry> entries = queueHandlerService.getAllEntriesVisibleForCurrentUser(full);
+        List<Entry> entries = queueHandlerService.getAllEntriesVisibleForCurrentUser();
         return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));
     }
 
@@ -304,7 +303,7 @@ public class UiController {
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
-            List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId, false);
+            List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId);
             return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -520,11 +519,5 @@ public class UiController {
         }
 
         return new Resource<>(entry, null, links);
-    }
-
-    private Resource<Company> asCompanyResource(Company company) {
-        return new Resource<>(company, null, Map.of("refs", Map.of("self", Link.to(vacoProperties.baseUrl(),
-            RequestMethod.GET,
-            fromMethodCall(on(CompanyController.class).getCompanyByBusinessId(company.businessId()))))));
     }
 }

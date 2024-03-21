@@ -66,10 +66,7 @@ public class QueueHandlerService {
             .build();
         messagingService.submitProcessingJob(job);
 
-        return cachingService.cacheEntry(
-                cachingService.keyForEntry(result.publicId(), true),
-                key -> result)
-            .get();
+        return cachingService.cacheEntry(result.publicId(), key -> result).get();
     }
 
     /**
@@ -107,30 +104,27 @@ public class QueueHandlerService {
         }
     }
 
-    public Entry getEntry(String publicId, boolean skipErrorsField) {
-        return cachingService.cacheEntry(
-            cachingService.keyForEntry(publicId, skipErrorsField),
-            key -> entryService.findEntry(publicId, skipErrorsField)
-                .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"))
-        ).get();
+    public Entry getEntry(String publicId) {
+        return entryService.findEntry(publicId)
+            .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"));
     }
 
-    public List<Entry> getAllQueueEntriesFor(String businessId, boolean full) {
-        List<Entry> entries = entryService.findAllByBusinessId(businessId, full);
+    public List<Entry> getAllQueueEntriesFor(String businessId) {
+        List<Entry> entries = entryService.findAllByBusinessId(businessId);
         entries.forEach(entry -> cachingService.cacheEntry(
-            cachingService.keyForEntry(entry.publicId(), full),
+            entry.publicId(),
             key -> entry));
         return entries;
     }
 
-    public List<Entry> getAllEntriesVisibleForCurrentUser(boolean full) {
+    public List<Entry> getAllEntriesVisibleForCurrentUser() {
         Set<String> allAccessibleBusinessIds = new HashSet<>();
         meService.findCompanies().forEach(company ->
             allAccessibleBusinessIds.addAll(companyHierarchyService.listAllChildren(company).keySet()));
 
-        List<Entry> entries = entryService.findAllForBusinessIds(allAccessibleBusinessIds, full);
+        List<Entry> entries = entryService.findAllForBusinessIds(allAccessibleBusinessIds);
         entries.forEach(entry -> cachingService.cacheEntry(
-            cachingService.keyForEntry(entry.publicId(), full),
+            entry.publicId(),
             key -> entry));
         return entries;
     }

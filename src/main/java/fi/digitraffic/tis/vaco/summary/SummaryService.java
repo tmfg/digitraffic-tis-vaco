@@ -30,7 +30,7 @@ public class SummaryService {
     }
 
     public void generateSummaries(Entry entry, Task task) {
-        if (DownloadRule.DOWNLOAD_SUBTASK.equals(task.name())) {
+        if (DownloadRule.PREPARE_DOWNLOAD_TASK.equals(task.name())) {
             generateInputDataSummaries(entry, task);
         }
     }

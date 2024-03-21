@@ -6,9 +6,9 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
-import fi.digitraffic.tis.vaco.findings.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingService;
-import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -32,7 +32,6 @@ import java.util.Objects;
 public class NetexEnturValidatorResultProcessor extends RuleResultProcessor implements ResultProcessor {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final VacoProperties vacoProperties;
     private final ObjectMapper objectMapper;
     private final RulesetService rulesetService;
 
@@ -44,7 +43,6 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
                                                  ObjectMapper objectMapper,
                                                  RulesetService rulesetService) {
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
-        this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.rulesetService = Objects.requireNonNull(rulesetService);
     }

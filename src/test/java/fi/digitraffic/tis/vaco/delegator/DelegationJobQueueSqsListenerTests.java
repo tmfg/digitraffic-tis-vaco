@@ -94,7 +94,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
         listener.listen(tooManyRetries, acknowledgement);
 
-        Entry result = entryService.findEntry(entry.publicId(), true).get();
+        Entry result = entryService.findEntry(entry.publicId()).get();
 
         assertThat(result.completed(), notNullValue());
     }

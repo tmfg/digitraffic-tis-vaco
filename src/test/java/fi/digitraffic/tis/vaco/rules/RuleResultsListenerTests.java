@@ -170,7 +170,7 @@ class RuleResultsListenerTests {
 
     @NotNull
     private BDDMockito.BDDMyOngoingStubbing<Entry> givenGetEntry(Entry entry) {
-        return given(queueHandlerService.getEntry(entry.publicId(), true));
+        return given(queueHandlerService.getEntry(entry.publicId()));
     }
 
     @NotNull

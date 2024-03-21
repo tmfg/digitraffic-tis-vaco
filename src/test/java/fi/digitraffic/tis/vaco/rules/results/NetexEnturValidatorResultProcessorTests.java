@@ -7,7 +7,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.Finding;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -101,7 +101,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
                 TransitDataFormat.GTFS)
-            .withDependencies(List.of(DownloadRule.DOWNLOAD_SUBTASK, RulesetSubmissionService.VALIDATE_TASK));
+            .withDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK, RulesetSubmissionService.VALIDATE_TASK));
     }
 
     @AfterEach
@@ -114,7 +114,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.NETEX_ENTUR)).willReturn(Optional.of(netexEnturRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
-        given(findingService.summarizeFindingsSeverities(entry, task)).willReturn(Map.of());
+        given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
 
         resultProcessor.processResults(resultMessage, entry, task);

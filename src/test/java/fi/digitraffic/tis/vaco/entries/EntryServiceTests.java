@@ -54,7 +54,6 @@ class EntryServiceTests {
     void setUp() {
         entryService = new EntryService(
             entryRepository,
-            findingRepository,
             cachingService,
             taskService,
             packagesService,
@@ -120,6 +119,6 @@ class EntryServiceTests {
     }
 
     private void thenCacheIsInvalidated() {
-        inOrderCaching.verify(cachingService).invalidateEntry(entry);
+        inOrderCaching.verify(cachingService).invalidateEntry(entry.publicId());
     }
 }

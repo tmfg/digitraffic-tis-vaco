@@ -85,11 +85,11 @@ class DownloadRuleTests {
     @Test
     void ruleExecutionForGtfs() throws URISyntaxException {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GTFS.fieldName());
-        Task dlTask = ImmutableTask.of(-1L, DownloadRule.DOWNLOAD_SUBTASK, -1).withId(5000000L);
+        Task dlTask = ImmutableTask.of(-1L, DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Path gtfsTestFile = resolveTestFile("padasjoen_kunta.zip");
 
-        given(taskService.findTask(entry.publicId(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
+        given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(Optional.ofNullable(gtfsTestFile)));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
@@ -99,7 +99,7 @@ class DownloadRuleTests {
 
         ResultMessage result = rule.execute(entry).join();
 
-        assertThat(result.ruleName(), equalTo(DownloadRule.DOWNLOAD_SUBTASK));
+        assertThat(result.ruleName(), equalTo(DownloadRule.PREPARE_DOWNLOAD_TASK));
 
         assertThat(tempFilePath.getValue().toString(), endsWith("entries/" + entry.publicId() + "/tasks/prepare.download/gtfs.zip"));
         assertThat(targetPath.getValue().toString(), equalTo("entries/" + entry.publicId() + "/tasks/prepare.download/rules/prepare.download/output/gtfs.zip"));
@@ -111,11 +111,11 @@ class DownloadRuleTests {
     @Test
     void ruleExecutionForGbfs() throws URISyntaxException {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GBFS.fieldName());
-        Task dlTask = ImmutableTask.of(-1L, DownloadRule.DOWNLOAD_SUBTASK, -1).withId(5000000L);
+        Task dlTask = ImmutableTask.of(-1L, DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Path gbfsDiscoveryFile = resolveTestFile("lahti_gbfs/gbfs.json");
 
-        given(taskService.findTask(entry.publicId(), DownloadRule.DOWNLOAD_SUBTASK)).willReturn(Optional.of(dlTask));
+        given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(httpClient.downloadFile(feedFiles.capture(), any(String.class), eq(entry.etag())))
             // 1) rule downloads the discovery file
@@ -138,7 +138,7 @@ class DownloadRuleTests {
 
         ResultMessage result = rule.execute(entry).join();
 
-        assertThat(result.ruleName(), equalTo(DownloadRule.DOWNLOAD_SUBTASK));
+        assertThat(result.ruleName(), equalTo(DownloadRule.PREPARE_DOWNLOAD_TASK));
 
         assertThat("Discovery downloaded all files",
             Streams.collect(feedFiles.getAllValues(), f -> f.getFileName().toString()),

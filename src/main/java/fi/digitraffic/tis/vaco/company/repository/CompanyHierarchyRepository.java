@@ -14,7 +14,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -91,14 +90,6 @@ public class CompanyHierarchyRepository {
             RowMappers.COMPANY);
     }
 
-    public Set<Company> findAll() {
-        return Set.copyOf(jdbc.query("""
-            SELECT DISTINCT *
-              FROM company c
-            """,
-            RowMappers.COMPANY));
-    }
-
     public Set<Company> findAllByAdGroupIds(List<String> adGroupIds) {
         if (adGroupIds.isEmpty()) {
             return Set.of();
@@ -123,11 +114,6 @@ public class CompanyHierarchyRepository {
             RowMappers.COMPANY,
             adGroupId,
             company.id());
-    }
-
-    @Transactional
-    public Hierarchy resolveDescendantHierarchyFor(Company company) {
-        return null;// loadHierarchies();
     }
 
     public Map<Company, Hierarchy> findRootHierarchies() {
@@ -210,19 +196,6 @@ public class CompanyHierarchyRepository {
                 }
                 return b.build();
             }));
-    }
-
-    private Map<Long, Company> findAlLByIds(List<Long> ids) {
-        return Streams.collect(namedJdbc.query("""
-            SELECT *
-            FROM company
-            WHERE id IN (:ids)
-            """,
-                new MapSqlParameterSource()
-                    .addValue("ids", ids),
-            RowMappers.COMPANY)
-                ,
-            Company::id, Function.identity());
     }
 
     public Map<String, Company> findAlLByIds() {

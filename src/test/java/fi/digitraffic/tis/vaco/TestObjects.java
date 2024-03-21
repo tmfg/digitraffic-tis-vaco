@@ -15,7 +15,7 @@ import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.MagicLink;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.findings.ImmutableFinding;
+import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -47,6 +47,8 @@ public class TestObjects {
 
     public static ImmutablePersistentEntry.Builder persistentEntry(String format) {
         return ImmutablePersistentEntry.builder()
+            .id(1_000_000L + new Random().nextInt(999_999))
+            .publicId(NanoIdUtils.randomNanoId())
             .name("testName")
             .format(format)
             .url("https://testfile")

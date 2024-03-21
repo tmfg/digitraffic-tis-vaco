@@ -5,11 +5,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
-import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +26,7 @@ import java.util.function.UnaryOperator;
 
 /**
  * Centralized caching control for entire application.
- *
+ * <p>
  * If anything needs caching, pipe it through this service. This is especially important for invalidation to ensure all
  * dependent caches are also purged accordingly.
  */
@@ -41,7 +39,6 @@ public class CachingService {
     private final Cache<String, String> sqsQueueUrlCache;
     private final Cache<Path, Path> localPathCache;
     private final Cache<String, Entry> entryCache;
-    private final Cache<String, Hierarchy> companyHierarchyCache;
     private final Cache<String, Status> statusCache;
     private final Cache<String, ClassPathResource> classPathResourceCache;
     private final CacheStatsMapper cacheStatsMapper;
@@ -53,7 +50,6 @@ public class CachingService {
         this.sqsQueueUrlCache = sqsQueueUrlCache();
         this.localPathCache = localPathCache();
         this.entryCache = entryCache();
-        this.companyHierarchyCache = companyHierarchyCache();
         this.statusCache = statusCache();
         this.classPathResourceCache = classPathResourceCache();
     }
@@ -82,34 +78,13 @@ public class CachingService {
         localPathCache.invalidate(key);
     }
 
-
-    public String keyForEntry(String publicId, boolean skipErrorsField) {
-        return publicId + " (full=" + skipErrorsField + ")";
-    }
-
     public Optional<Entry> cacheEntry(String key, Function<String, Entry> loader) {
         return Optional.ofNullable(entryCache.get(key, loader));
     }
 
-    public void invalidateEntry(PersistentEntry entry) {
-        invalidateEntry(entry.publicId());
-    }
-
-    public void invalidateEntry(Entry entry) {
-        invalidateEntry(entry.publicId());
-    }
-
-    protected void invalidateEntry(String publicId) {
-        entryCache.invalidate(keyForEntry(publicId, true));
-        entryCache.invalidate(keyForEntry(publicId, false));
-    }
-
-    public Hierarchy cacheCompanyHierarchy(Company company, String kind, Function<String, Hierarchy> loader) {
-        return companyHierarchyCache.get(company.businessId() + "(" + kind + ")", loader);
-    }
-
-    public void invalidateCompanyHierarchy(Company company, String kind) {
-        companyHierarchyCache.invalidate(company.businessId() + "(" + kind + ")");
+    public void invalidateEntry(String publicId) {
+        entryCache.invalidate(publicId);
+        invalidateStatus(publicId);
     }
 
     public GroupIdMappingTask cacheAdminTask(String key, Function<String, GroupIdMappingTask> loader) {
@@ -128,6 +103,10 @@ public class CachingService {
 
     public Optional<Status> cacheStatus(String key, Function<String, Status> loader) {
         return Optional.ofNullable(statusCache.get(key, loader));
+    }
+
+    public void invalidateStatus(String key) {
+        statusCache.invalidate(key);
     }
 
     public Optional<ClassPathResource> cacheClassPathResource(String key, Function<String, ClassPathResource> loader) {
@@ -212,7 +191,6 @@ public class CachingService {
             "SQS queue URLs", cacheStatsMapper.toCacheSummaryStatistics(sqsQueueUrlCache),
             "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache),
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
-            "hierarchies", cacheStatsMapper.toCacheSummaryStatistics(companyHierarchyCache),
             "statuses", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
             "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache));
     }

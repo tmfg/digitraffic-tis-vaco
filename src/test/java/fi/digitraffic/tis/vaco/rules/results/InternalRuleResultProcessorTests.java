@@ -50,10 +50,10 @@ class InternalRuleResultProcessorTests extends ResultProcessorTestBase {
         vacoProperties = TestObjects.vacoProperties();
         resultProcessor = new InternalRuleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService);
 
-        entry = entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), DownloadRule.DOWNLOAD_SUBTASK, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), DownloadRule.PREPARE_DOWNLOAD_TASK, 100).withId(9_000_000L));
         downloadTask = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of("archive.zip", List.of("result"));
-        downloadMessage = asResultMessage(vacoProperties, DownloadRule.DOWNLOAD_SUBTASK, entry, uploadedFiles);
+        downloadMessage = asResultMessage(vacoProperties, DownloadRule.PREPARE_DOWNLOAD_TASK, entry, uploadedFiles);
     }
 
     @AfterEach

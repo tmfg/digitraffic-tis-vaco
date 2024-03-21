@@ -29,7 +29,7 @@ public class CompanyHierarchyService {
     /**
      * This service keeps an in-memory version of the company hierarchies always available to make tree navigation
      * related queries as fast and flexible as possible. Pay attention to caching and reloading!
-     *
+     * <p>
      * The structure contains only business ids, if you need the entities, load them from the database.
      */
     private Map<String, LightweightHierarchy> hierarchies;
@@ -45,9 +45,8 @@ public class CompanyHierarchyService {
     private void reloadRootHierarchies() {
         Map<Company, Hierarchy> rootHierarchies = companyHierarchyRepository.findRootHierarchies();
         Map<String, LightweightHierarchy> lightweightHierarchies = new HashMap<>();
-        rootHierarchies.forEach((company, hierarchy) -> {
-            lightweightHierarchies.put(company.businessId(), LightweightHierarchy.from(hierarchy));
-        });
+        rootHierarchies.forEach((company, hierarchy) ->
+            lightweightHierarchies.put(company.businessId(), LightweightHierarchy.from(hierarchy)));
         synchronized (this) {
             this.hierarchies = lightweightHierarchies;
         }

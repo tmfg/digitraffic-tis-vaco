@@ -137,7 +137,7 @@ public class RulesetSubmissionService {
         Streams.map(rulesets, r -> {
                 String identifyingName = r.identifyingName();
                 if (taskService.internalDependenciesCompletedSuccessfully(entry, task.name())
-                    && rulesetService.dependenciesCompletedSuccessfully(entry, task, r)) {
+                    && rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
                     logger.debug("Entry {}, ruleset {} all dependencies completed successfully, submitting", entry.publicId(), identifyingName);
                     Optional<RuleConfiguration> configuration = Optional.ofNullable(configs.get(identifyingName));
                     ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(

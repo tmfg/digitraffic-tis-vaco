@@ -75,7 +75,7 @@ public class QueueHandlerController {
                                                              @RequestParam(name = "full", required = false) boolean full) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
-                Streams.collect(queueHandlerService.getAllQueueEntriesFor(businessId, full), this::asQueueHandlerResource));
+                Streams.collect(queueHandlerService.getAllQueueEntriesFor(businessId), this::asQueueHandlerResource));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -84,7 +84,7 @@ public class QueueHandlerController {
     @GetMapping(path = "/{publicId}")
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Entry>> fetchEntry(@PathVariable("publicId") String publicId) {
-        return entryService.findEntry(publicId, true)
+        return entryService.findEntry(publicId)
             .filter(meService::isAllowedToAccess)
             .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
             .orElse(Responses.notFound(String.format("Entry with public id %s does not exist", publicId)));

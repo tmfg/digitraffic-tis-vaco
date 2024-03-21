@@ -79,10 +79,10 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 logger.info("Running task {}", task);
                 String name = task.name();
 
-                if (name.equals(DownloadRule.DOWNLOAD_SUBTASK)) {
+                if (name.equals(DownloadRule.PREPARE_DOWNLOAD_TASK)) {
                     logger.debug("Internal rule {} detected, delegating...", name);
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, downloadRule.execute(entry).join());
-                } else if (name.equals(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK)) {
+                } else if (name.equals(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)) {
                     logger.debug("Internal rule {} detected, delegating...", name);
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, stopsAndQuaysRule.execute(entry).join());
                 } else if (name.equals(RulesetSubmissionService.VALIDATE_TASK)) {

@@ -105,10 +105,10 @@ public class RuleResultsListener {
         return CompletableFuture.supplyAsync(() -> {
             logger.debug("Got ResultMessage {}", resultMessage);
             return switch (resultMessage.ruleName()) {
-                case DownloadRule.DOWNLOAD_SUBTASK -> processDownloadRuleResults(resultMessage);
-                case StopsAndQuaysRule.STOPS_AND_QUAYS_TASK -> processStopsAndQuaysResults(resultMessage);
+                case DownloadRule.PREPARE_DOWNLOAD_TASK -> processDownloadRuleResults(resultMessage);
+                case StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK -> processStopsAndQuaysResults(resultMessage);
                 case RuleName.NETEX_ENTUR -> processResultFromNetexEntur101(resultMessage);
-                case RuleName.GTFS_CANONICAL -> processResultFromGtfsCanonical(RuleName.GTFS_CANONICAL, resultMessage);
+                case RuleName.GTFS_CANONICAL -> processResultFromGtfsCanonical(resultMessage);
                 case RuleName.NETEX2GTFS_ENTUR -> processNetex2GtfsEntur206(resultMessage);
                 case RuleName.GTFS2NETEX_FINTRAFFIC -> processGtfs2NetexFintraffic100(resultMessage);
                 case RuleName.GBFS_ENTUR ->  processGbfsEntur(resultMessage);
@@ -127,26 +127,26 @@ public class RuleResultsListener {
             // resubmit to processing queue to continue general logic
             Optional<Entry> entry = entryService.findEntry(resultMessage.entryId());
             entry.ifPresent(value -> messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
-                    .entry(queueHandlerService.getEntry(value.publicId(), true))
+                    .entry(queueHandlerService.getEntry(value.publicId()))
                     .retryStatistics(ImmutableRetryStatistics.of(5))
                     .build()));
         });
     }
 
     private boolean processDownloadRuleResults(ResultMessage resultMessage) {
-        return processRule(DownloadRule.DOWNLOAD_SUBTASK, resultMessage, internalRuleResultProcessor);
+        return processRule(DownloadRule.PREPARE_DOWNLOAD_TASK, resultMessage, internalRuleResultProcessor);
     }
 
     private boolean processStopsAndQuaysResults(ResultMessage resultMessage) {
-        return processRule(StopsAndQuaysRule.STOPS_AND_QUAYS_TASK, resultMessage, internalRuleResultProcessor);
+        return processRule(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, resultMessage, internalRuleResultProcessor);
     }
 
     private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
         return processRule(RuleName.NETEX_ENTUR, resultMessage, netexEnturValidator);
     }
 
-    private boolean processResultFromGtfsCanonical(String ruleName, ResultMessage resultMessage) {
-        return processRule(ruleName, resultMessage, gtfsResultProcessor);
+    private boolean processResultFromGtfsCanonical(ResultMessage resultMessage) {
+        return processRule(RuleName.GTFS_CANONICAL, resultMessage, gtfsResultProcessor);
     }
 
     private boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {

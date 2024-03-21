@@ -12,11 +12,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -61,22 +59,6 @@ public final class Streams {
         } else {
             return new Chain<>(objects.stream().map(mapper));
         }
-    }
-
-    /**
-     * Map given List with an index. Functionally equivalent to
-     * <pre>
-     *     IntStream.range(0, objects.size())
-     *              .mapToObj(i -> mapper.apply((long) i, objects.get(i)))
-     * </pre>
-     * @param objects Objects to process.
-     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
-     * @return Chain of mapped objects.
-     * @param <I> Type for input objects.
-     * @param <O> Type for output objects.
-     */
-    public static <I, O> Chain<O> mapIndexed(List<I> objects, BiFunction<Integer, ? super I, ? extends O> mapper) {
-        return new Chain<>(IntStream.range(0, objects.size()).mapToObj(i -> mapper.apply(i, objects.get(i))));
     }
 
     /**

@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.ruleset;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
-import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -12,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -73,11 +71,7 @@ public class RulesetService {
         return rulesetRepository.listAllNames();
     }
 
-    public boolean dependenciesCompletedSuccessfully(Entry entry, Task task, Ruleset r) {
+    public boolean dependenciesCompletedSuccessfully(Entry entry, Ruleset r) {
         return rulesetRepository.anyDependencyFailed(entry, r);
-    }
-
-    public List<Ruleset> findAll() {
-        return rulesetRepository.listAll();
     }
 }

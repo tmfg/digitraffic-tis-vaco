@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.entries;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.FindingRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
@@ -29,19 +28,16 @@ public class EntryService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final EntryRepository entryRepository;
-    private final FindingRepository findingRepository;
     private final CachingService cachingService;
     private final TaskService taskService;
     private final PackagesService packagesService;
     private final PersistentEntryMapper persistentEntryMapper;
 
     public EntryService(EntryRepository entryRepository,
-                        FindingRepository findingRepository,
                         CachingService cachingService,
                         TaskService taskService,
                         PackagesService packagesService,
                         PersistentEntryMapper persistentEntryMapper) {
-        this.findingRepository = findingRepository;
         this.taskService = Objects.requireNonNull(taskService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.cachingService = Objects.requireNonNull(cachingService);
@@ -51,18 +47,18 @@ public class EntryService {
 
     public void markComplete(Entry entry) {
         entryRepository.completeEntryProcessing(entry);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
     }
 
     public void markStarted(Entry entry) {
         entryRepository.startEntryProcessing(entry);
         entryRepository.markStatus(entry, Status.PROCESSING);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
     }
 
     public void markUpdated(Entry entry) {
         entryRepository.updateEntryProcessing(entry);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
     }
 
     /**
@@ -74,7 +70,7 @@ public class EntryService {
     public void updateStatus(Entry entry) {
         Status status = resolveStatus(entry);
         entryRepository.markStatus(entry, status);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
     }
 
     private Status resolveStatus(Entry entry) {
@@ -125,22 +121,14 @@ public class EntryService {
             .build();
     }
 
-    public List<Entry> findAllByBusinessId(String businessId, boolean skipFindings) {
+    public List<Entry> findAllByBusinessId(String businessId) {
         List<PersistentEntry> entries = entryRepository.findAllByBusinessId(businessId);
-        if (skipFindings) {
-            return Streams.map(entries, e -> buildCompleteEntry(e, skipFindings)).toList();
-        } else {
-            return Streams.map(entries, this::asEntry).toList();
-        }
+        return Streams.map(entries, this::buildCompleteEntry).toList();
     }
 
-    public List<Entry> findAllForBusinessIds(Set<String> businessIds, boolean skipFindings) {
+    public List<Entry> findAllForBusinessIds(Set<String> businessIds) {
         List<PersistentEntry> entries = entryRepository.findAllForBusinessIds(businessIds);
-        if (skipFindings) {
-            return Streams.map(entries, e -> buildCompleteEntry(e, skipFindings)).toList();
-        } else {
-            return Streams.map(entries, this::asEntry).toList();
-        }
+        return Streams.map(entries, this::buildCompleteEntry).toList();
     }
 
     private Entry asEntry(PersistentEntry e) {
@@ -153,36 +141,26 @@ public class EntryService {
      * @param entry Entry to complete.
      * @return Fully completed entry.
      */
-    private Entry buildCompleteEntry(PersistentEntry entry, boolean skipFindings) {
+    private Entry buildCompleteEntry(PersistentEntry entry) {
         List<Package> packages = Streams.flatten(taskService.findTasks(entry), packagesService::findPackages).toList();
-        ImmutableEntry e = persistentEntryMapper.toEntryBuilder(entry)
+        return persistentEntryMapper.toEntryBuilder(entry)
             .tasks(taskService.findTasks(entry))
             .validations(taskService.findValidationInputs(entry))
             .conversions(taskService.findConversionInputs(entry))
             .packages(packages)
             .build();
-        if (!skipFindings) {
-            e = e.withFindings(findingRepository.findFindingsByEntryId(entry.id()));
-        }
-        return e;
     }
 
     public Optional<Entry> findEntry(String publicId) {
-        return entryRepository.findByPublicId(publicId)
-            .map(e -> {
-                cachingService.invalidateEntry(e);
-                return e;
-            })
-            .map(this::asEntry);
-    }
-
-    public Optional<Entry> findEntry(String publicId, boolean skipFindings) {
-        return entryRepository.findByPublicId(publicId)
-            .map(e -> buildCompleteEntry(e, skipFindings));
+        return cachingService.cacheEntry(publicId, key ->
+            entryRepository.findByPublicId(publicId)
+                .map(this::buildCompleteEntry)
+                .orElse(null));
     }
 
     // TODO: this is horrible in both concept and practice
     public Entry reload(Entry entry) {
-        return findEntry(entry.publicId(), true).get();
+        cachingService.invalidateEntry(entry.publicId());
+        return findEntry(entry.publicId()).get();
     }
 }
