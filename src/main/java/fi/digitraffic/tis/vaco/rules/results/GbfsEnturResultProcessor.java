@@ -57,9 +57,11 @@ public class GbfsEnturResultProcessor extends RuleResultProcessor implements Res
 
         boolean reportsProcessed = processFile(resultMessage, entry, task, fileNames, "reports.json", reportsFile -> {
             List<Finding> findings = new ArrayList<>(scanReportsFile(entry, task, resultMessage.ruleName(), reportsFile));
-            storeFindings(entry, task, findings);
-            return true;
+            return storeFindings(findings);
         });
+
+        resolveTaskStatus(entry, task);
+
         return reportsProcessed;
     }
 

@@ -54,15 +54,15 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
         // file specific handling
         boolean reportProcessed = processFile(resultMessage, entry, task, fileNames, "report.json", reportFile -> {
             List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
-            storeFindings(entry, task, findings);
-            return true;
+            return storeFindings(findings);
         });
 
         boolean errorsProcessed = processFile(resultMessage, entry, task, fileNames, "system_errors.json", errorFile -> {
             List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), errorFile));
-            storeFindings(entry, task, findings);
-            return true;
+            return storeFindings(findings);
         });
+
+        resolveTaskStatus(entry, task);
 
         return reportProcessed && errorsProcessed;
     }
