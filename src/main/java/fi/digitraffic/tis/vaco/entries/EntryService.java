@@ -47,18 +47,18 @@ public class EntryService {
 
     public void markComplete(Entry entry) {
         entryRepository.completeEntryProcessing(entry);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
     }
 
     public void markStarted(Entry entry) {
         entryRepository.startEntryProcessing(entry);
         entryRepository.markStatus(entry, Status.PROCESSING);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
     }
 
     public void markUpdated(Entry entry) {
         entryRepository.updateEntryProcessing(entry);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
     }
 
     /**
@@ -70,7 +70,7 @@ public class EntryService {
     public void updateStatus(Entry entry) {
         Status status = resolveStatus(entry);
         entryRepository.markStatus(entry, status);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
     }
 
     private Status resolveStatus(Entry entry) {
@@ -152,15 +152,15 @@ public class EntryService {
     }
 
     public Optional<Entry> findEntry(String publicId) {
-        return entryRepository.findByPublicId(publicId)
-            .map(e -> {
-                cachingService.invalidateEntry(e);
-                return buildCompleteEntry(e);
-            });
+        return cachingService.cacheEntry(publicId, key ->
+            entryRepository.findByPublicId(publicId)
+                .map(this::buildCompleteEntry)
+                .orElse(null));
     }
 
     // TODO: this is horrible in both concept and practice
     public Entry reload(Entry entry) {
+        cachingService.invalidateEntry(entry.publicId());
         return findEntry(entry.publicId()).get();
     }
 }

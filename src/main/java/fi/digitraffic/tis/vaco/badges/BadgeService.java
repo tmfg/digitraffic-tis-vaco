@@ -26,7 +26,7 @@ public class BadgeService {
     }
 
     public Optional<ClassPathResource> getBadge(String publicId, String taskName) {
-        return cachingService.cacheStatus(publicId, k -> badgeRepository.findTaskStatus(publicId, taskName).orElse(null))
+        return cachingService.cacheStatus(publicId + "/" + taskName, k -> badgeRepository.findTaskStatus(publicId, taskName).orElse(null))
             .flatMap(s ->
                 cachingService.cacheClassPathResource("badges/" + s.fieldName() + ".svg", ClassPathResource::new));
     }

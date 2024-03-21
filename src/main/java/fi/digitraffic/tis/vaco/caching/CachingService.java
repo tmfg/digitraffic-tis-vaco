@@ -8,7 +8,6 @@ import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,16 +82,9 @@ public class CachingService {
         return Optional.ofNullable(entryCache.get(key, loader));
     }
 
-    public void invalidateEntry(PersistentEntry entry) {
-        invalidateEntry(entry.publicId());
-    }
-
-    public void invalidateEntry(Entry entry) {
-        invalidateEntry(entry.publicId());
-    }
-
-    protected void invalidateEntry(String publicId) {
+    public void invalidateEntry(String publicId) {
         entryCache.invalidate(publicId);
+        invalidateStatus(publicId);
     }
 
     public GroupIdMappingTask cacheAdminTask(String key, Function<String, GroupIdMappingTask> loader) {
@@ -111,6 +103,10 @@ public class CachingService {
 
     public Optional<Status> cacheStatus(String key, Function<String, Status> loader) {
         return Optional.ofNullable(statusCache.get(key, loader));
+    }
+
+    public void invalidateStatus(String key) {
+        statusCache.invalidate(key);
     }
 
     public Optional<ClassPathResource> cacheClassPathResource(String key, Function<String, ClassPathResource> loader) {

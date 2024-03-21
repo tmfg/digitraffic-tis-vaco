@@ -119,6 +119,6 @@ class EntryServiceTests {
     }
 
     private void thenCacheIsInvalidated() {
-        inOrderCaching.verify(cachingService).invalidateEntry(entry);
+        inOrderCaching.verify(cachingService).invalidateEntry(entry.publicId());
     }
 }

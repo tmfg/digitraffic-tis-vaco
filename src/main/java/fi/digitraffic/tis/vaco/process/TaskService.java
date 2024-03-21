@@ -59,7 +59,7 @@ public class TaskService {
             case COMPLETE -> taskRepository.completeTask(task);
         };
 
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
 
         return result;
     }
@@ -100,7 +100,7 @@ public class TaskService {
 
         List<Task> tasks = findTasks(entry);
 
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
 
         return tasks;
     }
@@ -309,7 +309,7 @@ public class TaskService {
 
     public Task markStatus(Entry entry, Task task, Status status) {
         Task marked = taskRepository.markStatus(task, status);
-        cachingService.invalidateEntry(entry);
+        cachingService.invalidateEntry(entry.publicId());
         return marked;
     }
 

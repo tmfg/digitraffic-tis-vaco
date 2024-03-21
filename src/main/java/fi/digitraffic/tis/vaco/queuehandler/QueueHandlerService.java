@@ -105,11 +105,8 @@ public class QueueHandlerService {
     }
 
     public Entry getEntry(String publicId) {
-        return cachingService.cacheEntry(
-            publicId,
-            key -> entryService.findEntry(publicId)
-                .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"))
-        ).get();
+        return entryService.findEntry(publicId)
+            .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"));
     }
 
     public List<Entry> getAllQueueEntriesFor(String businessId) {
