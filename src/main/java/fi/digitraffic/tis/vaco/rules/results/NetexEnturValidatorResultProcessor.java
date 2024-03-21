@@ -56,11 +56,14 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
 
         Map<String, String> fileNames = collectOutputFileNames(resultMessage);
 
-        return processFile(resultMessage, entry, task, fileNames, "reports.json", path -> {
+        boolean reportsProcessed = processFile(resultMessage, entry, task, fileNames, "reports.json", path -> {
             List<Finding> findings = new ArrayList<>(scanReportsFile(entry, task, resultMessage.ruleName(), path));
-            storeFindings(entry, task, findings);
-            return true;
+            return storeFindings(findings);
         });
+
+        resolveTaskStatus(entry, task);
+
+        return reportsProcessed;
     }
 
     private List<ImmutableFinding> scanReportsFile(Entry entry, Task task, String ruleName, Path reportsFile) {

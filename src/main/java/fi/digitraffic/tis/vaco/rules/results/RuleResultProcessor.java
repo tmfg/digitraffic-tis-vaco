@@ -4,6 +4,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
+import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.Finding;
@@ -97,22 +98,21 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         return reportFile;
     }
 
-    protected void storeFindings(Entry entry, Task task, List<Finding> findings) {
-        if (findings.isEmpty()) {
-            taskService.markStatus(entry, task, Status.SUCCESS);
+    protected void resolveTaskStatus(Entry entry, Task task) {
+    Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
+        logger.debug("{}/{} produced findings {}", entry.publicId(), task.name(), severities);
+        if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
+            || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
+            taskService.markStatus(entry, task, Status.ERRORS);
+        } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
+            taskService.markStatus(entry, task, Status.WARNINGS);
         } else {
-            findingService.reportFindings(findings);
-            Map<String, Long> severities = findingService.summarizeFindingsSeverities(entry, task);
-            logger.debug("{}/{} produced findings {}", entry.publicId(), task.name(), severities);
-            if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
-                || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
-                taskService.markStatus(entry, task, Status.ERRORS);
-            } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
-                taskService.markStatus(entry, task, Status.WARNINGS);
-            } else {
-                taskService.markStatus(entry, task, Status.SUCCESS);
-            }
+            taskService.markStatus(entry, task, Status.SUCCESS);
         }
+    }
+
+    protected boolean storeFindings(List<Finding> findings) {
+        return findingService.reportFindings(findings);
     }
 
     protected boolean processFile(ResultMessage resultMessage,
@@ -122,12 +122,19 @@ public abstract class RuleResultProcessor implements ResultProcessor {
                                   String fileName,
                                   Predicate<Path> consumeFile) {
         if (fileNames.containsKey(fileName)) {
-            Path ruleTemp = TempFiles.getRuleTempDirectory(vacoProperties, entry, task.name(), resultMessage.ruleName());
-            Path outputDir = ruleTemp.resolve("output");
+            try {
+                Path ruleTemp = TempFiles.getRuleTempDirectory(vacoProperties, entry, task.name(), resultMessage.ruleName());
+                Path outputDir = ruleTemp.resolve("output");
 
-            Path reportsFile = downloadFile(fileNames, fileName, outputDir);
+                Path reportsFile = downloadFile(fileNames, fileName, outputDir);
 
-            return consumeFile.test(reportsFile);
+                return consumeFile.test(reportsFile);
+            } catch (VacoException e) {
+                if (logger.isWarnEnabled()) {
+                    logger.warn("Failed to process file %s of %s/%s".formatted(fileName, entry.publicId(), task.name()), e);
+                }
+                return false;
+            }
         } else {
             logger.warn("Expected file '{}' missing from output for message {}", fileName, resultMessage);
             return false;
