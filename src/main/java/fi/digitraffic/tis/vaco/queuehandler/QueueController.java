@@ -41,7 +41,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 @RestController
 @RequestMapping("/queue")
 @PreAuthorize("hasAuthority('vaco.apiuser')")
-public class QueueHandlerController {
+public class QueueController {
 
     private final MeService meService;
     private final QueueHandlerService queueHandlerService;
@@ -49,11 +49,11 @@ public class QueueHandlerController {
     private final VacoProperties vacoProperties;
     private final EntryRequestMapper entryRequestMapper;
 
-    public QueueHandlerController(MeService meService,
-                                  QueueHandlerService queueHandlerService,
-                                  EntryService entryService,
-                                  VacoProperties vacoProperties,
-                                  EntryRequestMapper entryRequestMapper) {
+    public QueueController(MeService meService,
+                           QueueHandlerService queueHandlerService,
+                           EntryService entryService,
+                           VacoProperties vacoProperties,
+                           EntryRequestMapper entryRequestMapper) {
         this.meService = Objects.requireNonNull(meService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.entryService = Objects.requireNonNull(entryService);
@@ -93,7 +93,7 @@ public class QueueHandlerController {
 
     private Resource<Entry> asQueueHandlerResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId())))));
+        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())))));
 
         Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
 
