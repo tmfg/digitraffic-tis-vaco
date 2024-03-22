@@ -32,14 +32,14 @@ public class EntryRequestMapper {
 
         return ImmutableEntry.builder()
             .publicId(Entry.NON_PERSISTED_PUBLIC_ID)
-            .name(createEntryRequest.getName())
-            .format(safeTrim(createEntryRequest.getFormat()))
-            .url(safeTrim(createEntryRequest.getUrl()))
-            .businessId(safeTrim(createEntryRequest.getBusinessId()))
-            .etag(strip("\"", safeTrim(createEntryRequest.getEtag()), "\""))
-            .metadata(createEntryRequest.getMetadata())
-            .validations(mapValidations(createEntryRequest.getValidations()))
-            .conversions(mapConversions(createEntryRequest.getConversions()))
+            .name(createEntryRequest.name())
+            .format(safeTrim(createEntryRequest.format()))
+            .url(safeTrim(createEntryRequest.url()))
+            .businessId(safeTrim(createEntryRequest.businessId()))
+            .etag(strip("\"", safeTrim(createEntryRequest.etag()), "\""))
+            .metadata(createEntryRequest.metadata())
+            .validations(mapValidations(createEntryRequest.validations()))
+            .conversions(mapConversions(createEntryRequest.conversions()))
             .notifications(createEntryRequest.notifications())
             .build();
     }

@@ -12,25 +12,25 @@ import java.util.List;
 @JsonSerialize(as = ImmutableCreateEntryRequest.class)
 @JsonDeserialize(as = ImmutableCreateEntryRequest.class)
 public interface CreateEntryRequest {
-    String getFormat();
+    String format();
 
-    String getName();
+    String name();
 
-    String getUrl();
-
-    @Nullable
-    String getEtag();
-
-    String getBusinessId();
+    String url();
 
     @Nullable
-    JsonNode getMetadata();
+    String etag();
+
+    String businessId();
 
     @Nullable
-    List<JsonNode> getValidations();
+    JsonNode metadata();
 
     @Nullable
-    List<JsonNode> getConversions();
+    List<JsonNode> validations();
+
+    @Nullable
+    List<JsonNode> conversions();
 
     @Value.Default
     default List<String> notifications() {
