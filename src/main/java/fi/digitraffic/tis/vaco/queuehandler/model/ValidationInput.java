@@ -14,6 +14,7 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableValidationInput.class)
 public interface ValidationInput {
     @Nullable
+    @Deprecated(forRemoval = true)
     @JsonView(DataVisibility.Internal.class)
     Long id();
 

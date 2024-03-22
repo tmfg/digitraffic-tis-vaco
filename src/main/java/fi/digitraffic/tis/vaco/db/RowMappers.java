@@ -15,6 +15,10 @@ import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
@@ -121,7 +125,9 @@ public final class RowMappers {
 
     public static final Function<ObjectMapper, RowMapper<PersistentEntry>> PERSISTENT_ENTRY = RowMappers::mapEntryEntity;
     public static final Function<ObjectMapper, RowMapper<ValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
+    public static final Function<ObjectMapper, RowMapper<ValidationInputRecord>> VALIDATION_INPUT_RECORD = RowMappers::mapValidationInputRecord;
     public static final Function<ObjectMapper, RowMapper<ConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
+    public static final Function<ObjectMapper, RowMapper<ConversionInputRecord>> CONVERSION_INPUT_RECORD = RowMappers::mapConversionInputRecord;
 
     public static final RowMapper<Finding> FINDING = (rs, rowNum) -> ImmutableFinding.builder()
         .id(rs.getLong("id"))
@@ -270,6 +276,14 @@ public final class RowMappers {
         };
     }
 
+    private static RowMapper<ValidationInputRecord> mapValidationInputRecord(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutableValidationInputRecord.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
+                .config(readJson(objectMapper, rs, "config"))
+                .build();
+    }
+
     @SuppressWarnings("unchecked")
     private static RowMapper<ConversionInput> mapConversionInput(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
@@ -283,6 +297,14 @@ public final class RowMappers {
                     .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
                     .build();
         };
+    }
+
+    private static RowMapper<ConversionInputRecord> mapConversionInputRecord(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutableConversionInputRecord.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
+                .config(readJson(objectMapper, rs, "config"))
+                .build();
     }
 
     /**

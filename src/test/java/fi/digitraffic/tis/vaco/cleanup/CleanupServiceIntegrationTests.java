@@ -53,7 +53,7 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
      */
     @NotNull
     private Entry interleaveEntry(Entry e) {
-        Entry result = entryService.create(e);
+        Entry result = entryService.create(e).get();
         jdbc.update("UPDATE entry SET updated=NOW() - INTERVAL '" + result.name() + " days' WHERE public_id = ?",
             result.publicId());
         return entryService.findEntry(result.publicId()).get();

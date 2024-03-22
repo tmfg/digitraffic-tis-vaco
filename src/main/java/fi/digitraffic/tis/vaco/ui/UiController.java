@@ -146,8 +146,9 @@ public class UiController {
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
         Entry converted = entryRequestMapper.toEntry(createEntryRequest);
-        Entry processed = queueHandlerService.processQueueEntry(converted);
-        return ResponseEntity.ok(asQueueHandlerResource(processed));
+        return queueHandlerService.processQueueEntry(converted)
+            .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
+            .orElse(Responses.badRequest("Failed to create entry from request"));
     }
 
     @GetMapping(path = "/rules")

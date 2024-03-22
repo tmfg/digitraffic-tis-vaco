@@ -87,8 +87,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     }
 
     private Entry createEntryForTesting() {
-
-        return entryService.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)).build());
+        return entryService.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)).build()).get();
     }
 
     @Test

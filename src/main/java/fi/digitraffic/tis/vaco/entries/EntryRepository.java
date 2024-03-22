@@ -12,6 +12,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -42,20 +43,24 @@ public class EntryRepository {
     }
 
     @Transactional
-    public PersistentEntry create(Entry entry) {
-        return jdbc.queryForObject("""
-                INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                  RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications, status
-                """,
-            RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
-            entry.businessId(),
-            entry.format(),
-            entry.url(),
-            entry.etag(),
-            RowMappers.writeJson(objectMapper, entry.metadata()),
-            entry.name(),
-            ArraySqlValue.create(entry.notifications().toArray(new String[0])));
+    public Optional<PersistentEntry> create(Entry entry) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                    INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications)
+                         VALUES (?, ?, ?, ?, ?, ?, ?)
+                      RETURNING id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications, status
+                    """,
+                RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
+                entry.businessId(),
+                entry.format(),
+                entry.url(),
+                entry.etag(),
+                RowMappers.writeJson(objectMapper, entry.metadata()),
+                entry.name(),
+                ArraySqlValue.create(entry.notifications().toArray(new String[0]))));
+        } catch (DataAccessException dae) {
+            return Optional.empty();
+        }
     }
 
     public List<ValidationInput> createValidationInputs(PersistentEntry entry, List<ValidationInput> validations) {
