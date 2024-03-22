@@ -21,11 +21,8 @@ public class FeatureFlagsRepository {
 
     public List<FeatureFlag> listFeatureFlags() {
         return jdbc.query("""
-            SELECT r.*
-              FROM (SELECT ff.*,
-                           ROW_NUMBER() OVER (PARTITION BY name ORDER BY modified DESC) i
-                      FROM feature_flag ff) AS r
-             WHERE r.i = 1
+            SELECT ff.*
+              FROM feature_flag ff
             """,
             RowMappers.FEATURE_FLAG);
     }
@@ -33,12 +30,9 @@ public class FeatureFlagsRepository {
     public Optional<FeatureFlag> findFeatureFlag(String name) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
-                SELECT r.*
-                  FROM (SELECT ff.*,
-                               ROW_NUMBER() OVER (PARTITION BY name ORDER BY modified DESC) i
-                          FROM feature_flag ff
-                         WHERE name = ?) AS r
-                 WHERE r.i = 1;
+                SELECT ff.*
+                  FROM feature_flag ff
+                 WHERE name = ?
                 """,
                 RowMappers.FEATURE_FLAG,
                 name));
@@ -49,22 +43,25 @@ public class FeatureFlagsRepository {
 
     public FeatureFlag setFeatureFlag(FeatureFlag featureFlag, boolean enabled, String modifierOid) {
         return jdbc.queryForObject("""
-               INSERT INTO feature_flag (name, enabled, modified_by)
-               VALUES (?, ?, ?)
+               UPDATE feature_flag
+                  SET name = ?,
+                      enabled = ?,
+                      modified_by = ?
+               WHERE id = ?
             RETURNING *
             """,
             RowMappers.FEATURE_FLAG,
-            featureFlag.name(), enabled, modifierOid);
+            featureFlag.name(),
+            enabled,
+            modifierOid,
+            featureFlag.id());
     }
 
     public boolean isFeatureFlagEnabled(String name) {
         return Boolean.TRUE.equals(jdbc.queryForObject("""
-            SELECT r.enabled
-              FROM (SELECT ff.enabled,
-                           ROW_NUMBER() OVER (PARTITION BY name ORDER BY modified DESC) i
-                      FROM feature_flag ff
-                     WHERE name = ?) AS r
-             WHERE r.i = 1;
+            SELECT ff.enabled
+              FROM feature_flag ff
+             WHERE name = ?
             """,
             Boolean.class,
             name));
