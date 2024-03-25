@@ -27,11 +27,12 @@ public class CleanupRepository {
     /**
      * Removes entries which are older than specified, keeping at least specified amount of entries for each url.
      *
-     * @param olderThan Age limit for entries
-     * @param keepAtLeast How many entries should be kept at minimum
+     * @param olderThan           Age limit for entries
+     * @param keepAtLeast         How many entries should be kept at minimum
+     * @param removeAtMostInTotal How many entries should be deleted by a single run at most
      * @return Public id:s of entries removed by history cleanup.
      */
-    public List<String> cleanupHistory(Duration olderThan, int keepAtLeast) {
+    public List<String> cleanupHistory(Duration olderThan, int keepAtLeast, int removeAtMostInTotal) {
         try {
             return jdbc.queryForList("""
               DELETE
@@ -42,11 +43,12 @@ public class CleanupRepository {
                                            ROW_NUMBER() OVER (PARTITION BY url ORDER BY created DESC) newest_to_oldest
                                       FROM entry e) AS e
                              WHERE e.newest_to_oldest > ?
-                                OR e.created < NOW() - ?)
+                                OR e.created < NOW() - ?
+                             LIMIT ?)
            RETURNING e.public_id;
             """,
                 String.class,
-                keepAtLeast, RowMappers.writeInterval(olderThan)
+                keepAtLeast, RowMappers.writeInterval(olderThan), removeAtMostInTotal
             );
         } catch (DataAccessException dae) {
             logger.warn("Failed to cleanup entry history, returning empty list", dae);

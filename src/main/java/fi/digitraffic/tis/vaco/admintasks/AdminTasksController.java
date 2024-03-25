@@ -81,8 +81,9 @@ public class AdminTasksController {
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<CleanupResponse>> runCleanup(
         @RequestParam(value = "olderThan", required = false) Duration olderThanRequest,
-        @RequestParam(value = "keepAtLeast", required = false) Integer keepAtLeastRequest
+        @RequestParam(value = "keepAtLeast", required = false) Integer keepAtLeastRequest,
+        @RequestParam(value = "removeAtMostInTotal", required = false) Integer removeAtMostInTotal
     ) {
-        return ok(resource(ImmutableCleanupResponse.of(cleanupService.runCleanup(olderThanRequest, keepAtLeastRequest))));
+        return ok(resource(ImmutableCleanupResponse.of(cleanupService.runCleanup(olderThanRequest, keepAtLeastRequest, removeAtMostInTotal))));
     }
 }

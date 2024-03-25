@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -34,8 +35,8 @@ class FeatureFlagsControllerIntegrationTests extends SpringBootIntegrationTestBa
         List<FeatureFlag> featureFlags = apiResponse(response, listFeatureFlagsType).data();
 
         assertThat(
-            Streams.collect(featureFlags, FeatureFlag::name),
-            equalTo(List.of("emails.entryCompleteEmail", "emails.feedStatusEmail")));
+            Streams.map(featureFlags, FeatureFlag::name).toSet(),
+            equalTo(Set.of("emails.entryCompleteEmail", "emails.feedStatusEmail", "scheduledTasks.oldDataCleanup")));
     }
 
     @Test

@@ -70,7 +70,8 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
         // remove anything without timelimit, keep 10 latest
         int keepEntries = 10;
         Duration olderThan = Duration.parse("P5D");
-        Set<String> removed = cleanupService.runCleanup(olderThan, keepEntries);
+        int atMost = 100;
+        Set<String> removed = cleanupService.runCleanup(olderThan, keepEntries, atMost);
 
         // old are removed - the smaller the sequence number in name field, the older the entry is
         removed.forEach(r -> assertThat(Integer.parseInt(entries.get(r)), lessThan(totalEntries - keepEntries)));
@@ -90,7 +91,8 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
         // keep everything newer than specified
         int keepEntries = 5;
         Duration olderThan = Duration.parse("P10D");
-        Set<String> removed = cleanupService.runCleanup(olderThan, keepEntries);
+        int atMost = 100;
+        Set<String> removed = cleanupService.runCleanup(olderThan, keepEntries, atMost);
 
         // old are removed - the smaller the sequence number in name field, the older the entry is
         removed.forEach(r -> assertThat(Integer.parseInt(entries.get(r)), lessThan(20)));
@@ -113,13 +115,9 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
             .map(this::interleaveEntry)
             .toList();
 
-        System.out.println("cancelledEntries = " + cancelledEntries);
-
         assertThat(cancelledEntries.size(), equalTo(cancelledEntryCount));
 
         Set<String> removed = cleanupService.runCleanup();
-
-        System.out.println("removed = " + removed);
 
         // first is removed
         assertThat(removed.contains(cancelledEntries.get(0).publicId()), equalTo(false));
