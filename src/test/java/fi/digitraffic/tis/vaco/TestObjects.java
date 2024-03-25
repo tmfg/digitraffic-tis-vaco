@@ -141,7 +141,7 @@ public class TestObjects {
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
             email != null ? email : new Email("king@commonwealth", null),
             magicLink != null ? magicLink : new MagicLink("C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"),
-            cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), 10));
+            cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), 10, 100));
     }
 
     public static ImmutableGroupIdMappingTask.Builder adminGroupId() {
