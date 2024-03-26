@@ -41,7 +41,8 @@ class CachingControllerIntegrationTests extends SpringBootIntegrationTestBase {
                 "local temporary file paths", emptyStatistics,
                 "entries", emptyStatistics,
                 "statuses", emptyStatistics,
-                "classpath resources", emptyStatistics)));
+                "classpath resources", emptyStatistics,
+                "UI/MyData summaries", emptyStatistics)));
     }
 
 }
