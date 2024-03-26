@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.entries;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -9,7 +10,6 @@ import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class EntryService {
@@ -137,11 +136,6 @@ public class EntryService {
 
     public List<Entry> findAllByBusinessId(String businessId) {
         List<PersistentEntry> entries = entryRepository.findAllByBusinessId(businessId);
-        return Streams.map(entries, this::buildCompleteEntry).toList();
-    }
-
-    public List<Entry> findAllForBusinessIds(Set<String> businessIds) {
-        List<PersistentEntry> entries = entryRepository.findAllForBusinessIds(businessIds);
         return Streams.map(entries, this::buildCompleteEntry).toList();
     }
 

@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.entries;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -43,6 +44,8 @@ class EntryServiceTests {
     private CachingService cachingService;
     @Mock
     private QueueHandlerService queueHandlerService;
+    @Mock
+    private ContextRepository contextRepository;
 
     private ImmutableEntry entry;
 
@@ -68,7 +71,13 @@ class EntryServiceTests {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(entryRepository, taskService, findingRepository, cachingService, queueHandlerService);
+        verifyNoMoreInteractions(
+            entryRepository,
+            taskService,
+            findingRepository,
+            cachingService,
+            queueHandlerService,
+            contextRepository);
     }
 
     @Test

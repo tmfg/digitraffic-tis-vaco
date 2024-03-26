@@ -42,6 +42,7 @@ class CachingControllerIntegrationTests extends SpringBootIntegrationTestBase {
                 "entries", emptyStatistics,
                 "statuses", emptyStatistics,
                 "classpath resources", emptyStatistics,
+                "UI/MyData summaries", emptyStatistics,
                 "DB/context records", emptyStatistics)));
     }
 

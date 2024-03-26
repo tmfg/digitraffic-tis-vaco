@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 @Repository
 public class EntryRepository {
@@ -184,15 +183,24 @@ public class EntryRepository {
         }
     }
 
-    public List<PersistentEntry> findAllForBusinessIds(Set<String> businessIds) {
+    /**
+     * !! This is used by UI MyData page only
+     * @param businessIds
+     * @return
+     */
+    public List<PersistentEntry> findLatestForBusinessId(String businessId) {
         try {
             return namedJdbc.query("""
                 SELECT e.*
-                  FROM entry e
-                 WHERE e.business_id IN (:businessIds)
+                  FROM (SELECT e.*,
+                               ROW_NUMBER() OVER (PARTITION BY url ORDER BY created DESC) r
+                          FROM entry e
+                         WHERE e.business_id = :businessId) AS e
+                 WHERE e.r <= 10
+                ORDER BY created DESC;
                 """,
                 new MapSqlParameterSource()
-                    .addValue("businessIds", businessIds),
+                    .addValue("businessId", businessId),
                 RowMappers.PERSISTENT_ENTRY.apply(objectMapper));
         } catch (EmptyResultDataAccessException erdae) {
             logger.warn("Failed to find all for business ids", erdae);

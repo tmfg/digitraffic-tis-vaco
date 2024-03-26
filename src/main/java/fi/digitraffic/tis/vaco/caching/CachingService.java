@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,6 +43,7 @@ public class CachingService {
     private final Cache<String, Entry> entryCache;
     private final Cache<String, Status> statusCache;
     private final Cache<String, ClassPathResource> classPathResourceCache;
+    private final Cache<String, List<MyDataEntrySummary>> myDataSummariesCache;
     private final CacheStatsMapper cacheStatsMapper;
 
     // *Record caches are database specific and should only be accesssed from *Repositories
@@ -56,6 +59,7 @@ public class CachingService {
         this.statusCache = genericCache(3000);
         this.classPathResourceCache = genericCache(Status.values().length);
         this.contextRecordCache = genericCache(300);
+        this.myDataSummariesCache = genericCache(500);
     }
 
     public Optional<Ruleset> cacheRuleset(String key, Function<String, Ruleset> loader) {
@@ -117,6 +121,10 @@ public class CachingService {
         return Optional.ofNullable(classPathResourceCache.get(key, loader));
     }
 
+    public Optional<List<MyDataEntrySummary>> cacheEntrySummaries(String key, Function<String, List<MyDataEntrySummary>> loader) {
+        return Optional.ofNullable(myDataSummariesCache.get(key, loader));
+    }
+
     private Cache<String, String> sqsQueueUrlCache() {
         return Caffeine.newBuilder()
             .recordStats()
@@ -158,7 +166,8 @@ public class CachingService {
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
             "statuses", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
             "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
-            "DB/context records", cacheStatsMapper.toCacheSummaryStatistics(contextRecordCache));
+            "DB/context records", cacheStatsMapper.toCacheSummaryStatistics(contextRecordCache),
+            "UI/MyData summaries", cacheStatsMapper.toCacheSummaryStatistics(myDataSummariesCache));
     }
 
     public Optional<ContextRecord> cacheContextRecord(String key, Function<String, ContextRecord> loader) {
