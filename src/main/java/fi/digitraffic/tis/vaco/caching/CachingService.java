@@ -5,7 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
-import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -43,15 +43,19 @@ public class CachingService {
     private final Cache<String, ClassPathResource> classPathResourceCache;
     private final CacheStatsMapper cacheStatsMapper;
 
+    // *Record caches are database specific and should only be accesssed from *Repositories
+    private final Cache<String, ContextRecord> contextRecordCache;
+
     public CachingService(CacheStatsMapper cacheStatsMapper) {
         this.cacheStatsMapper = Objects.requireNonNull(cacheStatsMapper);
-        this.adminTasksCache = adminTasksCache();
-        this.rulesetCache = rulesetNameCache();
+        this.adminTasksCache = genericCache(100);
+        this.rulesetCache = genericCache(500);
         this.sqsQueueUrlCache = sqsQueueUrlCache();
         this.localPathCache = localPathCache();
-        this.entryCache = entryCache();
-        this.statusCache = statusCache();
-        this.classPathResourceCache = classPathResourceCache();
+        this.entryCache = genericCache(500);
+        this.statusCache = genericCache(3000);
+        this.classPathResourceCache = genericCache(Status.values().length);
+        this.contextRecordCache = genericCache(300);
     }
 
     public Optional<Ruleset> cacheRuleset(String key, Function<String, Ruleset> loader) {
@@ -113,21 +117,6 @@ public class CachingService {
         return Optional.ofNullable(classPathResourceCache.get(key, loader));
     }
 
-    private Cache<String, GroupIdMappingTask> adminTasksCache() {
-        return Caffeine.newBuilder()
-            .recordStats()
-            .maximumSize(100)
-            .build();
-    }
-
-    private static Cache<String, Ruleset> rulesetNameCache() {
-        return Caffeine.newBuilder()
-            .recordStats()
-            .maximumSize(500)
-            .expireAfterWrite(Duration.ofHours(1))
-            .build();
-    }
-
     private Cache<String, String> sqsQueueUrlCache() {
         return Caffeine.newBuilder()
             .recordStats()
@@ -153,34 +142,10 @@ public class CachingService {
             .build();
     }
 
-    private Cache<String, Hierarchy> companyHierarchyCache() {
+    private <K, V> Cache<K, V> genericCache(int size) {
         return Caffeine.newBuilder()
             .recordStats()
-            .maximumSize(200)
-            .expireAfterWrite(Duration.ofHours(1))
-            .build();
-    }
-
-    private Cache<String, Entry> entryCache() {
-        return Caffeine.newBuilder()
-            .recordStats()
-            .maximumSize(500)
-            .expireAfterWrite(Duration.ofDays(1))
-            .build();
-    }
-
-    private Cache<String, Status> statusCache() {
-        return Caffeine.newBuilder()
-            .recordStats()
-            .maximumSize(3000)
-            .expireAfterWrite(Duration.ofDays(1))
-            .build();
-    }
-
-    private Cache<String, ClassPathResource> classPathResourceCache() {
-        return Caffeine.newBuilder()
-            .recordStats()
-            .maximumSize(Status.values().length)
+            .maximumSize(size)
             .expireAfterWrite(Duration.ofDays(1))
             .build();
     }
@@ -192,8 +157,11 @@ public class CachingService {
             "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache),
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
             "statuses", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
-            "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache));
+            "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
+            "DB/context records", cacheStatsMapper.toCacheSummaryStatistics(contextRecordCache));
     }
 
-
+    public Optional<ContextRecord> cacheContextRecord(String key, Function<String, ContextRecord> loader) {
+        return Optional.ofNullable(contextRecordCache.get(key, loader));
+    }
 }

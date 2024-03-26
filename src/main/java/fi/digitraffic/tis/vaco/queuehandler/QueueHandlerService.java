@@ -8,18 +8,20 @@ import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
-import fi.digitraffic.tis.vaco.db.repositories.ConversionInputRepository;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
-import fi.digitraffic.tis.vaco.entries.EntryService;
-import fi.digitraffic.tis.vaco.db.repositories.ValidationInputRepository;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
+import fi.digitraffic.tis.vaco.db.repositories.ConversionInputRepository;
+import fi.digitraffic.tis.vaco.db.repositories.ValidationInputRepository;
+import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.slf4j.Logger;
@@ -38,6 +40,7 @@ import static fi.digitraffic.tis.Constants.FINTRAFFIC_BUSINESS_ID;
 @Service
 public class QueueHandlerService {
 
+    private final ContextRepository contextRepository;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final CachingService cachingService;
@@ -72,7 +75,8 @@ public class QueueHandlerService {
                                RecordMapper recordMapper,
                                EntryRepository entryRepository,
                                ValidationInputRepository validationInputRepository,
-                               ConversionInputRepository conversionInputRepository) {
+                               ConversionInputRepository conversionInputRepository,
+                               ContextRepository contextRepository) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.meService = Objects.requireNonNull(meService);
         this.entryService = Objects.requireNonNull(entryService);
@@ -84,15 +88,19 @@ public class QueueHandlerService {
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.validationInputRepository = Objects.requireNonNull(validationInputRepository);
         this.conversionInputRepository = Objects.requireNonNull(conversionInputRepository);
+        this.contextRepository = Objects.requireNonNull(contextRepository);
     }
 
     public Optional<Entry> processQueueEntry(Entry entry) {
         Optional<Entry> result = transactionTemplate.execute(status -> {
             autoregisterCompany(entry.metadata(), entry.businessId());
 
-            return entryRepository.create(entry)
+            Optional<ContextRecord> context = Optional.ofNullable(entry.context())
+                .flatMap(ctx -> contextRepository.upsert(entry));
+
+            return entryRepository.create(context, entry)
                 .map(persisted -> {
-                    ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted);
+                    ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted, context);
 
                     List<ValidationInputRecord> validationInputs = validationInputRepository.create(persisted, entry.validations());
                     List<ConversionInputRecord> conversionInputs = conversionInputRepository.create(persisted, entry.conversions());
@@ -109,16 +117,16 @@ public class QueueHandlerService {
             logger.error("Insert transaction failed for entry {}! Check logs for more information.", entry);
             return Optional.empty();
         } else {
-            return result.map(r -> {
-                logger.debug("Processing done for entry request and new entry created as {}, submitting to delegation", r.publicId());
+            return result.map(createdEntry -> {
+                logger.debug("Processing done for entry request and new entry created as {}, submitting to delegation", createdEntry.publicId());
 
                 ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
-                    .entry(entry)
+                    .entry(createdEntry)
                     .retryStatistics(ImmutableRetryStatistics.of(5))
                     .build();
                 messagingService.submitProcessingJob(job);
 
-                return r;
+                return createdEntry;
             });
         }
     }

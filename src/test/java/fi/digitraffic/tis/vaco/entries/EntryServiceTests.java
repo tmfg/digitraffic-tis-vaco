@@ -59,7 +59,8 @@ class EntryServiceTests {
             cachingService,
             taskService,
             packagesService,
-                recordMapper);
+            recordMapper,
+            contextRepository);
         entry = ImmutableEntry.copyOf(TestObjects.anEntry().build());
         inOrderRepository = Mockito.inOrder(entryRepository);
         inOrderCaching = Mockito.inOrder(cachingService);

@@ -36,4 +36,7 @@ public interface CreateEntryRequest {
     default List<String> notifications() {
         return List.of();
     }
+
+    @Nullable
+    String context();
 }

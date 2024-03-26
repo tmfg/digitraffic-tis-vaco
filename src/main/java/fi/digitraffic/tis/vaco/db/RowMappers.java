@@ -15,7 +15,9 @@ import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
@@ -67,6 +69,8 @@ import java.util.Set;
 import java.util.function.Function;
 
 public final class RowMappers {
+
+
 
     private RowMappers() {}
 
@@ -122,6 +126,11 @@ public final class RowMappers {
             .partnerA(ALIASED_COMPANY.apply("partner_a_").mapRow(rs, rowNum))
             .partnerB(ALIASED_COMPANY.apply("partner_b_").mapRow(rs, rowNum))
             .build();
+
+    public static final RowMapper<ContextRecord> CONTEXT_RECORD = (rs, rowNum) -> ImmutableContextRecord.of(
+        rs.getLong("id"),
+        rs.getLong("company_id"),
+        rs.getString("context"));
 
     public static final Function<ObjectMapper, RowMapper<PersistentEntry>> PERSISTENT_ENTRY = RowMappers::mapEntryEntity;
     public static final Function<ObjectMapper, RowMapper<ValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
@@ -230,6 +239,7 @@ public final class RowMappers {
             .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
             .notifications(List.of(ArraySqlValue.read(rs, "notifications")))
             .status(Status.forField(rs.getString("status")))
+            .context(rs.getLong("context_id"))
             .build();
     }
 

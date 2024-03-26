@@ -2,6 +2,8 @@ package fi.digitraffic.tis.vaco.entries;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.model.ContextRecord;
+import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -33,16 +35,20 @@ public class EntryService {
     private final PackagesService packagesService;
     private final RecordMapper recordMapper;
 
+    private final ContextRepository contextRepository;
+
     public EntryService(EntryRepository entryRepository,
                         CachingService cachingService,
                         TaskService taskService,
                         PackagesService packagesService,
-                        RecordMapper recordMapper) {
+                        RecordMapper recordMapper,
+                        ContextRepository contextRepository) {
         this.taskService = Objects.requireNonNull(taskService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.cachingService = Objects.requireNonNull(cachingService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.recordMapper = Objects.requireNonNull(recordMapper);
+        this.contextRepository = Objects.requireNonNull(contextRepository);
     }
 
     public void markComplete(Entry entry) {
@@ -114,8 +120,9 @@ public class EntryService {
      */
     @Deprecated(forRemoval = true)
     public Optional<Entry> create(Entry entry) {
-        return entryRepository.create(entry).map(persisted -> {
-            ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted);
+        Optional<ContextRecord> context = Optional.empty();
+        return entryRepository.create(context, entry).map(persisted -> {
+            ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted, context);
 
             List<ValidationInput> validationInputs = entryRepository.createValidationInputs(persisted, entry.validations());
             List<ConversionInput> conversionInputs = entryRepository.createConversionInputs(persisted, entry.conversions());
@@ -138,10 +145,6 @@ public class EntryService {
         return Streams.map(entries, this::buildCompleteEntry).toList();
     }
 
-    private Entry asEntry(PersistentEntry e) {
-        return recordMapper.toEntryBuilder(e).build();
-    }
-
     /**
      * Call this to complete {@link Entry} object's fields if needed.
      *
@@ -150,7 +153,8 @@ public class EntryService {
      */
     private Entry buildCompleteEntry(PersistentEntry entry) {
         List<Package> packages = Streams.flatten(taskService.findTasks(entry), packagesService::findPackages).toList();
-        return recordMapper.toEntryBuilder(entry)
+        Optional<ContextRecord> context = contextRepository.find(entry);
+        return recordMapper.toEntryBuilder(entry, context)
             .tasks(taskService.findTasks(entry))
             .validations(taskService.findValidationInputs(entry))
             .conversions(taskService.findConversionInputs(entry))

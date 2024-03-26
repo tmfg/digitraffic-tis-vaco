@@ -41,6 +41,7 @@ public class EntryRequestMapper {
             .validations(mapValidations(createEntryRequest.validations()))
             .conversions(mapConversions(createEntryRequest.conversions()))
             .notifications(createEntryRequest.notifications())
+            .context(createEntryRequest.context())
             .build();
     }
 

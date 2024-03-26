@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
+import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -18,6 +19,7 @@ import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Map various repository <code>Record</code> types into datamodel equivalents.
@@ -31,7 +33,7 @@ public class RecordMapper {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public ImmutableEntry.Builder toEntryBuilder(PersistentEntry persistentEntry) {
+    public ImmutableEntry.Builder toEntryBuilder(PersistentEntry persistentEntry, Optional<ContextRecord> context) {
         return ImmutableEntry.builder()
             .publicId(persistentEntry.publicId())
             .name(persistentEntry.name())
@@ -45,7 +47,8 @@ public class RecordMapper {
             .started(persistentEntry.started())
             .updated(persistentEntry.updated())
             .completed(persistentEntry.completed())
-            .status(persistentEntry.status());
+            .status(persistentEntry.status())
+            .context(context.map(ContextRecord::context).orElse(null));
     }
 
     @SuppressWarnings("unchecked")
