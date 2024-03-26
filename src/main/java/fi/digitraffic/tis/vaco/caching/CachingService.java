@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,7 +43,9 @@ public class CachingService {
     private final Cache<String, Entry> entryCache;
     private final Cache<String, Status> statusCache;
     private final Cache<String, ClassPathResource> classPathResourceCache;
+    private final Cache<String, List<MyDataEntrySummary>> myDataSummariesCache;
     private final CacheStatsMapper cacheStatsMapper;
+
 
     public CachingService(CacheStatsMapper cacheStatsMapper) {
         this.cacheStatsMapper = Objects.requireNonNull(cacheStatsMapper);
@@ -52,6 +56,7 @@ public class CachingService {
         this.entryCache = entryCache();
         this.statusCache = statusCache();
         this.classPathResourceCache = classPathResourceCache();
+        this.myDataSummariesCache = myDataSummariesCache();
     }
 
     public Optional<Ruleset> cacheRuleset(String key, Function<String, Ruleset> loader) {
@@ -111,6 +116,10 @@ public class CachingService {
 
     public Optional<ClassPathResource> cacheClassPathResource(String key, Function<String, ClassPathResource> loader) {
         return Optional.ofNullable(classPathResourceCache.get(key, loader));
+    }
+
+    public Optional<List<MyDataEntrySummary>> cacheEntrySummaries(String key, Function<String, List<MyDataEntrySummary>> loader) {
+        return Optional.ofNullable(myDataSummariesCache.get(key, loader));
     }
 
     private Cache<String, GroupIdMappingTask> adminTasksCache() {
@@ -185,6 +194,14 @@ public class CachingService {
             .build();
     }
 
+    private Cache<String, List<MyDataEntrySummary>> myDataSummariesCache() {
+        return Caffeine.newBuilder()
+            .recordStats()
+            .maximumSize(500)
+            .expireAfterWrite(Duration.ofDays(1))
+            .build();
+    }
+
     public Map<String, CacheSummaryStatistics> getStats() {
         return Map.of(
             "rulesets", cacheStatsMapper.toCacheSummaryStatistics(rulesetCache),
@@ -192,8 +209,8 @@ public class CachingService {
             "local temporary file paths", cacheStatsMapper.toCacheSummaryStatistics(localPathCache),
             "entries", cacheStatsMapper.toCacheSummaryStatistics(entryCache),
             "statuses", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
-            "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache));
+            "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
+            "UI/MyData summaries", cacheStatsMapper.toCacheSummaryStatistics(myDataSummariesCache));
     }
-
 
 }

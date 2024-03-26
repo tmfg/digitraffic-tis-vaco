@@ -117,15 +117,4 @@ public class QueueHandlerService {
         return entries;
     }
 
-    public List<Entry> getAllEntriesVisibleForCurrentUser() {
-        Set<String> allAccessibleBusinessIds = new HashSet<>();
-        meService.findCompanies().forEach(company ->
-            allAccessibleBusinessIds.addAll(companyHierarchyService.listAllChildren(company).keySet()));
-
-        List<Entry> entries = entryService.findAllForBusinessIds(allAccessibleBusinessIds);
-        entries.forEach(entry -> cachingService.cacheEntry(
-            entry.publicId(),
-            key -> entry));
-        return entries;
-    }
 }

@@ -41,6 +41,7 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableProcessingResultsPage;
 import fi.digitraffic.tis.vaco.ui.model.MagicToken;
 import fi.digitraffic.tis.vaco.ui.model.MagicTokenResponse;
+import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -90,6 +91,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 public class UiController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final UiService uiService;
 
     private final VacoProperties vacoProperties;
     private final EntryService entryService;
@@ -115,7 +117,7 @@ public class UiController {
                         PackagesService packagesService,
                         AdminToolsService adminToolsService,
                         EntryRequestMapper entryRequestMapper,
-                        EncryptionService encryptionService) {
+                        EncryptionService encryptionService, UiService uiService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -128,6 +130,7 @@ public class UiController {
         this.adminToolsService = Objects.requireNonNull(adminToolsService);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
         this.encryptionService = Objects.requireNonNull(encryptionService);
+        this.uiService = uiService;
     }
 
     @GetMapping(path = "/bootstrap")
@@ -209,7 +212,7 @@ public class UiController {
                 Optional<Company> company = companyHierarchyService.findByBusinessId(entry.businessId());
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
-                        .entry(asEntryStateResource(entry))
+                        .entry(asEntryStateResource(entry, entry.publicId()))
                         .reports(reports)
                         .summaries(summaries)
                         .company(company.map(c -> c.name() + " (" +c.businessId() + ")").orElse(entry.businessId()))
@@ -230,9 +233,9 @@ public class UiController {
     @GetMapping(path = "/entries")
     @JsonView(DataVisibility.External.class)
     @PreAuthorize("hasAuthority('vaco.user')")
-    public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "full") boolean full) {
-        List<Entry> entries = queueHandlerService.getAllEntriesVisibleForCurrentUser();
-        return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));
+    public ResponseEntity<List<Resource<MyDataEntrySummary>>> listEntries(@RequestParam(name = "full") boolean full) {
+        List<MyDataEntrySummary> entries = uiService.getAllEntriesVisibleForCurrentUser();
+        return ResponseEntity.ok(Streams.collect(entries, e -> asEntryStateResource(e, e.publicId())));
     }
 
     @GetMapping(path = "/packages/{entryPublicId}/{taskName}/{packageName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -304,7 +307,7 @@ public class UiController {
     public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId);
-            return ResponseEntity.ok(Streams.collect(entries, this::asEntryStateResource));
+            return ResponseEntity.ok(Streams.collect(entries, e -> asEntryStateResource(e, e.publicId())));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
@@ -488,18 +491,18 @@ public class UiController {
         return new Resource<>(companyLatestEntry, null, links);
     }
 
-    private Resource<Entry> asEntryStateResource(Entry entry) {
+    private <T> Resource<T> asEntryStateResource(T data, String publicId) {
         Map<String, Map<String, Link>> links = new HashMap<>();
         Map<String, Link> linkInstances = new HashMap<>();
         linkInstances.put("self", Link.to(vacoProperties.baseUrl(),
             RequestMethod.GET,
-            fromMethodCall(on(UiController.class).fetchEntryState(entry.publicId(), null))));
+            fromMethodCall(on(UiController.class).fetchEntryState(publicId, null))));
         linkInstances.put("badge", Link.to(vacoProperties.baseUrl(),
             RequestMethod.GET,
-            fromMethodCall(on(BadgeController.class).entryBadge(entry.publicId(), null))));
+            fromMethodCall(on(BadgeController.class).entryBadge(publicId, null))));
 
         links.put("refs", linkInstances);
-        return new Resource<>(entry, null, links);
+        return new Resource<>(data, null, links);
     }
 
     private Resource<Entry> asQueueHandlerResource(Entry entry) {

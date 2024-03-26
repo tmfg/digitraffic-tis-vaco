@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class EntryService {
@@ -124,15 +123,6 @@ public class EntryService {
     public List<Entry> findAllByBusinessId(String businessId) {
         List<PersistentEntry> entries = entryRepository.findAllByBusinessId(businessId);
         return Streams.map(entries, this::buildCompleteEntry).toList();
-    }
-
-    public List<Entry> findAllForBusinessIds(Set<String> businessIds) {
-        List<PersistentEntry> entries = entryRepository.findAllForBusinessIds(businessIds);
-        return Streams.map(entries, this::buildCompleteEntry).toList();
-    }
-
-    private Entry asEntry(PersistentEntry e) {
-        return persistentEntryMapper.toEntryBuilder(e).build();
     }
 
     /**
