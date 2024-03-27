@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.caching.model.ImmutableRequestStatistics;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,7 +34,8 @@ class CachingControllerIntegrationTests extends SpringBootIntegrationTestBase {
             0,
             ImmutableRequestStatistics.of(0, 0),
             ImmutableLoadStatistics.of(0, 0, 0, 0),
-            ImmutableEvictionStatistics.of(0)
+            ImmutableEvictionStatistics.of(0),
+            List.of()
         );
         assertThat(stats,
             equalTo(Map.of("rulesets", emptyStatistics,
