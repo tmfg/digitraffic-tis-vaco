@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.caching;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +29,7 @@ public class CachingController {
 
     @GetMapping(path = "/statistics")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<Resource<Map<String, CacheSummaryStatistics>>> listGroupIdMappingTasks() {
+    public ResponseEntity<Resource<Map<String, CacheSummaryStatistics>>> listAllCacheStatistics() {
         return ok(resource(cachingService.getStats()));
     }
 }
