@@ -39,7 +39,7 @@ public class ContextRepository {
                     INSERT INTO context(company_id, context)
                          VALUES ((SELECT id FROM company WHERE business_id = ?), ?)
                     ON CONFLICT (company_id, context)
-                             DO NOTHING
+                             DO UPDATE SET context = EXCLUDED.context
                       RETURNING *
                     """,
                     RowMappers.CONTEXT_RECORD,
@@ -61,10 +61,10 @@ public class ContextRepository {
             return Optional.ofNullable(jdbc.queryForObject("""
                 SELECT c.*
                   FROM context c
-                 WHERE c.id = (SELECT context_id FROM entry WHERE public_id = ?)
+                 WHERE c.id = ?
                 """,
                 RowMappers.CONTEXT_RECORD,
-                entry.publicId()));
+                entry.context()));
         } catch (DataAccessException dae) {
             logger.warn("Failed to find context record", dae);
             return Optional.empty();
