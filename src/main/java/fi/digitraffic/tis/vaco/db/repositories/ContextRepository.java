@@ -29,7 +29,11 @@ public class ContextRepository {
     }
 
     public Optional<ContextRecord> upsert(Entry entry) {
-        return cachingService.cacheContextRecord(entry.publicId(), key -> {
+        return cachingService.cacheContextRecord(entry.businessId() + "/" + entry.context(), key -> {
+            if (entry.context() == null) {
+                logger.debug("Entry {} does not have context set", entry.publicId());
+                return null;
+            }
             try {
                 return jdbc.queryForObject("""
                     INSERT INTO context(company_id, context)
@@ -49,7 +53,7 @@ public class ContextRepository {
     }
 
     public Optional<ContextRecord> find(PersistentEntry entry) {
-        return cachingService.cacheContextRecord(entry.publicId(), key -> {
+        return cachingService.cacheContextRecord(entry.businessId() + "/" + entry.context(), key -> {
             if (entry.context() == null) {
                 logger.debug("Entry {} does not have context set", entry.publicId());
                 return null;
@@ -68,4 +72,5 @@ public class ContextRepository {
             }
         });
     }
+
 }
