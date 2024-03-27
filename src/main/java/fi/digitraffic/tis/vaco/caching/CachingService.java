@@ -125,6 +125,10 @@ public class CachingService {
         return Optional.ofNullable(myDataSummariesCache.get(key, loader));
     }
 
+    public void invalidateEntrySummaries(String businessId) {
+        myDataSummariesCache.invalidate(businessId);
+    }
+
     private Cache<String, String> sqsQueueUrlCache() {
         return Caffeine.newBuilder()
             .recordStats()
@@ -173,4 +177,5 @@ public class CachingService {
     public Optional<ContextRecord> cacheContextRecord(String key, Function<String, ContextRecord> loader) {
         return Optional.ofNullable(contextRecordCache.get(key, loader));
     }
+
 }

@@ -53,17 +53,20 @@ public class EntryService {
     public void markComplete(Entry entry) {
         entryRepository.completeEntryProcessing(entry);
         cachingService.invalidateEntry(entry.publicId());
+        cachingService.invalidateEntrySummaries(entry.businessId());
     }
 
     public void markStarted(Entry entry) {
         entryRepository.startEntryProcessing(entry);
         entryRepository.markStatus(entry, Status.PROCESSING);
         cachingService.invalidateEntry(entry.publicId());
+        cachingService.invalidateEntrySummaries(entry.businessId());
     }
 
     public void markUpdated(Entry entry) {
         entryRepository.updateEntryProcessing(entry);
         cachingService.invalidateEntry(entry.publicId());
+        cachingService.invalidateEntrySummaries(entry.businessId());
     }
 
     /**
