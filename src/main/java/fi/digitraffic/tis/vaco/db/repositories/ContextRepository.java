@@ -53,24 +53,21 @@ public class ContextRepository {
     }
 
     public Optional<ContextRecord> find(PersistentEntry entry) {
-        return cachingService.cacheContextRecord(entry.businessId() + "/" + entry.context(), key -> {
-            if (entry.context() == null) {
-                logger.debug("Entry {} does not have context set", entry.publicId());
-                return null;
-            }
-            try {
-                return jdbc.queryForObject("""
-                    SELECT c.*
-                      FROM context c
-                     WHERE c.id = (SELECT context_id FROM entry WHERE public_id = ?)
-                    """,
-                    RowMappers.CONTEXT_RECORD,
-                    entry.publicId());
-            } catch (DataAccessException dae) {
-                logger.warn("Failed to find context record", dae);
-                return null;
-            }
-        });
+        if (entry.context() == null) {
+            logger.debug("Entry {} does not have context set", entry.publicId());
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                SELECT c.*
+                  FROM context c
+                 WHERE c.id = (SELECT context_id FROM entry WHERE public_id = ?)
+                """,
+                RowMappers.CONTEXT_RECORD,
+                entry.publicId()));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to find context record", dae);
+            return Optional.empty();
+        }
     }
-
 }
