@@ -275,7 +275,7 @@ public class UiController {
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<CompanyLatestEntry>>> fetchLatestEntriesPerCompany() {
         List<CompanyLatestEntry> companyLatestEntries = adminToolsService
-            .listLatestEntriesPerCompany(
+            .getDataDeliveryOverview(
                 meService.isAdmin()
                     ? null
                     : meService.findCompanies());
@@ -288,7 +288,7 @@ public class UiController {
         StreamingResponseBody stream = outputStream -> {
             try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
                 CSVWriter csvWriter = new CSVWriter(writer, ICSVWriter.DEFAULT_SEPARATOR,
-                    ICSVWriter.NO_QUOTE_CHARACTER, ICSVWriter.DEFAULT_ESCAPE_CHARACTER, ICSVWriter.DEFAULT_LINE_END);
+                    ICSVWriter.DEFAULT_QUOTE_CHARACTER, ICSVWriter.DEFAULT_ESCAPE_CHARACTER, ICSVWriter.DEFAULT_LINE_END);
                 adminToolsService.exportDataDeliveryToCsv(csvWriter, language);
             }
         };
