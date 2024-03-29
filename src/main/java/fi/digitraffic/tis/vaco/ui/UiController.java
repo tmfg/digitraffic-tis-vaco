@@ -48,6 +48,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -91,6 +92,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 public class UiController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final UiService uiService;
 
     private final VacoProperties vacoProperties;
@@ -117,7 +119,8 @@ public class UiController {
                         PackagesService packagesService,
                         AdminToolsService adminToolsService,
                         EntryRequestMapper entryRequestMapper,
-                        EncryptionService encryptionService, UiService uiService) {
+                        EncryptionService encryptionService,
+                        UiService uiService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -130,7 +133,7 @@ public class UiController {
         this.adminToolsService = Objects.requireNonNull(adminToolsService);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
         this.encryptionService = Objects.requireNonNull(encryptionService);
-        this.uiService = uiService;
+        this.uiService = Objects.requireNonNull(uiService);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -141,8 +144,17 @@ public class UiController {
                 vacoProperties.environment(),
                 vacoProperties.baseUrl(),
                 vacoProperties.azureAd().tenantId(),
-                vacoProperties.azureAd().clientId()));
+                vacoProperties.azureAd().clientId(),
+                bootstrapBuildInfo()));
     }
+
+    private @Value("${git.build.version:#{'latest'}}") String buildVersion;
+    private @Value("${git.commit.id.full:#{'HEAD'}}") String commitId;
+
+    private String bootstrapBuildInfo() {
+        return buildVersion + " (" + commitId + ")";
+    }
+
 
     @PostMapping(path = "/queue")
     @JsonView(DataVisibility.Public.class)
