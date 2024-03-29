@@ -1,7 +1,9 @@
 package fi.digitraffic.tis.vaco.entries;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -9,7 +11,7 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,22 +44,26 @@ class EntryServiceTests {
     private CachingService cachingService;
     @Mock
     private QueueHandlerService queueHandlerService;
+    @Mock
+    private ContextRepository contextRepository;
 
     private ImmutableEntry entry;
 
     // InOrder enables reusing simple verifications in order
     private InOrder inOrderRepository;
     private InOrder inOrderCaching;
-    private PersistentEntryMapper persistentEntryMapper = new PersistentEntryMapper();
+    private RecordMapper recordMapper;
 
     @BeforeEach
     void setUp() {
+        recordMapper = new RecordMapper(new ObjectMapper());
         entryService = new EntryService(
             entryRepository,
             cachingService,
             taskService,
             packagesService,
-            persistentEntryMapper);
+            recordMapper,
+            contextRepository);
         entry = ImmutableEntry.copyOf(TestObjects.anEntry().build());
         inOrderRepository = Mockito.inOrder(entryRepository);
         inOrderCaching = Mockito.inOrder(cachingService);
@@ -65,7 +71,13 @@ class EntryServiceTests {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(entryRepository, taskService, findingRepository, cachingService, queueHandlerService);
+        verifyNoMoreInteractions(
+            entryRepository,
+            taskService,
+            findingRepository,
+            cachingService,
+            queueHandlerService,
+            contextRepository);
     }
 
     @Test

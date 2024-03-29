@@ -72,9 +72,10 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
     void createsCompleteEntries() {
 
         Entry result = entryService.create(entry.withEtag("etag")
-            .withMetadata(metadata)
-            .withConversions(conversion)
-            .withValidations(validation));
+                .withMetadata(metadata)
+                .withConversions(conversion)
+                .withValidations(validation))
+            .get();
 
         assertAll(
             () -> assertThat(result.format(), equalTo("gtfs")),
@@ -89,7 +90,7 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void entryWithoutValidationsAndConversionsGetsNoTasks() {
-        Entry result = entryService.create(entry);
+        Entry result = entryService.create(entry).get();
 
         assertThat(
             Streams.map(taskService.findTasks(result), this::withoutGeneratedValues).toList(),
@@ -112,7 +113,7 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 .withDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK, RulesetSubmissionService.CONVERT_TASK));
 
         // TODO: should be PersistentEntry for better assertions
-        Entry result = entryService.create(entry.withConversions(conversion));
+        Entry result = entryService.create(entry.withConversions(conversion)).get();
 
         assertThat(
             Streams.map(taskService.findTasks(result), this::withoutGeneratedValues).toList(),

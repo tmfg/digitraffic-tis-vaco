@@ -41,7 +41,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 @RestController
 @RequestMapping("/queue")
 @PreAuthorize("hasAuthority('vaco.apiuser')")
-public class QueueHandlerController {
+public class QueueController {
 
     private final MeService meService;
     private final QueueHandlerService queueHandlerService;
@@ -49,11 +49,11 @@ public class QueueHandlerController {
     private final VacoProperties vacoProperties;
     private final EntryRequestMapper entryRequestMapper;
 
-    public QueueHandlerController(MeService meService,
-                                  QueueHandlerService queueHandlerService,
-                                  EntryService entryService,
-                                  VacoProperties vacoProperties,
-                                  EntryRequestMapper entryRequestMapper) {
+    public QueueController(MeService meService,
+                           QueueHandlerService queueHandlerService,
+                           EntryService entryService,
+                           VacoProperties vacoProperties,
+                           EntryRequestMapper entryRequestMapper) {
         this.meService = Objects.requireNonNull(meService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.entryService = Objects.requireNonNull(entryService);
@@ -65,14 +65,15 @@ public class QueueHandlerController {
     @JsonView(DataVisibility.External.class)
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
         Entry converted = entryRequestMapper.toEntry(createEntryRequest);
-        Entry processed = queueHandlerService.processQueueEntry(converted);
-        return ResponseEntity.ok(asQueueHandlerResource(processed));
+
+        return queueHandlerService.processQueueEntry(converted)
+            .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
+            .orElse(Responses.badRequest("Failed to create entry from request"));
     }
 
     @GetMapping(path = "")
     @JsonView(DataVisibility.External.class)
-    public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "businessId") String businessId,
-                                                             @RequestParam(name = "full", required = false) boolean full) {
+    public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
                 Streams.collect(queueHandlerService.getAllQueueEntriesFor(businessId), this::asQueueHandlerResource));
@@ -92,7 +93,7 @@ public class QueueHandlerController {
 
     private Resource<Entry> asQueueHandlerResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId())))));
+        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())))));
 
         Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
 

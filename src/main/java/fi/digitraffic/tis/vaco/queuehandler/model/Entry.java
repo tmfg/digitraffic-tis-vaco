@@ -83,4 +83,7 @@ public interface Entry {
     default Status status() {
         return Status.RECEIVED;
     }
+
+    @Nullable
+    String context();
 }

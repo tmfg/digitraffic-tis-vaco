@@ -42,10 +42,10 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         JsonNode fetchResult = apiResponse(fetchResponse);
 
         assertAll("Entry fields are fetched properly",
-            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("name").textValue(), equalTo(request.getName())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("url").textValue(), equalTo(request.getUrl())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("etag").textValue(), equalTo(request.getEtag())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("format").textValue(), equalTo(request.getFormat())));
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("name").textValue(), equalTo(request.name())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("url").textValue(), equalTo(request.url())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("etag").textValue(), equalTo(request.etag())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("format").textValue(), equalTo(request.format())));
     }
 
     @Test

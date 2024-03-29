@@ -24,7 +24,7 @@ import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerController;
+import fi.digitraffic.tis.vaco.queuehandler.QueueController;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -149,8 +149,9 @@ public class UiController {
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
         Entry converted = entryRequestMapper.toEntry(createEntryRequest);
-        Entry processed = queueHandlerService.processQueueEntry(converted);
-        return ResponseEntity.ok(asQueueHandlerResource(processed));
+        return queueHandlerService.processQueueEntry(converted)
+            .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
+            .orElse(Responses.badRequest("Failed to create entry from request"));
     }
 
     @GetMapping(path = "/rules")
@@ -507,7 +508,7 @@ public class UiController {
 
     private Resource<Entry> asQueueHandlerResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueHandlerController.class).fetchEntry(entry.publicId())))));
+        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())))));
 
         Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
 

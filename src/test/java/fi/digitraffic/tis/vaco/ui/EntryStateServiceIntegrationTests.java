@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.ui;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingRepository;
@@ -9,7 +10,7 @@ import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,7 +56,7 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Autowired
     private FindingRepository findingRepository;
     @Autowired
-    PersistentEntryMapper persistentEntryMapper;
+    RecordMapper recordMapper;
     private Path inputPath;
     private Task task;
     private PersistentEntry entry;
@@ -63,7 +65,7 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @BeforeEach
     void setUp() throws URISyntaxException {
         ImmutableEntry entryToCreate = TestObjects.anEntry("gtfs").build();
-        entry = entryRepository.create(entryToCreate);
+        entry = entryRepository.create(Optional.empty(), entryToCreate).get();
         taskRepository.createTasks(List.of(ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 1)));
         task = taskRepository.findTask(entry.id(), RuleName.GTFS_CANONICAL).get();
         rule = rulesetRepository.findByName(RuleName.GTFS_CANONICAL).get();
@@ -118,7 +120,8 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     void testGetRuleReport() {
         Map<String, Ruleset> rulesetMap = new HashMap<>();
         rulesetMap.put(task.name(), rule);
-        RuleReport ruleReport = entryStateService.getRuleReport(task, persistentEntryMapper.toEntryBuilder(entry).build(), rulesetMap);
+        Optional<ContextRecord> context = Optional.empty(); // TODO: add actual context
+        RuleReport ruleReport = entryStateService.getRuleReport(task, recordMapper.toEntryBuilder(entry, context).build(), rulesetMap);
         assertThat(ruleReport.ruleName(), equalTo(rule.identifyingName()));
         assertThat(ruleReport.ruleDescription(), equalTo(rule.description()));
 
@@ -169,7 +172,8 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void testGettingSummaries() {
         assertDoesNotThrow(() -> gtfsInputSummaryService.generateGtfsInputSummaries(inputPath, task.id()));
-        List<Summary> summaries = entryStateService.getTaskSummaries(persistentEntryMapper.toEntryBuilder(entry).build());
+        Optional<ContextRecord> context = Optional.empty(); // TODO: add actual context
+        List<Summary> summaries = entryStateService.getTaskSummaries(recordMapper.toEntryBuilder(entry, context).build());
         assertThat(summaries.size(), equalTo(5));
         // Order matters
         Summary agencies = summaries.get(0);

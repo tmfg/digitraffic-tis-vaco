@@ -59,4 +59,7 @@ public interface PersistentEntry {
     default Status status() {
         return Status.RECEIVED;
     }
+
+    @Nullable
+    Long context();
 }

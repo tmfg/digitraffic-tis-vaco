@@ -2,12 +2,14 @@ package fi.digitraffic.tis.vaco.entries;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.ContextRecord;
+import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.mapper.PersistentEntryMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -30,34 +32,41 @@ public class EntryService {
     private final CachingService cachingService;
     private final TaskService taskService;
     private final PackagesService packagesService;
-    private final PersistentEntryMapper persistentEntryMapper;
+    private final RecordMapper recordMapper;
+
+    private final ContextRepository contextRepository;
 
     public EntryService(EntryRepository entryRepository,
                         CachingService cachingService,
                         TaskService taskService,
                         PackagesService packagesService,
-                        PersistentEntryMapper persistentEntryMapper) {
+                        RecordMapper recordMapper,
+                        ContextRepository contextRepository) {
         this.taskService = Objects.requireNonNull(taskService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.cachingService = Objects.requireNonNull(cachingService);
         this.packagesService = Objects.requireNonNull(packagesService);
-        this.persistentEntryMapper = Objects.requireNonNull(persistentEntryMapper);
+        this.recordMapper = Objects.requireNonNull(recordMapper);
+        this.contextRepository = Objects.requireNonNull(contextRepository);
     }
 
     public void markComplete(Entry entry) {
         entryRepository.completeEntryProcessing(entry);
         cachingService.invalidateEntry(entry.publicId());
+        cachingService.invalidateEntrySummaries(entry.businessId());
     }
 
     public void markStarted(Entry entry) {
         entryRepository.startEntryProcessing(entry);
         entryRepository.markStatus(entry, Status.PROCESSING);
         cachingService.invalidateEntry(entry.publicId());
+        cachingService.invalidateEntrySummaries(entry.businessId());
     }
 
     public void markUpdated(Entry entry) {
         entryRepository.updateEntryProcessing(entry);
         cachingService.invalidateEntry(entry.publicId());
+        cachingService.invalidateEntrySummaries(entry.businessId());
     }
 
     /**
@@ -105,19 +114,27 @@ public class EntryService {
         return status;
     }
 
-    public Entry create(Entry entry) {
-        PersistentEntry persisted = entryRepository.create(entry);
+    /**
+     * @deprecated This method should not be called to create entries! Instead create the objects in your service in the
+     *             form you need. Don't be afraid of duplication, there won't be much.
+     * @param entry Entry to create
+     * @return Created entry
+     */
+    @Deprecated(forRemoval = true)
+    public Optional<Entry> create(Entry entry) {
+        Optional<ContextRecord> context = Optional.empty();
+        return entryRepository.create(context, entry).map(persisted -> {
+            ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted, context);
 
-        ImmutableEntry.Builder resultBuilder = persistentEntryMapper.toEntryBuilder(persisted);
+            List<ValidationInput> validationInputs = entryRepository.createValidationInputs(persisted, entry.validations());
+            List<ConversionInput> conversionInputs = entryRepository.createConversionInputs(persisted, entry.conversions());
 
-        List<ValidationInput> validationInputs = entryRepository.createValidationInputs(persisted, entry.validations());
-        List<ConversionInput> conversionInputs = entryRepository.createConversionInputs(persisted, entry.conversions());
-
-        return resultBuilder.validations(validationInputs)
-            .conversions(conversionInputs)
-            // NOTE: createTasks requires validations and conversions to exist at this point
-            .tasks(taskService.createTasks(persisted))
-            .build();
+            return resultBuilder.validations(validationInputs)
+                .conversions(conversionInputs)
+                // NOTE: createTasks requires validations and conversions to exist at this point
+                .tasks(taskService.createTasks(persisted))
+                .build();
+        });
     }
 
     public List<Entry> findAllByBusinessId(String businessId) {
@@ -133,7 +150,8 @@ public class EntryService {
      */
     private Entry buildCompleteEntry(PersistentEntry entry) {
         List<Package> packages = Streams.flatten(taskService.findTasks(entry), packagesService::findPackages).toList();
-        return persistentEntryMapper.toEntryBuilder(entry)
+        Optional<ContextRecord> context = contextRepository.find(entry);
+        return recordMapper.toEntryBuilder(entry, context)
             .tasks(taskService.findTasks(entry))
             .validations(taskService.findValidationInputs(entry))
             .conversions(taskService.findConversionInputs(entry))
