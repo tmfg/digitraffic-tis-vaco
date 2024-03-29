@@ -11,6 +11,8 @@ public final class DataVisibility {
      */
     public interface Public {}
 
+    public interface AdminRestricted {}
+
     /**
      * Private/internal data, such as database id:s, which we do not want to expose.
      */

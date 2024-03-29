@@ -272,7 +272,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/data-delivery")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<CompanyLatestEntry>>> fetchLatestEntriesPerCompany() {
         List<CompanyLatestEntry> companyLatestEntries = adminToolsService
@@ -284,6 +284,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/data-delivery/export", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAuthority('vaco.admin')")
     public ResponseEntity<StreamingResponseBody> exportDataDeliveryOverview(@RequestParam(name = "language") String language) {
         StreamingResponseBody stream = outputStream -> {
@@ -303,7 +304,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/entries")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
@@ -314,7 +315,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/companies/{businessId}/info")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<ImmutableCompanyInfo>> getCompanyInfo(@PathVariable("businessId") String businessId) {
         return companyHierarchyService.findByBusinessId(businessId)
@@ -329,14 +330,14 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/companies/hierarchy")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<Hierarchy>>> getHierarchies(@RequestParam("businessId") String businessId) {
         return ResponseEntity.ok(new Resource<>(companyHierarchyService.getHierarchies(businessId), null, null));
     }
 
     @PutMapping(path = "/admin/companies/{businessId}")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<ImmutableCompanyInfo>> editCompany(
         @PathVariable("businessId") String businessId,
@@ -358,7 +359,7 @@ public class UiController {
     }
 
     @PostMapping(path = "/admin/partnership")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<Hierarchy>>> createPartnership(
         @RequestBody @Valid PartnershipRequest partnershipRequest) {
@@ -398,7 +399,7 @@ public class UiController {
     }
 
     @DeleteMapping(path = "/admin/partnership")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<Hierarchy>>> deletePartnership(
         @RequestParam("partnerABusinessId") String partnerABusinessId,
@@ -428,7 +429,7 @@ public class UiController {
     }
 
     @PostMapping(path = "/admin/partnership/swap")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<Hierarchy>>> swapPartnership(
         @Valid @RequestBody SwapPartnershipRequest swapPartnershipRequest) {
@@ -474,7 +475,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/companies")
-    @JsonView(DataVisibility.Public.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<CompanyWithFormatSummary>>> listCompanies() {
         return ResponseEntity.ok(new Resource<>(adminToolsService.getCompaniesWithFormatInfos(), null, null));
