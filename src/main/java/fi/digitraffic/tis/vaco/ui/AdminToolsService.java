@@ -25,13 +25,6 @@ public class AdminToolsService {
         this.meService = Objects.requireNonNull(meService);
     }
 
-    public List<CompanyLatestEntry> listLatestEntriesPerCompany(@Nullable Set<Company> userCompanies) {
-        Set<String> businessIds = userCompanies != null
-            ? userCompanies.stream().map(Company::businessId).collect(Collectors.toSet())
-            : null;
-        return adminToolsRepository.listCompanyLatestEntries(businessIds);
-    }
-
     public String[] getDataDeliveryCsvHeaders(String language) {
         switch (language) {
             case "en" -> {
