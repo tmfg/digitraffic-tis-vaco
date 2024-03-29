@@ -12,11 +12,12 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class QueueControllerTests extends SpringBootIntegrationTestBase {
+class QueueControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
@@ -32,6 +33,7 @@ class QueueControllerTests extends SpringBootIntegrationTestBase {
         JsonNode createResult = apiResponse(response);
 
         Link self = toLink((createResult.get("links").get("refs").get("self")));
+
         // follow the self-reference link from previous response
         MvcResult fetchResponse = apiCall(self)
             .andExpect(status().isOk())
@@ -44,6 +46,10 @@ class QueueControllerTests extends SpringBootIntegrationTestBase {
             () -> assertThat(fetchResult.get("data").get("url").textValue(), equalTo(request.url())),
             () -> assertThat(fetchResult.get("data").get("etag").textValue(), equalTo(request.etag())),
             () -> assertThat(fetchResult.get("data").get("format").textValue(), equalTo(request.format())));
+
+        // allow anonymous linking to resource
+        Link magic = toLink((fetchResult.get("links").get("refs").get("magic")));
+        assertThat(magic.href(), startsWith("http://localhost:8080/ui/data/" + fetchResult.get("data").get("publicId").textValue() + "?magic="));
 
         assertThat("API endpoints should not expose internal IDs.", fetchResult.get("data").has("id"), equalTo(false));
     }
