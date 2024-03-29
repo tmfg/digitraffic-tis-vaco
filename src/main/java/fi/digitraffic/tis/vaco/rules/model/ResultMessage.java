@@ -14,11 +14,11 @@ import java.util.Map;
 @JsonDeserialize(as = ImmutableResultMessage.class)
 public interface ResultMessage {
     @Value.Parameter
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     String entryId();
 
     @Value.Parameter
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long taskId();
 
     @Value.Parameter

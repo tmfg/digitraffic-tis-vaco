@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @JsonDeserialize(as = ImmutableFeatureFlag.class)
 public interface FeatureFlag {
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Value.Parameter

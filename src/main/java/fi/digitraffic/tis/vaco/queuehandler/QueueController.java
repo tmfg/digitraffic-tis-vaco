@@ -66,7 +66,7 @@ public class QueueController {
     }
 
     @PostMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
         Entry converted = entryRequestMapper.toEntry(createEntryRequest);
 
@@ -76,7 +76,7 @@ public class QueueController {
     }
 
     @GetMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
@@ -87,7 +87,7 @@ public class QueueController {
     }
 
     @GetMapping(path = "/{publicId}")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Entry>> fetchEntry(@PathVariable("publicId") String publicId) {
         return entryService.findEntry(publicId)
             .filter(meService::isAllowedToAccess)

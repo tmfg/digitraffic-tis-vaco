@@ -34,7 +34,7 @@ public class MeController {
     }
 
     @GetMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Me>> fetch() {
         Set<Company> companies = meService.findCompanies();
 

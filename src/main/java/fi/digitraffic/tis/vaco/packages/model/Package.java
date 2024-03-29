@@ -12,18 +12,18 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutablePackage.class)
 public interface Package {
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     @Value.Parameter
     Long taskId();
 
     @Value.Parameter
     String name();
 
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     @Value.Parameter
     String path();
 }

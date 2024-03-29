@@ -50,13 +50,13 @@ public class AdminTasksController {
     }
 
     @GetMapping(path = "/group-ids")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<List<GroupIdMappingTask>>> listGroupIdMappingTasks() {
         return ok(resource(adminTasksService.listUnresolvedGroupIdMappingTasks()));
     }
 
     @PostMapping(path = "/group-ids/{publicId}/{action}")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<GroupIdMappingTask>> listGroupIdMappingTasks(
         @PathVariable("publicId") String publicId,
         @PathVariable("action") String action,
@@ -78,7 +78,7 @@ public class AdminTasksController {
     }
 
     @PostMapping(path = "/cleanup")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<CleanupResponse>> runCleanup(
         @RequestParam(value = "olderThan", required = false) Duration olderThanRequest,
         @RequestParam(value = "keepAtLeast", required = false) Integer keepAtLeastRequest,

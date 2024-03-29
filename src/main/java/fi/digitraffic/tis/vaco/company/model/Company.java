@@ -15,7 +15,7 @@ import java.util.List;
 public interface Company {
 
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Value.Parameter

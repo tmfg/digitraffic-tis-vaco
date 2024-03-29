@@ -14,7 +14,7 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableConversionInput.class)
 public interface ConversionInput {
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Value.Parameter

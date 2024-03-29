@@ -20,7 +20,7 @@ public class HealthcheckController {
     }
 
     @GetMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<String> ok(
         @RequestParam(name="key", required = false) String key) {
         if (key != null) {

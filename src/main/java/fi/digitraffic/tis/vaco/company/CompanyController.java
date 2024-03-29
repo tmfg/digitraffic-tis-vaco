@@ -41,7 +41,7 @@ public class CompanyController {
     }
 
     @PostMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Company>> createCompany(@Valid @RequestBody Company company) {
         Optional<Company> createdCompany = companyHierarchyService.createCompany(company);
         return createdCompany
@@ -51,7 +51,7 @@ public class CompanyController {
     }
 
     @GetMapping(path = "/{businessId}")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Company>> getCompanyByBusinessId(@PathVariable("businessId") String businessId) {
         return companyHierarchyService.findByBusinessId(businessId)
             .map(o -> ResponseEntity.ok(asCompanyResource(o)))

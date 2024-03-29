@@ -9,10 +9,10 @@ public final class DataVisibility {
     /**
      * Public/stable data which can be exposed to users.
      */
-    public interface External {}
+    public interface Public {}
 
     /**
      * Private/internal data, such as database id:s, which we do not want to expose.
      */
-    public interface Internal {}
+    public interface InternalOnly {}
 }

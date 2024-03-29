@@ -15,7 +15,7 @@ import org.immutables.value.Value;
 public interface ValidationInput {
     @Nullable
     @Deprecated(forRemoval = true)
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Value.Parameter

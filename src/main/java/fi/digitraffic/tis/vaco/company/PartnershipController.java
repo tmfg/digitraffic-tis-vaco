@@ -35,7 +35,7 @@ public class PartnershipController {
     }
 
     @PostMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Partnership>> createPartnership(@Valid @RequestBody ImmutablePartnershipRequest partnershipRequest) {
         Optional<Company> partnerA = companyHierarchyService.findByBusinessId(partnershipRequest.partnerABusinessId());
         Optional<Company> partnerB = companyHierarchyService.findByBusinessId(partnershipRequest.partnerBBusinessId());
