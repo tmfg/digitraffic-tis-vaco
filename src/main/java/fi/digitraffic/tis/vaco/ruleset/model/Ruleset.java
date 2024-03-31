@@ -16,14 +16,14 @@ import java.util.Set;
 @JsonDeserialize(as = ImmutableRuleset.class)
 public interface Ruleset {
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Nullable
     String publicId();
 
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     @Value.Parameter
     Long ownerId();  // TODO: We might want to be able to show this with publicId in some cases
 

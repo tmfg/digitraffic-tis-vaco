@@ -12,7 +12,7 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableFinding.class)
 public interface Finding {
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Nullable
@@ -20,17 +20,17 @@ public interface Finding {
 
     @Value.Parameter
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     String entryId();
 
     @Value.Parameter
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long taskId();
 
     @Value.Parameter
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long rulesetId();
 
     @Value.Parameter

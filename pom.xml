@@ -57,7 +57,7 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
-        <jib-maven-plugin.image-name>${project.groupId}.${project.name}:${project.version}:${project.version}</jib-maven-plugin.image-name>
+        <jib-maven-plugin.image-name>${project.groupId}.${project.artifactId}:latest</jib-maven-plugin.image-name>
     </properties>
 
     <dependencyManagement>
@@ -410,7 +410,9 @@
                         <image>${jib-maven-plugin.image-name}</image>
                     </to>
                     <from>
-                        <image>gcr.io/distroless/java17-debian12:nonroot@sha256:cbf2ec039cb3ad0f79f651ad945239bbb95fc40604444b056af9fe3562e0c314</image>
+                        <!-- base image is not set to specific artifact id to allow for rolling updates to be taken into
+                             use automatically -->
+                        <image>mcr.microsoft.com/openjdk/jdk:21-distroless</image>
                     </from>
                 </configuration>
             </plugin>

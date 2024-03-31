@@ -19,4 +19,7 @@ public interface Bootstrap {
 
     @Value.Parameter
     String clientId();
+
+    @Value.Parameter
+    String buildInfo();
 }

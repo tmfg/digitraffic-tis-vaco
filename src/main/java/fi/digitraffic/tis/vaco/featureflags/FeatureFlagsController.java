@@ -33,13 +33,13 @@ public class FeatureFlagsController {
     }
 
     @GetMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<List<FeatureFlag>>> listKnownFeatureFlags() {
         return ok(resource(featureFlagsService.listFeatureFlags()));
     }
 
     @PostMapping(path = "/{name}/{action}")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<FeatureFlag>> modifyFeatureFlag(@PathVariable("name") String name,
                                                                    @PathVariable("action") String action,
                                                                    JwtAuthenticationToken token) {

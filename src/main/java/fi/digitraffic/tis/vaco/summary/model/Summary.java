@@ -12,11 +12,11 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableSummary.class)
 public interface Summary {
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Value.Parameter
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long taskId();
 
     @Value.Parameter
@@ -26,7 +26,7 @@ public interface Summary {
     RendererType rendererType();
 
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     @Value.Parameter
     byte[] raw();
 

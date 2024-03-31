@@ -16,10 +16,10 @@ import java.time.LocalDateTime;
 @Value.Style(defaultAsDefault = true)
 public interface Task {
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     @Value.Parameter
     Long entryId();
 

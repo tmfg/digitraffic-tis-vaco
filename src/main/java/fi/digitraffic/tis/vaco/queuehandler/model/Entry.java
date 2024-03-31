@@ -55,7 +55,7 @@ public interface Entry {
     List<ConversionInput> conversions();
 
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     List<Package> packages();
 
     /**

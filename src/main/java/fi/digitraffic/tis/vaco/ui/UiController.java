@@ -48,6 +48,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -91,6 +92,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 public class UiController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final UiService uiService;
 
     private final VacoProperties vacoProperties;
@@ -117,7 +119,8 @@ public class UiController {
                         PackagesService packagesService,
                         AdminToolsService adminToolsService,
                         EntryRequestMapper entryRequestMapper,
-                        EncryptionService encryptionService, UiService uiService) {
+                        EncryptionService encryptionService,
+                        UiService uiService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -130,22 +133,31 @@ public class UiController {
         this.adminToolsService = Objects.requireNonNull(adminToolsService);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
         this.encryptionService = Objects.requireNonNull(encryptionService);
-        this.uiService = uiService;
+        this.uiService = Objects.requireNonNull(uiService);
     }
 
     @GetMapping(path = "/bootstrap")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<ImmutableBootstrap> bootstrap() {
         return ResponseEntity.ok()
             .body(ImmutableBootstrap.of(
                 vacoProperties.environment(),
                 vacoProperties.baseUrl(),
                 vacoProperties.azureAd().tenantId(),
-                vacoProperties.azureAd().clientId()));
+                vacoProperties.azureAd().clientId(),
+                bootstrapBuildInfo()));
     }
 
+    private @Value("${git.build.version:#{'latest'}}") String buildVersion;
+    private @Value("${git.commit.id.full:#{'HEAD'}}") String commitId;
+
+    private String bootstrapBuildInfo() {
+        return buildVersion + " (" + commitId + ")";
+    }
+
+
     @PostMapping(path = "/queue")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
         Entry converted = entryRequestMapper.toEntry(createEntryRequest);
@@ -155,7 +167,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/rules")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
@@ -177,7 +189,7 @@ public class UiController {
      *       things instead of well-defined type structure, this won't be used for that at this time.
      */
     @GetMapping(path = "/processing-results/{publicId}")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Resource<ImmutableProcessingResultsPage>> processingResultsPage(@PathVariable("publicId") String publicId) {
         return entryService.findEntry(publicId)
@@ -192,7 +204,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/entries/{publicId}/state")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId,
                                                                          @RequestParam(value = "magic", required = false) String magicToken) {
         return entryService.findEntry(publicId)
@@ -232,7 +244,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/entries")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<List<Resource<MyDataEntrySummary>>> listEntries(@RequestParam(name = "full") boolean full) {
         List<MyDataEntrySummary> entries = uiService.getAllEntriesVisibleForCurrentUser();
@@ -264,7 +276,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/magiclink/{publicId}")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<MagicTokenResponse> generateMagicToken(@PathVariable("publicId") String publicId) {
         String encrypted = encryptionService.encrypt(ImmutableMagicToken.of(publicId));
@@ -272,7 +284,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/data-delivery")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<CompanyLatestEntry>>> fetchLatestEntriesPerCompany() {
         List<CompanyLatestEntry> companyLatestEntries = adminToolsService
@@ -284,6 +296,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/data-delivery/export", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAuthority('vaco.admin')")
     public ResponseEntity<StreamingResponseBody> exportDataDeliveryOverview(@RequestParam(name = "language") String language) {
         StreamingResponseBody stream = outputStream -> {
@@ -303,7 +316,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/entries")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
@@ -314,7 +327,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/companies/{businessId}/info")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<ImmutableCompanyInfo>> getCompanyInfo(@PathVariable("businessId") String businessId) {
         return companyHierarchyService.findByBusinessId(businessId)
@@ -329,14 +342,14 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/companies/hierarchy")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<Hierarchy>>> getHierarchies(@RequestParam("businessId") String businessId) {
         return ResponseEntity.ok(new Resource<>(companyHierarchyService.getHierarchies(businessId), null, null));
     }
 
     @PutMapping(path = "/admin/companies/{businessId}")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<ImmutableCompanyInfo>> editCompany(
         @PathVariable("businessId") String businessId,
@@ -358,7 +371,7 @@ public class UiController {
     }
 
     @PostMapping(path = "/admin/partnership")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<Hierarchy>>> createPartnership(
         @RequestBody @Valid PartnershipRequest partnershipRequest) {
@@ -398,7 +411,7 @@ public class UiController {
     }
 
     @DeleteMapping(path = "/admin/partnership")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<Hierarchy>>> deletePartnership(
         @RequestParam("partnerABusinessId") String partnerABusinessId,
@@ -428,7 +441,7 @@ public class UiController {
     }
 
     @PostMapping(path = "/admin/partnership/swap")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<Hierarchy>>> swapPartnership(
         @Valid @RequestBody SwapPartnershipRequest swapPartnershipRequest) {
@@ -474,7 +487,7 @@ public class UiController {
     }
 
     @GetMapping(path = "/admin/companies")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<List<CompanyWithFormatSummary>>> listCompanies() {
         return ResponseEntity.ok(new Resource<>(adminToolsService.getCompaniesWithFormatInfos(), null, null));

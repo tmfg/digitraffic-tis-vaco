@@ -28,7 +28,7 @@ public class CachingController {
     }
 
     @GetMapping(path = "/statistics")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Map<String, CacheSummaryStatistics>>> listAllCacheStatistics() {
         return ok(resource(cachingService.getStats()));
     }

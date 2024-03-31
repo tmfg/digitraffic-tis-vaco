@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public interface GroupIdMappingTask {
 
     @Nullable
-    @JsonView(DataVisibility.Internal.class)
+    @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
     @Nullable

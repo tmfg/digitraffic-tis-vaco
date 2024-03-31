@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
@@ -14,6 +15,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +45,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 @PreAuthorize("hasAuthority('vaco.apiuser')")
 public class QueueController {
 
+    private final EncryptionService encryptionService;
     private final MeService meService;
     private final QueueHandlerService queueHandlerService;
     private final EntryService entryService;
@@ -53,16 +56,17 @@ public class QueueController {
                            QueueHandlerService queueHandlerService,
                            EntryService entryService,
                            VacoProperties vacoProperties,
-                           EntryRequestMapper entryRequestMapper) {
+                           EntryRequestMapper entryRequestMapper, EncryptionService encryptionService) {
         this.meService = Objects.requireNonNull(meService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.entryService = Objects.requireNonNull(entryService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
+        this.encryptionService = encryptionService;
     }
 
     @PostMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
         Entry converted = entryRequestMapper.toEntry(createEntryRequest);
 
@@ -72,7 +76,7 @@ public class QueueController {
     }
 
     @GetMapping(path = "")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
@@ -83,7 +87,7 @@ public class QueueController {
     }
 
     @GetMapping(path = "/{publicId}")
-    @JsonView(DataVisibility.External.class)
+    @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Entry>> fetchEntry(@PathVariable("publicId") String publicId) {
         return entryService.findEntry(publicId)
             .filter(meService::isAllowedToAccess)
@@ -93,7 +97,12 @@ public class QueueController {
 
     private Resource<Entry> asQueueHandlerResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())))));
+
+        String magicToken = encryptionService.encrypt(ImmutableMagicToken.of(entry.publicId()));
+
+        Link magicLink = new Link(vacoProperties.baseUrl() + "/ui/data/" + entry.publicId() + "?magic=" + magicToken, RequestMethod.GET);
+        Link selfLink = Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())));
+        links.put( "refs", Map.of("self", selfLink, "magic", magicLink));
 
         Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
 
