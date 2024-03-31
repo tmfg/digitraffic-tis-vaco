@@ -412,7 +412,7 @@
                     <from>
                         <!-- base image is not set to specific artifact id to allow for rolling updates to be taken into
                              use automatically -->
-                        <image>mcr.microsoft.com/openjdk/jdk:21-distroless</image>
+                        <image>gcr.io/distroless/java17-debian12:nonroot</image>
                     </from>
                 </configuration>
             </plugin>
