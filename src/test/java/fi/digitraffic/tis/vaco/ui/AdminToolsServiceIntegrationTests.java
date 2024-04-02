@@ -1,11 +1,31 @@
 package fi.digitraffic.tis.vaco.ui;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.repository.CompanyHierarchyRepository;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
+import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 
 class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
@@ -15,76 +35,92 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private CompanyHierarchyRepository companyHierarchyRepository;
     @Autowired
     EntryRepository entryRepository;
+    final String companyWithMultipleFeedsBusinessId = "AdminToolsService-1234";
+    Company companyWithMultipleFeeds;
+    final String companyWithOnlyGtfsBusinessId = "AdminToolsService-2345";
     Company companyWithOnlyGtfs;
+    final String companyWithOnlyNetexBusinessId = "AdminToolsService-3456";
+    Company companyWithOnlyNetex;
+    final String noDataCompanyBusinessId = "AdminToolsService-4567";
+    Company noDataCompany;
     Entry gtfsEntry;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    // Temporarily commented out
-    /*@BeforeAll
+    @BeforeEach
     void setUp() {
-        JwtAuthenticationToken token = TestObjects.jwtAuthenticationToken("Jornado");
-        SecurityContextHolder.getContext().setAuthentication(token);
+        companyWithMultipleFeeds = TestObjects.aCompany()
+            .name("Company with multiple feeds").businessId(companyWithMultipleFeedsBusinessId).build();
+        if (companyHierarchyRepository.findByBusinessId(companyWithMultipleFeedsBusinessId).isEmpty()) {
+            companyHierarchyRepository.create(companyWithMultipleFeeds);
+        }
+        entryRepository.create(Optional.empty(),
+            TestObjects.anEntry().url("Some gtfs url").businessId(companyWithMultipleFeedsBusinessId).build());
+        entryRepository.create(Optional.empty(),
+            TestObjects.anEntry().url("Some gtfs url").businessId(companyWithMultipleFeedsBusinessId).build());
+        entryRepository.create(Optional.empty(),
+            TestObjects.anEntry().url("Some other gtfs url").businessId(companyWithMultipleFeedsBusinessId).build());
+        entryRepository.create(Optional.empty(),
+            TestObjects.anEntry().url("Some netex url").businessId(companyWithMultipleFeedsBusinessId).format("netex").build());
+        entryRepository.create(Optional.empty(),
+            TestObjects.anEntry().url("Some netex url").businessId(companyWithMultipleFeedsBusinessId).format("netex").build());
+        entryRepository.create(Optional.empty(),
+            TestObjects.anEntry().url("Another netex url").businessId(companyWithMultipleFeedsBusinessId).format("netex").build());
 
-        entryRepository.create(TestObjects.anEntry().build());
-        entryRepository.create(TestObjects.anEntry().build());
-        entryRepository.create(TestObjects.anEntry().format("netex").build());
-        entryRepository.create(TestObjects.anEntry().format("netex").build());
-        injectGroupIdToCompany(token);
+        companyWithOnlyGtfs = TestObjects.aCompany().name("Company only with gtfs").businessId(companyWithOnlyGtfsBusinessId).build();
+        if (companyHierarchyRepository.findByBusinessId(companyWithOnlyGtfs.businessId()).isEmpty()) {
+            companyHierarchyRepository.create(companyWithOnlyGtfs);
+        }
+        gtfsEntry = TestObjects.anEntry().url("URL").businessId(companyWithOnlyGtfs.businessId()).build();
+        entryRepository.create(Optional.empty(), gtfsEntry);
 
-        companyWithOnlyGtfs = TestObjects.aCompany().name("Company only with gtfs").build();
-        companyHierarchyRepository.create(companyWithOnlyGtfs);
-        gtfsEntry = TestObjects.anEntry().businessId(companyWithOnlyGtfs.businessId()).build();
-        entryRepository.create(gtfsEntry);
-        injectGroupIdToCompany(token, companyWithOnlyGtfs.businessId());
+        companyWithOnlyNetex = TestObjects.aCompany().name("Company only with netex").businessId(companyWithOnlyNetexBusinessId).build();
+        if (companyHierarchyRepository.findByBusinessId(companyWithOnlyNetex.businessId()).isEmpty()) {
+            companyHierarchyRepository.create(companyWithOnlyNetex);
+        }
+        Entry netexEntry = TestObjects.anEntry().url("URL2").businessId(companyWithOnlyNetex.businessId()).format("netex").build();
+        entryRepository.create(Optional.empty(), netexEntry);
 
-        Company company3 = TestObjects.aCompany().name("Company only with netex").build();
-        companyHierarchyRepository.create(company3);
-        Entry e2 = TestObjects.anEntry().businessId(company3.businessId()).format("netex").build();
-        entryRepository.create(e2);
-        injectGroupIdToCompany(token, company3.businessId());
-
-        Company company4 = TestObjects.aCompany().name("Company with no data at all").build();
-        companyHierarchyRepository.create(company4);
-        injectGroupIdToCompany(token, company4.businessId());
-
-        Company company5 = TestObjects.aCompany().name("A company user isn't part of").build();
-        companyHierarchyRepository.create(company5);
+        noDataCompany = TestObjects.aCompany().name("Company with no data at all").businessId(noDataCompanyBusinessId).build();
+        if (companyHierarchyRepository.findByBusinessId(noDataCompany.businessId()).isEmpty()) {
+            companyHierarchyRepository.create(noDataCompany);
+        }
     }
 
     @Test
-    void testGetAllLatestEntriesPerCompany() {
-        List<CompanyLatestEntry> companyLatestEntries = adminToolsService.listLatestEntriesPerCompany(null);
-        Optional<CompanyLatestEntry> fintrafficData = companyLatestEntries.stream()
-            .filter(c -> c.businessId().equals(Constants.FINTRAFFIC_BUSINESS_ID)).findFirst();
-        assertTrue(fintrafficData.isPresent());
-        assertThat(fintrafficData.get().companyName(), equalTo("Fintraffic Oy"));
-        assertThat(fintrafficData.get().businessId(), equalTo(Constants.FINTRAFFIC_BUSINESS_ID));
-        Optional<CompanyLatestEntry> noDataCompany = companyLatestEntries.stream()
-            .filter(c -> c.companyName().equals("Company with no data at all")).findFirst();
-        assertTrue(noDataCompany.isPresent());
-        // The logic of listLatestEntriesPerCompany related to entries accumulation will change, so not testing the entry data now
+    void testDataDeliveryOverviewForSingleCompanyAdmin() {
+        List<CompanyLatestEntry> companyLatestEntries = adminToolsService.getDataDeliveryOverview(Set.of(companyWithMultipleFeeds));
+        companyLatestEntries.forEach(c -> {
+            logger.info("DataDeliveryOverviewForSingleCompanyAdmin: " + c);
+        });
+        assertThat(companyLatestEntries.size(), equalTo(4));
+        Optional<CompanyLatestEntry> nonCompanyData = companyLatestEntries.stream()
+            .filter(c -> !c.businessId().equals(companyWithMultipleFeedsBusinessId)).findFirst();
+        Assertions.assertTrue(nonCompanyData.isEmpty());
+
+        CompanyLatestEntry latestEntry = companyLatestEntries.get(0);
+        assertThat(latestEntry.companyName(), equalTo(companyWithMultipleFeeds.name()));
+        assertThat(latestEntry.businessId(), equalTo(companyWithMultipleFeedsBusinessId));
+        assertThat(latestEntry.format().toLowerCase(), equalTo("netex"));
+
+        CompanyLatestEntry earliestEntry = companyLatestEntries.get(companyLatestEntries.size() - 1);
+        assertThat(earliestEntry.companyName(), equalTo(companyWithMultipleFeeds.name()));
+        assertThat(earliestEntry.businessId(), equalTo(companyWithMultipleFeedsBusinessId));
+        assertThat(earliestEntry.format().toLowerCase(), equalTo("gtfs"));
+
+        List<String> uniqueUrls = companyLatestEntries.stream().map(CompanyLatestEntry::url).distinct().toList();
+        assertThat(uniqueUrls.size(), equalTo(4));
     }
 
     @Test
-    void testGetLatestEntriesPerUserCompany() {
-        Company fintraffic = companyHierarchyRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get();
-        List<CompanyLatestEntry> companyLatestEntries = adminToolsService.listLatestEntriesPerCompany(Set.of(fintraffic));
-        assertThat(companyLatestEntries.size(), equalTo(2));
-        Optional<CompanyLatestEntry> fintrafficData = companyLatestEntries.stream()
-            .filter(c -> c.businessId().equals(Constants.FINTRAFFIC_BUSINESS_ID)).findFirst();
-        assertTrue(fintrafficData.isPresent());
-        assertThat(fintrafficData.get().companyName(), equalTo(fintraffic.name()));
-        assertThat(fintrafficData.get().businessId(), equalTo(fintraffic.businessId()));
-        // The logic of listLatestEntriesPerCompany related to entries accumulation will change, so not testing the entry data now
-    }
-
-    @Test
-    void testDataDeliveryOverviewForAdmin() {
+    void testDataDeliveryOverviewForSupremeAdmin() {
         List<CompanyLatestEntry> data = adminToolsService.getDataDeliveryOverview(null);
-        assertThat(data.size(), equalTo(6));
+        data.forEach(c -> {
+            logger.info("DataDeliveryOverviewForSupremeAdmin: " + c);
+        });
 
-        List<CompanyLatestEntry> fintrafficEntries = data.stream()
-            .filter(c -> c.businessId().equals(Constants.FINTRAFFIC_BUSINESS_ID)).toList();
-        assertThat(fintrafficEntries.size(), equalTo(2));
+        List<CompanyLatestEntry> companyWithMultipleFeedsData = data.stream()
+            .filter(c -> c.businessId().equals(companyWithMultipleFeedsBusinessId)).toList();
+        assertThat(companyWithMultipleFeedsData.size(), equalTo(4));
 
         List<CompanyLatestEntry> companyWithOnlyGtfsEntries = data.stream()
             .filter(c -> c.companyName().equals(companyWithOnlyGtfs.name())).toList();
@@ -96,49 +132,60 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(gtfsEntry.feedName(), equalTo(gtfsEntry.feedName()));
         assertThat(gtfsEntry.status(), equalTo(Status.RECEIVED));
 
+        List<CompanyLatestEntry> companyWithOnlyNetexEntries = data.stream()
+            .filter(c -> c.companyName().equals(companyWithOnlyNetex.name())).toList();
+        assertThat(companyWithOnlyNetexEntries.size(), equalTo(1));
+
         List<CompanyLatestEntry> noDataCompanyEntries = data.stream()
-            .filter(c -> c.companyName().equals("Company with no data at all")).toList();
+            .filter(c -> c.companyName().equals(noDataCompany.name())).toList();
         assertThat(noDataCompanyEntries.size(), equalTo(1));
     }
 
     @Test
-    void testDataDeliveryOverviewForCompanyAdmin() {
-        Company fintraffic = companyHierarchyRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get();
-        List<CompanyLatestEntry> data = adminToolsService.getDataDeliveryOverview(Set.of(fintraffic));
-        assertThat(data.size(), equalTo(2));
+    void testGetCompaniesWithFormatInfosForSupremeAdmin() {
+        JwtAuthenticationToken token = TestObjects.jwtAdminAuthenticationToken("A supreme admin");
+        SecurityContextHolder.getContext().setAuthentication(token);
+
+        List<CompanyWithFormatSummary> companyWithFormatInfos = adminToolsService.getCompaniesWithFormatInfos();
+
+        Optional<CompanyWithFormatSummary> companyWithMultipleFeedsSummary = companyWithFormatInfos.stream()
+            .filter(c -> c.businessId().equals(companyWithMultipleFeedsBusinessId)).findFirst();
+        Assertions.assertTrue(companyWithMultipleFeedsSummary.isPresent());
+        assertThat(companyWithMultipleFeedsSummary.get().name(), equalTo(companyWithMultipleFeeds.name()));
+        assertThat(companyWithMultipleFeedsSummary.get().businessId(), equalTo(companyWithMultipleFeedsBusinessId));
+        assertThat(companyWithMultipleFeedsSummary.get().formatSummary(), containsString("GTFS"));
+        assertThat(companyWithMultipleFeedsSummary.get().formatSummary(), containsString("NeTEx"));
+
+        Optional<CompanyWithFormatSummary> companyWithOnlyGtfsSummary = companyWithFormatInfos.stream()
+            .filter(c -> c.name().equals(companyWithOnlyGtfs.name())).findFirst();
+        Assertions.assertTrue(companyWithOnlyGtfsSummary.isPresent());
+        assertThat(companyWithOnlyGtfsSummary.get().formatSummary(), containsString("GTFS"));
+        assertThat(companyWithOnlyGtfsSummary.get().formatSummary(), Matchers.not(containsString("NeTEx")));
+
+        Optional<CompanyWithFormatSummary> companyWithOnlyNetexSummary = companyWithFormatInfos.stream()
+            .filter(c -> c.name().equals(companyWithOnlyNetex.name())).findFirst();
+        Assertions.assertTrue(companyWithOnlyNetexSummary.isPresent());
+        assertThat(companyWithOnlyNetexSummary.get().formatSummary(), containsString("NeTEx"));
+        assertThat(companyWithOnlyNetexSummary.get().formatSummary(), Matchers.not(containsString("GTFS")));
+
+        Optional<CompanyWithFormatSummary> companyWithNoDataSummary = companyWithFormatInfos.stream()
+            .filter(c -> c.name().equals(noDataCompany.name())).findFirst();
+        Assertions.assertTrue(companyWithNoDataSummary.isPresent());
+        Assertions.assertNull(companyWithNoDataSummary.get().formatSummary());
     }
 
     @Test
-    void testGetCompaniesWithFormatInfos() {
+    void testGetCompaniesWithFormatInfosForCompanyAdmin() {
+        JwtAuthenticationToken token = TestObjects.jwtCompanyAdminAuthenticationToken("A company admin");
+        SecurityContextHolder.getContext().setAuthentication(token);
+        injectGroupIdToCompany(token, companyWithMultipleFeedsBusinessId);
+
         List<CompanyWithFormatSummary> companyWithFormatInfos = adminToolsService.getCompaniesWithFormatInfos();
-        assertThat(companyWithFormatInfos.size(), equalTo(4));
-        Optional<CompanyWithFormatSummary> fintraffic = companyWithFormatInfos.stream()
-            .filter(c -> c.businessId().equals(Constants.FINTRAFFIC_BUSINESS_ID)).findFirst();
-        assertTrue(fintraffic.isPresent());
-        assertThat(fintraffic.get().name(), equalTo("Fintraffic Oy"));
-        assertThat(fintraffic.get().businessId(), equalTo(Constants.FINTRAFFIC_BUSINESS_ID));
-        assertThat(fintraffic.get().formatSummary(), containsString("GTFS"));
-        assertThat(fintraffic.get().formatSummary(), containsString("NeTEx"));
-
-        Optional<CompanyWithFormatSummary> companyWithOnlyGtfs = companyWithFormatInfos.stream()
-            .filter(c -> c.name().equals("Company only with gtfs")).findFirst();
-        assertTrue(companyWithOnlyGtfs.isPresent());
-        assertThat(companyWithOnlyGtfs.get().formatSummary(), containsString("GTFS"));
-        assertThat(companyWithOnlyGtfs.get().formatSummary(), not(containsString("NeTEx")));
-
-        Optional<CompanyWithFormatSummary> companyWithOnlyNetex = companyWithFormatInfos.stream()
-            .filter(c -> c.name().equals("Company only with netex")).findFirst();
-        assertTrue(companyWithOnlyNetex.isPresent());
-        assertThat(companyWithOnlyNetex.get().formatSummary(), containsString("NeTEx"));
-        assertThat(companyWithOnlyNetex.get().formatSummary(), not(containsString("GTFS")));
-
-        Optional<CompanyWithFormatSummary> companyWithNoData = companyWithFormatInfos.stream()
-            .filter(c -> c.name().equals("Company with no data at all")).findFirst();
-        assertTrue(companyWithNoData.isPresent());
-        assertNull(companyWithNoData.get().formatSummary());
-
-        Optional<CompanyWithFormatSummary> companyOutOfUserScope = companyWithFormatInfos.stream()
-            .filter(c -> c.name().equals("A company user isn't part of")).findFirst();
-        assertTrue(companyOutOfUserScope.isEmpty());
-    }*/
+        assertThat(companyWithFormatInfos.size(), equalTo(1));
+        CompanyWithFormatSummary companyWithMultipleFeedsSummary = companyWithFormatInfos.get(0);
+        assertThat(companyWithMultipleFeedsSummary.name(), equalTo(companyWithMultipleFeeds.name()));
+        assertThat(companyWithMultipleFeedsSummary.businessId(), equalTo(companyWithMultipleFeedsBusinessId));
+        assertThat(companyWithMultipleFeedsSummary.formatSummary(), containsString("GTFS"));
+        assertThat(companyWithMultipleFeedsSummary.formatSummary(), containsString("NeTEx"));
+    }
 }
