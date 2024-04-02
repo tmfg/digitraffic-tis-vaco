@@ -10,6 +10,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
@@ -19,6 +20,7 @@ import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +29,7 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.SesException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -39,19 +42,22 @@ public class EmailService {
     private final CompanyHierarchyService companyHierarchyService;
     private final FeatureFlagsService featureFlagsService;
     private final EntryRepository entryRepository;
+    private final EncryptionService encryptionService;
 
     public EmailService(VacoProperties vacoProperties,
                         MessageMapper messageMapper,
                         SesClient sesClient,
                         CompanyHierarchyService companyHierarchyService,
                         FeatureFlagsService featureFlagsService,
-                        EntryRepository entryRepository) {
+                        EntryRepository entryRepository,
+                        EncryptionService encryptionService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
+        this.encryptionService = Objects.requireNonNull(encryptionService);
     }
 
     @VisibleForTesting
@@ -184,15 +190,19 @@ public class EmailService {
             .children(
                 c.element("td").text(e.name()),
                 c.element("td").text(e.format()),
-                c.element("td").text("-"),
+                c.element("td").children(badge(c, e)),
                 c.element("td")
                     .children(
                         link(c,
-                            "/ui/data/" + e.publicId(),
+                            "/ui/data/" + e.publicId() + "?magic=" + encryptionService.encrypt(ImmutableMagicToken.of(e.publicId())),
                             translations.get("message.feeds.entries.link")))));
         return c.element("table")
             .children(headers)
             .children(rows);
+    }
+
+    private Element badge(ContentBuilder c, PersistentEntry e) {
+        return c.element("img", Map.of("src", vacoProperties.baseUrl() + "/api/badge/" + e.publicId()));
     }
 
     private HtmlContent link(ContentBuilder c,

@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
@@ -16,6 +17,8 @@ import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
+import fi.digitraffic.tis.vaco.ui.model.MagicToken;
 import io.burt.jmespath.jackson.JacksonRuntime;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -38,6 +41,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +57,8 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     private CompanyHierarchyService companyHierarchyService;
     @Mock
     private FeatureFlagsService featureFlagsService;
+    @Mock
+    private EncryptionService encryptionService;
 
     @BeforeEach
     void setUp() {
@@ -66,7 +72,8 @@ class EmailServiceTests extends AwsIntegrationTestBase {
             sesClient,
             companyHierarchyService,
             featureFlagsService,
-            entryRepository);
+            entryRepository,
+            encryptionService);
     }
 
     @AfterEach
@@ -74,7 +81,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         // clear all received messages
         localstack.execInContainer("curl", "-X", "DELETE", "localhost.localstack.cloud:4566/_aws/ses");
 
-        verifyNoMoreInteractions(companyHierarchyService, featureFlagsService, entryRepository);
+        verifyNoMoreInteractions(companyHierarchyService, featureFlagsService, entryRepository, encryptionService);
     }
 
     @BeforeAll
@@ -169,6 +176,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
 
         BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(true);
         BDDMockito.given(entryRepository.findLatestEntries(org)).willReturn(List.of(entry));
+        BDDMockito.given(encryptionService.encrypt(any(MagicToken.class))).willAnswer(a -> "magic/link/for/" + ((ImmutableMagicToken) a.getArgument(0)).token());
 
         emailService.sendFeedStatusEmail(org);
         JsonNode messages = readReceivedMessages();
@@ -181,6 +189,17 @@ class EmailServiceTests extends AwsIntegrationTestBase {
             );
         String message = list(path(messages, "messages[].Body.html_part"), JsonNode::textValue).get(0);
         assertThat(message, containsString("<title>NAP:iin ilmoittamienne rajapintojen tilanneraportti</title>"));
+
+        System.out.println("message = " + message);
+
+        assertThat(
+            "Generated email should contain VACO badge",
+            message,
+            containsString("<img src=\"" + vacoProperties.baseUrl() + "/api/badge/" + entry.publicId() + "\" />"));
+        assertThat(
+            "Generated email should contain magic link to UI",
+            message,
+            containsString("<a href=\"http://localhost:5173/ui/data/" + entry.publicId() + "?magic=magic/link/for/" + entry.publicId() + "\">Tarkastele VACO UI:ssa</a>"));
     }
 
     @Test
