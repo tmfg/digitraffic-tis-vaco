@@ -27,6 +27,7 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.SesException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -184,7 +185,7 @@ public class EmailService {
             .children(
                 c.element("td").text(e.name()),
                 c.element("td").text(e.format()),
-                c.element("td").text("-"),
+                c.element("td").children(badge(c, e)),
                 c.element("td")
                     .children(
                         link(c,
@@ -193,6 +194,10 @@ public class EmailService {
         return c.element("table")
             .children(headers)
             .children(rows);
+    }
+
+    private Element badge(ContentBuilder c, PersistentEntry e) {
+        return c.element("img", Map.of("src", vacoProperties.baseUrl() + "/api/badge/" + e.publicId()));
     }
 
     private HtmlContent link(ContentBuilder c,

@@ -181,6 +181,11 @@ class EmailServiceTests extends AwsIntegrationTestBase {
             );
         String message = list(path(messages, "messages[].Body.html_part"), JsonNode::textValue).get(0);
         assertThat(message, containsString("<title>NAP:iin ilmoittamienne rajapintojen tilanneraportti</title>"));
+
+        assertThat(
+            "Generated email should contain VACO badge",
+            message,
+            containsString("<img src=\"" + vacoProperties.baseUrl() + "/api/badge/" + entry.publicId() + "\" />"));
     }
 
     @Test
