@@ -10,6 +10,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
@@ -19,6 +20,7 @@ import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -40,19 +42,22 @@ public class EmailService {
     private final CompanyHierarchyService companyHierarchyService;
     private final FeatureFlagsService featureFlagsService;
     private final EntryRepository entryRepository;
+    private final EncryptionService encryptionService;
 
     public EmailService(VacoProperties vacoProperties,
                         MessageMapper messageMapper,
                         SesClient sesClient,
                         CompanyHierarchyService companyHierarchyService,
                         FeatureFlagsService featureFlagsService,
-                        EntryRepository entryRepository) {
+                        EntryRepository entryRepository,
+                        EncryptionService encryptionService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
+        this.encryptionService = Objects.requireNonNull(encryptionService);
     }
 
     @VisibleForTesting
@@ -189,7 +194,7 @@ public class EmailService {
                 c.element("td")
                     .children(
                         link(c,
-                            "/ui/data/" + e.publicId(),
+                            "/ui/data/" + e.publicId() + "?magic=" + encryptionService.encrypt(ImmutableMagicToken.of(e.publicId())),
                             translations.get("message.feeds.entries.link")))));
         return c.element("table")
             .children(headers)
