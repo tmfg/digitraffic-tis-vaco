@@ -1,15 +1,12 @@
 package fi.digitraffic.tis.vaco.me;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.me.model.ImmutableMe;
 import fi.digitraffic.tis.vaco.me.model.Me;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,9 +20,7 @@ import java.util.Set;
  */
 @RestController
 @RequestMapping("/me")
-@PreAuthorize("hasAnyAuthority('vaco.user' ,'vaco.apiuser')")
 public class MeController {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MeService meService;
 

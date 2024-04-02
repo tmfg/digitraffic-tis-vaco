@@ -158,7 +158,6 @@ public class UiController {
 
     @PostMapping(path = "/queue")
     @JsonView(DataVisibility.Public.class)
-    @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
         Entry converted = entryRequestMapper.toEntry(createEntryRequest);
         return queueHandlerService.processQueueEntry(converted)
@@ -168,7 +167,6 @@ public class UiController {
 
     @GetMapping(path = "/rules")
     @JsonView(DataVisibility.Public.class)
-    @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
@@ -190,7 +188,6 @@ public class UiController {
      */
     @GetMapping(path = "/processing-results/{publicId}")
     @JsonView(DataVisibility.Public.class)
-    @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<Resource<ImmutableProcessingResultsPage>> processingResultsPage(@PathVariable("publicId") String publicId) {
         return entryService.findEntry(publicId)
             .map(entry -> ResponseEntity.ok(
@@ -245,20 +242,17 @@ public class UiController {
 
     @GetMapping(path = "/entries")
     @JsonView(DataVisibility.Public.class)
-    @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<List<Resource<MyDataEntrySummary>>> listEntries(@RequestParam(name = "full") boolean full) {
         List<MyDataEntrySummary> entries = uiService.getAllEntriesVisibleForCurrentUser();
         return ResponseEntity.ok(Streams.collect(entries, e -> asEntryStateResource(e, e.publicId())));
     }
 
     @GetMapping(path = "/packages/{entryPublicId}/{taskName}/{packageName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @PreAuthorize("hasAuthority('vaco.user')")
     public FileSystemResource fetchPackage(
         @PathVariable("entryPublicId") String entryPublicId,
         @PathVariable("taskName") String taskName,
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
-        // TODO: Add MeService check here !
         return entryService.findEntry(entryPublicId)
             .flatMap(e ->
                 taskService.findTask(entryPublicId, taskName)
@@ -277,7 +271,6 @@ public class UiController {
 
     @GetMapping(path = "/magiclink/{publicId}")
     @JsonView(DataVisibility.Public.class)
-    @PreAuthorize("hasAuthority('vaco.user')")
     public ResponseEntity<MagicTokenResponse> generateMagicToken(@PathVariable("publicId") String publicId) {
         String encrypted = encryptionService.encrypt(ImmutableMagicToken.of(publicId));
         return ResponseEntity.ok(ImmutableMagicTokenResponse.of(encrypted));
