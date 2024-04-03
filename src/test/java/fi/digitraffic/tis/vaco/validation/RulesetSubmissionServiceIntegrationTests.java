@@ -87,7 +87,11 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     }
 
     private Entry createEntryForTesting() {
-        return entryService.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)).build()).get();
+        return entryService.create(
+            TestObjects.anEntry("gtfs")
+                .addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL))
+                .build())
+            .get();
     }
 
     @Test
@@ -99,7 +103,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         String testQueueName = createSqsQueue();
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
-        Task task = taskService.findTask(entry.publicId(), RulesetSubmissionService.VALIDATE_TASK).get();
+        Task task = taskService.findTask(entry.publicId(), RuleName.GTFS_CANONICAL).get();
         rulesetSubmissionService.submitRules(
             entry,
             task,
@@ -127,7 +131,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         // NOTE: the task name repeats the matching task name on purpose
         assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL + "/rules/" + RuleName.GTFS_CANONICAL + "/input"));
         assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL + "/rules/" + RuleName.GTFS_CANONICAL + "/output"));
-        assertThat(message.source(), equalTo(RulesetSubmissionService.VALIDATE_TASK));
+        assertThat(message.source(), equalTo(RuleName.GTFS_CANONICAL));
     }
 
     @NotNull

@@ -25,7 +25,6 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -110,7 +109,7 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
                     Category.GENERIC,
                     Type.CONVERSION_SYNTAX,
                     TransitDataFormat.forField(entry.format()))
-                .withDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK, RulesetSubmissionService.CONVERT_TASK));
+                .withDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK));
 
         // TODO: should be PersistentEntry for better assertions
         Entry result = entryService.create(entry.withConversions(conversion)).get();
@@ -119,13 +118,12 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
             Streams.map(taskService.findTasks(result), this::withoutGeneratedValues).toList(),
             equalTo(List.of(
                 ImmutableTask.of(1000000L, DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
-                ImmutableTask.of(1000000L, RulesetSubmissionService.CONVERT_TASK, 200),
-                ImmutableTask.of(1000000L, "bananas", 201)
+                ImmutableTask.of(1000000L, "bananas", 200)
             )));
     }
 
     @NotNull
     private ImmutableTask withoutGeneratedValues(Task p) {
-        return ImmutableTask.copyOf(p).withId(null).withCreated(null);
+        return ImmutableTask.copyOf(p).withId(null).withPublicId(null).withCreated(null);
     }
 }

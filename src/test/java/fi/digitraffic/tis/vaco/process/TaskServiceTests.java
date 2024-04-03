@@ -6,7 +6,6 @@ import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
-import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleName;
@@ -17,7 +16,6 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +29,7 @@ import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -72,7 +71,7 @@ class TaskServiceTests {
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
                 TransitDataFormat.GTFS)
-            .withDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK, RulesetSubmissionService.VALIDATE_TASK));
+            .withDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
     }
 
     @AfterEach
@@ -85,14 +84,17 @@ class TaskServiceTests {
         givenAvailableRulesets(Type.VALIDATION_SYNTAX, TransitDataFormat.GTFS, Set.of(gtfsCanonicalRuleset));
         given(taskRepository.findValidationInputs(entry)).willReturn(List.of(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)));
         given(taskRepository.findConversionInputs(entry)).willReturn(List.of());
-        given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
-
-        List<Task> tasks = taskService.resolveTasks(entry);
+        given(rulesetService.findByName(anyString())).willAnswer(a -> {
+            if (RuleName.GTFS_CANONICAL.equals(a.getArgument(0))) {
+                return Optional.of(gtfsCanonicalRuleset);
+            } else {
+                return Optional.empty();
+            }
+        });
 
         List<ImmutableTask> expectedTasks = List.of(
             ImmutableTask.of(entry.id(), DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
-            ImmutableTask.of(entry.id(), RulesetSubmissionService.VALIDATE_TASK, 200),
-            ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 201)
+            ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 200)
         );
 
         assertThat(taskService.resolveTasks(entry), equalTo(expectedTasks));

@@ -26,6 +26,7 @@ import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.RulesetSubmissionConfiguration;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import org.slf4j.Logger;
@@ -40,12 +41,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 public class RulesetSubmissionService {
-    public static final String VALIDATE_TASK = "validate";
-    public static final String CONVERT_TASK = "convert";
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final TaskService taskService;
@@ -75,21 +74,19 @@ public class RulesetSubmissionService {
         Entry entry = message.entry();
         RulesetSubmissionConfiguration configuration = message.configuration();
 
-        taskService.findTask(entry.publicId(), configuration.submissionTask())
-            .map(task -> {
-                Set<Ruleset> rulesets = selectRulesets(entry, configuration);
+        taskService.findTask(configuration.taskPublicId())
+            .ifPresent(task -> {
+                Set<Ruleset> rulesets = selectRulesets(entry, task);
 
                 if (rulesets.isEmpty()) {
                     taskService.markStatus(entry, task, Status.FAILED);
                 } else {
                     submitRules(entry, task, rulesets);
-                    taskService.markStatus(entry, task, Status.SUCCESS);
                 }
-                return taskService.trackTask(entry, task, ProcessingState.COMPLETE);
-            }).orElseThrow();
+            });
     }
 
-    private Set<Ruleset> selectRulesets(Entry entry, RulesetSubmissionConfiguration configuration) {
+    private Set<Ruleset> selectRulesets(Entry entry, Task task) {
         TransitDataFormat format;
         try {
             format = TransitDataFormat.forField(entry.format());
@@ -102,17 +99,16 @@ public class RulesetSubmissionService {
         Set<String> rulesetNames = Streams.map(entry.tasks(), Task::name).toSet();
 
         // find all possible rulesets to execute
-        Set<Ruleset> rulesets = Streams.filter(
-                rulesetService.selectRulesets(
-                    entry.businessId(),
-                    configuration.type(),
-                    format,
-                    rulesetNames),
-                // filter to contain only format compatible rulesets
-                r -> r.identifyingName().startsWith(entry.format()))
-            .toSet();
 
-        logger.info("Selected {} rulesets for {} are {}", configuration.type(), entry.publicId(), Streams.collect(rulesets, Ruleset::identifyingName));
+        Optional<Type> type = rulesetService.findByName(task.name()).map(Ruleset::type);
+        Set<Ruleset> rulesets = type.map(t -> rulesetService.selectRulesets(entry.businessId(), t, format, rulesetNames)
+                .stream()
+                // filter to contain only format compatible rulesets
+                .filter(r -> r.identifyingName().startsWith(entry.format())))
+            .map(s -> s.collect(Collectors.toSet()))
+            .orElse(Set.of());
+
+        logger.info("Selected {} rulesets for {} are {}", type.orElse(null), entry.publicId(), Streams.collect(rulesets, Ruleset::identifyingName));
 
         return rulesets;
     }

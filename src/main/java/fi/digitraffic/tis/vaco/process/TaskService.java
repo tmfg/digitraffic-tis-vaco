@@ -20,7 +20,6 @@ import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -147,11 +146,14 @@ public class TaskService {
         Map<String, List<String>> deps = new HashMap<>();
         deps.put(DownloadRule.PREPARE_DOWNLOAD_TASK, List.of());
         deps.put(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, List.of());
-        deps.put(RulesetSubmissionService.VALIDATE_TASK,
+        /*
+                deps.put(RulesetSubmissionService.VALIDATE_TASK,
             List.of(
                 DownloadRule.PREPARE_DOWNLOAD_TASK,
                 StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
-        deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
+                deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
+         */
+
         return deps;
     }
 
@@ -162,8 +164,7 @@ public class TaskService {
         deps.addAll(RuleName.ALL_EXTERNAL_VALIDATION_RULES);
         deps.addAll(List.of(
             DownloadRule.PREPARE_DOWNLOAD_TASK,
-            StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK,
-            RulesetSubmissionService.VALIDATE_TASK));
+            StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
         return deps;
     }
 
@@ -257,7 +258,10 @@ public class TaskService {
         int prioGroup = 1;
         int groupIndex = 0;
         for (Task task : sorted) {
-            if (ruleDeps.getOrDefault(task.name(), List.of()).stream().anyMatch(previousGroupNodes::contains)) {
+            Optional<Ruleset> ruleset = rulesetService.findByName(task.name());
+
+            if ((ruleset.isPresent() && (ruleset.get().dependencies().stream().anyMatch(previousGroupNodes::contains)))
+                || (ruleDeps.getOrDefault(task.name(), List.of()).stream().anyMatch(previousGroupNodes::contains))) {
                 prioGroup++;
                 groupIndex = 0;
                 previousGroupNodes.clear();
@@ -335,4 +339,7 @@ public class TaskService {
     }
 
 
+    public Optional<Task> findTask(String taskPublicId) {
+        return taskRepository.findTask(taskPublicId);
+    }
 }

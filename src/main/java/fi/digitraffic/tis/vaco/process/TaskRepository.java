@@ -65,7 +65,7 @@ public class TaskRepository {
                      UPDATE task
                         SET started = NOW()
                       WHERE id = ?
-                  RETURNING id, entry_id, name, priority, created, started, updated, completed, status
+                  RETURNING id, entry_id, public_id, name, priority, created, started, updated, completed, status
                 """,
             RowMappers.TASK,
             task.id());
@@ -77,7 +77,7 @@ public class TaskRepository {
                  UPDATE task
                     SET updated = NOW()
                   WHERE id = ?
-              RETURNING id, entry_id, name, priority, created, started, updated, completed, status
+              RETURNING id, entry_id, public_id, name, priority, created, started, updated, completed, status
             """,
             RowMappers.TASK,
             task.id());
@@ -90,7 +90,7 @@ public class TaskRepository {
                     SET updated = NOW(),
                         completed = NOW()
                   WHERE id = ?
-              RETURNING id, entry_id, name, priority, created, started, updated, completed, status
+              RETURNING id, entry_id, public_id, name, priority, created, started, updated, completed, status
             """,
             RowMappers.TASK,
             task.id());
@@ -136,8 +136,11 @@ public class TaskRepository {
 
     public Optional<Task> findTask(String publicId, String taskName) {
         try {
-            return Optional.ofNullable(jdbc.queryForObject(
-                "SELECT * FROM task WHERE entry_id = (SELECT id FROM entry WHERE public_id = ?) AND name = ?",
+            return Optional.ofNullable(jdbc.queryForObject("""
+                SELECT *
+                  FROM task
+                 WHERE entry_id = (SELECT id FROM entry WHERE public_id = ?) AND name = ?
+                """,
                 RowMappers.TASK,
                 publicId, taskName));
         } catch (EmptyResultDataAccessException e) {
@@ -151,6 +154,17 @@ public class TaskRepository {
                 "SELECT * FROM task WHERE entry_id = ? AND name = ?",
                 RowMappers.TASK,
                 entryId, taskName));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Task> findTask(String taskPublicId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                "SELECT * FROM task WHERE public_id = ?",
+                RowMappers.TASK,
+                taskPublicId));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -224,7 +238,7 @@ public class TaskRepository {
                      UPDATE task
                         SET status = (?)::status
                       WHERE id = ?
-                  RETURNING id, entry_id, name, priority, created, started, updated, completed, status
+                  RETURNING id, entry_id, public_id, name, priority, created, started, updated, completed, status
                 """,
             RowMappers.TASK,
             status.fieldName(),
@@ -242,6 +256,5 @@ public class TaskRepository {
             RowMappers.CONVERSION_INPUT.apply(objectMapper),
             entry.id());
     }
-
 
 }

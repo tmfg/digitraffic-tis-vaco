@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +58,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     private DownloadRule downloadRule;
     @Mock
     private StopsAndQuaysRule stopsAndQuaysRule;
+    @Mock
+    private RulesetSubmissionService rulesetSubmissionService;
 
     @BeforeEach
     void setUp() {
@@ -67,7 +70,8 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
             downloadRule,
             stopsAndQuaysRule,
             emailService,
-            entryService);
+            entryService,
+            rulesetSubmissionService);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)
@@ -81,7 +85,7 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(messagingService, taskRepository, downloadRule, stopsAndQuaysRule);
+        verifyNoMoreInteractions(messagingService, taskRepository, downloadRule, stopsAndQuaysRule, rulesetSubmissionService);
     }
 
     @Test

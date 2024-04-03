@@ -23,6 +23,9 @@ public interface Task {
     @Value.Parameter
     Long entryId();
 
+    @Nullable // TODO: make not nullable
+    String publicId();
+
     @Value.Parameter
     String name();
 

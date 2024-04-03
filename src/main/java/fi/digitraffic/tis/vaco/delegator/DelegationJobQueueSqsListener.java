@@ -32,6 +32,7 @@ import java.util.Set;
 public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDelegationJobMessage> {
 
     private final MessagingService messagingService;
+    private final RulesetSubmissionService rulesetSubmissionService;
     private final TaskService taskService;
     private final Set<String> knownExternalRules;
     // internal tasks are direct dependencies
@@ -46,7 +47,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                                          DownloadRule downloadRule,
                                          StopsAndQuaysRule stopsAndQuaysRule,
                                          EmailService emailService,
-                                         EntryService entryService) {
+                                         EntryService entryService, RulesetSubmissionService rulesetSubmissionService) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = Objects.requireNonNull(messagingService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -55,6 +56,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         this.stopsAndQuaysRule = Objects.requireNonNull(stopsAndQuaysRule);
         this.emailService = Objects.requireNonNull(emailService);
         this.entryService = Objects.requireNonNull(entryService);
+        this.rulesetSubmissionService = rulesetSubmissionService;
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -85,26 +87,9 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 } else if (name.equals(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)) {
                     logger.debug("Internal rule {} detected, delegating...", name);
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, stopsAndQuaysRule.execute(entry).join());
-                } else if (name.equals(RulesetSubmissionService.VALIDATE_TASK)) {
-                    logger.debug("Internal category {} detected, delegating...", name);
-                    taskService.findTask(entry.publicId(), name)
-                        .ifPresent(t -> {
-                            taskService.trackTask(entry, t, ProcessingState.START);
-                            validationJob(entry);
-                            taskService.markStatus(entry, t, Status.SUCCESS);
-                        });
-                } else if (name.equals(RulesetSubmissionService.CONVERT_TASK)) {
-                    logger.debug("Internal category {} detected, delegating...", name);
-                    taskService.findTask(entry.publicId(), name)
-                        .ifPresent(t -> {
-                            taskService.trackTask(entry, t, ProcessingState.START);
-                            conversionJob(entry);
-                            taskService.markStatus(entry, t, Status.SUCCESS);
-                        });
                 } else if (knownExternalRules.contains(name)) {
-                    // these are currently submitted delegatively elsewhere
-                    logger.debug("External rule {} detected, skipping...", name);
-                    taskService.trackTask(entry, task, ProcessingState.START);
+                    logger.debug("External rule {} detected, submitting to processing queue...", name);
+                    submitExternalRule(task, name, entry);
                 } else {
                     logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
                     taskService.trackTask(entry, task, ProcessingState.START);
@@ -124,30 +109,14 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         }
     }
 
-    private void validationJob(Entry entry) {
+    private void submitExternalRule(Task task, String name, Entry entry) {
         ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
             .entry(entry)
             .configuration(ImmutableRulesetSubmissionConfiguration
-                .builder()
-                .submissionTask(RulesetSubmissionService.VALIDATE_TASK)
-                .type(Type.VALIDATION_SYNTAX)
-                .build())
+                .of(Type.VALIDATION_SYNTAX, task.publicId()))
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
-        messagingService.submitValidationJob(validationJob);
-    }
-
-    private void conversionJob(Entry entry) {
-        ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
-            .entry(entry)
-            .configuration(ImmutableRulesetSubmissionConfiguration
-                .builder()
-                .submissionTask(RulesetSubmissionService.CONVERT_TASK)
-                .type(Type.CONVERSION_SYNTAX)
-                .build())
-            .retryStatistics(ImmutableRetryStatistics.of(5))
-            .build();
-        messagingService.submitValidationJob(validationJob);
+        rulesetSubmissionService.submit(validationJob);
     }
 
     private Optional<List<Task>> nextTaskGroupToRun(ImmutableDelegationJobMessage jobDescription) {
