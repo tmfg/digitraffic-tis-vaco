@@ -157,6 +157,19 @@ public class TestObjects {
     public static JwtAuthenticationToken jwtAuthenticationToken(String oid) {
         String fakeGroupId = UUID.randomUUID().toString();
         Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("groups", List.of(fakeGroupId), "oid", oid));
+        return new JwtAuthenticationToken(jwt);
+    }
+
+    public static JwtAuthenticationToken jwtAdminAuthenticationToken(String oid) {
+        String fakeGroupId = UUID.randomUUID().toString();
+        Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("groups", List.of(fakeGroupId), "oid", oid, "roles", List.of("vaco.admin")));
+
+        return new JwtAuthenticationToken(jwt);
+    }
+
+    public static JwtAuthenticationToken jwtCompanyAdminAuthenticationToken(String oid) {
+        String fakeGroupId = UUID.randomUUID().toString();
+        Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("groups", List.of(fakeGroupId), "oid", oid, "roles", List.of("vaco.company_admin")));
 
         return new JwtAuthenticationToken(jwt);
     }
