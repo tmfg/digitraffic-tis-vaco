@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.rules.results;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
@@ -43,6 +44,7 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
         if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
             logger.warn("Entry {} internal task {} does not contain 'result' package.", resultMessage.entryId(), task.name());
             taskService.markStatus(entry, task, Status.FAILED);
+            taskService.trackTask(entry, task, ProcessingState.COMPLETE);
             return false;
         } else {
             String sourceFile = packages.get("result").get(0);
@@ -52,7 +54,7 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
                 "result",
                 dlFile.toString()));
             taskService.markStatus(entry, task, Status.SUCCESS);
-
+            taskService.trackTask(entry, task, ProcessingState.COMPLETE);
             return true;
         }
     }

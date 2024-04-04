@@ -143,25 +143,27 @@ public class RulesetRepository {
     }
 
     public Ruleset createRuleset(Ruleset ruleset) {
-        return jdbc.queryForObject("""
-                INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format, dependencies)
-                     VALUES (?, ?::ruleset_category, ?, ?, ?, ?::transit_data_format, ?)
-                  RETURNING id, public_id, owner_id, category, identifying_name, description, "type", format, dependencies;
+        return jdbc.queryForObject(
+                """
+                INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format, before_dependencies, after_dependencies)
+                     VALUES (?, ?::ruleset_category, ?, ?, ?, ?::transit_data_format, ?, ?)
+                  RETURNING *;
                 """,
-            RowMappers.RULESET,
-            ruleset.ownerId(),
-            ruleset.category().fieldName(),
-            ruleset.identifyingName(),
-            ruleset.description(),
-            ruleset.type().fieldName(),
-            ruleset.format().fieldName(),
-            ArraySqlValue.create(ruleset.dependencies().toArray(new String[0])));
+                RowMappers.RULESET,
+                ruleset.ownerId(),
+                ruleset.category().fieldName(),
+                ruleset.identifyingName(),
+                ruleset.description(),
+                ruleset.type().fieldName(),
+                ruleset.format().fieldName(),
+                ArraySqlValue.create(ruleset.beforeDependencies().toArray(new String[0])),
+                ArraySqlValue.create(ruleset.afterDependencies().toArray(new String[0])));
     }
 
     public Optional<Ruleset> findByName(String rulesetName) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
-                    SELECT id, public_id, owner_id, category, identifying_name, description, "type", format, dependencies
+                    SELECT *
                       FROM ruleset
                      WHERE identifying_name = ?
                     """,
@@ -187,7 +189,7 @@ public class RulesetRepository {
             RowMappers.RULESET);
     }
 
-    public boolean anyDependencyFailed(Entry entry, Ruleset ruleset) {
+    public boolean anyPrerequisiteDependencyFailed(Entry entry, Ruleset ruleset) {
         return Boolean.FALSE.equals(jdbc.queryForObject("""
             SELECT EXISTS(WITH entry AS (SELECT *
                                        FROM entry
@@ -201,7 +203,7 @@ public class RulesetRepository {
                            ruleset r
                      WHERE t.entry_id = e.id
                        AND t.status = ANY (ARRAY ['failed']::status[])
-                       AND t.name = ANY (r.dependencies))
+                       AND t.name = ANY (r.before_dependencies))
             """,
             Boolean.class,
             entry.publicId(),

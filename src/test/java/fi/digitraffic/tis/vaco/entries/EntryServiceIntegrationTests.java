@@ -109,7 +109,7 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
                     Category.GENERIC,
                     Type.CONVERSION_SYNTAX,
                     TransitDataFormat.forField(entry.format()))
-                .withDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK));
+                .withBeforeDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK));
 
         // TODO: should be PersistentEntry for better assertions
         Entry result = entryService.create(entry.withConversions(conversion)).get();

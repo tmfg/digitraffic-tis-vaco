@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
@@ -32,7 +33,9 @@ public class SimpleResultProcessor extends RuleResultProcessor implements Result
     @Override
     public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
         createOutputPackages(resultMessage, entry, task);
+        // this should call resolveTaskStatus(); if this logic gets _any_ more complex than this
         taskService.markStatus(entry, task, Status.SUCCESS);
+        taskService.trackTask(entry, task, ProcessingState.COMPLETE);
         return true;
     }
 }

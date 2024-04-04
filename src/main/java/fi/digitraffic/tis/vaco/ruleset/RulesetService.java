@@ -41,7 +41,7 @@ public class RulesetService {
             rulesets = rulesetRepository.findRulesets(businessId, type, format, names);
         }
 
-        logger.info("Selected {} rulesets for {} are {}, requested {}", type, businessId, Streams.collect(rulesets, Ruleset::identifyingName), names);
+        logger.info("Selected {} {} rulesets for {} are {}, requested {}", format, type, businessId, Streams.collect(rulesets, Ruleset::identifyingName), names);
 
         return rulesets;
     }
@@ -72,6 +72,6 @@ public class RulesetService {
     }
 
     public boolean dependenciesCompletedSuccessfully(Entry entry, Ruleset r) {
-        return rulesetRepository.anyDependencyFailed(entry, r);
+        return rulesetRepository.anyPrerequisiteDependencyFailed(entry, r);
     }
 }

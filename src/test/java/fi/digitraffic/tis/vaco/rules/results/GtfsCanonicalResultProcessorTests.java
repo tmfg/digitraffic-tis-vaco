@@ -96,7 +96,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
                 TransitDataFormat.GTFS)
-            .withDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
+            .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
     }
 
     @AfterEach

@@ -150,15 +150,14 @@ public class S3Client {
      * @param targetDirectory Target directory.
      * @return
      */
-    public CompletableFuture<CompletedCopy> copyFile(String bucket, S3Path file, S3Path targetDirectory) {
-        String targetPath = targetDirectory.resolve(file.getLast()).toString();
+    public CompletableFuture<CompletedCopy> copyFile(String bucket, S3Path file, S3Path targetPath) {
         logger.info("Copying object in path s3://{}/{} to s3://{}/{}", bucket, file, bucket, targetPath);
         return s3TransferManager.copy(build ->
                 build.copyObjectRequest(copyObject ->
                     copyObject.sourceBucket(bucket)
                         .sourceKey(file.toString())
                         .destinationBucket(bucket)
-                        .destinationKey(targetPath)))
+                        .destinationKey(targetPath.toString())))
             .completionFuture();
     }
 }

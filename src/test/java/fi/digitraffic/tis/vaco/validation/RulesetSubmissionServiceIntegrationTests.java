@@ -35,7 +35,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -104,16 +103,16 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
         Task task = taskService.findTask(entry.publicId(), RuleName.GTFS_CANONICAL).get();
-        rulesetSubmissionService.submitRules(
+        rulesetSubmissionService.submitTask(
             entry,
             task,
             // DownloadRule produces just a single file so this is OK
-            Set.of(TestObjects.aRuleset()
+            TestObjects.aRuleset()
                 .identifyingName(RuleName.GTFS_CANONICAL)
                 .description("running rule from tests")
                 .category(Category.SPECIFIC)
                 .format(TransitDataFormat.GTFS)
-                .build()));
+                .build());
 
         // read generated messages from queue
         List<ValidationRuleJobMessage> messages = messagingService.readMessages(testQueueName).map(m -> {

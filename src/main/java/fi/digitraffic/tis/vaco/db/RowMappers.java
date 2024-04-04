@@ -85,7 +85,8 @@ public final class RowMappers {
         .category(Category.forField(rs.getString("category")))
         .type(Type.forField(rs.getString("type")))
         .format(TransitDataFormat.forField(rs.getString("format")))
-        .dependencies(Set.of(ArraySqlValue.read(rs, "dependencies")))
+        .beforeDependencies(Set.of(ArraySqlValue.read(rs, "before_dependencies")))
+        .afterDependencies(Set.of(ArraySqlValue.read(rs, "after_dependencies")))
         .build();
 
     public static final RowMapper<Task> TASK = (rs, rowNum) -> ImmutableTask.builder()

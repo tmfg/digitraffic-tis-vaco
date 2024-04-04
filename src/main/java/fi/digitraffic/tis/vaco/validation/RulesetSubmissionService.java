@@ -5,7 +5,6 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -25,8 +24,6 @@ import fi.digitraffic.tis.vaco.rules.model.ImmutableValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.validation.model.RulesetSubmissionConfiguration;
 import fi.digitraffic.tis.vaco.validation.model.ValidationJobMessage;
 import org.slf4j.Logger;
@@ -40,8 +37,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Service
 public class RulesetSubmissionService {
@@ -76,91 +71,79 @@ public class RulesetSubmissionService {
 
         taskService.findTask(configuration.taskPublicId())
             .ifPresent(task -> {
-                Set<Ruleset> rulesets = selectRulesets(entry, task);
+                Optional<Ruleset> ruleset = selectRuleset(entry, task);
 
-                if (rulesets.isEmpty()) {
-                    taskService.markStatus(entry, task, Status.FAILED);
+                if (ruleset.isPresent()) {
+                    submitTask(entry, task, ruleset.get());
                 } else {
-                    submitRules(entry, task, rulesets);
+                    taskService.markStatus(entry, task, Status.FAILED);
                 }
             });
     }
 
-    private Set<Ruleset> selectRulesets(Entry entry, Task task) {
-        TransitDataFormat format;
-        try {
-            format = TransitDataFormat.forField(entry.format());
-        } catch (InvalidMappingException ime) {
-            logger.warn("Cannot select rulesets for entry {}: Unknown format '{}'", entry.publicId(), entry.format(), ime);
-            return Set.of();
+    private Optional<Ruleset> selectRuleset(Entry entry, Task task) {
+        Optional<Ruleset> ruleset = rulesetService.findByName(task.name());
+
+        if (ruleset.isPresent()) {
+            Ruleset rs = ruleset.get();
+            // TODO: this is probably not needed, but its intent is to block access to unauthorized rules
+            Set<Ruleset> allowedRulesets = rulesetService.selectRulesets(
+                entry.businessId(),
+                rs.type(),
+                rs.format(),
+                Set.of(task.name())
+            );
+            if (allowedRulesets.contains(rs)) {
+                return Optional.of(rs);
+            }
         }
-
-        // add all task names to rulesets to select to ensure rules from dependencies are also included
-        Set<String> rulesetNames = Streams.map(entry.tasks(), Task::name).toSet();
-
-        // find all possible rulesets to execute
-
-        Optional<Type> type = rulesetService.findByName(task.name()).map(Ruleset::type);
-        Set<Ruleset> rulesets = type.map(t -> rulesetService.selectRulesets(entry.businessId(), t, format, rulesetNames)
-                .stream()
-                // filter to contain only format compatible rulesets
-                .filter(r -> r.identifyingName().startsWith(entry.format())))
-            .map(s -> s.collect(Collectors.toSet()))
-            .orElse(Set.of());
-
-        logger.info("Selected {} rulesets for {} are {}", type.orElse(null), entry.publicId(), Streams.collect(rulesets, Ruleset::identifyingName));
-
-        return rulesets;
+        return Optional.empty();
     }
 
     @VisibleForTesting
-    void submitRules(Entry entry,
-                     Task task,
-                     Set<Ruleset> rulesets) {
+    void submitTask(Entry entry,
+                    Task task,
+                    Ruleset r) {
 
-        Map<String, RuleConfiguration> configs = new HashMap<>();
+        Map<String, RuleConfiguration> userProvidedConfigs = new HashMap<>();
         List<ValidationInput> validations = entry.validations();
         if (validations != null) {
-            configs.putAll(Streams.filter(validations, v -> v.config() != null)
+            userProvidedConfigs.putAll(Streams.filter(validations, v -> v.config() != null)
                 .collect(ValidationInput::name, ValidationInput::config));
         }
         List<ConversionInput> conversions = entry.conversions();
         if (conversions != null) {
-            configs.putAll(Streams.filter(conversions, v -> v.config() != null)
+            userProvidedConfigs.putAll(Streams.filter(conversions, v -> v.config() != null)
                 .collect(ConversionInput::name, ConversionInput::config));
         }
 
-        Streams.map(rulesets, r -> {
-                String identifyingName = r.identifyingName();
-                if (taskService.internalDependenciesCompletedSuccessfully(entry, task.name())
-                    && rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
-                    logger.debug("Entry {}, ruleset {} all dependencies completed successfully, submitting", entry.publicId(), identifyingName);
-                    Optional<RuleConfiguration> configuration = Optional.ofNullable(configs.get(identifyingName));
-                    ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
-                        entry,
-                        task,
-                        configuration,
-                        identifyingName);
-                    // mark the processing of matching task as started
-                    // 1) shows in API response that the processing has started
-                    // 2) this prevents unintended retrying of the task
-                    Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
-                    ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
-                        .orElseThrow();
-                    return messagingService.submitRuleExecutionJob(identifyingName, ruleMessage);
-                } else {
-                    logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
-                    // dependencies failed or were cancelled, mark this one as cancelled and complete
-                    taskService.findTask(entry.publicId(), identifyingName)
-                        .map(t -> taskService.trackTask(entry, t, ProcessingState.START))
-                        .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
-                        .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
-                        .orElseThrow();
-                    return CompletableFuture.completedFuture(null);
-                }
-            })
-            .map(CompletableFuture::join)
-            .complete();
+        String identifyingName = r.identifyingName();
+        // TODO: Should ensure the previous deps are ok, not all globally. This case trips only if the same flow has same rule multiple times, which is unlikely.
+        if (taskService.internalDependenciesCompletedSuccessfully(entry, task.name())
+            && rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
+            logger.debug("Entry {}, ruleset {} all dependencies completed successfully, submitting", entry.publicId(), identifyingName);
+            Optional<RuleConfiguration> configuration = Optional.ofNullable(userProvidedConfigs.get(identifyingName));
+            ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
+                entry,
+                task,
+                configuration,
+                identifyingName);
+            // mark the processing of matching task as started
+            // 1) shows in API response that the processing has started
+            // 2) this prevents unintended retrying of the task
+            Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
+            ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
+                .orElseThrow();
+            messagingService.submitRuleExecutionJob(identifyingName, ruleMessage).join();
+        } else {
+            logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
+            // dependencies failed or were cancelled, mark this one as cancelled and complete
+            taskService.findTask(entry.publicId(), identifyingName)
+                .map(t -> taskService.trackTask(entry, t, ProcessingState.START))
+                .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
+                .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
+                .orElseThrow();
+        }
     }
 
     private ValidationRuleJobMessage convertToValidationRuleJobMessage(
@@ -189,6 +172,10 @@ public class RulesetSubmissionService {
      * Expose the results of previously completed tasks as inputs to the current task.
      * <p>
      * Transitively this copies downloaded input files and other static content for the task.
+     * <p>
+     * The copying logic has two branches due to legacy reasons, one which puts all outputs as is to root of provided
+     * directory and another which categorizes the outputs of previous tasks by name. The latter is the one which should
+     * be used in longterm.
      *
      * @param targetDirectory
      * @param entry
@@ -200,7 +187,14 @@ public class RulesetSubmissionService {
             .filter(task -> task.priority() < current.priority() && task.completed() != null)
             .toList();
         completedTasks.forEach(task -> lookupDownloadedFile(entry, task.name())
-            .ifPresent(s3Path -> s3Client.copyFile(vacoProperties.s3ProcessingBucket(), s3Path, targetDirectory).join()));
+            .ifPresent(s3Path -> {
+                // legacy logic: copy all results as is
+                S3Path targetPath = targetDirectory.resolve(s3Path.getLast());
+                s3Client.copyFile(vacoProperties.s3ProcessingBucket(), s3Path, targetPath).join();
+                // new logic: categorize outputs by task name (could be publicId?)
+                S3Path targetTaskPath = targetDirectory.resolve(task.name()).resolve(s3Path.getLast());
+                s3Client.copyFile(vacoProperties.s3ProcessingBucket(), s3Path, targetTaskPath).join();
+            }));
     }
 
     private Optional<S3Path> lookupDownloadedFile(Entry entry, String taskName) {
