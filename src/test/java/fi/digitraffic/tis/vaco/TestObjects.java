@@ -174,6 +174,11 @@ public class TestObjects {
         return new JwtAuthenticationToken(jwt);
     }
 
+    public static JwtAuthenticationToken jwtNoGroupsToken(String oid) {
+        Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("oid", oid));
+        return new JwtAuthenticationToken(jwt);
+    }
+
     public static ImmutableFinding.Builder aFinding(String entryId, long rulesetId, long taskId) {
         return ImmutableFinding.builder()
             .entryId(entryId)
