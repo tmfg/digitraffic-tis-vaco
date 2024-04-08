@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.company.service;
 
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
@@ -66,6 +67,10 @@ public class CompanyHierarchyService {
 
     public Optional<Company> findByBusinessId(String businessId) {
         return companyHierarchyRepository.findByBusinessId(businessId);
+    }
+
+    public Company getPublicTestCompany() {
+        return findByBusinessId(Constants.PUBLIC_VALIDATION_TEST_ID).get();
     }
 
     public List<Company> listAllWithEntries() {

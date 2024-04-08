@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,6 +112,12 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
                     oldEnturNetex2GtfsConverter206,
                     oldFintrafficGtfs2NetexConverter100),
                 Ruleset::identifyingName)));
+    }
+
+    @Test
+    void publicValidationTestHasRules() {
+        Set<Ruleset> publicValidationTestRules = rulesetService.selectRulesets(Constants.PUBLIC_VALIDATION_TEST_ID);
+        Assertions.assertFalse(publicValidationTestRules.isEmpty());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.ruleset;
 
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -30,7 +31,11 @@ public class RulesetService {
     }
 
     public Set<Ruleset> selectRulesets(String businessId) {
-        return rulesetRepository.findRulesets(businessId);
+        // For Public validation test, we don't want to have an actual "cooperation" with Fintraffic as a company,
+        // but we still want to re-use same rulesets
+        return rulesetRepository.findRulesets(Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId)
+            ? Constants.FINTRAFFIC_BUSINESS_ID
+            : businessId);
     }
 
     public Set<Ruleset> selectRulesets(String businessId, Type type, TransitDataFormat format, Set<String> names) {
