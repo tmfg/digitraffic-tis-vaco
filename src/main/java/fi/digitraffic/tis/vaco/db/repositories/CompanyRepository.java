@@ -5,10 +5,9 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
-import fi.digitraffic.tis.vaco.company.model.Partnership;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -35,13 +34,13 @@ public class CompanyRepository {
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
 
-    public Company create(Company company) {
+    public CompanyRecord create(Company company) {
         return jdbc.queryForObject("""
                 INSERT INTO company(business_id, name, contact_emails)
                      VALUES (?, ?, ?)
                   RETURNING *
                 """,
-                RowMappers.COMPANY,
+                RowMappers.COMPANY_RECORD,
                 company.businessId(),
             company.name(),
             ArraySqlValue.create(company.contactEmails().toArray(new String[0])));
@@ -62,14 +61,15 @@ public class CompanyRepository {
             businessId);
     }
 
-    public Optional<Company> findByBusinessId(String businessId) {
+    public Optional<CompanyRecord> findByBusinessId(String businessId) {
         try {
-            return Optional.ofNullable(jdbc.queryForObject("""
-                    SELECT *
-                      FROM company
-                     WHERE business_id = ?
-                    """,
-                RowMappers.COMPANY,
+            return Optional.ofNullable(jdbc.queryForObject(
+                """
+                SELECT *
+                  FROM company
+                 WHERE business_id = ?
+                """,
+                RowMappers.COMPANY_RECORD,
                 businessId));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
@@ -134,7 +134,7 @@ public class CompanyRepository {
         // 2a. find hierarchy links for root
         List<IntermediateHierarchyLink> hierarchyLinks = findHierarchyLinks(rootId);
 
-        // 2b. create lookup for id->entity
+        // 2b. create lookup for business id->entity
         Map<Long, Company> companiesbyId = hierarchyLinks.stream().collect(
             Collectors.toMap(
                 IntermediateHierarchyLink::childId,
@@ -185,14 +185,17 @@ public class CompanyRepository {
             Long.class));
     }
 
-    private static void resolveHierarchy(Company parent, ImmutableHierarchy.Builder builder, Map<Long, Company> companiesbyId, Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
+    private static void resolveHierarchy(Company parent,
+                                         ImmutableHierarchy.Builder builder,
+                                         Map<Long, Company> companiesbyBusinessId,
+                                         Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
         builder.company(parent);
         List<IntermediateHierarchyLink> children = parentsAndChildren.getOrDefault(parent.id(), List.of());
         builder.addAllChildren(Streams.collect(children, child -> {
                 ImmutableHierarchy.Builder b = ImmutableHierarchy.builder();
-                b.company(companiesbyId.get(child.parentId()));
+                b.company(companiesbyBusinessId.get(child.parentId()));
                 if (child.childId() != null) {
-                    resolveHierarchy(companiesbyId.get(child.childId()), b, companiesbyId, parentsAndChildren);
+                    resolveHierarchy(companiesbyBusinessId.get(child.childId()), b, companiesbyBusinessId, parentsAndChildren);
                 }
                 return b.build();
             }));
@@ -206,49 +209,6 @@ public class CompanyRepository {
                 RowMappers.COMPANY)
             ,
             Company::businessId, Function.identity());
-    }
-
-
-    public Partnership create(Partnership partnership) {
-        jdbc.update("""
-                INSERT INTO partnership(type, partner_a_id, partner_b_id)
-                     VALUES (?::partnership_type, ?, ?)
-                """,
-            partnership.type().fieldName(), partnership.partnerA().id(), partnership.partnerB().id());
-        // There's no easy way to do this with just one query so the fetch query is delegated to #findByIds to avoid
-        // code duplication. The blind call to Optional#get is on purpose.
-        return findByIds(partnership.type(), partnership.partnerA().id(), partnership.partnerB().id()).get();
-    }
-
-    public void deletePartnership(Partnership partnership) {
-        jdbc.update("DELETE FROM partnership WHERE type = ?::partnership_type AND partner_a_id =? AND partner_b_id = ?",
-            partnership.type().fieldName(), partnership.partnerA().id(), partnership.partnerB().id());
-    }
-
-    public Optional<Partnership> findByIds(PartnershipType type,
-                                           Long partnerAId,
-                                           Long partnerBId) {
-        return jdbc.query("""
-                SELECT c.type AS type,
-                       o_a.id as partner_a_id,
-                       o_a.business_id as partner_a_business_id,
-                       o_a.name as partner_a_name,
-                       o_a.contact_emails as partner_a_contact_emails,
-                       o_a.ad_group_id as partner_a_ad_group_id,
-                       o_a.language as partner_a_language,
-                       o_b.id as partner_b_id,
-                       o_b.business_id as partner_b_business_id,
-                       o_b.name as partner_b_name,
-                       o_b.contact_emails as partner_b_contact_emails,
-                       o_b.ad_group_id as partner_b_ad_group_id,
-                       o_b.language as partner_b_language
-                  FROM partnership c
-                  JOIN company o_a ON c.partner_a_id = o_a.id
-                  JOIN company o_b ON c.partner_b_id = o_b.id
-                 WHERE c.type = ?::partnership_type AND c.partner_a_id = ? AND c.partner_b_id = ?
-                """,
-            RowMappers.PARTNERSHIP,
-            type.fieldName(), partnerAId, partnerBId).stream().findFirst();
     }
 
     public boolean deleteByBusinessId(String businessId) {

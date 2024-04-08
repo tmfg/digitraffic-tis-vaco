@@ -6,8 +6,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
+import fi.digitraffic.tis.vaco.company.model.Partnership;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
@@ -100,5 +106,24 @@ public class RecordMapper {
             .map(JsonSubTypes.Type::value)
             .findFirst()
             .orElse(null);
+    }
+
+    public Company toCompany(CompanyRecord companyRecord) {
+        return ImmutableCompany.builder()
+            .id(companyRecord.id())
+            .businessId(companyRecord.businessId())
+            .name(companyRecord.name())
+            .contactEmails(companyRecord.contactEmails())
+            .language(companyRecord.language())
+            .adGroupId(companyRecord.adGroupId())
+            .build();
+    }
+
+    public Partnership toPartnership(PartnershipRecord partnership, CompanyRecord partnerA, CompanyRecord partnerB) {
+        return ImmutablePartnership.of(
+            partnership.type(),
+            toCompany(partnerA),
+            toCompany(partnerB)
+        );
     }
 }

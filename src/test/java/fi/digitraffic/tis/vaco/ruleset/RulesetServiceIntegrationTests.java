@@ -4,16 +4,16 @@ import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
+import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
+import fi.digitraffic.tis.vaco.db.repositories.PartnershipRepository;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,12 +31,15 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     CompanyRepository companyRepository;
 
     @Autowired
+    PartnershipRepository partnershipRepository;
+
+    @Autowired
     RulesetService rulesetService;
 
-    private Company fintraffic;
-    private Company parentOrg;
-    private Company currentOrg;
-    private Company otherOrg;
+    private CompanyRecord fintraffic;
+    private CompanyRecord parentOrg;
+    private CompanyRecord currentOrg;
+    private CompanyRecord otherOrg;
     private Ruleset parentRuleA;
     private Ruleset parentRuleB;
     private Ruleset currentRuleC;
@@ -54,8 +57,8 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         parentOrg = companyRepository.create(TestObjects.aCompany().build());
         currentOrg = companyRepository.create(TestObjects.aCompany().build());
         otherOrg = companyRepository.create(TestObjects.aCompany().build());
-        companyRepository.create(partnership(parentOrg, currentOrg));
-        companyRepository.create(partnership(parentOrg, otherOrg));
+        partnershipRepository.create(PartnershipType.AUTHORITY_PROVIDER, parentOrg, currentOrg);
+        partnershipRepository.create(PartnershipType.AUTHORITY_PROVIDER, parentOrg, otherOrg);
 
         parentRuleA = rulesetService.createRuleset(
             ImmutableRuleset.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC, Type.VALIDATION_SYNTAX, testFormat));
@@ -149,13 +152,5 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         // parent's generic is always returned even when not requested, can't request parent's specific rules
         assertThat(rulesetService.selectRulesets(currentOrg.businessId(), Type.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_B")),
                 equalTo(Set.of(parentRuleA)));
-    }
-
-    @NotNull
-    private ImmutablePartnership partnership(Company partnerA, Company partnerB) {
-        return TestObjects.aPartnership()
-                .partnerA(partnerA)
-                .partnerB(partnerB)
-                .build();
     }
 }

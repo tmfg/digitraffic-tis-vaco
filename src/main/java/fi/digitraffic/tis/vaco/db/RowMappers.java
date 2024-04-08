@@ -15,11 +15,15 @@ import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
@@ -121,13 +125,30 @@ public final class RowMappers {
             .adGroupId(rs.getString(alias + "ad_group_id"))
             .build();
 
+    public static final Function<String, RowMapper<CompanyRecord>> ALIASED_COMPANY_RECORD = alias ->
+        (rs, rowNum) -> ImmutableCompanyRecord.builder()
+            .id(rs.getLong(alias + "id"))
+            .businessId(rs.getString(alias + "business_id"))
+            .name(rs.getString(alias + "name"))
+            .language(rs.getString(alias + "language"))
+            .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
+            .adGroupId(rs.getString(alias + "ad_group_id"))
+            .build();
+
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
+
+    public static final RowMapper<CompanyRecord> COMPANY_RECORD = ALIASED_COMPANY_RECORD.apply("");
 
     public static final RowMapper<Partnership> PARTNERSHIP = (rs, rowNum) -> ImmutablePartnership.builder()
             .type(PartnershipType.forField(rs.getString("type")))
             .partnerA(ALIASED_COMPANY.apply("partner_a_").mapRow(rs, rowNum))
             .partnerB(ALIASED_COMPANY.apply("partner_b_").mapRow(rs, rowNum))
             .build();
+
+    public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(
+        PartnershipType.forField(rs.getString("type")),
+        rs.getLong("partner_a_id"),
+        rs.getLong("partner_b_id"));
 
     public static final RowMapper<ContextRecord> CONTEXT_RECORD = (rs, rowNum) -> ImmutableContextRecord.of(
         rs.getLong("id"),
