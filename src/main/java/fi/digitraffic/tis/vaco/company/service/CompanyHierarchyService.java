@@ -68,6 +68,10 @@ public class CompanyHierarchyService {
         return companyHierarchyRepository.findByBusinessId(businessId);
     }
 
+    public Company getPublicTestCompany() {
+        return findByBusinessId("public-validation-test-id").get();
+    }
+
     public List<Company> listAllWithEntries() {
         return companyHierarchyRepository.listAllWithEntries();
     }

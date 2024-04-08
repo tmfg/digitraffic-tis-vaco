@@ -42,6 +42,20 @@ public class AdminToolsService {
         }
     }
 
+    public String getPublicValidationTestName(String language) {
+        switch (language) {
+            case "en" -> {
+                return "Public validation test";
+            }
+            case "sv" -> {
+                return "Offentligt valideringstest";
+            }
+            default -> {
+                return "Julkinen validointitesti";
+            }
+        }
+    }
+
     public List<CompanyLatestEntry> getDataDeliveryOverview(@Nullable Set<Company> userCompanies) {
         Set<String> businessIds = userCompanies != null
             ? userCompanies.stream().map(Company::businessId).collect(Collectors.toSet())
@@ -55,6 +69,10 @@ public class AdminToolsService {
         List<CompanyLatestEntry> data = adminToolsRepository.getDataDeliveryOverview(null);
         String currentBusinessId = "";
         for (CompanyLatestEntry entry : data) {
+            boolean isPublicValidationTest = entry.companyName().equals("public-validation-test");
+            String companyNameToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.companyName();
+            String businessIdToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.businessId();
+
             boolean putEmptyString = false;
             if (currentBusinessId.equals(entry.businessId())) {
                 putEmptyString = true;
@@ -63,8 +81,8 @@ public class AdminToolsService {
             }
 
             csvWriter.writeNext(new String[]{
-                putEmptyString ? "" : entry.businessId(),
-                putEmptyString ? "" : entry.companyName(),
+                putEmptyString ? "" : businessIdToShow,
+                putEmptyString ? "" : companyNameToShow,
                 entry.url(),
                 entry.feedName(),
                 entry.format(),

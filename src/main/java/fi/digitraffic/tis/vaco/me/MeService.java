@@ -40,13 +40,18 @@ public class MeService {
      */
     public Set<Company> findCompanies() {
         return currentToken().map(token -> {
-            Set<String> allGroupIds = new HashSet<>(token.getToken().getClaimAsStringList("groups"));
+            List<String> groups = token.getToken().getClaimAsStringList("groups");
+            if (groups == null || groups.isEmpty()) {
+                return Set.of(companyHierarchyService.getPublicTestCompany());
+            }
+            Set<String> allGroupIds = new HashSet<>(groups);
             Set<Company> companies = companyHierarchyService.findAllByAdGroupIds(List.copyOf(allGroupIds));
 
             Set<String> mappedGroupIds = Streams.map(companies, Company::adGroupId).toSet();
             Set<String> unmappedGroupIds = new HashSet<>(allGroupIds);
             unmappedGroupIds.removeAll(mappedGroupIds);
             unmappedGroupIds.forEach(u -> adminTasksService.registerGroupIdMappingTask(ImmutableGroupIdMappingTask.of(u)));
+
             return companies;
         }).orElseThrow(() -> new UnauthenticatedException("User not authorized in this context"));
     }
