@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.ui;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.repository.CompanyHierarchyRepository;
+import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -32,7 +32,7 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Autowired
     private AdminToolsService adminToolsService;
     @Autowired
-    private CompanyHierarchyRepository companyHierarchyRepository;
+    private CompanyRepository companyRepository;
     @Autowired
     EntryRepository entryRepository;
     final String companyWithMultipleFeedsBusinessId = "AdminToolsService-1234";
@@ -50,8 +50,8 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
     void setUp() {
         companyWithMultipleFeeds = TestObjects.aCompany()
             .name("Company with multiple feeds").businessId(companyWithMultipleFeedsBusinessId).build();
-        if (companyHierarchyRepository.findByBusinessId(companyWithMultipleFeedsBusinessId).isEmpty()) {
-            companyHierarchyRepository.create(companyWithMultipleFeeds);
+        if (companyRepository.findByBusinessId(companyWithMultipleFeedsBusinessId).isEmpty()) {
+            companyRepository.create(companyWithMultipleFeeds);
         }
         entryRepository.create(Optional.empty(),
             TestObjects.anEntry().url("Some gtfs url").businessId(companyWithMultipleFeedsBusinessId).build());
@@ -67,22 +67,22 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
             TestObjects.anEntry().url("Another netex url").businessId(companyWithMultipleFeedsBusinessId).format("netex").build());
 
         companyWithOnlyGtfs = TestObjects.aCompany().name("Company only with gtfs").businessId(companyWithOnlyGtfsBusinessId).build();
-        if (companyHierarchyRepository.findByBusinessId(companyWithOnlyGtfs.businessId()).isEmpty()) {
-            companyHierarchyRepository.create(companyWithOnlyGtfs);
+        if (companyRepository.findByBusinessId(companyWithOnlyGtfs.businessId()).isEmpty()) {
+            companyRepository.create(companyWithOnlyGtfs);
         }
         gtfsEntry = TestObjects.anEntry().url("URL").businessId(companyWithOnlyGtfs.businessId()).build();
         entryRepository.create(Optional.empty(), gtfsEntry);
 
         companyWithOnlyNetex = TestObjects.aCompany().name("Company only with netex").businessId(companyWithOnlyNetexBusinessId).build();
-        if (companyHierarchyRepository.findByBusinessId(companyWithOnlyNetex.businessId()).isEmpty()) {
-            companyHierarchyRepository.create(companyWithOnlyNetex);
+        if (companyRepository.findByBusinessId(companyWithOnlyNetex.businessId()).isEmpty()) {
+            companyRepository.create(companyWithOnlyNetex);
         }
         Entry netexEntry = TestObjects.anEntry().url("URL2").businessId(companyWithOnlyNetex.businessId()).format("netex").build();
         entryRepository.create(Optional.empty(), netexEntry);
 
         noDataCompany = TestObjects.aCompany().name("Company with no data at all").businessId(noDataCompanyBusinessId).build();
-        if (companyHierarchyRepository.findByBusinessId(noDataCompany.businessId()).isEmpty()) {
-            companyHierarchyRepository.create(noDataCompany);
+        if (companyRepository.findByBusinessId(noDataCompany.businessId()).isEmpty()) {
+            companyRepository.create(noDataCompany);
         }
     }
 

@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.company.repository;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -16,13 +16,13 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-class CompanyHierarchyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
+class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private CompanyHierarchyService companyHierarchyService;
 
     @Autowired
-    private CompanyHierarchyRepository companyHierarchyRepository;
+    private CompanyRepository companyRepository;
 
     @Test
     void loadHierarchyWorks() {
@@ -35,7 +35,7 @@ class CompanyHierarchyRepositoryIntegrationTests extends SpringBootIntegrationTe
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childB);
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, childB, grandchildC);
 
-        Map<Company, Hierarchy> h = companyHierarchyRepository.findRootHierarchies();
+        Map<Company, Hierarchy> h = companyRepository.findRootHierarchies();
 
         Hierarchy expected = ImmutableHierarchy.builder()
             .company(root)
@@ -58,7 +58,7 @@ class CompanyHierarchyRepositoryIntegrationTests extends SpringBootIntegrationTe
             .withAdGroupId("ad")
             .withContactEmails(List.of("email"))
             .withLanguage("en");
-        Company updatedCompany = companyHierarchyRepository.update(companyToUpdate.businessId(), companyToUpdate);
+        Company updatedCompany = companyRepository.update(companyToUpdate.businessId(), companyToUpdate);
         assertThat(updatedCompany.name(), equalTo(companyToUpdate.name()));
         assertThat(updatedCompany.adGroupId(), equalTo(companyToUpdate.adGroupId()));
         assertThat(updatedCompany.contactEmails(), equalTo(companyToUpdate.contactEmails()));

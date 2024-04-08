@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.company.repository;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -25,12 +25,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Repository
-public class CompanyHierarchyRepository {
+public class CompanyRepository {
 
     private final JdbcTemplate jdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
 
-    public CompanyHierarchyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
+    public CompanyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
