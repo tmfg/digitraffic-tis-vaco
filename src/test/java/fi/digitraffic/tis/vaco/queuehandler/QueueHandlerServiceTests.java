@@ -8,7 +8,7 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
+import fi.digitraffic.tis.vaco.company.repository.CompanyHierarchyRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.hamcrest.Matchers;
@@ -27,7 +27,7 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
     private QueueHandlerService queueHandlerService;
 
     @Autowired
-    private CompanyRepository companyRepository;
+    private CompanyHierarchyRepository companyRepository;
 
     private ObjectMapper objectMapper;
 

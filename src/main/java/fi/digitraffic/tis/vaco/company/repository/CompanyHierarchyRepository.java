@@ -250,4 +250,12 @@ public class CompanyHierarchyRepository {
             RowMappers.PARTNERSHIP,
             type.fieldName(), partnerAId, partnerBId).stream().findFirst();
     }
+
+    public boolean deleteByBusinessId(String businessId) {
+        return jdbc.update("""
+            DELETE FROM company
+             WHERE business_id = ?
+            """,
+            businessId) == 1;
+    }
 }
