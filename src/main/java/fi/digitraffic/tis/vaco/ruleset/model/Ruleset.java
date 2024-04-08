@@ -48,7 +48,12 @@ public interface Ruleset {
     TransitDataFormat format();
 
     @Value.Default
-    default Set<String> dependencies() {
+    default Set<String> beforeDependencies() {
+        return Set.of();
+    }
+
+    @Value.Default
+    default Set<String> afterDependencies() {
         return Set.of();
     }
 }

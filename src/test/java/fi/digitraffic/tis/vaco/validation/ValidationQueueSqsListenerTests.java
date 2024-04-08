@@ -50,12 +50,18 @@ class ValidationQueueSqsListenerTests {
     void setUp() {
         listener = new ValidationQueueSqsListener(messagingService, rulesetSubmissionService, entryService);
 
-        entry = ImmutableEntry.of(NanoIdUtils.randomNanoId(), "entry", TestConstants.FORMAT_GTFS, TestConstants.EXAMPLE_URL, Constants.FINTRAFFIC_BUSINESS_ID);
+        entry = ImmutableEntry.of(
+            NanoIdUtils.randomNanoId(),
+            "entry",
+            TestConstants.FORMAT_GTFS,
+            TestConstants.EXAMPLE_URL,
+            Constants.FINTRAFFIC_BUSINESS_ID
+        );
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
         message = ImmutableValidationJobMessage.builder()
             .entry(entry)
             .retryStatistics(retryStatistics)
-            .configuration(ImmutableRulesetSubmissionConfiguration.of(RulesetSubmissionService.VALIDATE_TASK, Type.VALIDATION_SYNTAX))
+            .configuration(ImmutableRulesetSubmissionConfiguration.of(Type.VALIDATION_SYNTAX, "nullish"))
             .build();
     }
 

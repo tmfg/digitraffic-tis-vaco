@@ -20,7 +20,6 @@ import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -147,11 +146,14 @@ public class TaskService {
         Map<String, List<String>> deps = new HashMap<>();
         deps.put(DownloadRule.PREPARE_DOWNLOAD_TASK, List.of());
         deps.put(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, List.of());
-        deps.put(RulesetSubmissionService.VALIDATE_TASK,
+        /*
+                deps.put(RulesetSubmissionService.VALIDATE_TASK,
             List.of(
                 DownloadRule.PREPARE_DOWNLOAD_TASK,
                 StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
-        deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
+                deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
+         */
+
         return deps;
     }
 
@@ -162,8 +164,7 @@ public class TaskService {
         deps.addAll(RuleName.ALL_EXTERNAL_VALIDATION_RULES);
         deps.addAll(List.of(
             DownloadRule.PREPARE_DOWNLOAD_TASK,
-            StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK,
-            RulesetSubmissionService.VALIDATE_TASK));
+            StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
         return deps;
     }
 
@@ -193,7 +194,7 @@ public class TaskService {
         MutableGraph<Task> dag = GraphBuilder.directed().allowsSelfLoops(false).build();
         tasks.values().forEach(task -> {
             dag.addNode(task);
-            // add "before" edges
+            // built-in pseudorules
             if (ruleDeps.containsKey(task.name())) {
                 ruleDeps.get(task.name()).forEach(dep -> {
                     if (tasks.containsKey(dep)) {
@@ -201,14 +202,21 @@ public class TaskService {
                     }
                 });
             } else {
-                rulesetService.findByName(task.name()).ifPresent(ruleset ->
-                    ruleset.dependencies().forEach(dep -> {
+                rulesetService.findByName(task.name()).ifPresent(ruleset -> {
+                    // add "before" edges
+                    ruleset.beforeDependencies().forEach(dep -> {
                         if (tasks.containsKey(dep)) {
                             dag.putEdge(tasks.get(dep), task);
                         }
-                    }));
+                    });
+                    // add "after" edges
+                    ruleset.afterDependencies().forEach(dep -> {
+                        if (tasks.containsKey(dep)) {
+                            dag.putEdge(task, tasks.get(dep));
+                        }
+                    });
+                });
             }
-            // TODO: support for "after" edges
         });
         return dag;
     }
@@ -257,7 +265,10 @@ public class TaskService {
         int prioGroup = 1;
         int groupIndex = 0;
         for (Task task : sorted) {
-            if (ruleDeps.getOrDefault(task.name(), List.of()).stream().anyMatch(previousGroupNodes::contains)) {
+            Optional<Ruleset> ruleset = rulesetService.findByName(task.name());
+
+            if ((ruleset.isPresent() && (ruleset.get().beforeDependencies().stream().anyMatch(previousGroupNodes::contains)))
+                || (ruleDeps.getOrDefault(task.name(), List.of()).stream().anyMatch(previousGroupNodes::contains))) {
                 prioGroup++;
                 groupIndex = 0;
                 previousGroupNodes.clear();
@@ -279,22 +290,27 @@ public class TaskService {
         Set<String> allowedRuleTasks = Streams.filter(requestedRuleTasks, rulesetsByName::containsKey).toSet();
 
         // include ruleset dependencies to list of resolved tasks
-        Set<String> dependencies = Streams.filter(allAccessibleRulesets, ruleset -> allowedRuleTasks.contains(ruleset.identifyingName()))
-            .flatten(Ruleset::dependencies)
-            .toSet();
+        Set<Ruleset> rulesets = Streams.filter(allAccessibleRulesets, ruleset -> allowedRuleTasks.contains(ruleset.identifyingName())).toSet();
+        Set<String> preDependencies = Streams.flatten(rulesets, Ruleset::beforeDependencies).toSet();
+        Set<String> postDependencies = Streams.flatten(rulesets, Ruleset::afterDependencies).toSet();
         // include transitive dependencies as well
-        dependencies.addAll(Streams.filter(dependencies, rulesetsByName::containsKey)
-            .flatten(d -> rulesetsByName.get(d).dependencies())
-                .toSet());
+        preDependencies.addAll(Streams.filter(preDependencies, rulesetsByName::containsKey)
+            .flatten(d -> rulesetsByName.get(d).beforeDependencies())
+            .toSet());
+        postDependencies.addAll(Streams.filter(postDependencies, rulesetsByName::containsKey)
+            .flatten(d -> rulesetsByName.get(d).afterDependencies())
+            .toSet());
 
-        logger.debug("Task generation for entry {}: available rules {} / requested {} / allowed {} / dependencies {}",
+        logger.debug("Task generation for entry {}: available rules {} / requested {} / allowed {} / pre-dependencies {} / post-dependencies {}",
             entry.publicId(),
             rulesetsByName.keySet(),
             requestedRuleTasks,
             allowedRuleTasks,
-            dependencies);
+            preDependencies,
+            postDependencies);
         List<String> completeTasks = new ArrayList<>(allowedRuleTasks);
-        completeTasks.addAll(dependencies);
+        completeTasks.addAll(preDependencies);
+        completeTasks.addAll(postDependencies);
         return createTasks(completeTasks, entry);
     }
 
@@ -335,4 +351,7 @@ public class TaskService {
     }
 
 
+    public Optional<Task> findTask(String taskPublicId) {
+        return taskRepository.findTask(taskPublicId);
+    }
 }

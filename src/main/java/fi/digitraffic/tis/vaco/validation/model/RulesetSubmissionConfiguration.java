@@ -10,8 +10,8 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableRulesetSubmissionConfiguration.class)
 public interface RulesetSubmissionConfiguration {
     @Value.Parameter
-    String submissionTask();
+    Type type();
 
     @Value.Parameter
-    Type type();
+    String taskPublicId();
 }

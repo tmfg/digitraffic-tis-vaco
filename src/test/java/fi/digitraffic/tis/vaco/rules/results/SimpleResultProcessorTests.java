@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -55,6 +56,7 @@ class SimpleResultProcessorTests extends ResultProcessorTestBase {
         givenPackageIsCreated("all", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "all", IGNORED_PATH_VALUE));
         givenPackageIsCreated("debug", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "debug", IGNORED_PATH_VALUE));
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
+        givenTaskProcessingStateIsMarkedAs(entry, entry.tasks().get(0), ProcessingState.COMPLETE);
 
         simpleResultProcessor.processResults(gtfs2netexMessage, entry, conversionTask);
     }

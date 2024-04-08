@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -65,6 +66,7 @@ class InternalRuleResultProcessorTests extends ResultProcessorTestBase {
     void registersResultPackageAsIs() {
         givenPackageIsRegistered();
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
+        givenTaskProcessingStateIsMarkedAs(entry, entry.tasks().get(0), ProcessingState.COMPLETE);
 
         resultProcessor.processResults(downloadMessage, entry, downloadTask);
 

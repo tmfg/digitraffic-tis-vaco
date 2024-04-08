@@ -35,7 +35,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -87,7 +86,11 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     }
 
     private Entry createEntryForTesting() {
-        return entryService.create(TestObjects.anEntry("gtfs").addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL)).build()).get();
+        return entryService.create(
+            TestObjects.anEntry("gtfs")
+                .addValidations(ImmutableValidationInput.of(RuleName.GTFS_CANONICAL))
+                .build())
+            .get();
     }
 
     @Test
@@ -99,17 +102,17 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         String testQueueName = createSqsQueue();
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
-        Task task = taskService.findTask(entry.publicId(), RulesetSubmissionService.VALIDATE_TASK).get();
-        rulesetSubmissionService.submitRules(
+        Task task = taskService.findTask(entry.publicId(), RuleName.GTFS_CANONICAL).get();
+        rulesetSubmissionService.submitTask(
             entry,
             task,
             // DownloadRule produces just a single file so this is OK
-            Set.of(TestObjects.aRuleset()
+            TestObjects.aRuleset()
                 .identifyingName(RuleName.GTFS_CANONICAL)
                 .description("running rule from tests")
                 .category(Category.SPECIFIC)
                 .format(TransitDataFormat.GTFS)
-                .build()));
+                .build());
 
         // read generated messages from queue
         List<ValidationRuleJobMessage> messages = messagingService.readMessages(testQueueName).map(m -> {
@@ -127,7 +130,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         // NOTE: the task name repeats the matching task name on purpose
         assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL + "/rules/" + RuleName.GTFS_CANONICAL + "/input"));
         assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL + "/rules/" + RuleName.GTFS_CANONICAL + "/output"));
-        assertThat(message.source(), equalTo(RulesetSubmissionService.VALIDATE_TASK));
+        assertThat(message.source(), equalTo(RuleName.GTFS_CANONICAL));
     }
 
     @NotNull

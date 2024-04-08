@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -36,5 +37,9 @@ public abstract class ResultProcessorTestBase {
 
     protected void givenTaskStatusIsMarkedAs(Entry entry, Status status) {
         given(taskService.markStatus(eq(entry), any(), eq(status))).will(a -> a.getArgument(1));
+    }
+
+    protected void givenTaskProcessingStateIsMarkedAs(Entry entry, Task task, ProcessingState processingState) {
+        given(taskService.trackTask(eq(entry), eq(task), eq(processingState))).will(a -> a.getArgument(1));
     }
 }

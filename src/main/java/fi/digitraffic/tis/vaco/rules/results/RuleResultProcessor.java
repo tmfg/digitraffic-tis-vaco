@@ -4,6 +4,7 @@ import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -99,8 +100,8 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     }
 
     protected void resolveTaskStatus(Entry entry, Task task) {
-    Map<String, Long> severities = findingService.summarizeFindingsSeverities(task);
-        logger.debug("{}/{} produced findings {}", entry.publicId(), task.name(), severities);
+        Map<String, Long> severities = findingService.summarizeFindingsSeverities(task);
+        logger.debug("{}/{} ({}) produced findings {}", entry.publicId(), task.name(), task.publicId(), severities);
         if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
             || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
             taskService.markStatus(entry, task, Status.ERRORS);
@@ -109,6 +110,7 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         } else {
             taskService.markStatus(entry, task, Status.SUCCESS);
         }
+        taskService.trackTask(entry, task, ProcessingState.COMPLETE);
     }
 
     protected boolean storeFindings(List<Finding> findings) {

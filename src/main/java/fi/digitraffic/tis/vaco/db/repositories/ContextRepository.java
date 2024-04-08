@@ -66,7 +66,7 @@ public class ContextRepository {
                 RowMappers.CONTEXT_RECORD,
                 entry.context()));
         } catch (DataAccessException dae) {
-            logger.warn("Failed to find context record", dae);
+            logger.warn("Failed to find context record for context %s/%s".formatted(entry.publicId(), entry.context()), dae);
             return Optional.empty();
         }
     }

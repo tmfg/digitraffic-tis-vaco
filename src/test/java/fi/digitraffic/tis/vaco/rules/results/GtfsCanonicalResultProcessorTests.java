@@ -3,11 +3,12 @@ package fi.digitraffic.tis.vaco.rules.results;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -21,7 +22,6 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -96,7 +96,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
                 TransitDataFormat.GTFS)
-            .withDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK, RulesetSubmissionService.VALIDATE_TASK));
+            .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
     }
 
     @AfterEach
@@ -113,6 +113,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
+        givenTaskProcessingStateIsMarkedAs(entry, task, ProcessingState.COMPLETE);
 
         resultProcessor.processResults(resultMessage, entry, task);
 
@@ -132,6 +133,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
+        givenTaskProcessingStateIsMarkedAs(entry, task, ProcessingState.COMPLETE);
 
         resultProcessor.processResults(resultMessage, entry, task);
 

@@ -85,20 +85,22 @@ public final class RowMappers {
         .category(Category.forField(rs.getString("category")))
         .type(Type.forField(rs.getString("type")))
         .format(TransitDataFormat.forField(rs.getString("format")))
-        .dependencies(Set.of(ArraySqlValue.read(rs, "dependencies")))
+        .beforeDependencies(Set.of(ArraySqlValue.read(rs, "before_dependencies")))
+        .afterDependencies(Set.of(ArraySqlValue.read(rs, "after_dependencies")))
         .build();
 
     public static final RowMapper<Task> TASK = (rs, rowNum) -> ImmutableTask.builder()
-            .id(rs.getLong("id"))
-            .entryId(rs.getLong("entry_id"))
-            .name(rs.getString("name"))
-            .priority(rs.getInt("priority"))
-            .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
-            .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
-            .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
-            .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
-            .status(Status.forField(rs.getString("status")))
-            .build();
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .entryId(rs.getLong("entry_id"))
+        .name(rs.getString("name"))
+        .priority(rs.getInt("priority"))
+        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
+        .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
+        .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
+        .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
+        .status(Status.forField(rs.getString("status")))
+        .build();
 
     public static final RowMapper<Status> STATUS = (rs, rowNum) -> Status.forField(rs.getString("status"));
 
@@ -239,7 +241,7 @@ public final class RowMappers {
             .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
             .notifications(List.of(ArraySqlValue.read(rs, "notifications")))
             .status(Status.forField(rs.getString("status")))
-            .context(rs.getLong("context_id"))
+            .context(nullableLong(rs, "context_id"))
             .build();
     }
 

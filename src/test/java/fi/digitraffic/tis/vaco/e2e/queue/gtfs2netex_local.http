@@ -17,11 +17,11 @@ Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
 {
-  "url": "https://finap.finferries.fi/share/Reitit20042021.zip",
+  "url": "https://tvv.fra1.digitaloceanspaces.com/211.zip",
   "format": "gtfs",
   "businessId": "2942108-7",
   "etag": "etagg",
-  "name": "Finferries (Suomen Lauttaliikenne Oy, Suomen Saaristovarustamo Oy) / GTFS / FINAP (2790/4103/1003)",
+  "name": "Waltti Kajaani",
   "conversions": [{
     "name": "gtfs2netex.fintraffic",
     "config": {}
