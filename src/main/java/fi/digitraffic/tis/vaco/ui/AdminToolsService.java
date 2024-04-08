@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.ui;
 
 import com.opencsv.CSVWriter;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.me.MeService;
@@ -69,7 +70,7 @@ public class AdminToolsService {
         List<CompanyLatestEntry> data = adminToolsRepository.getDataDeliveryOverview(null);
         String currentBusinessId = "";
         for (CompanyLatestEntry entry : data) {
-            boolean isPublicValidationTest = entry.companyName().equals("public-validation-test");
+            boolean isPublicValidationTest = entry.businessId().equals(Constants.PUBLIC_VALIDATION_TEST_ID);
             String companyNameToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.companyName();
             String businessIdToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.businessId();
 
