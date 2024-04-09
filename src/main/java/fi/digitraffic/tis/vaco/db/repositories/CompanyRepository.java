@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,10 +29,12 @@ public class CompanyRepository {
 
     private final JdbcTemplate jdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
+    private final RecordMapper recordMapper;
 
-    public CompanyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
+    public CompanyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc, RecordMapper recordMapper) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
+        this.recordMapper = recordMapper;
     }
 
     public CompanyRecord create(Company company) {
@@ -104,14 +107,15 @@ public class CompanyRepository {
             RowMappers.COMPANY));
     }
 
-    public Company updateAdGroupId(Company company, String adGroupId) {
-        return jdbc.queryForObject("""
+    public CompanyRecord updateAdGroupId(CompanyRecord company, String adGroupId) {
+        return jdbc.queryForObject(
+            """
                 UPDATE company
                    SET ad_group_id = ?
                  WHERE id = ?
              RETURNING *
             """,
-            RowMappers.COMPANY,
+            RowMappers.COMPANY_RECORD,
             adGroupId,
             company.id());
     }
@@ -134,66 +138,89 @@ public class CompanyRepository {
         // 2a. find hierarchy links for root
         List<IntermediateHierarchyLink> hierarchyLinks = findHierarchyLinks(rootId);
 
-        // 2b. create lookup for business id->entity
-        Map<Long, Company> companiesbyId = hierarchyLinks.stream().collect(
+        // 2b. load all distinct companies in hierarchy
+        Set<Long> companyIds = Streams.concat(
+                Streams.map(hierarchyLinks, IntermediateHierarchyLink::parentId).stream(),
+                Streams.map(hierarchyLinks, IntermediateHierarchyLink::childId).stream())
+            .filter(Objects::nonNull)
+            .toSet();
+        List<CompanyRecord> companies = findAlLByIds(companyIds);
+
+        // 2c. create lookup for id->entity
+        Map<Long, CompanyRecord> companiesbyId = companies.stream().collect(
             Collectors.toMap(
-                IntermediateHierarchyLink::childId,
-                IntermediateHierarchyLink::company,
+                CompanyRecord::id,
+                Function.identity(),
                 (company1, company2) -> company2));
 
-        // 2c. create lookup for getting children of each parent
+        // 2d. create lookup for getting children of each parent
         Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren = hierarchyLinks.stream()
             .filter(l -> l.parentId() != null)
             .collect(Collectors.groupingBy(IntermediateHierarchyLink::parentId));
 
-        // 2d. construct the hierarchy
+        // 2e. construct the hierarchy
         return buildHierarchy(companiesbyId.get(rootId), companiesbyId, parentsAndChildren);
     }
 
-    private static Hierarchy buildHierarchy(Company company,
-                                            Map<Long, Company> companiesbyId,
-                                            Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
+    private List<CompanyRecord> findAlLByIds(Set<Long> companyIds) {
+        return namedJdbc.query(
+            """
+            SELECT DISTINCT *
+              FROM company c
+             WHERE id IN (:companyIds)
+            """,
+            new MapSqlParameterSource()
+                .addValue("companyIds", companyIds),
+            RowMappers.COMPANY_RECORD);
+    }
+
+    private Hierarchy buildHierarchy(CompanyRecord company,
+                                     Map<Long, CompanyRecord> companiesbyId,
+                                     Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
         ImmutableHierarchy.Builder builder = ImmutableHierarchy.builder();
         resolveHierarchy(company, builder, companiesbyId, parentsAndChildren);
         return builder.build();
     }
 
     private List<IntermediateHierarchyLink> findHierarchyLinks(Long root) {
-        return jdbc.query("""
-            WITH RECURSIVE
-                hierarchy AS (SELECT id AS child_id, NULL::BIGINT AS parent_id
-                                FROM root
-                               UNION ALL
-                              SELECT ps.partner_b_id, ps.partner_a_id
-                                FROM hierarchy
-                                         JOIN
-                                     partnership ps
-                                     ON ps.partner_a_id = hierarchy.child_id),
-                root AS (SELECT ? AS id)
-          SELECT DISTINCT *
-            FROM hierarchy h
-            LEFT JOIN company c ON h.child_id = c.id
-             """,
+        return jdbc.query(
+            """
+              WITH RECURSIVE
+                  hierarchy AS (SELECT id AS child_id, NULL::BIGINT AS parent_id
+                                  FROM root
+                                 UNION ALL
+                                SELECT ps.partner_b_id, ps.partner_a_id
+                                  FROM hierarchy
+                                           JOIN
+                                       partnership ps
+                                       ON ps.partner_a_id = hierarchy.child_id),
+                  root AS (SELECT ? AS id)
+            SELECT DISTINCT *
+              FROM hierarchy h
+            """,
             RowMappers.INTERMEDIATE_HIERARCHY_LINK,
             root);
     }
 
     private Set<Long> findHierarchyRoots() {
-        return Set.copyOf(jdbc.queryForList("""
-                SELECT DISTINCT id FROM company c WHERE c.id NOT IN (SELECT DISTINCT partner_b_id FROM partnership)
-                """,
+        return Set.copyOf(jdbc.queryForList(
+            """
+            SELECT DISTINCT id
+              FROM company c
+             WHERE c.id NOT IN (SELECT DISTINCT partner_b_id FROM partnership)
+            """,
             Long.class));
     }
 
-    private static void resolveHierarchy(Company parent,
-                                         ImmutableHierarchy.Builder builder,
-                                         Map<Long, Company> companiesbyBusinessId,
-                                         Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
-        builder.company(parent);
+    private void resolveHierarchy(CompanyRecord parent,
+                                  ImmutableHierarchy.Builder builder,
+                                  Map<Long, CompanyRecord> companiesbyBusinessId,
+                                  Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
+        builder.company(recordMapper.toCompany(parent));
         List<IntermediateHierarchyLink> children = parentsAndChildren.getOrDefault(parent.id(), List.of());
         builder.addAllChildren(Streams.collect(children, child -> {
                 ImmutableHierarchy.Builder b = ImmutableHierarchy.builder();
-                b.company(companiesbyBusinessId.get(child.parentId()));
+                b.company(recordMapper.toCompany(companiesbyBusinessId.get(child.parentId())));
                 if (child.childId() != null) {
                     resolveHierarchy(companiesbyBusinessId.get(child.childId()), b, companiesbyBusinessId, parentsAndChildren);
                 }

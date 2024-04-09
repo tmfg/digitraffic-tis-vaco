@@ -14,6 +14,4 @@ public interface IntermediateHierarchyLink {
 
     @Nullable
     Long childId();
-
-    Company company();
 }

@@ -234,7 +234,6 @@ public final class RowMappers {
     public static final RowMapper<IntermediateHierarchyLink> INTERMEDIATE_HIERARCHY_LINK = (rs, rowNum) -> ImmutableIntermediateHierarchyLink.builder()
         .parentId(nullableLong(rs, "parent_id"))
         .childId(nullableLong(rs, "child_id"))
-        .company(COMPANY.mapRow(rs, rowNum))
         .build();
 
     private static Long nullableLong(ResultSet rs, String columnLabel) throws SQLException {

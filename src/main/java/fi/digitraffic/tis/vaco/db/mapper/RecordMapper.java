@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Map various repository <code>Record</code> types into datamodel equivalents.
@@ -119,11 +120,13 @@ public class RecordMapper {
             .build();
     }
 
-    public Partnership toPartnership(PartnershipRecord partnership, CompanyRecord partnerA, CompanyRecord partnerB) {
+    public Partnership toPartnership(PartnershipRecord partnership,
+                                     Function<Long, Company> partnerALoader,
+                                     Function<Long, Company> partnerBLoader) {
         return ImmutablePartnership.of(
             partnership.type(),
-            toCompany(partnerA),
-            toCompany(partnerB)
+            partnerALoader.apply(partnership.partnerA()),
+            partnerBLoader.apply(partnership.partnerB())
         );
     }
 }

@@ -89,7 +89,10 @@ public class CompanyHierarchyService {
     }
 
     public Company updateAdGroupId(Company company, String groupId) {
-        return companyRepository.updateAdGroupId(company, groupId);
+        return companyRepository.findByBusinessId(company.businessId())
+            .map(c -> companyRepository.updateAdGroupId(c, groupId))
+            .map(recordMapper::toCompany)
+            .get();  // TODO: feels slightly wrong but works
     }
 
     public boolean isChildOfAny(Set<Company> possibleParents, String childBusinessId) {
@@ -159,7 +162,9 @@ public class CompanyHierarchyService {
         if (pA.isPresent() && pB.isPresent()) {
             PartnershipRecord partnership = partnershipRepository.create(partnershipType, pA.get(), pB.get());
             reloadRootHierarchies();
-            return Optional.of(recordMapper.toPartnership(partnership, pA.get(), pB.get()));
+            return Optional.of(recordMapper.toPartnership(partnership,
+                                                          id -> recordMapper.toCompany(pA.get()),
+                                                          id -> recordMapper.toCompany(pB.get())));
         } else {
             return Optional.empty();
         }
@@ -175,8 +180,10 @@ public class CompanyHierarchyService {
         Optional<CompanyRecord> a = companyRepository.findByBusinessId(partnerA.businessId());
         Optional<CompanyRecord> b = companyRepository.findByBusinessId(partnerB.businessId());
         if (a.isPresent() && b.isPresent()) {
-
-            return partnershipRepository.findByIds(partnershipType, a.get(), b.get());
+            return partnershipRepository.findByIds(partnershipType, a.get(), b.get())
+                .map(p -> recordMapper.toPartnership(p,
+                                                     id -> recordMapper.toCompany(a.get()),
+                                                     id -> recordMapper.toCompany(b.get())));
         } else {
             return Optional.empty();
         }
