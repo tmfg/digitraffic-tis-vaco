@@ -68,7 +68,7 @@ public class CompanyHierarchyService {
         return Optional.of(companyRepository.create(company)).map(recordMapper::toCompany);
     }
 
-    public Company editCompany(String businessId,Company company) {
+    public Company editCompany(String businessId, Company company) {
         return companyRepository.update(businessId, company);
     }
 

@@ -38,29 +38,37 @@ public class CompanyRepository {
     }
 
     public CompanyRecord create(Company company) {
-        return jdbc.queryForObject("""
-                INSERT INTO company(business_id, name, contact_emails)
-                     VALUES (?, ?, ?)
-                  RETURNING *
-                """,
-                RowMappers.COMPANY_RECORD,
-                company.businessId(),
+        return jdbc.queryForObject(
+            """
+            INSERT INTO company(business_id, name, contact_emails, publish)
+                 VALUES (?, ?, ?, ?)
+              RETURNING *
+            """,
+            RowMappers.COMPANY_RECORD,
+            company.businessId(),
             company.name(),
-            ArraySqlValue.create(company.contactEmails().toArray(new String[0])));
+            ArraySqlValue.create(company.contactEmails().toArray(new String[0])),
+            company.publish());
     }
 
     public Company update(String businessId, Company company) {
-        return jdbc.queryForObject("""
-                UPDATE company
-                    SET name = ?, language = (?)::company_language, ad_group_id = ?, contact_emails = ?
-                    WHERE business_id = ?
-                  RETURNING *
-                """,
+        return jdbc.queryForObject(
+            """
+              UPDATE company
+                  SET name = ?,
+                      language = (?)::company_language,
+                      ad_group_id = ?,
+                      contact_emails = ?,
+                      publish = ?
+                WHERE business_id = ?
+            RETURNING *
+            """,
             RowMappers.COMPANY,
             company.name(),
             company.language(),
             company.adGroupId(),
             ArraySqlValue.create(company.contactEmails().toArray(new String[0])),
+            company.publish(),
             businessId);
     }
 
@@ -229,13 +237,15 @@ public class CompanyRepository {
     }
 
     public Map<String, Company> findAlLByIds() {
-        return Streams.collect(jdbc.query("""
-            SELECT *
-            FROM company
-            """,
-                RowMappers.COMPANY)
-            ,
-            Company::businessId, Function.identity());
+        return Streams.collect(
+            jdbc.query(
+                """
+                SELECT *
+                  FROM company
+                """,
+                RowMappers.COMPANY),
+            Company::businessId,
+            Function.identity());
     }
 
     public boolean deleteByBusinessId(String businessId) {

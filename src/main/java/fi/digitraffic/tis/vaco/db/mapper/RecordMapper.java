@@ -117,6 +117,7 @@ public class RecordMapper {
             .contactEmails(companyRecord.contactEmails())
             .language(companyRecord.language())
             .adGroupId(companyRecord.adGroupId())
+            .publish(companyRecord.publish())
             .build();
     }
 

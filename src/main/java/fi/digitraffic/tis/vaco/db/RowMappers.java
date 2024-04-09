@@ -11,9 +11,7 @@ import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
-import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
-import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
@@ -123,26 +121,19 @@ public final class RowMappers {
             .language(rs.getString(alias + "language"))
             .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
             .adGroupId(rs.getString(alias + "ad_group_id"))
-            .build();
-
-    public static final Function<String, RowMapper<CompanyRecord>> ALIASED_COMPANY_RECORD = alias ->
-        (rs, rowNum) -> ImmutableCompanyRecord.builder()
-            .id(rs.getLong(alias + "id"))
-            .businessId(rs.getString(alias + "business_id"))
-            .name(rs.getString(alias + "name"))
-            .language(rs.getString(alias + "language"))
-            .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
-            .adGroupId(rs.getString(alias + "ad_group_id"))
+            .publish(rs.getBoolean(alias + "publish"))
             .build();
 
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
-    public static final RowMapper<CompanyRecord> COMPANY_RECORD = ALIASED_COMPANY_RECORD.apply("");
-
-    public static final RowMapper<Partnership> PARTNERSHIP = (rs, rowNum) -> ImmutablePartnership.builder()
-            .type(PartnershipType.forField(rs.getString("type")))
-            .partnerA(ALIASED_COMPANY.apply("partner_a_").mapRow(rs, rowNum))
-            .partnerB(ALIASED_COMPANY.apply("partner_b_").mapRow(rs, rowNum))
+    public static final RowMapper<CompanyRecord> COMPANY_RECORD = (rs, rowNum) -> ImmutableCompanyRecord.builder()
+            .id(rs.getLong("id"))
+            .businessId(rs.getString("business_id"))
+            .name(rs.getString("name"))
+            .language(rs.getString("language"))
+            .contactEmails(List.of(ArraySqlValue.read(rs, "contact_emails")))
+            .adGroupId(rs.getString("ad_group_id"))
+            .publish(rs.getBoolean("publish"))
             .build();
 
     public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(

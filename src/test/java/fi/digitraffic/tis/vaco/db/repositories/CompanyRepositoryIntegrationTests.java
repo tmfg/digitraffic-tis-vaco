@@ -26,10 +26,10 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void loadHierarchyWorks() {
-        Company root = companyHierarchyService.createCompany(ImmutableCompany.of("312233-4", "Kompany Ky")).get();
-        Company childA = companyHierarchyService.createCompany(ImmutableCompany.of("112233-5", "Virma Oy")).get();
-        Company childB = companyHierarchyService.createCompany(ImmutableCompany.of("112233-6", "Puulaaki Oyj")).get();
-        Company grandchildC = companyHierarchyService.createCompany(ImmutableCompany.of("112233-7", "Limited Ltd.")).get();
+        Company root = companyHierarchyService.createCompany(ImmutableCompany.of("312233-4", "Kompany Ky", true)).get();
+        Company childA = companyHierarchyService.createCompany(ImmutableCompany.of("112233-5", "Virma Oy", true)).get();
+        Company childB = companyHierarchyService.createCompany(ImmutableCompany.of("112233-6", "Puulaaki Oyj", true)).get();
+        Company grandchildC = companyHierarchyService.createCompany(ImmutableCompany.of("112233-7", "Limited Ltd.", true)).get();
 
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childA);
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childB);
@@ -52,16 +52,18 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void testEditCompany() {
-        Company company = companyHierarchyService.createCompany(ImmutableCompany.of("112233-4", "Kompany Ky")).get();
+        Company company = companyHierarchyService.createCompany(ImmutableCompany.of("112233-4", "Kompany Ky", true)).get();
         Company companyToUpdate = ImmutableCompany.copyOf(company)
             .withName("Some company")
             .withAdGroupId("ad")
             .withContactEmails(List.of("email"))
-            .withLanguage("en");
+            .withLanguage("en")
+            .withPublish(false);
         Company updatedCompany = companyRepository.update(companyToUpdate.businessId(), companyToUpdate);
         assertThat(updatedCompany.name(), equalTo(companyToUpdate.name()));
         assertThat(updatedCompany.adGroupId(), equalTo(companyToUpdate.adGroupId()));
         assertThat(updatedCompany.contactEmails(), equalTo(companyToUpdate.contactEmails()));
         assertThat(updatedCompany.language(), equalTo(companyToUpdate.language()));
+        assertThat(updatedCompany.publish(), equalTo(companyToUpdate.publish()));
     }
 }

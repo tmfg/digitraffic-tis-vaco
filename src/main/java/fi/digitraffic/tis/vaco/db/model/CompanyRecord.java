@@ -29,4 +29,7 @@ public interface CompanyRecord {
 
     @Nullable
     String adGroupId();
+
+    @Value.Parameter
+    boolean publish();
 }

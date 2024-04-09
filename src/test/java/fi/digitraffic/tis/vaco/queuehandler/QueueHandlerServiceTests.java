@@ -58,7 +58,7 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
             .metadata(metadata)
             .build();
 
-        fintrafficCompany = ImmutableCompany.of(Constants.FINTRAFFIC_BUSINESS_ID, TestConstants.FINTRAFFIC_COMPANY_NAME);
+        fintrafficCompany = ImmutableCompany.of(Constants.FINTRAFFIC_BUSINESS_ID, TestConstants.FINTRAFFIC_COMPANY_NAME, true);
     }
 
     @Test

@@ -44,4 +44,7 @@ public interface Company {
     @Nullable
     @JsonView(DataVisibility.AdminRestricted.class)
     String adGroupId();
+
+    @Value.Parameter
+    boolean publish();
 }
