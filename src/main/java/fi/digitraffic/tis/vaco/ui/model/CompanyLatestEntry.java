@@ -20,6 +20,8 @@ public interface CompanyLatestEntry {
     @Nullable
     String feedName();
     @Nullable
+    String context();
+    @Nullable
     String url();
     @Nullable
     String format();

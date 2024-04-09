@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.entries;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
@@ -206,17 +205,5 @@ public class EntryRepository {
             logger.warn("Failed to find all for business ids", erdae);
             return List.of();
         }
-    }
-
-    public List<PersistentEntry> findLatestEntries(Company company) {
-        return jdbc.query("""
-            SELECT e.*
-              FROM (SELECT e.*, ROW_NUMBER() OVER (PARTITION BY format ORDER BY created DESC) r
-                      FROM entry e
-                      WHERE e.business_id = ?) AS e
-             WHERE e.r = 1
-            """,
-            RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
-            company.businessId());
     }
 }
