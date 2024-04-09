@@ -14,10 +14,10 @@ class LightweightHierarchyTests {
 
     @Test
     void canLookupChildren() {
-        Company root = ImmutableCompany.of("112233-4", "Kompany Ky");
-        Company childA = ImmutableCompany.of("112233-5", "Virma Oy");
-        Company childB = ImmutableCompany.of("112233-6", "Puulaaki Oyj");
-        Company grandchildC = ImmutableCompany.of("112233-7", "Limited Ltd.");
+        Company root = ImmutableCompany.of("112233-4", "Kompany Ky", true);
+        Company childA = ImmutableCompany.of("112233-5", "Virma Oy", true);
+        Company childB = ImmutableCompany.of("112233-6", "Puulaaki Oyj", true);
+        Company grandchildC = ImmutableCompany.of("112233-7", "Limited Ltd.", true);
 
         LightweightHierarchy h = ImmutableLightweightHierarchy.of(
             root.businessId(),
@@ -42,9 +42,9 @@ class LightweightHierarchyTests {
 
     @Test
     void canConvertHierarchyToLightweightHierarchy() {
-        Company root = ImmutableCompany.of("123456-7", "Pelit ja Vehkeet Oy");
-        Company child = ImmutableCompany.of("101010-1", "Kainuun Keksi ja Kalarehu Oy");
-        Company grandhild = ImmutableCompany.of("1717171-7", "Arvat ja ja Luulot Oy");
+        Company root = ImmutableCompany.of("123456-7", "Pelit ja Vehkeet Oy", true);
+        Company child = ImmutableCompany.of("101010-1", "Kainuun Keksi ja Kalarehu Oy", true);
+        Company grandhild = ImmutableCompany.of("1717171-7", "Arvat ja ja Luulot Oy", true);
 
         Hierarchy fullHierarchy = ImmutableHierarchy.builder()
             .company(root)
@@ -70,9 +70,9 @@ class LightweightHierarchyTests {
 
     @Test
     void canConvertLightweightHierarchyToHierarchy() {
-        Company root = ImmutableCompany.of("123456-7", "Pelit ja Vehkeet Oy");
-        Company child = ImmutableCompany.of("101010-1", "Kainuun Keksi ja Kalarehu Oy");
-        Company grandchild = ImmutableCompany.of("1717171-7", "Arvat ja ja Luulot Oy");
+        Company root = ImmutableCompany.of("123456-7", "Pelit ja Vehkeet Oy", true);
+        Company child = ImmutableCompany.of("101010-1", "Kainuun Keksi ja Kalarehu Oy", true);
+        Company grandchild = ImmutableCompany.of("1717171-7", "Arvat ja ja Luulot Oy", true);
 
         LightweightHierarchy lightweightHierarchy = ImmutableLightweightHierarchy.builder()
             .businessId(root.businessId())

@@ -80,7 +80,8 @@ public class TestObjects {
     public static ImmutableCompany.Builder aCompany() {
         return ImmutableCompany.builder()
             .businessId(randomBusinessId())
-            .name("company:name:" + UUID.randomUUID());
+            .name("company:name:" + UUID.randomUUID())
+            .publish(true);
     }
 
     private static String randomBusinessId() {

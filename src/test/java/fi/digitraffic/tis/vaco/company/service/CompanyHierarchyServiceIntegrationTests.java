@@ -20,12 +20,12 @@ class CompanyHierarchyServiceIntegrationTests extends SpringBootIntegrationTestB
 
     @Test
     void truncatedHierarchyWorks() {
-        Company root = companyHierarchyService.createCompany(ImmutableCompany.of("112233-4", "Kompany Ky")).get();
-        Company childA = companyHierarchyService.createCompany(ImmutableCompany.of("112233-5", "Virma Oy")).get();
-        Company childB = companyHierarchyService.createCompany(ImmutableCompany.of("112233-6", "Puulaaki Oyj")).get();
-        Company grandchildC = companyHierarchyService.createCompany(ImmutableCompany.of("112233-7", "Limited Ltd.")).get();
-        Company grandchildD = companyHierarchyService.createCompany(ImmutableCompany.of("112233-8", "Limited Ltd.")).get();
-        Company grandGrandchild = companyHierarchyService.createCompany(ImmutableCompany.of("112235-9", "Hmm Ltd.")).get();
+        Company root = companyHierarchyService.createCompany(ImmutableCompany.of("112233-4", "Kompany Ky", true)).get();
+        Company childA = companyHierarchyService.createCompany(ImmutableCompany.of("112233-5", "Virma Oy", true)).get();
+        Company childB = companyHierarchyService.createCompany(ImmutableCompany.of("112233-6", "Puulaaki Oyj", true)).get();
+        Company grandchildC = companyHierarchyService.createCompany(ImmutableCompany.of("112233-7", "Limited Ltd.", true)).get();
+        Company grandchildD = companyHierarchyService.createCompany(ImmutableCompany.of("112233-8", "Limited Ltd.", true)).get();
+        Company grandGrandchild = companyHierarchyService.createCompany(ImmutableCompany.of("112235-9", "Hmm Ltd.", true)).get();
 
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childA);
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childB);

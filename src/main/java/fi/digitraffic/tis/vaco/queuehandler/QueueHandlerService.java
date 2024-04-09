@@ -29,11 +29,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import static fi.digitraffic.tis.Constants.FINTRAFFIC_BUSINESS_ID;
 
@@ -146,7 +144,7 @@ public class QueueHandlerService {
             String callerName = caller.asText();
             if ("FINAP".equals(callerName)) {
                 String finapOperator = operatorName.asText();
-                ImmutableCompany operatorCompany = ImmutableCompany.of(businessId, finapOperator);
+                ImmutableCompany operatorCompany = ImmutableCompany.of(businessId, finapOperator, true);
                 Optional<Company> createdCompany = companyHierarchyService.createCompany(operatorCompany);
 
                 createdCompany.ifPresent(newOperator -> {

@@ -2,7 +2,8 @@ package fi.digitraffic.tis.vaco.admintasks;
 
 import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.repository.CompanyHierarchyRepository;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
+import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -19,11 +20,11 @@ public class AdminTaskRepository {
 
     private final JdbcTemplate jdbc;
 
-    private final CompanyHierarchyRepository companyHierarchyRepository;
+    private final CompanyRepository companyRepository;
 
-    public AdminTaskRepository(JdbcTemplate jdbc, CompanyHierarchyRepository companyHierarchyRepository) {
+    public AdminTaskRepository(JdbcTemplate jdbc, CompanyRepository companyRepository) {
         this.jdbc = Objects.requireNonNull(jdbc);
-        this.companyHierarchyRepository = Objects.requireNonNull(companyHierarchyRepository);
+        this.companyRepository = Objects.requireNonNull(companyRepository);
     }
 
     public GroupIdMappingTask create(GroupIdMappingTask task) {
@@ -52,20 +53,23 @@ public class AdminTaskRepository {
     }
 
     @Transactional
-    public Pair<GroupIdMappingTask, Company> resolve(GroupIdMappingTask task, Company company) {
-        GroupIdMappingTask updatedTask = jdbc.queryForObject("""
-                UPDATE admin_groupid
-                   SET completed = NOW()
-                 WHERE id = ? OR public_id = ?
-             RETURNING *
-            """,
-            RowMappers.ADMIN_GROUPID,
-            task.id(),
-            task.publicId());
+    public Pair<GroupIdMappingTask, CompanyRecord> resolve(GroupIdMappingTask task, Company company) {
+        return companyRepository.findByBusinessId(company.businessId())
+            .map(c -> {
+                GroupIdMappingTask updatedTask = jdbc.queryForObject(
+                    """
+                       UPDATE admin_groupid
+                          SET completed = NOW()
+                        WHERE id = ? OR public_id = ?
+                    RETURNING *
+                    """,
+                    RowMappers.ADMIN_GROUPID,
+                    task.id(),
+                    task.publicId());
+                CompanyRecord updatedCompany = companyRepository.updateAdGroupId(c, task.groupId());
 
-        Company updatedCompany = companyHierarchyRepository.updateAdGroupId(company, task.groupId());
-
-        return Pair.of(updatedTask, updatedCompany);
+                return Pair.of(updatedTask, updatedCompany);
+            }).orElse(null);
     }
 
     public GroupIdMappingTask resolveSkipped(GroupIdMappingTask task) {

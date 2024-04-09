@@ -14,13 +14,19 @@ import java.util.List;
 @JsonDeserialize(as = ImmutableCompany.class)
 public interface Company {
 
+    /**
+     * @deprecated If you need `id`, use {@link fi.digitraffic.tis.vaco.db.model.CompanyRecord} Otherwise
+     *             refer to company uniqueness through {@link #businessId()}
+     */
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)
+    @Deprecated(since = "2024-04-08")
     Long id();
 
     @Value.Parameter
     String businessId();
 
+    @Nullable
     @Value.Parameter
     String name();
 
@@ -38,4 +44,7 @@ public interface Company {
     @Nullable
     @JsonView(DataVisibility.AdminRestricted.class)
     String adGroupId();
+
+    @Value.Parameter
+    boolean publish();
 }
