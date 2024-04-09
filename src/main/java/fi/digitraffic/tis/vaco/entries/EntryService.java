@@ -171,4 +171,9 @@ public class EntryService {
         cachingService.invalidateEntry(entry.publicId());
         return findEntry(entry.publicId()).get();
     }
+
+    public Optional<Entry> findLatestEntryForContext(String businessId, String context) {
+        return entryRepository.findLatestForBusinessIdAndContext(businessId, context)
+            .map(er -> recordMapper.toEntryBuilder(er, contextRepository.find(er)).build());
+    }
 }
