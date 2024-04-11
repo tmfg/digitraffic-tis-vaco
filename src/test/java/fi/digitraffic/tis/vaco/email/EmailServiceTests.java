@@ -1,8 +1,10 @@
 package fi.digitraffic.tis.vaco.email;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.AwsIntegrationTestBase;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -13,10 +15,10 @@ import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import fi.digitraffic.tis.vaco.ui.model.MagicToken;
 import io.burt.jmespath.jackson.JacksonRuntime;
@@ -34,6 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -51,14 +54,15 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     private ObjectMapper objectMapper;
     private JacksonRuntime jmesPath;
     private VacoProperties vacoProperties;
-    @Mock
-    private EntryRepository entryRepository;
+
     @Mock
     private CompanyHierarchyService companyHierarchyService;
     @Mock
     private FeatureFlagsService featureFlagsService;
     @Mock
     private EncryptionService encryptionService;
+    @Mock
+    private AdminToolsRepository adminToolsRepository;
 
     @BeforeEach
     void setUp() {
@@ -72,8 +76,8 @@ class EmailServiceTests extends AwsIntegrationTestBase {
             sesClient,
             companyHierarchyService,
             featureFlagsService,
-            entryRepository,
-            encryptionService);
+            encryptionService,
+            adminToolsRepository);
     }
 
     @AfterEach
@@ -81,7 +85,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         // clear all received messages
         localstack.execInContainer("curl", "-X", "DELETE", "localhost.localstack.cloud:4566/_aws/ses");
 
-        verifyNoMoreInteractions(companyHierarchyService, featureFlagsService, entryRepository, encryptionService);
+        verifyNoMoreInteractions(companyHierarchyService, featureFlagsService, encryptionService, adminToolsRepository);
     }
 
     @BeforeAll
@@ -172,10 +176,17 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     @Test
     void weeklyStatusEmailIsSentToRelatedCompanyContacts() throws IOException, InterruptedException {
         Company org = TestObjects.aCompany().addContactEmails("organ@izati.on").build();
-        PersistentEntry entry = TestObjects.persistentEntry("gtfs").build();
+        ImmutableCompanyLatestEntry entry = ImmutableCompanyLatestEntry.builder()
+            .companyName("some company")
+            .feedName("testName")
+            .format("gtfs")
+            .url("https://testfile")
+            .publicId(NanoIdUtils.randomNanoId())
+            .businessId(Constants.FINTRAFFIC_BUSINESS_ID)
+            .build();
 
         BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(true);
-        BDDMockito.given(entryRepository.findLatestEntries(org)).willReturn(List.of(entry));
+        BDDMockito.given(adminToolsRepository.getDataDeliveryOverview(Set.of(org.businessId()))).willReturn(List.of(entry));
         BDDMockito.given(encryptionService.encrypt(any(MagicToken.class))).willAnswer(a -> "magic/link/for/" + ((ImmutableMagicToken) a.getArgument(0)).token());
 
         emailService.sendFeedStatusEmail(org);
