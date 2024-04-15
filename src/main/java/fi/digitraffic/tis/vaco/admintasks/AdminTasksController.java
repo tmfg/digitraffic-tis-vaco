@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.api.model.admintasks.CleanupResponse;
 import fi.digitraffic.tis.vaco.api.model.admintasks.ImmutableCleanupResponse;
 import fi.digitraffic.tis.vaco.cleanup.CleanupService;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ import static org.springframework.http.ResponseEntity.ok;
 @RestController
 @RequestMapping("/admin-tasks")
 @PreAuthorize("hasAuthority('vaco.admin') and hasAuthority('vaco.apiuser')")
+@Hidden
 public class AdminTasksController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());

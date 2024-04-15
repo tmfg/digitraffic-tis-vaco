@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ import static org.springframework.http.ResponseEntity.ok;
 @RestController
 @RequestMapping("/admin/caching")
 @PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
+@Hidden
 public class CachingController {
 
     private final CachingService cachingService;

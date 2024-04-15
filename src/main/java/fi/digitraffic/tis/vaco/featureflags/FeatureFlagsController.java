@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -24,6 +25,7 @@ import static org.springframework.http.ResponseEntity.ok;
 @RestController
 @RequestMapping("/feature-flags")
 @PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
+@Hidden
 public class FeatureFlagsController {
 
     private final FeatureFlagsService featureFlagsService;

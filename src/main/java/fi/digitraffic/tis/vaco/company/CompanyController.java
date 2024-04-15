@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 @RestController
 @RequestMapping("/company")
 @PreAuthorize("hasAuthority('vaco.apiuser') and hasAnyAuthority('vaco.company_admin')")
+@Hidden
 public class CompanyController {
 
     private final VacoProperties vacoProperties;
