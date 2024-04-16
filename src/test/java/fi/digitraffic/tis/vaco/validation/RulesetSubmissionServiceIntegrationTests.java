@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
+import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.TaskService;
@@ -96,7 +97,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     @Test
     void delegatesRuleProcessingToRuleSpecificQueueBasedOnRuleName() {
         when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
-            .thenReturn(CompletableFuture.supplyAsync(() -> Optional.ofNullable(response)));
+            .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.ofNullable(response)).build()));
 
         Entry entry = createEntryForTesting();
         String testQueueName = createSqsQueue();

@@ -176,4 +176,20 @@ public class EntryService {
         return entryRepository.findLatestForBusinessIdAndContext(businessId, context)
             .map(er -> recordMapper.toEntryBuilder(er, contextRepository.find(er)).build());
     }
+
+    /**
+     * Update given entry's etag to the given one.
+     * @param entry Entry to update
+     * @param etag New etag.
+     * @return Returns entry with updated etag if the update went through to database successfully
+     */
+    public Entry updateEtag(Entry entry, String etag) {
+        if (entryRepository.updateEtag(entry, etag)) {
+            ImmutableEntry updated = ImmutableEntry.copyOf(entry).withEtag(etag);
+            cachingService.updateEntry(entry.publicId(), updated);
+            return updated;
+        } else {
+            return entry;
+        }
+    }
 }

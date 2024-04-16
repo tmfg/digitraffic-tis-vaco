@@ -14,6 +14,7 @@ import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
+import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -134,19 +135,23 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     private Optional<S3Path> download(Entry entry, Path tempDirPath, Task tracked, S3Path ruleS3Output) {
         if (shouldDownload(entry)) {
             CompletableFuture<Optional<Path>> feedArchive;
+
             if (TransitDataFormat.GBFS.fieldName().equalsIgnoreCase(entry.format())) {
                 // GBFS feed is a directive pointing out to more files, so need to download them all separately and build a ZIP
                 feedArchive = httpClient.downloadFile(
                         TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".json"),
                         entry.url(),
                         entry.etag())
+                    .thenApply(updateEtag(entry))
                     .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
             } else {
                 // by default we assume single ZIP files, this applies to e.g. GTFS and NeTEx
                 feedArchive = httpClient.downloadFile(
                     TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip"),
                     entry.url(),
-                    entry.etag());
+                    entry.etag())
+                    .thenApply(updateEtag(entry))
+                    .thenApply(DownloadResponse::body);
             }
 
             return feedArchive.thenCompose(validateZip(entry, tracked))
@@ -161,6 +166,20 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         }
     }
 
+    /**
+     * Update current entry's etag if one was present in download to allow detection of stale/updated etags for further
+     * runs based on context link, if any.
+     *
+     * @param entry Entry to update.
+     * @return the same response, unmodified
+     */
+    private Function<DownloadResponse, DownloadResponse> updateEtag(Entry entry) {
+        return downloadResponse -> {
+            downloadResponse.etag().ifPresent(etag -> entryService.updateEtag(entry, etag));
+            return downloadResponse;
+        };
+    }
+
     private boolean shouldDownload(Entry entry) {
         if (entry.context() != null && entry.etag() != null) {
             Optional<Entry> previousEntry = entryService.findLatestEntryForContext(entry.businessId(), entry.context());
@@ -172,14 +191,14 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         return true;
     }
 
-    private Function<Optional<Path>, CompletionStage<Optional<Path>>> downloadGbfsDiscovery(Entry entry, Path tempDirPath) {
+    private Function<DownloadResponse, CompletionStage<Optional<Path>>> downloadGbfsDiscovery(Entry entry, Path tempDirPath) {
         return discoveryFile -> {
-            if (discoveryFile.isPresent()) {
+            if (discoveryFile.body().isPresent()) {
                 try {
                     Path discoveryDir = Files.createDirectories(tempDirPath.resolve("discovery"));
-                    Discovery discovery = objectMapper.readValue(discoveryFile.get().toFile(), Discovery.class);
+                    Discovery discovery = objectMapper.readValue(discoveryFile.body().get().toFile(), Discovery.class);
 
-                    List<CompletableFuture<Optional<Path>>> contents = Streams.flatten(discovery.data().values(), Map::values)
+                    List<CompletableFuture<DownloadResponse>> contents = Streams.flatten(discovery.data().values(), Map::values)
                         .flatten(Function.identity())
                         .map(feed -> httpClient.downloadFile(
                             TempFiles.getTaskTempFile(discoveryDir, feed.name() + ".json"),

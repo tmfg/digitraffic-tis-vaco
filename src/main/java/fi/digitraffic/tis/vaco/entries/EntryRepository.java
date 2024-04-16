@@ -243,4 +243,16 @@ public class EntryRepository {
             return Optional.empty();
         }
     }
+
+    public boolean updateEtag(Entry entry, String etag) {
+        return jdbc.update(
+            """
+            UPDATE entry
+               SET etag = ?
+             WHERE public_id = ?
+            """,
+            etag,
+            entry.publicId()
+        ) == 1;
+    }
 }
