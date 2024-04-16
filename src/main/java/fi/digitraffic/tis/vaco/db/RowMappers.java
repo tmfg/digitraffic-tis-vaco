@@ -276,6 +276,7 @@ public final class RowMappers {
         .convertedFormat(rs.getString("converted_format"))
         .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
         .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
+        .context(rs.getString("context"))
         .build();
 
     public static final RowMapper<CompanyWithFormatSummary> COMPANY_WITH_FORMATS = (rs, rowNum) -> ImmutableCompanyWithFormatSummary.builder()

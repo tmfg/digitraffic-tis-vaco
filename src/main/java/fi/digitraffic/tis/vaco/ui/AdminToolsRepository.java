@@ -16,8 +16,8 @@ import java.util.Set;
 public class AdminToolsRepository {
 
     private final JdbcTemplate jdbc;
-    private final NamedParameterJdbcTemplate namedJdbc;
 
+    private final NamedParameterJdbcTemplate namedJdbc;
 
     public AdminToolsRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
         this.jdbc = Objects.requireNonNull(jdbc);
@@ -25,41 +25,48 @@ public class AdminToolsRepository {
     }
 
     public List<CompanyLatestEntry> getDataDeliveryOverview(Set<String> businessIds) {
-        return namedJdbc.query("""
-                SELECT c.name as company_name,
-                       c.business_id,
-                       latest_entries.public_id,
-                       latest_entries.name,
-                       coalesce(latest_entries.url, 'NO_DATA') as source_url,
-                       CASE
-                           WHEN latest_entries.input_format = 'NETEX' THEN 'NeTEx'
-                           ELSE latest_entries.input_format
-                        END as input_format,
-                       latest_entries.status,
-                       latest_entries.created,
-                       STRING_AGG(CASE
-                                      WHEN starts_with(ci.name, 'gtfs2netex.fintraffic') THEN 'NeTEx'
-                                      WHEN starts_with(ci.name, 'netex2gtfs.entur') THEN 'GTFS'
-                                      ELSE '-'
-                                      END, ' / ') as converted_format
-                FROM company c
-                LEFT JOIN (SELECT partitioned_entries.*
-                    FROM (SELECT e.business_id,
-                                 e.url,
-                                 e.public_id,
-                                 e.id,
-                                 e.name,
-                                 upper(trim(format)) as input_format,
-                                 e.status,
-                                 e.created, ROW_NUMBER() OVER (PARTITION BY business_id, url, upper(trim(format)) ORDER BY created DESC) r
-                          FROM entry e) AS partitioned_entries
-                    WHERE partitioned_entries.r = 1) AS latest_entries
-                ON c.business_id = latest_entries.business_id
-                LEFT JOIN conversion_input ci ON ci.entry_id = latest_entries.id
-                WHERE (:businessIds)::text IS NULL OR c.business_id IN (:businessIds)
-                GROUP BY company_name, c.business_id, public_id, latest_entries.name, source_url, input_format, status, created
-                ORDER BY company_name, latest_entries.created DESC
-                """,
+        return namedJdbc.query(
+            """
+             WITH partitioned_entries AS (SELECT e.business_id,
+                                                 e.url,
+                                                 e.public_id,
+                                                 e.id,
+                                                 e.name,
+                                                 e.format AS input_format,
+                                                 e.status,
+                                                 e.created,
+                                                 ROW_NUMBER() OVER (PARTITION BY business_id, context_id, url, format ORDER BY created DESC) r,
+                                                 e.context_id
+                                            FROM entry e),
+                  latest_entry AS (SELECT *
+                                     FROM partitioned_entries pe
+                                    WHERE pe.r = 1)
+                           SELECT c.name AS company_name,
+                  c.business_id,
+                  latest_entry.public_id,
+                  latest_entry.name,
+                  (SELECT c.context FROM context c WHERE id = latest_entry.context_id) AS context,
+                  COALESCE(latest_entry.url, 'NO_DATA') AS source_url,
+                  latest_entry.status,
+                  latest_entry.created,
+                  CASE
+                      WHEN latest_entry.input_format = 'netex' THEN 'NeTEx'
+                      ELSE UPPER(latest_entry.input_format)
+                   END AS input_format,
+                  STRING_AGG(CASE
+                                 WHEN starts_with(ci.name, 'gtfs2netex.fintraffic') THEN 'NeTEx'
+                                 WHEN starts_with(ci.name, 'netex2gtfs.entur') THEN 'GTFS'
+                                 ELSE '-'
+                                 END, ' / ')            AS converted_format
+             FROM company c
+                      LEFT JOIN latest_entry ON c.business_id = latest_entry.business_id
+                      LEFT JOIN conversion_input ci ON ci.entry_id = latest_entry.id
+            WHERE (:businessIds)::TEXT IS NULL
+               OR c.business_id IN (:businessIds)
+            GROUP BY company_name, c.business_id, public_id, latest_entry.name, latest_entry.context_id, source_url, input_format, status, created
+            ORDER BY company_name, latest_entry.
+               created DESC
+            """,
             new MapSqlParameterSource()
                 .addValue("businessIds", businessIds),
             RowMappers.DATA_DELIVERY);

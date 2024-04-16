@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ import java.util.Optional;
 @RequestMapping("/partnership")
 @Validated
 @PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
+@Hidden
 public class PartnershipController {
 
     private final CompanyHierarchyService companyHierarchyService;

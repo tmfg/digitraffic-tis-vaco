@@ -66,6 +66,11 @@ in the logs.
 
 TBD.
 
+
+### API schema documentation
+
+Swagger documentation is available at path: /api/swagger-ui/index.html
+
 ---
 
 Copyright Fintraffic 2023-2024. Licensed under the EUPL-1.2 or later.

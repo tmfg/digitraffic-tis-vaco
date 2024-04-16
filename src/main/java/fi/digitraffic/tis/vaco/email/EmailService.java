@@ -16,10 +16,10 @@ import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.email.model.Message;
 import fi.digitraffic.tis.vaco.email.model.Recipients;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
+import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +31,11 @@ import software.amazon.awssdk.services.ses.model.SesException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class EmailService {
+    private final AdminToolsRepository adminToolsRepository;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final VacoProperties vacoProperties;
@@ -41,7 +43,6 @@ public class EmailService {
     private final SesClient sesClient;
     private final CompanyHierarchyService companyHierarchyService;
     private final FeatureFlagsService featureFlagsService;
-    private final EntryRepository entryRepository;
     private final EncryptionService encryptionService;
 
     public EmailService(VacoProperties vacoProperties,
@@ -49,15 +50,15 @@ public class EmailService {
                         SesClient sesClient,
                         CompanyHierarchyService companyHierarchyService,
                         FeatureFlagsService featureFlagsService,
-                        EntryRepository entryRepository,
-                        EncryptionService encryptionService) {
+                        EncryptionService encryptionService,
+                        AdminToolsRepository adminToolsRepository) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
-        this.entryRepository = Objects.requireNonNull(entryRepository);
         this.encryptionService = Objects.requireNonNull(encryptionService);
+        this.adminToolsRepository = Objects.requireNonNull(adminToolsRepository);
     }
 
     @VisibleForTesting
@@ -96,7 +97,7 @@ public class EmailService {
         if (!featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")) {
             logger.info("Feature flag 'emails.feedStatusEmail' is currently disabled, feed status email sending for {} skipped.", company.businessId());
         } else {
-            List<PersistentEntry> latestEntries = entryRepository.findLatestEntries(company);
+            List<CompanyLatestEntry> latestEntries = adminToolsRepository.getDataDeliveryOverview(Set.of(company.businessId()));
             if (latestEntries.isEmpty()) {
                 logger.debug("No entries available for company '{}', feed status email sending skipped", company.businessId());
             } else {
@@ -158,7 +159,7 @@ public class EmailService {
         return builder.build(buildOptions);
     }
 
-    private String createFeedStatusEmailHtml(Translations translations, List<PersistentEntry> entries) {
+    private String createFeedStatusEmailHtml(Translations translations, List<CompanyLatestEntry> entries) {
         HtmlBuilder builder = new HtmlBuilder();
         HtmlBuildOptions buildOptions = new HtmlBuildOptions(0, false);
 
@@ -179,7 +180,7 @@ public class EmailService {
         return builder.build(buildOptions);
     }
 
-    private Element table(ContentBuilder c, Translations translations, List<PersistentEntry> entries) {
+    private Element table(ContentBuilder c, Translations translations, List<CompanyLatestEntry> entries) {
         Element headers = c.element("tr")
             .children(
                 c.element("th").text(translations.get("message.feeds.labels.feed")),
@@ -188,7 +189,7 @@ public class EmailService {
                 c.element("th").text(translations.get("message.feeds.labels.link")));
         List<HtmlContent> rows = Streams.collect(entries, e -> c.element("tr")
             .children(
-                c.element("td").text(e.name()),
+                c.element("td").text(e.feedName()),
                 c.element("td").text(e.format()),
                 c.element("td").children(badge(c, e)),
                 c.element("td")
@@ -201,7 +202,7 @@ public class EmailService {
             .children(rows);
     }
 
-    private Element badge(ContentBuilder c, PersistentEntry e) {
+    private Element badge(ContentBuilder c, CompanyLatestEntry e) {
         return c.element("img", Map.of("src", vacoProperties.baseUrl() + "/api/badge/" + e.publicId()));
     }
 

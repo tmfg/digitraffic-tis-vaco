@@ -51,6 +51,8 @@ public class AadOAuth2LoginSecurityConfig {
                 "/health/**",                // load balancer health endpoint
                 "/ui/bootstrap/**",          // frontend bootstrapping endpoint
                 "/badge/**",                 // status badges
+                "/v3/api-docs/**",           // Openapi docs
+                "/swagger-ui/**",            // Swagger docs
                 // magic link exceptions:
                 "/ui/processing-results/**", // Entry processing result page may be accessed with magic link
                 "/ui/entries/*/state",       // entry state checks its own permissions internally

@@ -44,6 +44,7 @@ import fi.digitraffic.tis.vaco.ui.model.MagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.RuleReport;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -89,6 +90,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 
 @RestController
 @RequestMapping("/ui")
+@Hidden
 public class UiController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
