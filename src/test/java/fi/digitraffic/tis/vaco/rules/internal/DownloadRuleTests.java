@@ -167,6 +167,8 @@ class DownloadRuleTests {
         given(taskService.markStatus(entry, dlTask, Status.CANCELLED)).willReturn(dlTask);
 
         ResultMessage result = rule.execute(entry).join();
+
+        assertThat(result.uploadedFiles().isEmpty(), equalTo(true));
     }
 
     @NotNull
