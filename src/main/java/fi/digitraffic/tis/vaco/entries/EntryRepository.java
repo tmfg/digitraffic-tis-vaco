@@ -206,4 +206,40 @@ public class EntryRepository {
             return List.of();
         }
     }
+
+    public Optional<PersistentEntry> findLatestForBusinessIdAndContext(String businessId, String context) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                """
+                SELECT *
+                  FROM entry e
+                 WHERE e.business_id = ?
+                   AND e.context_id = (SELECT id
+                                         FROM context c
+                                        WHERE c.company_id = (SELECT id
+                                                                FROM company co
+                                                               WHERE co.business_id = e.business_id)
+                                          AND c.context = ?)
+                 ORDER BY created DESC
+                 LIMIT 1
+                """,
+                RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
+                businessId,
+                context));
+        } catch (EmptyResultDataAccessException erdae) {
+            return Optional.empty();
+        }
+    }
+
+    public boolean updateEtag(Entry entry, String etag) {
+        return jdbc.update(
+            """
+            UPDATE entry
+               SET etag = ?
+             WHERE public_id = ?
+            """,
+            etag,
+            entry.publicId()
+        ) == 1;
+    }
 }

@@ -36,13 +36,13 @@ _Profile: `src/main/resources/application-local.properties`_
 
 _Profile: `src/main/resources/application-compose.properties`_
 
-This variant is meant for testing out alternative environment configurations, container packagin of the application 
+This variant is meant for testing out alternative environment configurations, container packaging of the application 
 itself and such and is not meant to be and will never be meant to be used as primary way to run the application 
 during development.
 
  1. Package the application to container with
     ```shell
-    mvn clean compile jib:dockerBuild -Djib-maven-plugin.configuration.to.image=vaco:latest
+    mvn clean compile jib:dockerBuild -Djib-maven-plugin.image-name=vaco:latest
     ``` 
  2. Run the Compose environment with
     ```shell

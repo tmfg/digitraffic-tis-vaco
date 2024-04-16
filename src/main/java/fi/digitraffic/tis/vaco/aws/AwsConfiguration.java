@@ -39,14 +39,14 @@ import java.time.Duration;
 @Configuration
 public class AwsConfiguration {
 
-    @Profile("local | tests | itest")
+    @Profile("local | compose | tests | itest")
     @Bean
     public AwsCredentialsProvider localCredentials(VacoProperties vacoProperties) {
         Aws aws = vacoProperties.aws();
         return StaticCredentialsProvider.create(AwsBasicCredentials.create(aws.accessKeyId(), aws.secretKey()));
     }
 
-    @Profile("!local & !tests & !itest")
+    @Profile("!local & !compose & !tests & !itest")
     @Bean
     public AwsCredentialsProvider cloudCredentials() {
         return DefaultCredentialsProvider.create();

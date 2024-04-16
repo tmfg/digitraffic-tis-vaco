@@ -9,10 +9,12 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
+import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -47,6 +49,7 @@ import java.util.zip.ZipInputStream;
 @Component
 public class DownloadRule implements Rule<Entry, ResultMessage> {
     public static final String PREPARE_DOWNLOAD_TASK = "prepare.download";
+    private final EntryService entryService;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
@@ -60,13 +63,14 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         VacoProperties vacoProperties,
                         VacoHttpClient httpClient,
                         S3Client s3Client,
-                        FindingService findingService) {
+                        FindingService findingService, EntryService entryService) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.httpClient = Objects.requireNonNull(httpClient);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.findingService = Objects.requireNonNull(findingService);
+        this.entryService = entryService;
     }
 
     @Override
@@ -129,37 +133,72 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     }
 
     private Optional<S3Path> download(Entry entry, Path tempDirPath, Task tracked, S3Path ruleS3Output) {
-        CompletableFuture<Optional<Path>> feedArchive;
-        if (TransitDataFormat.GBFS.fieldName().equalsIgnoreCase(entry.format())) {
-            // GBFS feed is a directive pointing out to more files, so need to download them all separately and build a ZIP
-            feedArchive = httpClient.downloadFile(
-                TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".json"),
-                entry.url(),
-                entry.etag())
-            .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
-        } else {
-            // by default we assume single ZIP files, this applies to e.g. GTFS and NeTEx
-            feedArchive = httpClient.downloadFile(
-                TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip"),
-                entry.url(),
-                entry.etag());
-        }
+        if (shouldDownload(entry)) {
+            CompletableFuture<Optional<Path>> feedArchive;
 
-        return feedArchive.thenCompose(validateZip(entry, tracked))
-            .thenApply(track(entry, tracked, ProcessingState.UPDATE))
-            .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
-            .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
-            .join();
+            if (TransitDataFormat.GBFS.fieldName().equalsIgnoreCase(entry.format())) {
+                // GBFS feed is a directive pointing out to more files, so need to download them all separately and build a ZIP
+                feedArchive = httpClient.downloadFile(
+                        TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".json"),
+                        entry.url(),
+                        entry.etag())
+                    .thenApply(updateEtag(entry))
+                    .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
+            } else {
+                // by default we assume single ZIP files, this applies to e.g. GTFS and NeTEx
+                feedArchive = httpClient.downloadFile(
+                    TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip"),
+                    entry.url(),
+                    entry.etag())
+                    .thenApply(updateEtag(entry))
+                    .thenApply(DownloadResponse::body);
+            }
+
+            return feedArchive.thenCompose(validateZip(entry, tracked))
+                .thenApply(track(entry, tracked, ProcessingState.UPDATE))
+                .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
+                .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
+                .join();
+        } else {
+            // yes, this looks a bit weird, it's because it reuses the function from above composition
+            track(entry, tracked, ProcessingState.COMPLETE).apply(tracked);
+            return Optional.empty();
+        }
     }
 
-    private Function<Optional<Path>, CompletionStage<Optional<Path>>> downloadGbfsDiscovery(Entry entry, Path tempDirPath) {
+    /**
+     * Update current entry's etag if one was present in download to allow detection of stale/updated etags for further
+     * runs based on context link, if any.
+     *
+     * @param entry Entry to update.
+     * @return the same response, unmodified
+     */
+    private Function<DownloadResponse, DownloadResponse> updateEtag(Entry entry) {
+        return downloadResponse -> {
+            downloadResponse.etag().ifPresent(etag -> entryService.updateEtag(entry, etag));
+            return downloadResponse;
+        };
+    }
+
+    private boolean shouldDownload(Entry entry) {
+        if (entry.context() != null && entry.etag() != null) {
+            Optional<Entry> previousEntry = entryService.findLatestEntryForContext(entry.businessId(), entry.context());
+            if (previousEntry.isPresent() && previousEntry.get().etag().equals(entry.etag())) {
+                logger.info("Entry {} with context '{}' has same ETag '{}' as its predecessor, skipping download", entry.businessId(), entry.context(), entry.etag());
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Function<DownloadResponse, CompletionStage<Optional<Path>>> downloadGbfsDiscovery(Entry entry, Path tempDirPath) {
         return discoveryFile -> {
-            if (discoveryFile.isPresent()) {
+            if (discoveryFile.body().isPresent()) {
                 try {
                     Path discoveryDir = Files.createDirectories(tempDirPath.resolve("discovery"));
-                    Discovery discovery = objectMapper.readValue(discoveryFile.get().toFile(), Discovery.class);
+                    Discovery discovery = objectMapper.readValue(discoveryFile.body().get().toFile(), Discovery.class);
 
-                    List<CompletableFuture<Optional<Path>>> contents = Streams.flatten(discovery.data().values(), Map::values)
+                    List<CompletableFuture<DownloadResponse>> contents = Streams.flatten(discovery.data().values(), Map::values)
                         .flatten(Function.identity())
                         .map(feed -> httpClient.downloadFile(
                             TempFiles.getTaskTempFile(discoveryDir, feed.name() + ".json"),
