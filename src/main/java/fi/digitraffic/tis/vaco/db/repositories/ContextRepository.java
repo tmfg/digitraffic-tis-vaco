@@ -11,6 +11,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -69,5 +70,57 @@ public class ContextRepository {
             logger.warn("Failed to find context record for context %s/%s".formatted(entry.publicId(), entry.context()), dae);
             return Optional.empty();
         }
+    }
+
+    public Optional<ContextRecord> find(String context, Long companyId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                SELECT c.*
+                  FROM context c
+                 WHERE lower(trim(c.context)) = lower(trim(?)) AND c.company_id = ?
+                """,
+                RowMappers.CONTEXT_RECORD,
+                context,
+                companyId));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to find context record for companyId/context %s/%s".formatted(companyId, context), dae);
+            return Optional.empty();
+        }
+    }
+
+    public List<ContextRecord> findByBusinessId(String businessId) {
+        return jdbc.query("""
+                SELECT c.*
+                  FROM context c
+                 JOIN company ON company.id = c.company_id AND company.business_id = ?
+                """,
+            RowMappers.CONTEXT_RECORD,
+            businessId);
+    }
+
+    public ContextRecord create(String context, Long companyId) {
+        return jdbc.queryForObject(
+            """
+            INSERT INTO context(context, company_id)
+                 VALUES (?, ?)
+              RETURNING *
+            """,
+            RowMappers.CONTEXT_RECORD,
+            context,
+            companyId);
+    }
+
+    public ContextRecord update(String oldContext, String newContext, Long companyId) {
+        return jdbc.queryForObject(
+            """
+            UPDATE context
+                 SET context = ?
+                 WHERE company_id = ? AND context = ?
+              RETURNING *
+            """,
+            RowMappers.CONTEXT_RECORD,
+            newContext,
+            companyId,
+            oldContext);
     }
 }
