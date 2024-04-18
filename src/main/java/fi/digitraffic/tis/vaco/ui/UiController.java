@@ -33,6 +33,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
+import fi.digitraffic.tis.vaco.ui.model.Context;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyInfo;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
@@ -109,6 +110,7 @@ public class UiController {
     private final AdminToolsService adminToolsService;
     private final EntryRequestMapper entryRequestMapper;
     private final EncryptionService encryptionService;
+    private final ContextService contextService;
 
     public UiController(VacoProperties vacoProperties,
                         EntryService entryService,
@@ -122,7 +124,7 @@ public class UiController {
                         AdminToolsService adminToolsService,
                         EntryRequestMapper entryRequestMapper,
                         EncryptionService encryptionService,
-                        UiService uiService) {
+                        UiService uiService, ContextService contextService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -136,6 +138,7 @@ public class UiController {
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
         this.encryptionService = Objects.requireNonNull(encryptionService);
         this.uiService = Objects.requireNonNull(uiService);
+        this.contextService = Objects.requireNonNull(contextService);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -173,6 +176,54 @@ public class UiController {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
                 Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @GetMapping(path = "/contexts")
+    @JsonView(DataVisibility.Public.class)
+    public ResponseEntity<List<Resource<Context>>> listContexts(@RequestParam(name = "businessId") String businessId) {
+        if (meService.isAllowedToAccess(businessId)) {
+            return ResponseEntity.ok(Streams.map(contextService.findByBusinessId(businessId), Resource::resource).toList());
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    private void validateContext(Context context) {
+        Optional<Company> companyRecord = companyHierarchyService.findByBusinessId(context.businessId());
+        if (companyRecord.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                String.format("Provided company' business ID (%s) does not exist", context.businessId()));
+        }
+        Optional<Context> contextRecord = contextService.find(context.context().trim().toLowerCase(), context.businessId());
+        if (contextRecord.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                String.format("Context (%s) with company' business ID (%s) already exists", context.context(), context.businessId()));
+        }
+    }
+
+    @PostMapping(path = "/admin/contexts")
+    @JsonView(DataVisibility.Public.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<Context>>> createContext(@RequestBody @Valid Context context) {
+        if (meService.isAdmin() || meService.isAllowedToAccess(context.businessId())) {
+            validateContext(context);
+            return ResponseEntity.ok(new Resource<>(contextService.create(context), null, null));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @PutMapping(path = "/admin/contexts/{contextIdentifier}")
+    @JsonView(DataVisibility.Public.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<Context>>> editContext(@PathVariable("contextIdentifier") String contextIdentifier,
+                                                               @RequestBody @Valid Context context) {
+        if (meService.isAdmin() || meService.isAllowedToAccess(context.businessId())) {
+            validateContext(context);
+            return ResponseEntity.ok(new Resource<>(contextService.update(contextIdentifier, context), null, null));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -329,6 +380,7 @@ public class UiController {
             .filter(meService::isAllowedToAccess)
             .map(company -> ResponseEntity.ok(new Resource<>(ImmutableCompanyInfo.builder()
                 .company(company)
+                .contexts(contextService.findByBusinessId(businessId))
                 .hierarchies(companyHierarchyService.getHierarchiesContainingCompany(businessId))
                 .rulesets(rulesetService.selectRulesets(businessId))
                 .build(), null, Map.of()))

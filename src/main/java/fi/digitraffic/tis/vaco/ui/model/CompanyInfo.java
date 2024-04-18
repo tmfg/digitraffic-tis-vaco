@@ -15,6 +15,8 @@ import java.util.List;
 public interface CompanyInfo {
     Company company();
 
+    List<Context> contexts();
+
     List<Hierarchy> hierarchies();
 
     List<Ruleset> rulesets();
