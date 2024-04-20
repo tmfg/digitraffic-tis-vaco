@@ -29,15 +29,15 @@ public class AdminToolsService {
     public String[] getDataDeliveryCsvHeaders(String language) {
         switch (language) {
             case "en" -> {
-                return new String[]{"Business ID", "Company name", "Data URL",
+                return new String[]{"Business ID", "Company name", "Context identifier", "Data URL",
                     "Feed name", "Format", "Converted format(-s)", "Status", "Date published", "Entry public ID"};
             }
             case "sv" -> {
-                return new String[]{"Företags-id", "Företagsnamn", "Data-URL",
+                return new String[]{"Företags-id", "Företagsnamn", "Kontextidentifiare", "Data-URL",
                     "Matningsnamn", "Format", "Konverterad", "Status", "Skapad", "Inlämnings-ID"};
             }
             default -> {
-                return new String[]{"Y-tunnus", "Yrityksen nimi", "Datan URL",
+                return new String[]{"Y-tunnus", "Yrityksen nimi", "Kontekstitunniste", "Datan URL",
                     "Syötteen nimi", "Formaatti", "Konversio", "Tila", "Julkaistu", "Julkaisun tunnus"};
             }
         }
@@ -84,6 +84,7 @@ public class AdminToolsService {
             csvWriter.writeNext(new String[]{
                 putEmptyString ? "" : businessIdToShow,
                 putEmptyString ? "" : companyNameToShow,
+                entry.context(),
                 entry.url(),
                 entry.feedName(),
                 entry.format(),

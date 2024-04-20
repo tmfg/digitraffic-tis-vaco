@@ -3,6 +3,8 @@ package fi.digitraffic.tis.vaco.ui;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.db.model.ContextRecord;
+import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
@@ -14,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -23,12 +26,14 @@ public class UiService {
     private final CompanyHierarchyService companyHierarchyService;
     private final CachingService cachingService;
     private final EntryRepository entryRepository;
+    private final ContextRepository contextRepository;
 
-    public UiService(MeService meService, CompanyHierarchyService companyHierarchyService, CachingService cachingService, EntryRepository entryRepository) {
+    public UiService(MeService meService, CompanyHierarchyService companyHierarchyService, CachingService cachingService, EntryRepository entryRepository, ContextRepository contextRepository) {
         this.meService = meService;
         this.companyHierarchyService = companyHierarchyService;
         this.cachingService = cachingService;
         this.entryRepository = entryRepository;
+        this.contextRepository = contextRepository;
     }
 
     public List<MyDataEntrySummary> getAllEntriesVisibleForCurrentUser() {
@@ -49,7 +54,9 @@ public class UiService {
 
 
     private MyDataEntrySummary convertToSummary(PersistentEntry pe) {
+        Optional<ContextRecord> context = contextRepository.find(pe);
         return ImmutableMyDataEntrySummary.of(pe.publicId(), pe.name(), pe.format(), pe.status())
+            .withContext(context.map(c -> c.context()).orElse(null))
             .withCreated(pe.created())
             .withStarted(pe.started())
             .withUpdated(pe.updated())

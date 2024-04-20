@@ -366,6 +366,7 @@ public class UiController {
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
+            // TODO: should this also fetch latest 10 instances like in MyData case?
             List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId);
             return ResponseEntity.ok(Streams.collect(entries, e -> asEntryStateResource(e, e.publicId())));
         }
