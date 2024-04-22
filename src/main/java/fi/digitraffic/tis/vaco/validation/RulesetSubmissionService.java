@@ -9,10 +9,13 @@ import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -50,19 +53,22 @@ public class RulesetSubmissionService {
     // code migration split, these are temporary
     private final RulesetService rulesetService;
     private final PackagesService packagesService;
+    private final QueueHandlerService queueHandlerService;
 
     public RulesetSubmissionService(TaskService taskService,
                                     S3Client s3Client,
                                     VacoProperties vacoProperties,
                                     MessagingService messagingService,
                                     RulesetService rulesetService,
-                                    PackagesService packagesService) {
+                                    PackagesService packagesService,
+                                    QueueHandlerService queueHandlerService) {
         this.taskService = Objects.requireNonNull(taskService);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messagingService = Objects.requireNonNull(messagingService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.packagesService = Objects.requireNonNull(packagesService);
+        this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
     }
 
     public void submit(ValidationJobMessage message) throws RuleExecutionException {
@@ -122,18 +128,17 @@ public class RulesetSubmissionService {
         if (taskService.internalDependenciesCompletedSuccessfully(entry, task.name())
             && rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
             logger.debug("Entry {}, ruleset {} all dependencies completed successfully, submitting", entry.publicId(), identifyingName);
+            // mark the processing of matching task as started
+            Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
+            ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
+                .orElseThrow();
+
             Optional<RuleConfiguration> configuration = Optional.ofNullable(userProvidedConfigs.get(identifyingName));
             ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
                 entry,
                 task,
                 configuration,
                 identifyingName);
-            // mark the processing of matching task as started
-            // 1) shows in API response that the processing has started
-            // 2) this prevents unintended retrying of the task
-            Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
-            ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
-                .orElseThrow();
             messagingService.submitRuleExecutionJob(identifyingName, ruleMessage).join();
         } else {
             logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
@@ -143,7 +148,14 @@ public class RulesetSubmissionService {
                 .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
                 .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
                 .orElseThrow();
+
+            DelegationJobMessage message = ImmutableDelegationJobMessage.builder()
+                .entry(queueHandlerService.getEntry(entry.publicId()))
+                .retryStatistics(ImmutableRetryStatistics.of(5))
+                .build();
+            messagingService.submitProcessingJob(message);
         }
+
     }
 
     private ValidationRuleJobMessage convertToValidationRuleJobMessage(
