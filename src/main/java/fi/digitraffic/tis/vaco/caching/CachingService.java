@@ -86,6 +86,10 @@ public class CachingService {
         localPathCache.invalidate(key);
     }
 
+    public void updateEntry(String key, Entry value) {
+        entryCache.put(key, value);
+    }
+
     public Optional<Entry> cacheEntry(String key, Function<String, Entry> loader) {
         return Optional.ofNullable(entryCache.get(key, loader));
     }

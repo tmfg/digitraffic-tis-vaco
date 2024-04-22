@@ -8,9 +8,12 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
+import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
+import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -61,6 +64,8 @@ class DownloadRuleTests {
     private S3Client s3Client;
     @Mock
     private FindingService findingService;
+    @Mock
+    private EntryService entryService;
 
     @Captor
     private ArgumentCaptor<Path> tempFilePath;
@@ -74,12 +79,12 @@ class DownloadRuleTests {
         objectMapper = new ObjectMapper();
         objectMapper.registerModules(new GuavaModule());
         vacoProperties = TestObjects.vacoProperties();
-        rule = new DownloadRule(objectMapper, taskService, vacoProperties, httpClient, s3Client, findingService);
+        rule = new DownloadRule(objectMapper, taskService, vacoProperties, httpClient, s3Client, findingService, entryService);
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(taskService, httpClient, s3Client, findingService);
+        verifyNoMoreInteractions(taskService, httpClient, s3Client, findingService, entryService);
     }
 
     @Test
@@ -88,10 +93,11 @@ class DownloadRuleTests {
         Task dlTask = ImmutableTask.of(-1L, DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Path gtfsTestFile = resolveTestFile("padasjoen_kunta.zip");
+        DownloadResponse response = ImmutableDownloadResponse.builder().body(gtfsTestFile).build();
 
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
-        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(Optional.ofNullable(gtfsTestFile)));
+        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(response));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
@@ -114,12 +120,17 @@ class DownloadRuleTests {
         Task dlTask = ImmutableTask.of(-1L, DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Path gbfsDiscoveryFile = resolveTestFile("lahti_gbfs/gbfs.json");
+        String newEtag = "W/new etag";
+        DownloadResponse response = ImmutableDownloadResponse.builder()
+            .etag(newEtag)
+            .body(gbfsDiscoveryFile)
+            .build();
 
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(httpClient.downloadFile(feedFiles.capture(), any(String.class), eq(entry.etag())))
             // 1) rule downloads the discovery file
-            .willAnswer(a -> CompletableFuture.completedFuture(Optional.of(gbfsDiscoveryFile)))
+            .willAnswer(a -> CompletableFuture.completedFuture(response))
             // 2) rule downloads all the other files as well
             .willAnswer(a -> {
                 String path = a.getArgument(1).toString();
@@ -128,9 +139,10 @@ class DownloadRuleTests {
                 // overwrite assumed downloaded file with our test file to simulate "downloading" for discovered files
                 Files.copy(resolveTestFile("lahti_gbfs/" + path), (Path) a.getArgument(0));
 
-                return CompletableFuture.completedFuture(Optional.of(a.getArgument(0)));
+                return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().body((Path) a.getArgument(0)).build());
             });
 
+        given(entryService.updateEtag(entry, newEtag)).willReturn(ImmutableEntry.copyOf(entry).withEtag(newEtag));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
@@ -146,6 +158,26 @@ class DownloadRuleTests {
         assertThat(
             "Download of discovered GBFS files resulted in a single archive",
             targetPath.getValue().toString(), equalTo("entries/" + entry.publicId() + "/tasks/prepare.download/rules/prepare.download/output/gbfs.zip"));
+    }
+
+    @Test
+    void cancelsTaskIfPreviousContextEntryHasSameETag() {
+        String executionContext = "context can be anything";
+        String sharedETag = "foobaretag";
+        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GBFS.fieldName()).context(executionContext).etag(sharedETag);
+        Task dlTask = ImmutableTask.of(-1L, DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
+        Entry entry = entryBuilder.addTasks(dlTask).build();
+        Entry previousEntry = ImmutableEntry.copyOf(entry).withPublicId("höpöhöpö");
+
+        given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
+        given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
+        given(entryService.findLatestEntryForContext(entry.businessId(), entry.context())).willReturn(Optional.of(previousEntry));
+        given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
+        given(taskService.markStatus(entry, dlTask, Status.CANCELLED)).willReturn(dlTask);
+
+        ResultMessage result = rule.execute(entry).join();
+
+        assertThat(result.uploadedFiles().isEmpty(), equalTo(true));
     }
 
     @NotNull

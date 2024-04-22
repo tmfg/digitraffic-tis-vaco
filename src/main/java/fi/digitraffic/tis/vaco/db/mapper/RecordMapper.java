@@ -22,6 +22,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
+import fi.digitraffic.tis.vaco.ui.model.Context;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -129,5 +131,12 @@ public class RecordMapper {
             partnerALoader.apply(partnership.partnerA()),
             partnerBLoader.apply(partnership.partnerB())
         );
+    }
+
+    public Context toContext(ContextRecord contextRecord, String businessId) {
+        return ImmutableContext.builder()
+            .context(contextRecord.context())
+            .businessId(businessId)
+            .build();
     }
 }

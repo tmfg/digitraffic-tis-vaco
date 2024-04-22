@@ -23,6 +23,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
@@ -91,6 +92,10 @@ public class TestObjects {
             sb.append(r.nextInt(10));
         }
         return sb.append("-").append(r.nextInt(10)).toString();
+    }
+
+    public static ImmutableContext.Builder aContext(String businessId) {
+        return ImmutableContext.builder().context(UUID.randomUUID().toString()).businessId(businessId);
     }
 
     public static ImmutablePartnership.Builder aPartnership() {

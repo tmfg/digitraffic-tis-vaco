@@ -15,6 +15,9 @@ public interface MyDataEntrySummary {
     @Value.Parameter
     String publicId();
 
+    @Nullable
+    String context();
+
     @Value.Parameter
     String name();
 
@@ -35,5 +38,4 @@ public interface MyDataEntrySummary {
 
     @Nullable
     LocalDateTime completed();
-
 }
