@@ -202,7 +202,7 @@ public class RulesetRepository {
                            entry e,
                            ruleset r
                      WHERE t.entry_id = e.id
-                       AND t.status = ANY (ARRAY ['failed']::status[])
+                       AND t.status = ANY (ARRAY ['cancelled', 'failed']::status[])
                        AND t.name = ANY (r.before_dependencies))
             """,
             Boolean.class,

@@ -153,7 +153,7 @@ public class RulesetSubmissionService {
                 .entry(queueHandlerService.getEntry(entry.publicId()))
                 .retryStatistics(ImmutableRetryStatistics.of(5))
                 .build();
-            messagingService.submitProcessingJob(message);
+            messagingService.submitProcessingJob(message).join();
         }
 
     }
