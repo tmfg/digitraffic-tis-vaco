@@ -6,9 +6,11 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -18,6 +20,7 @@ import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +34,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
+import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -76,6 +80,9 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
 
     Path response;
 
+    @Autowired
+    private RulesetService rulesetService;
+
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
         CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
@@ -100,7 +107,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
             .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.ofNullable(response)).build()));
 
         Entry entry = createEntryForTesting();
-        String testQueueName = createSqsQueue();
+        String testQueueName = createSqsQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
         Task task = taskService.findTask(entry.publicId(), RuleName.GTFS_CANONICAL).get();
@@ -134,11 +141,37 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         assertThat(message.source(), equalTo(RuleName.GTFS_CANONICAL));
     }
 
+    @Test
+    void sendsMessageToJobQueueForTaskWithFailedDependencies() throws InterruptedException {
+        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
+            .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.empty()).build()));
+
+        Entry entry = createEntryForTesting();
+        String testQueueName = createSqsQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
+        ResultMessage downloadedFile = downloadRule.execute(entry).join();
+
+        Task task = taskService.findTask(entry.publicId(), RuleName.GTFS_CANONICAL).get();
+        rulesetSubmissionService.submitTask(
+            entry,
+            task,
+            rulesetService.findByName(RuleName.GTFS_CANONICAL).get());
+
+        List<Message> ruleMessages = messagingService.readMessages(testQueueName).toList();
+
+        assertThat(ruleMessages.size(), equalTo(0));
+        Thread.sleep(10);
+        Entry completedEntry = entryService.findEntry(entry.publicId()).get();
+        Task dlTask = completedEntry.tasks().get(0);
+        Task gtfsTask = completedEntry.tasks().get(1);
+        assertThat(dlTask.status(), equalTo(Status.CANCELLED));
+        assertThat(gtfsTask.status(), equalTo(Status.CANCELLED));
+        assertThat(completedEntry.status(), equalTo(Status.FAILED));
+    }
+
     @NotNull
-    private static String createSqsQueue() {
-        String testQueueName = MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL);
-        CreateQueueResponse r = sqsClient.createQueue(CreateQueueRequest.builder().queueName(testQueueName).build());
-        return testQueueName;
+    private static String createSqsQueue(String queueName) {
+        CreateQueueResponse r = sqsClient.createQueue(CreateQueueRequest.builder().queueName(queueName).build());
+        return queueName;
     }
 
 }

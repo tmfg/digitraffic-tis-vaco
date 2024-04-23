@@ -99,6 +99,11 @@ public class CachingService {
         invalidateStatus(publicId);
     }
 
+    public void invalidateEntry(Entry entry) {
+        entryCache.invalidate(entry.publicId());
+        invalidateStatus(entry);
+    }
+
     public GroupIdMappingTask cacheAdminTask(String key, Function<String, GroupIdMappingTask> loader) {
         return adminTasksCache.get(key, loader);
     }
@@ -119,6 +124,11 @@ public class CachingService {
 
     public void invalidateStatus(String key) {
         statusCache.invalidate(key);
+    }
+
+    private void invalidateStatus(Entry entry) {
+        invalidateStatus(entry.publicId());
+        entry.tasks().forEach(t -> invalidateStatus(entry.publicId() + "/" + t.name()));
     }
 
     public Optional<ClassPathResource> cacheClassPathResource(String key, Function<String, ClassPathResource> loader) {
