@@ -163,7 +163,7 @@ public final class Streams {
     public static <I, K, V> Map<K, V> collect(
         Collection<I> objects,
         Function<? super I, K> keyMapper,
-        Function<? super I, ? extends V> valueMapper) {
+        Function<? super I, V> valueMapper) {
         return new Chain<>(objects.stream()).collect(keyMapper, valueMapper);
     }
 
@@ -318,7 +318,7 @@ public final class Streams {
 
         public <K, V> Map<K, V> collect(
             Function<? super R, K> keyMapper,
-            Function<? super R, ? extends V> valueMapper) {
+            Function<? super R, V> valueMapper) {
             return stream.collect(Collectors.toMap(keyMapper, valueMapper));
         }
 
