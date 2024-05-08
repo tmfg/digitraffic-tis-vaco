@@ -88,6 +88,10 @@ public class CompanyHierarchyService {
         return companyRepository.findAllByAdGroupIds(adGroupIds);
     }
 
+    public Optional<Company> findByAdGroupId(String groupId) {
+        return companyRepository.findByAdGroupId(groupId);
+    }
+
     public Company updateAdGroupId(Company company, String groupId) {
         return companyRepository.findByBusinessId(company.businessId())
             .map(c -> companyRepository.updateAdGroupId(c, groupId))
@@ -203,5 +207,6 @@ public class CompanyHierarchyService {
         reloadRootHierarchies();
         return getHierarchiesContainingCompany(partnership.partnerB().businessId());
     }
+
 
 }

@@ -4,16 +4,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.VacoApplication;
+import fi.digitraffic.tis.vaco.api.model.Link;
+import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
+import fi.digitraffic.tis.vaco.fintrafficid.InMemoryFintrafficIdService;
+import fi.digitraffic.tis.vaco.fintrafficid.model.FintrafficIdGroup;
+import fi.digitraffic.tis.vaco.fintrafficid.model.ImmutableFintrafficIdGroup;
+import fi.digitraffic.tis.vaco.fintrafficid.model.ImmutableOrganizationData;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -29,7 +35,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.UUID;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -73,6 +83,8 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
         registry.add("spring.flyway.fail-on-missing-locations", () -> true);
         registry.add("spring.cloud.aws.sqs.endpoint", () -> localstack.getEndpointOverride(Service.SQS));
         registry.add("spring.cloud.aws.s3.endpoint", () -> localstack.getEndpointOverride(Service.S3));
+        registry.add("vaco.azure-ad.client-id", () -> UUID.randomUUID().toString());
+        registry.add("vaco.azure-ad.tenant-id", () -> UUID.randomUUID().toString());
         registry.add("vaco.aws.region", () -> localstack.getRegion());
         registry.add("vaco.aws.endpoint", () -> localstack.getEndpoint());
         registry.add("vaco.scheduling.enable", () -> false);
@@ -128,20 +140,39 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
     @Autowired
     protected CompanyHierarchyService companyHierarchyService;
 
-    /**
-     * Make current context believe given token is Fintraffic company.
-     * <p>
-     * This is about 3/5 on scale of "how hacky this is".
-     */
-    protected void injectGroupIdToCompany(JwtAuthenticationToken token) {
-        companyHierarchyService.updateAdGroupId(
-            companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get(),
-            token.getToken().getClaimAsStringList("groups").get(0));
+    @Autowired
+    private FintrafficIdService fintrafficIdService;
+    private InMemoryFintrafficIdService inMemFidService;
+
+    @BeforeEach
+    void setUp_FintrafficIdServicePrerequisites() {
+        // MS Graph integration needs to be enabled for access checks to work
+        // in memory implementation is used instead of real integration
+        assertThat(
+            "Integration tests require FintrafficIdService to be the in-memory implementation due to secret handling. " +
+            "If you absolutely need some other implementation for this feature, do not use this base class.",
+            fintrafficIdService,
+            instanceOf(InMemoryFintrafficIdService.class));
+        inMemFidService = (InMemoryFintrafficIdService) fintrafficIdService;
     }
 
-    protected void injectGroupIdToCompany(JwtAuthenticationToken token, String businessId) {
-        companyHierarchyService.updateAdGroupId(
-            companyHierarchyService.findByBusinessId(businessId).get(),
-            token.getToken().getClaimAsStringList("groups").get(0));
+    protected void injectAuthOverrides(String oid, FintrafficIdGroup... groups) {
+        inMemFidService.putGroups(oid, Arrays.asList(groups));
+    }
+
+    /**
+     * Use this method to convert VACO Company to Fintraffic ID group metadata object.
+     * @param company Company to convert
+     * @return Converted FintrafficIdGroup
+     * @see #injectAuthOverrides(String, FintrafficIdGroup...)
+     */
+    protected FintrafficIdGroup asFintrafficIdGroup(Company company) {
+        return ImmutableFintrafficIdGroup.builder()
+            .id(UUID.randomUUID().toString())
+            .displayName(company.name())
+            .organizationData(ImmutableOrganizationData.builder()
+                .businessId(company.businessId())
+                .build())
+            .build();
     }
 }

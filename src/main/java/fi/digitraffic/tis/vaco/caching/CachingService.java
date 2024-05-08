@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.caching;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
@@ -36,7 +35,6 @@ import java.util.function.UnaryOperator;
 public class CachingService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final Cache<String, GroupIdMappingTask> adminTasksCache;
     private final Cache<String, Ruleset> rulesetCache;
     private final Cache<String, String> sqsQueueUrlCache;
     private final Cache<Path, Path> localPathCache;
@@ -44,6 +42,7 @@ public class CachingService {
     private final Cache<String, Status> statusCache;
     private final Cache<String, ClassPathResource> classPathResourceCache;
     private final Cache<String, List<MyDataEntrySummary>> myDataSummariesCache;
+    private final Cache<String, Object> msGraphCache;
     private final CacheStatsMapper cacheStatsMapper;
 
     // *Record caches are database specific and should only be accesssed from *Repositories
@@ -51,7 +50,6 @@ public class CachingService {
 
     public CachingService(CacheStatsMapper cacheStatsMapper) {
         this.cacheStatsMapper = Objects.requireNonNull(cacheStatsMapper);
-        this.adminTasksCache = genericCache(100);
         this.rulesetCache = genericCache(500);
         this.sqsQueueUrlCache = sqsQueueUrlCache();
         this.localPathCache = localPathCache();
@@ -60,6 +58,7 @@ public class CachingService {
         this.classPathResourceCache = genericCache(Status.values().length);
         this.contextRecordCache = genericCache(300);
         this.myDataSummariesCache = genericCache(500);
+        this.msGraphCache = genericCache(500, Duration.ofMinutes(5));
     }
 
     public Optional<Ruleset> cacheRuleset(String key, Function<String, Ruleset> loader) {
@@ -104,20 +103,6 @@ public class CachingService {
         invalidateStatus(entry);
     }
 
-    public GroupIdMappingTask cacheAdminTask(String key, Function<String, GroupIdMappingTask> loader) {
-        return adminTasksCache.get(key, loader);
-    }
-
-    public void invalidateAdminTask(String key) {
-        adminTasksCache.invalidate(key);
-    }
-
-    public GroupIdMappingTask forceUpdateAdminTask(String key, Function<String, GroupIdMappingTask> loader) {
-        GroupIdMappingTask result = loader.apply(key);
-        adminTasksCache.put(key, result);
-        return result;
-    }
-
     public Optional<Status> cacheStatus(String key, Function<String, Status> loader) {
         return Optional.ofNullable(statusCache.get(key, loader));
     }
@@ -141,6 +126,10 @@ public class CachingService {
 
     public void invalidateEntrySummaries(String businessId) {
         myDataSummariesCache.invalidate(businessId);
+    }
+
+    public <T> Optional<T> cacheMsGraph(String key, Function<String, T> loader) {
+        return Optional.ofNullable((T) msGraphCache.get(key, loader));
     }
 
     private Cache<String, String> sqsQueueUrlCache() {
@@ -169,10 +158,13 @@ public class CachingService {
     }
 
     private <K, V> Cache<K, V> genericCache(int size) {
+        return genericCache(size, Duration.ofDays(1));
+    }
+    private <K, V> Cache<K, V> genericCache(int size, Duration expireAfter) {
         return Caffeine.newBuilder()
             .recordStats()
             .maximumSize(size)
-            .expireAfterWrite(Duration.ofDays(1))
+            .expireAfterWrite(expireAfter)
             .build();
     }
 

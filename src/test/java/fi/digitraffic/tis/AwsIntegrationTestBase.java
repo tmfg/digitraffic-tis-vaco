@@ -54,6 +54,7 @@ public abstract class AwsIntegrationTestBase {
             null,
             null,
             null,
+            null,
             null);
         // reuse Spring beans without Spring to keep implementations consistent
         AwsConfiguration awsConfiguration = new AwsConfiguration();

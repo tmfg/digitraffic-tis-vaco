@@ -6,8 +6,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
-import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
@@ -65,6 +63,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -163,16 +162,6 @@ public final class RowMappers {
         .raw(rs.getBytes("raw"))
         .build();
 
-    public static final RowMapper<GroupIdMappingTask> ADMIN_GROUPID = (rs, rowNum) -> ImmutableGroupIdMappingTask.builder()
-        .id(rs.getLong("id"))
-        .publicId(rs.getString("public_id"))
-        .groupId(rs.getString("group_id"))
-        .skip(rs.getBoolean("skip"))
-        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
-        .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
-        .completedBy(rs.getString("completed_by"))
-        .build();
-
     public static final RowMapper<Summary> SUMMARY = (rs, rowNum) -> ImmutableSummary.builder()
         .id(rs.getLong("id"))
         .taskId(rs.getLong("task_id"))
@@ -216,7 +205,7 @@ public final class RowMappers {
 
     public static final RowMapper<FeatureFlag> FEATURE_FLAG = (rs, rowNum) -> ImmutableFeatureFlag.builder()
         .id(rs.getLong("id"))
-        .modified(nullable(rs.getTimestamp("modified"), Timestamp::toLocalDateTime))
+        .modified(nullable(rs.getTimestamp("modified"), ts -> ts.toInstant().atZone(ZoneId.of("UTC"))))
         .modifiedBy(rs.getString("modified_by"))
         .name(rs.getString("name"))
         .enabled(rs.getBoolean("enabled"))

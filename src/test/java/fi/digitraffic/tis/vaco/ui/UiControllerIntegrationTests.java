@@ -3,10 +3,8 @@ package fi.digitraffic.tis.vaco.ui;
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.servlet.MvcResult;
@@ -20,15 +18,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
-    @Autowired
-    private CompanyHierarchyService companyHierarchyService;
-
     @Test
     void canFetchEntryStateWithPublicId() throws Exception {
         CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
-        JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken("Joh Rnado");
+        String oid = "Joh Rnado";
+        JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken(oid);
         SecurityContextHolder.getContext().setAuthentication(johRnado);
-        injectGroupIdToCompany(johRnado);
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId(request.businessId()).get()));
 
         MvcResult response = apiCall(post("/queue").content(toJson(request)))
             .andExpect(status().isOk())
