@@ -97,11 +97,12 @@ public class HttpClient {
     protected URI toUri(String uri) throws URISyntaxException {
         // XXX: It's 2024 and Java still doesn't have a native URI builder, and options are all frameworky
         URI uriObj = new URI(uri);
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUri(uriObj);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(uri);
         if (uriObj.getScheme() == null) {
             builder.scheme(configuration.defaultScheme());
         }
-        return builder.build().toUri();
+        // Treat provided URIs as pre-encoded. See tests for more details.
+        return builder.build(true).toUri();
     }
 }
 
