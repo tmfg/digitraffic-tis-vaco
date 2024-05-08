@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableFeatureFlag.class)
@@ -26,7 +26,7 @@ public interface FeatureFlag {
     }
 
     @Nullable
-    LocalDateTime modified();
+    ZonedDateTime modified();
 
     @Nullable
     String modifiedBy();

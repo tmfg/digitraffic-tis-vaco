@@ -46,6 +46,7 @@ public class FeatureFlagsRepository {
                UPDATE feature_flag
                   SET name = ?,
                       enabled = ?,
+                      modified = NOW(),
                       modified_by = ?
                WHERE id = ?
             RETURNING *
