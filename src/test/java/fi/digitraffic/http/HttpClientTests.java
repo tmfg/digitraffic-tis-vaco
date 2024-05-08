@@ -40,4 +40,16 @@ class HttpClientTests {
         URI uri = httpClient.toUri("exaple.org");
         assertThat(uri.getScheme(), equalTo(HttpClientConfiguration.DEFAULT_SCHEME));
     }
+
+    /**
+     * Some URLs, such as S3 presigned URLs, contain pre-encoded parameters which should be used verbatim
+     * Java URI however ignores such and performs another unnecessary decoding effectively corrupting URLs
+     * this test ensures this doesn't happen.
+     */
+    @Test
+    void doesntDoubleEncodeUrisWithPredefinedParameters() throws URISyntaxException {
+        String original = "https://example.org/keep%2f/?foo=%2fthis-is-on-purpose";
+        URI uri = httpClient.toUri(original);
+        assertThat(uri.toString(), equalTo(original));
+    }
 }
