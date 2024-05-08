@@ -29,11 +29,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,7 +44,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 @Component
 public class DownloadRule implements Rule<Entry, ResultMessage> {
@@ -147,9 +146,9 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             } else {
                 // by default we assume single ZIP files, this applies to e.g. GTFS and NeTEx
                 feedArchive = httpClient.downloadFile(
-                    TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip"),
-                    entry.url(),
-                    entry.etag())
+                        TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip"),
+                        entry.url(),
+                        entry.etag())
                     .thenApply(updateEtag(entry))
                     .thenApply(DownloadResponse::body);
             }
@@ -249,19 +248,14 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                 File file = path.get().toFile();
 
                 try (ZipFile zipfile = new ZipFile(file)) {
-                    ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
-                    ZipEntry ze = zis.getNextEntry();
-                    if (ze == null) {
-                        logger.warn("Entry {} processed ZIP file at path {} is empty", entry.publicId(), file);
-                        return CompletableFuture.completedFuture(Optional.empty());
-                    }
-                    while (ze != null) {
+                    Enumeration<? extends ZipEntry> entries = zipfile.entries();
+                    while (entries.hasMoreElements()) {
+                        ZipEntry ze = entries.nextElement();
                         // if it throws an exception fetching any of the following then we know the file is corrupted.
                         zipfile.getInputStream(ze);
                         ze.getCrc();
                         ze.getCompressedSize();
                         ze.getName();
-                        ze = zis.getNextEntry();
                     }
                     return CompletableFuture.completedFuture(path);
                 } catch (IOException e) {
