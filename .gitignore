@@ -24,3 +24,6 @@ volume/
 
 # hide any files explicitly named 'private'
 *.private.*
+
+# .env is meant for local development parameters only
+.env
