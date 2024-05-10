@@ -7,7 +7,8 @@ public enum Type implements PersistableEnum {
     VALIDATION_SYNTAX("validation_syntax"),
     VALIDATION_LOGIC("validation_logic"),
     CONVERSION_SYNTAX("conversion_syntax"),
-    CONVERSION_LOGIC("conversion_logic");
+    CONVERSION_LOGIC("conversion_logic"),
+    INTERNAL("internal");
 
     private final String fieldName;
 
@@ -26,6 +27,7 @@ public enum Type implements PersistableEnum {
             case "validation_logic" -> VALIDATION_LOGIC;
             case "conversion_syntax" -> CONVERSION_SYNTAX;
             case "conversion_logic" -> CONVERSION_LOGIC;
+            case "internal" -> INTERNAL;
             default -> throw new InvalidMappingException("Could not map field value '" + field + "' to Category! Implementation missing?");
         };
     }
