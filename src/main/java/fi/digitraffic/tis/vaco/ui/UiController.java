@@ -43,7 +43,7 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableProcessingResultsPage;
 import fi.digitraffic.tis.vaco.ui.model.MagicToken;
 import fi.digitraffic.tis.vaco.ui.model.MagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
-import fi.digitraffic.tis.vaco.ui.model.RuleReport;
+import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
@@ -261,12 +261,10 @@ public class UiController {
             .filter(e -> magicTokenMatches(magicToken, publicId) || meService.isAllowedToAccess(e))
             .map(entry -> {
                 Map<String, Ruleset> rulesets = Streams.collect(rulesetService.selectRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
-                List<RuleReport> reports =  new ArrayList<>();
+                List<TaskReport> reports =  new ArrayList<>();
                 entry.tasks().forEach(task -> {
-                    RuleReport report = null;
-                    if (rulesets.get(task.name()) != null) {
-                        report = entryStateService.getRuleReport(task, entry, rulesets);
-                    }
+                    TaskReport report = null;
+                    report = entryStateService.getTaskReport(task, entry, rulesets);
                     if(report != null) {
                         reports.add(report);
                     }

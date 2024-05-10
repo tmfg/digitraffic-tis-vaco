@@ -5,19 +5,21 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.util.List;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableRuleReport.class)
-@JsonDeserialize(as = ImmutableRuleReport.class)
-public interface RuleReport {
-    String ruleName();
+@JsonSerialize(as = ImmutableTaskReport.class)
+@JsonDeserialize(as = ImmutableTaskReport.class)
+public interface TaskReport {
+    String name();
 
-    String ruleDescription();
+    @Nullable
+    String description();
 
-    Type ruleType();
+    Type type();
 
     List<ItemCounter> findingCounters();
 

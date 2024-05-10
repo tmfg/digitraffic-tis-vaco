@@ -16,6 +16,6 @@ public interface EntryState {
 
     Resource<Entry> entry();
     List<Summary> summaries();
-    List<RuleReport> reports();
+    List<TaskReport> reports();
     String company();
 }

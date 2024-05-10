@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.summary.SummaryRepository;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
@@ -18,9 +19,9 @@ import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableRuleReport;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableTaskReport;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.RuleReport;
+import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableCard;
 import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableLabelValuePair;
 import fi.digitraffic.tis.vaco.ui.model.summary.LabelValuePair;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
@@ -54,7 +56,7 @@ public class EntryStateService {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
     }
 
-    public RuleReport getRuleReport(Task task, Entry entry, Map<String, Ruleset> rulesets) {
+    public TaskReport getTaskReport(Task task, Entry entry, Map<String, Ruleset> rulesets) {
         List<Finding> allFindings = findingRepository.findFindingsByTaskId(task.id());
 
         Map<String, Long> findingCountersBySeverity =
@@ -90,12 +92,12 @@ public class EntryStateService {
         List<Package> taskPackages = entry.packages() != null
             ? Streams.filter(entry.packages(), p -> p.taskId().equals(task.id())).toList()
             : List.of();
-        Ruleset rule = rulesets.get(task.name());
+        Optional<Ruleset> rule = Optional.ofNullable(rulesets.get(task.name()));
 
-        return ImmutableRuleReport.builder()
-            .ruleName(task.name())
-            .ruleDescription(rule.description())
-            .ruleType(rule.type())
+        return ImmutableTaskReport.builder()
+            .name(task.name())
+            .description(rule.map(Ruleset::description).orElse(null))
+            .type(rule.map(Ruleset::type).orElse(Type.INTERNAL))
             .findingCounters(counters)
             .packages(Streams.map(taskPackages, p -> asPackageResource(p, task, entry)).toList())
             .findings(aggregatedWithFindings).build();
