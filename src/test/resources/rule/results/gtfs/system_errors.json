@@ -2,7 +2,7 @@
   "notices": [
     {
       "code": "runtime_exception_in_validator_error",
-      "severity": "ERROR",
+      "severity": "WARNING",
       "totalNotices": 1,
       "sampleNotices": [
         {

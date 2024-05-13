@@ -143,4 +143,25 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         assertThat(findings.size(), equalTo(1));
         findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.GTFS_CANONICAL)));
     }
+
+    @Test
+    void GtfsCanonicalRuntimeErrorGivesWarning() {
+        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("system_errors.json", List.of("report")));
+
+        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
+        given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
+        given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
+        given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
+        givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
+        givenTaskProcessingStateIsMarkedAs(entry, task, ProcessingState.COMPLETE);
+
+        resultProcessor.processResults(resultMessage, entry, task);
+
+        List<Finding> findings = generatedFindings.getValue();
+
+        assertThat(findings.size(), equalTo(1));
+        Finding finding = findings.get(0);
+        assertThat(finding.severity(), equalTo("WARNING"));
+        findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.GTFS_CANONICAL)));
+    }
 }
