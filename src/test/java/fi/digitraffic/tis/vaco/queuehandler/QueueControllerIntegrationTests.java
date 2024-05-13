@@ -23,9 +23,10 @@ class QueueControllerIntegrationTests extends SpringBootIntegrationTestBase {
     void canCreateEntryAndFetchItsDetailsWithPublicId() throws Exception {
         // create new entry to queue
         CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
-        JwtAuthenticationToken rohnMnadoj = TestObjects.jwtAuthenticationToken("Rohn Mnadoj");
+        String oid = "Rohn Mnadoj";
+        JwtAuthenticationToken rohnMnadoj = TestObjects.jwtAuthenticationToken(oid);
         SecurityContextHolder.getContext().setAuthentication(rohnMnadoj);
-        injectGroupIdToCompany(rohnMnadoj);
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId(request.businessId()).get()));
 
         MvcResult response = apiCall(post("/queue").content(toJson(request)))
             .andExpect(status().isOk())

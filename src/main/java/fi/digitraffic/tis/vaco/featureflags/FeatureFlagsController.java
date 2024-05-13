@@ -24,7 +24,7 @@ import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
 @RequestMapping("/feature-flags")
-@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.company_admin')")
+@PreAuthorize("hasAuthority('vaco.apiuser') and hasAuthority('vaco.admin')")
 @Hidden
 public class FeatureFlagsController {
 

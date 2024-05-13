@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
-import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
@@ -13,6 +12,7 @@ import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.MagicLink;
+import fi.digitraffic.tis.vaco.configuration.MsGraph;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
@@ -128,13 +128,13 @@ public class TestObjects {
     }
 
     public static VacoProperties vacoProperties() {
-        return vacoProperties(null, null, null, null, null);
+        return vacoProperties(null, null, null, null, null, null);
     }
 
     /**
      * Override specific configuration subtypes. Provide nulls for those values which should use defaults.
      */
-    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, MagicLink magicLink, Cleanup cleanup) {
+    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, MagicLink magicLink, Cleanup cleanup, MsGraph msGraph) {
         String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
 
         return new VacoProperties(
@@ -147,17 +147,8 @@ public class TestObjects {
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
             email != null ? email : new Email("king@commonwealth", null),
             magicLink != null ? magicLink : new MagicLink("C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"),
-            cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), 10, 100));
-    }
-
-    public static ImmutableGroupIdMappingTask.Builder adminGroupId() {
-        return adminGroupId(UUID.randomUUID().toString());
-    }
-
-    public static ImmutableGroupIdMappingTask.Builder adminGroupId(String groupId) {
-        return ImmutableGroupIdMappingTask
-            .builder()
-            .groupId(groupId);
+            cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), 10, 100),
+            msGraph != null ? msGraph : new MsGraph("tenantId", "clientId", "clientSecret", "schemaExtension"));
     }
 
     public static JwtAuthenticationToken jwtAuthenticationToken(String oid) {

@@ -1,7 +1,10 @@
 package fi.digitraffic.tis;
 
+import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
+import fi.digitraffic.tis.vaco.fintrafficid.InMemoryFintrafficIdService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -42,8 +45,14 @@ public class OverridesConfiguration {
     }
 
     @Bean
-    S3TransferManager s3TransferManager() {
+    public S3TransferManager s3TransferManager() {
         logger.info("S3TransferManager overridden");
         return AwsIntegrationTestBase.s3TransferManager;
+    }
+
+    @ConditionalOnMissingBean(FintrafficIdService.class)
+    @Bean
+    public FintrafficIdService fintrafficIdService() {
+        return new InMemoryFintrafficIdService();
     }
 }

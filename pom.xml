@@ -27,7 +27,7 @@
 
     <properties>
         <!-- versions for all dependencies which support BOMs, see also dependencyManagement -->
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
                    avoid conflicts -->
         <springframework.boot-version>3.2.5</springframework.boot-version>
@@ -44,6 +44,7 @@
         <caffeine.version>3.1.8</caffeine.version>
         <guava.version>33.1.0-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
+        <msgraph.version>[6.0,)</msgraph.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -349,6 +350,13 @@
             <groupId>com.github.mizosoft.methanol</groupId>
             <artifactId>methanol</artifactId>
             <version>1.7.0</version>
+        </dependency>
+
+        <!-- MS Graph client and its dependencies for reading extended group data for overage scenario -->
+        <dependency>
+            <groupId>com.microsoft.graph</groupId>
+            <artifactId>microsoft-graph</artifactId>
+            <version>${msgraph.version}</version>
         </dependency>
     </dependencies>
 

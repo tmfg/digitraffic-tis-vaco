@@ -68,7 +68,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
     void setUp() {
         objectMapper = new ObjectMapper();
         jmesPath = new JacksonRuntime();
-        vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null), null, null);
+        vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null), null, null, null);
 
         emailService = new EmailService(
             vacoProperties,

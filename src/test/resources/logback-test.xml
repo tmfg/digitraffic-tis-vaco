@@ -33,6 +33,9 @@
     <logger name="org.xnio" level="WARN" />
     <logger name="org.thymeleaf" level="WARN" />
     <logger name="org.apache.commons.beanutils" level="WARN" />
+    <logger name="com.microsoft" level="WARN" />
+    <logger name="reactor.netty" level="WARN" />
+    <logger name="com.azure.identity" level="WARN" />
 
     <!-- ### Testing dependency only log adjustments below ### -->
 

@@ -1,11 +1,11 @@
 package fi.digitraffic.tis.vaco.me;
 
-import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.admintasks.AdminTasksService;
-import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
+import fi.digitraffic.tis.vaco.fintrafficid.model.FintrafficIdGroup;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,37 +23,48 @@ public class MeService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final AdminTasksService adminTasksService;
+    private final FintrafficIdService fintrafficIdService;
+
     private final CompanyHierarchyService companyHierarchyService;
 
-    public MeService(AdminTasksService adminTasksService,
-                     CompanyHierarchyService companyHierarchyService) {
-        this.adminTasksService = Objects.requireNonNull(adminTasksService);
+    public MeService(CompanyHierarchyService companyHierarchyService,
+                     FintrafficIdService fintrafficIdService) {
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
+        this.fintrafficIdService = Objects.requireNonNull(fintrafficIdService);
     }
 
     /**
-     * Resolve group GUIDs from token to actual {@link Company Companies} and automagically register an admin task for
-     * mapping the unidentified groups.
+     * Resolve user's {@link Company Companies} access from MS Graph.
      *
      * @return set of company metadata the current user has access to
      */
     public Set<Company> findCompanies() {
         return currentToken().map(token -> {
-            List<String> groups = token.getToken().getClaimAsStringList("groups");
-            if (groups == null || groups.isEmpty()) {
+            Set<Company> companies = new HashSet<>();
+
+            String userId = token.getToken().getClaimAsString("oid");
+            List<FintrafficIdGroup> groups = fintrafficIdService.getGroups(userId);
+
+            groups.forEach(g -> g.organizationData().ifPresent(od -> {
+                String groupId = g.id();
+                String businessId = od.businessId();
+
+                companyHierarchyService.findByAdGroupId(groupId)
+                    .or(() -> updateKnownCompany(businessId, groupId))
+                    .ifPresent(companies::add);
+            }));
+
+            if (companies.isEmpty()) {
                 return Set.of(companyHierarchyService.getPublicTestCompany());
             }
-            Set<String> allGroupIds = new HashSet<>(groups);
-            Set<Company> companies = companyHierarchyService.findAllByAdGroupIds(List.copyOf(allGroupIds));
-
-            Set<String> mappedGroupIds = Streams.map(companies, Company::adGroupId).toSet();
-            Set<String> unmappedGroupIds = new HashSet<>(allGroupIds);
-            unmappedGroupIds.removeAll(mappedGroupIds);
-            unmappedGroupIds.forEach(u -> adminTasksService.registerGroupIdMappingTask(ImmutableGroupIdMappingTask.of(u)));
-
             return companies;
         }).orElseThrow(() -> new UnauthenticatedException("User not authorized in this context"));
+    }
+
+    private @NotNull Optional<Company> updateKnownCompany(String businessId, String groupId) {
+        return companyHierarchyService
+            .findByBusinessId(businessId)
+            .map(mc -> companyHierarchyService.updateAdGroupId(mc, groupId));
     }
 
     /**

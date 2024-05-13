@@ -13,7 +13,7 @@ each VACO task is processed asynchronously and the results are fetched using the
 > See [Development Environment Setup](https://finrail.atlassian.net/wiki/spaces/VACO1/pages/2720825453/Development+Environment+Setup)
 > on Confluence for initial common setup instructions.
 
-1. Java 17 LTS+
+1. Java 21 LTS+
 2. Maven 3+
 3. Docker with Docker Compose
 
@@ -21,11 +21,13 @@ each VACO task is processed asynchronously and the results are fetched using the
 
 _Profile: `src/main/resources/application-local.properties`_
 
- 1. Start up dev environment with 
+ 1. Create `.env` file at the root of this repository 
+    - Ask a fellow team member for a copy of this file and its contents, as it contains secrets which should not be publicly shared
+ 2. Start up dev environment with 
     ```shell
     docker compose up
-    ```
- 2. Run `VacoApplication` from within your IDE of choice or with Maven
+     ```
+ 3. Run `VacoApplication` from within your IDE of choice or with Maven
     ```shell
     mvn spring-boot:run
     ```
@@ -64,12 +66,11 @@ in the logs.
 
 ### Build, Packaging etc.
 
-TBD.
-
+See GitHub Actions workflows in [`.github/workflows`](.github/workflows)
 
 ### API schema documentation
 
-Swagger documentation is available at path: /api/swagger-ui/index.html
+Swagger documentation is available at path: `/api/swagger-ui/index.html`
 
 ---
 

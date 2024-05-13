@@ -115,6 +115,21 @@ public class CompanyRepository {
             RowMappers.COMPANY));
     }
 
+    public Optional<Company> findByAdGroupId(String groupId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                """
+                SELECT *
+                  FROM company c
+                 WHERE c.ad_group_id = ?
+                """,
+                RowMappers.COMPANY,
+                groupId));
+        } catch (EmptyResultDataAccessException erdae) {
+            return Optional.empty();
+        }
+    }
+
     public CompanyRecord updateAdGroupId(CompanyRecord company, String adGroupId) {
         return jdbc.queryForObject(
             """
@@ -255,4 +270,5 @@ public class CompanyRepository {
             """,
             businessId) == 1;
     }
+
 }

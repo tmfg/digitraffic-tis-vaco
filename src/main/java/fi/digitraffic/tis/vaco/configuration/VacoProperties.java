@@ -17,7 +17,8 @@ public record VacoProperties(@DefaultValue("local") String environment,
                              @NestedConfigurationProperty AzureAd azureAd,
                              @NestedConfigurationProperty Email email,
                              @NestedConfigurationProperty MagicLink magicLink,
-                             @NestedConfigurationProperty Cleanup cleanup) {
+                             @NestedConfigurationProperty Cleanup cleanup,
+                             @NestedConfigurationProperty MsGraph msGraph) {
     @Override
     public String temporaryDirectory() {
         return temporaryDirectory != null ? temporaryDirectory : System.getProperty("java.io.tmpdir");

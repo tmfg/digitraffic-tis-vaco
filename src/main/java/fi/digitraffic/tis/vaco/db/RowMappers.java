@@ -6,8 +6,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
-import fi.digitraffic.tis.vaco.admintasks.model.GroupIdMappingTask;
-import fi.digitraffic.tis.vaco.admintasks.model.ImmutableGroupIdMappingTask;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
@@ -162,16 +160,6 @@ public final class RowMappers {
         .message(rs.getString("message"))
         .severity(rs.getString("severity"))
         .raw(rs.getBytes("raw"))
-        .build();
-
-    public static final RowMapper<GroupIdMappingTask> ADMIN_GROUPID = (rs, rowNum) -> ImmutableGroupIdMappingTask.builder()
-        .id(rs.getLong("id"))
-        .publicId(rs.getString("public_id"))
-        .groupId(rs.getString("group_id"))
-        .skip(rs.getBoolean("skip"))
-        .created(readZonedDateTime(rs, "created"))
-        .completed(readZonedDateTime(rs, "completed"))
-        .completedBy(rs.getString("completed_by"))
         .build();
 
     public static final RowMapper<Summary> SUMMARY = (rs, rowNum) -> ImmutableSummary.builder()
