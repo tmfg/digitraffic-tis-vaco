@@ -61,9 +61,9 @@ import org.springframework.jdbc.core.RowMapper;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -96,10 +96,10 @@ public final class RowMappers {
         .entryId(rs.getLong("entry_id"))
         .name(rs.getString("name"))
         .priority(rs.getInt("priority"))
-        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
-        .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
-        .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
-        .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
+        .created(readZonedDateTime(rs, "created"))
+        .started(readZonedDateTime(rs, "started"))
+        .updated(readZonedDateTime(rs, "updated"))
+        .completed(readZonedDateTime(rs, "completed"))
         .status(Status.forField(rs.getString("status")))
         .build();
 
@@ -205,7 +205,7 @@ public final class RowMappers {
 
     public static final RowMapper<FeatureFlag> FEATURE_FLAG = (rs, rowNum) -> ImmutableFeatureFlag.builder()
         .id(rs.getLong("id"))
-        .modified(nullable(rs.getTimestamp("modified"), ts -> ts.toInstant().atZone(ZoneId.of("UTC"))))
+        .modified(readZonedDateTime(rs, "modified"))
         .modifiedBy(rs.getString("modified_by"))
         .name(rs.getString("name"))
         .enabled(rs.getBoolean("enabled"))
@@ -235,10 +235,10 @@ public final class RowMappers {
             .url(rs.getString("url"))
             .etag(rs.getString("etag"))
             .metadata(readJson(objectMapper, rs, "metadata"))
-            .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
-            .started(nullable(rs.getTimestamp("started"), Timestamp::toLocalDateTime))
-            .updated(nullable(rs.getTimestamp("updated"), Timestamp::toLocalDateTime))
-            .completed(nullable(rs.getTimestamp("completed"), Timestamp::toLocalDateTime))
+            .created(readZonedDateTime(rs, "created"))
+            .started(readZonedDateTime(rs, "started"))
+            .updated(readZonedDateTime(rs, "updated"))
+            .completed(readZonedDateTime(rs, "completed"))
             .notifications(List.of(ArraySqlValue.read(rs, "notifications")))
             .status(Status.forField(rs.getString("status")))
             .context(nullableLong(rs, "context_id"))
@@ -251,7 +251,7 @@ public final class RowMappers {
         .publicId(rs.getString("public_id"))
         .format(rs.getString("format"))
         .convertedFormat(rs.getString("converted_format"))
-        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
+        .created(readZonedDateTime(rs, "created"))
         .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
         .build();
 
@@ -263,7 +263,7 @@ public final class RowMappers {
         .url(rs.getString("source_url"))
         .feedName(rs.getString("name"))
         .convertedFormat(rs.getString("converted_format"))
-        .created(nullable(rs.getTimestamp("created"), Timestamp::toLocalDateTime))
+        .created(readZonedDateTime(rs, "created"))
         .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
         .context(rs.getString("context"))
         .build();
@@ -367,6 +367,10 @@ public final class RowMappers {
             // TODO: This is potentially fatal, we could re-throw instead
             return null;
         });
+    }
+
+    private static ZonedDateTime readZonedDateTime(ResultSet rs, String created) throws SQLException {
+        return nullable(rs.getTimestamp(created), ts -> ts.toInstant().atZone(ZoneId.of("UTC").normalized()));
     }
 
     private static <R> R fromJsonb(ResultSet rs, String field, Function<String, R> mapper) {

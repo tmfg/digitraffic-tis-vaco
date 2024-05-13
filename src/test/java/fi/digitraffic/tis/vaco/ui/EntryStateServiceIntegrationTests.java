@@ -21,7 +21,7 @@ import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
-import fi.digitraffic.tis.vaco.ui.model.RuleReport;
+import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.summary.Card;
 import fi.digitraffic.tis.vaco.ui.model.summary.LabelValuePair;
 import org.junit.jupiter.api.Assertions;
@@ -121,9 +121,9 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Map<String, Ruleset> rulesetMap = new HashMap<>();
         rulesetMap.put(task.name(), rule);
         Optional<ContextRecord> context = Optional.empty(); // TODO: add actual context
-        RuleReport ruleReport = entryStateService.getRuleReport(task, recordMapper.toEntryBuilder(entry, context).build(), rulesetMap);
-        assertThat(ruleReport.ruleName(), equalTo(rule.identifyingName()));
-        assertThat(ruleReport.ruleDescription(), equalTo(rule.description()));
+        TaskReport ruleReport = entryStateService.getTaskReport(task, recordMapper.toEntryBuilder(entry, context).build(), rulesetMap);
+        assertThat(ruleReport.name(), equalTo(rule.identifyingName()));
+        assertThat(ruleReport.description(), equalTo(rule.description()));
 
         // Order matters
         ItemCounter allCounter = ruleReport.findingCounters().get(0);

@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.entries.model.Status;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCompanyLatestEntry.class)
@@ -30,5 +30,5 @@ public interface CompanyLatestEntry {
     @Nullable
     Status status();
     @Nullable
-    LocalDateTime created();
+    ZonedDateTime created();
 }
