@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -76,18 +77,18 @@ public class NetexInputSummaryService {
                                         case "Operator" -> {
                                             operatorTotalCount++;
                                             processOperator(reader, startElement,
-                                                netexInputSummaryBuilder);
+                                                netexInputSummaryBuilder, zipFile.getName(), taskId);
                                         }
                                         case "Route" -> {
                                             routeTotalCount++;
-                                            Route route = processRoute(reader, startElement);
+                                            Route route = processRoute(reader, startElement, zipFile.getName(), taskId);
                                             if (route.lineRef() != null) {
                                                 routes.add(route);
                                             }
                                         }
                                         case "Line" -> {
                                             lineTotalCount++;
-                                            lines.add(processLine(reader, startElement));
+                                            lines.add(processLine(reader, startElement, zipFile.getName(), taskId));
                                         }
                                         case "StopPlace" -> stopPlaceTotalCount++;
                                         case "Quay" -> quayTotalCount++;
@@ -97,7 +98,7 @@ public class NetexInputSummaryService {
                                 }
                         }
                         produceLineSummaries(netexInputSummaryBuilder, lines, routes);
-                    } catch (XMLStreamException e) {
+                    } catch (Exception e) {
                         logger.error("Failed to process summaries from {} as part of task {}",
                             zipEntry.getName(), taskId, e);
                     }
@@ -124,7 +125,9 @@ public class NetexInputSummaryService {
 
     void processOperator(XMLEventReader reader,
                          StartElement operatorStartElement,
-                         ImmutableNetexInputSummary.Builder netexInputSummaryBuilder) throws XMLStreamException {
+                         ImmutableNetexInputSummary.Builder netexInputSummaryBuilder,
+                         String fileName,
+                         Long taskId) {
         ImmutableCard.Builder cardBuilder = ImmutableCard.builder();
         List<LabelValuePair> cardContent = new ArrayList<>();
 
@@ -134,30 +137,17 @@ public class NetexInputSummaryService {
         }
 
         while (reader.hasNext()) {
+            try {
                 XMLEvent nextEvent = reader.nextEvent();
                 if (nextEvent.isStartElement()) {
                     StartElement startElement = nextEvent.asStartElement();
-                    switch (startElement.getName().getLocalPart()) {
-                        case "Name" -> {
-                            nextEvent = reader.nextEvent();
-                            String name = nextEvent.asCharacters().getData();
-                            cardBuilder.title(name);
-                        }
-                        case "Email" -> {
-                            nextEvent = reader.nextEvent();
-                            String email = nextEvent.asCharacters().getData();
-                            cardContent.add(ImmutableLabelValuePair.of("email", email));
-                        }
-                        case "Url" -> {
-                            nextEvent = reader.nextEvent();
-                            String url = nextEvent.asCharacters().getData();
-                            cardContent.add(ImmutableLabelValuePair.of("website", url));
-                        }
-                        case "Phone" -> {
-                            nextEvent = reader.nextEvent();
-                            String phone = nextEvent.asCharacters().getData();
-                            cardContent.add(ImmutableLabelValuePair.of("phone", phone));
-                        }
+                    String localPart = startElement.getName().getLocalPart();
+                    nextEvent = reader.nextEvent();
+                    switch (localPart) {
+                        case "Name" -> collectCharacters("name", nextEvent, (k, s) -> cardBuilder.title(s));
+                        case "Email" -> collectCharacters("email", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
+                        case "Url" -> collectCharacters("website", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
+                        case "Phone" -> collectCharacters("phone", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
                     }
                 }
                 if (nextEvent.isEndElement()) {
@@ -166,14 +156,26 @@ public class NetexInputSummaryService {
                         break;
                     }
                 }
+            } catch (Exception e) {
+                logger.error("Failed to process operator in {} as part of task {}", fileName, taskId, e);
+            }
         }
 
         Card operator = cardBuilder.content(cardContent).build();
         netexInputSummaryBuilder.addOperators(operator);
     }
 
+    private void collectCharacters(String key, XMLEvent event, BiConsumer<String, String> content) {
+        if (event.isCharacters()) {
+            String email = event.asCharacters().getData();
+            content.accept(key, email);
+        }
+    }
+
     Route processRoute(XMLEventReader reader,
-                       StartElement routeStartElement) throws XMLStreamException {
+                       StartElement routeStartElement,
+                       String fileName,
+                       Long taskId) throws Exception {
         ImmutableRoute.Builder routeBuilder = ImmutableRoute.builder();
         Attribute id = routeStartElement.getAttributeByName(new QName("id"));
         if (id != null) {
@@ -181,10 +183,12 @@ public class NetexInputSummaryService {
         }
 
         while (reader.hasNext()) {
+            try {
                 XMLEvent nextEvent = reader.nextEvent();
                 if (nextEvent.isStartElement()) {
                     StartElement startElement = nextEvent.asStartElement();
-                    if ("LineRef".equals(startElement.getName().getLocalPart())) {
+                    String localPart = startElement.getName().getLocalPart();
+                    if ("LineRef".equals(localPart)) {
                         Attribute lineRef = startElement.getAttributeByName(new QName("ref"));
                         if (lineRef != null) {
                             routeBuilder.lineRef(lineRef.getValue());
@@ -192,13 +196,17 @@ public class NetexInputSummaryService {
                         break;
                     }
                 }
+            } catch (Exception e) {
+                logger.error("Failed to process route in {} as part of task {}", fileName, taskId, e);
+            }
         }
 
         return routeBuilder.build();
     }
 
     Line processLine(XMLEventReader reader,
-                     StartElement lineStartElement) throws XMLStreamException {
+                     StartElement lineStartElement, String fileName,
+                     Long taskId) throws Exception {
         ImmutableLine.Builder lineBuilder = ImmutableLine.builder();
         Attribute id = lineStartElement.getAttributeByName(new QName("id"));
         if (id != null) {
@@ -206,18 +214,15 @@ public class NetexInputSummaryService {
         }
 
         while (reader.hasNext()) {
+            try{
                 XMLEvent nextEvent = reader.nextEvent();
                 if (nextEvent.isStartElement()) {
                     StartElement startElement = nextEvent.asStartElement();
-                    switch (startElement.getName().getLocalPart()) {
-                        case "Name" -> {
-                            nextEvent = reader.nextEvent();
-                            lineBuilder.name(nextEvent.asCharacters().getData());
-                        }
-                        case "TransportMode" -> {
-                            nextEvent = reader.nextEvent();
-                            lineBuilder.transportMode(nextEvent.asCharacters().getData());
-                        }
+                    String localPart = startElement.getName().getLocalPart();
+                    nextEvent = reader.nextEvent();
+                    switch (localPart) {
+                        case "Name" -> collectCharacters("name", nextEvent, (k, s) -> lineBuilder.name(s));
+                        case "TransportMode" -> collectCharacters("transportMode", nextEvent, (k, s) -> lineBuilder.transportMode(s));
                     }
                 }
                 if (nextEvent.isEndElement()) {
@@ -226,6 +231,9 @@ public class NetexInputSummaryService {
                         break;
                     }
                 }
+            } catch (Exception e) {
+                logger.error("Failed to process line in {} as part of task {}", fileName, taskId, e);
+            }
         }
 
         return lineBuilder.build();
