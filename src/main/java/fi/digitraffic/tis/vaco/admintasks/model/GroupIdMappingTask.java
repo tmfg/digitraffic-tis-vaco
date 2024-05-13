@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableGroupIdMappingTask.class)
@@ -30,10 +30,10 @@ public interface GroupIdMappingTask {
     }
 
     @Nullable
-    LocalDateTime created();
+    ZonedDateTime created();
 
     @Nullable
-    LocalDateTime completed();
+    ZonedDateTime completed();
 
     @Nullable
     String completedBy();
