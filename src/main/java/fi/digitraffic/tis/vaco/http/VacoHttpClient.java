@@ -34,7 +34,7 @@ public class VacoHttpClient {
         try {
             Map<String, String> requestHeaders = httpClient.headers(
                 "If-None-Match", etag,
-                "Accept", "application/zip, */*");
+                "Accept", "*/*");
             HttpRequest request = httpClient.get(uri, requestHeaders);
             HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
 
@@ -43,7 +43,7 @@ public class VacoHttpClient {
                 response.headers().firstValue("ETag").ifPresent(resp::etag);
 
                 logger.info("Response for {} with ETag {} resulted in HTTP status {}", uri, etag, response.statusCode());
-                ImmutableDownloadResponse r;
+
                 if (response.statusCode() == 304) {
                     return resp.build();
                 } else {

@@ -17,20 +17,15 @@ Content-Type: application/json
 Authorization: Bearer {{tis_token}}
 
 {
-  "url": "https://tvv.fra1.digitaloceanspaces.com/211.zip",
+  "url": "https://minfoapi.matkahuolto.fi/gtfs/4820/gtfs.zip",
   "format": "gtfs",
   "businessId": "2942108-7",
-  "etag": "etagg",
-  "name": "Waltti Kajaani",
+  "name": "TIS-683 bugtest Skiigge Boi Edition",
   "conversions": [{
     "name": "gtfs2netex.fintraffic",
     "config": {}
   }],
-  "metadata": {
-    "brewingEquipment": "car radiator",
-    "capacity (ml)": 7200,
-    "tea": "egg whites"
-  }
+  "metadata": {}
 }
 
 > {%

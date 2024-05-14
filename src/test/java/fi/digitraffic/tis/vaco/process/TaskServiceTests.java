@@ -68,6 +68,7 @@ class TaskServiceTests {
                 TestConstants.EXAMPLE_URL,
                 Constants.FINTRAFFIC_BUSINESS_ID);
         // these model "download, validate, convert, re-validate" pattern we want to support
+        // the data should match with contents of R__seed_data.sql so be careful if you need to edit these
         gtfsCanonicalRuleset = ImmutableRuleset.of(
                 entry.id(),
                 RuleName.GTFS_CANONICAL,
@@ -92,7 +93,7 @@ class TaskServiceTests {
                 Category.GENERIC,
                 Type.VALIDATION_SYNTAX,
                 TransitDataFormat.NETEX)
-            .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK, RuleName.GTFS2NETEX_FINTRAFFIC));
+            .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
     }
 
     @AfterEach
