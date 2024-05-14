@@ -31,7 +31,7 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;

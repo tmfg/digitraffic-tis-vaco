@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

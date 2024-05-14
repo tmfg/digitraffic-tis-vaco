@@ -5,7 +5,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 

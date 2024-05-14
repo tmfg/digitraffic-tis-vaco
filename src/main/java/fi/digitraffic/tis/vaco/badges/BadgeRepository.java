@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.badges;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;

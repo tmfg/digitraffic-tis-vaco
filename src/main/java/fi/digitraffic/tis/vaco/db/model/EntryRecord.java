@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.queuehandler.model;
+package fi.digitraffic.tis.vaco.db.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.vaco.entries.model.Status;
