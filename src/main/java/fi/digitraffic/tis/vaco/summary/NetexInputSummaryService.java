@@ -167,8 +167,8 @@ public class NetexInputSummaryService {
 
     private void collectCharacters(String key, XMLEvent event, BiConsumer<String, String> content) {
         if (event.isCharacters()) {
-            String email = event.asCharacters().getData();
-            content.accept(key, email);
+            String value = event.asCharacters().getData();
+            content.accept(key, value);
         }
     }
 
