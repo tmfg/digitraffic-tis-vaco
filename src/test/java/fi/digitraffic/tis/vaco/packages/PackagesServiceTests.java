@@ -82,7 +82,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
      * @return
      */
     private Task forceTaskCreation(EntryRecord createdEntry, Task task) {
-        taskRepository.createTasks(List.of(task));
+        taskRepository.createTasks(createdEntry, List.of(task));
         return taskService.findTask(createdEntry.id(), task.name()).get();
     }
 }

@@ -93,7 +93,7 @@ public class TaskService {
     public List<Task> createTasks(EntryRecord entry) {
         List<Task> allTasks = resolveTasks(entry);
 
-        if (!taskRepository.createTasks(allTasks)) {
+        if (!taskRepository.createTasks(entry, allTasks)) {
             throw new PersistenceException("Failed to create all tasks for entry " + entry);
         }
 

@@ -46,7 +46,7 @@ public class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase
     void setUp() throws URISyntaxException {
         ImmutableEntry entryToCreate = TestObjects.anEntry("netex").build();
         EntryRecord entry = entryRepository.create(Optional.empty(), entryToCreate).get();
-        taskRepository.createTasks(List.of(ImmutableTask.of(entry.id(), "FAKE_TASK", 1)));
+        taskRepository.createTasks(entry, List.of(ImmutableTask.of(entry.id(), "FAKE_TASK", 1)));
         task = taskRepository.findTask(entry.id(), "FAKE_TASK").get();
         inputPath = Path.of(ClassLoader.getSystemResource("summary/211_netex.zip").toURI());
     }

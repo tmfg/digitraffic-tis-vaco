@@ -39,9 +39,10 @@ public class TaskRepository {
     }
 
     @Transactional
-    public boolean createTasks(List<Task> tasks) {
+    public boolean createTasks(EntryRecord entry, List<Task> tasks) {
         try {
-            jdbc.batchUpdate("""
+            int[][] result = jdbc.batchUpdate(
+                """
                 INSERT INTO task (entry_id, name, priority)
                      VALUES (?, ?, ?)
                   RETURNING id, entry_id, name, priority, created, started, updated, completed, status
@@ -49,11 +50,18 @@ public class TaskRepository {
                 tasks,
                 100,
                 (ps, task) -> {
-                    ps.setLong(1, task.entryId());
+                    ps.setLong(1, entry.id());
                     ps.setString(2, task.name());
                     ps.setLong(3, task.priority());
                 });
-            // TODO: inspect result counts to determine everything was inserted
+            for (int[] batch : result) {
+                for (int insert : batch) {
+                    if (insert != 0) {
+                        logger.warn("Not all tasks were successfully created for entry {} ({})", entry.publicId(), result);
+                        return false;
+                    }
+                }
+            }
             return true;
         } catch (DuplicateKeyException dke) {
             logger.warn("Failed to batch insert tasks", dke);
