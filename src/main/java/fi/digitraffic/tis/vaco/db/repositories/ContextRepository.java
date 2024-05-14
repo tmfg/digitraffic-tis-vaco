@@ -32,7 +32,6 @@ public class ContextRepository {
     public Optional<ContextRecord> upsert(Entry entry) {
         return cachingService.cacheContextRecord(entry.businessId() + "/" + entry.context(), key -> {
             if (entry.context() == null) {
-                logger.debug("Entry {} does not have context set", entry.publicId());
                 return null;
             }
             try {
@@ -55,7 +54,6 @@ public class ContextRepository {
 
     public Optional<ContextRecord> find(PersistentEntry entry) {
         if (entry.context() == null) {
-            logger.debug("Entry {} does not have context set", entry.publicId());
             return Optional.empty();
         }
         try {

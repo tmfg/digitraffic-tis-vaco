@@ -158,7 +158,6 @@ public class TaskService {
      * @param tasks Tasks to prioritize and group.
      * @return New list with a copy of tasks updated with priorities.
      */
-    @SuppressWarnings("UnstableApiUsage")
     private List<Task> resolvePrioritiesBasedOnTopology(List<Task> tasks) {
         // 0) prerequisite lookups
         Map<String, Task> tasksByName = Streams.collect(tasks, Task::name, Function.identity());
