@@ -11,8 +11,8 @@ import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -59,7 +59,7 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     RecordMapper recordMapper;
     private Path inputPath;
     private Task task;
-    private PersistentEntry entry;
+    private EntryRecord entry;
     private Ruleset rule;
 
     @BeforeEach

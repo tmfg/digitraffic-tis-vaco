@@ -5,7 +5,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -23,7 +23,7 @@ public class ConversionInputRepository {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public List<ConversionInputRecord> create(PersistentEntry entry, List<ConversionInput> conversions) {
+    public List<ConversionInputRecord> create(EntryRecord entry, List<ConversionInput> conversions) {
         if (conversions == null) {
             return List.of();
         }

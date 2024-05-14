@@ -19,7 +19,7 @@ import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
@@ -46,8 +46,8 @@ public class TestObjects {
             .businessId(Constants.FINTRAFFIC_BUSINESS_ID);
     }
 
-    public static ImmutablePersistentEntry.Builder persistentEntry(String format) {
-        return ImmutablePersistentEntry.builder()
+    public static ImmutableEntryRecord.Builder persistentEntry(String format) {
+        return ImmutableEntryRecord.builder()
             .id(1_000_000L + new Random().nextInt(999_999))
             .publicId(NanoIdUtils.randomNanoId())
             .name("testName")

@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,7 +138,7 @@ public class EntryService {
     }
 
     public List<Entry> findAllByBusinessId(String businessId) {
-        List<PersistentEntry> entries = entryRepository.findAllByBusinessId(businessId);
+        List<EntryRecord> entries = entryRepository.findAllByBusinessId(businessId);
         return Streams.map(entries, this::buildCompleteEntry).toList();
     }
 
@@ -148,7 +148,7 @@ public class EntryService {
      * @param entry Entry to complete.
      * @return Fully completed entry.
      */
-    private Entry buildCompleteEntry(PersistentEntry entry) {
+    private Entry buildCompleteEntry(EntryRecord entry) {
         List<Package> packages = Streams.flatten(taskService.findTasks(entry), packagesService::findPackages).toList();
         Optional<ContextRecord> context = contextRepository.find(entry);
         return recordMapper.toEntryBuilder(entry, context)

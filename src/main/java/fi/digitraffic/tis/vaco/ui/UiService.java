@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.me.MeService;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import org.springframework.stereotype.Service;
@@ -53,7 +53,7 @@ public class UiService {
     }
 
 
-    private MyDataEntrySummary convertToSummary(PersistentEntry pe) {
+    private MyDataEntrySummary convertToSummary(EntryRecord pe) {
         Optional<ContextRecord> context = contextRepository.find(pe);
         return ImmutableMyDataEntrySummary.of(pe.publicId(), pe.name(), pe.format(), pe.status())
             .withContext(context.map(c -> c.context()).orElse(null))

@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
@@ -51,7 +51,7 @@ class TaskServiceTests {
     @Mock
     private CachingService cachingService;
 
-    private ImmutablePersistentEntry entry;
+    private ImmutableEntryRecord entry;
 
     private ImmutableRuleset gtfsCanonicalRuleset;
     private ImmutableRuleset gtfs2NetexRuleset;
@@ -60,7 +60,7 @@ class TaskServiceTests {
     @BeforeEach
     void setUp() {
         taskService = new TaskService(taskRepository, rulesetService, cachingService);
-        entry = ImmutablePersistentEntry.of(
+        entry = ImmutableEntryRecord.of(
                 1000000L,
                 NanoIdUtils.randomNanoId(),
                 "entry",

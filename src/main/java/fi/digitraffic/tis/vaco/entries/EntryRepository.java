@@ -8,7 +8,7 @@ import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ public class EntryRepository {
     }
 
     @Transactional
-    public Optional<PersistentEntry> create(Optional<ContextRecord> context, Entry entry) {
+    public Optional<EntryRecord> create(Optional<ContextRecord> context, Entry entry) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                     INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications, context_id)
@@ -78,7 +78,7 @@ public class EntryRepository {
         }
     }
 
-    public List<ValidationInput> createValidationInputs(PersistentEntry entry, List<ValidationInput> validations) {
+    public List<ValidationInput> createValidationInputs(EntryRecord entry, List<ValidationInput> validations) {
         return createValidationInputs(entry.id(), validations);
     }
 
@@ -93,7 +93,7 @@ public class EntryRepository {
             .toList();
     }
 
-    public List<ConversionInput> createConversionInputs(PersistentEntry result, List<ConversionInput> conversions) {
+    public List<ConversionInput> createConversionInputs(EntryRecord result, List<ConversionInput> conversions) {
         return createConversionInputs(result.id(), conversions);
     }
 
@@ -108,11 +108,11 @@ public class EntryRepository {
             .toList();
     }
 
-    public Optional<PersistentEntry> findByPublicId(String publicId) {
+    public Optional<EntryRecord> findByPublicId(String publicId) {
         return findEntry(publicId);
     }
 
-    private Optional<PersistentEntry> findEntry(String publicId) {
+    private Optional<EntryRecord> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                         SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications, status, context_id
@@ -166,7 +166,7 @@ public class EntryRepository {
             entry.publicId());
     }
 
-    public List<PersistentEntry> findAllByBusinessId(String businessId) {
+    public List<EntryRecord> findAllByBusinessId(String businessId) {
         try {
             return jdbc.query("""
                     SELECT *
@@ -187,7 +187,7 @@ public class EntryRepository {
      * @param businessIds
      * @return
      */
-    public List<PersistentEntry> findLatestForBusinessId(String businessId) {
+    public List<EntryRecord> findLatestForBusinessId(String businessId) {
         try {
             return namedJdbc.query("""
                 SELECT e.*
@@ -207,7 +207,7 @@ public class EntryRepository {
         }
     }
 
-    public Optional<PersistentEntry> findLatestForBusinessIdAndContext(String businessId, String context) {
+    public Optional<EntryRecord> findLatestForBusinessIdAndContext(String businessId, String context) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
                 """

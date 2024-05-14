@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
@@ -74,7 +74,7 @@ public class TaskService {
         return taskRepository.findTasks(entry.publicId());
     }
 
-    public List<Task> findTasks(PersistentEntry entry) {
+    public List<Task> findTasks(EntryRecord entry) {
         return taskRepository.findTasks(entry.id());
     }
 
@@ -89,7 +89,7 @@ public class TaskService {
      * @param entry Persisted entry root to which the tasks should be created for
      * @return List of created tasks
      */
-    public List<Task> createTasks(PersistentEntry entry) {
+    public List<Task> createTasks(EntryRecord entry) {
         List<Task> allTasks = resolveTasks(entry);
 
         if (!taskRepository.createTasks(allTasks)) {
@@ -104,7 +104,7 @@ public class TaskService {
     }
 
     @VisibleForTesting
-    protected List<Task> resolveTasks(PersistentEntry entry) {
+    protected List<Task> resolveTasks(EntryRecord entry) {
 
         Set<Task> allTasks = new HashSet<>();
 
@@ -129,11 +129,11 @@ public class TaskService {
         return List.of();
     }
 
-    public List<ValidationInput> findValidationInputs(PersistentEntry entry) {
+    public List<ValidationInput> findValidationInputs(EntryRecord entry) {
         return taskRepository.findValidationInputs(entry);
     }
 
-    public List<ConversionInput> findConversionInputs(PersistentEntry entry) {
+    public List<ConversionInput> findConversionInputs(EntryRecord entry) {
         return taskRepository.findConversionInputs(entry);
     }
 
@@ -280,7 +280,7 @@ public class TaskService {
         return false;
     }
 
-    private List<ImmutableTask> resolveRuleTasks(PersistentEntry entry,
+    private List<ImmutableTask> resolveRuleTasks(EntryRecord entry,
                                                  List<String> requestedRuleTasks) {
         Set<Ruleset> allAccessibleRulesets = rulesetService.selectRulesets(entry.businessId());
         Map<String, Ruleset> rulesetsByName = Streams
@@ -314,7 +314,7 @@ public class TaskService {
     }
 
     private static List<ImmutableTask> createTasks(List<String> taskNames,
-                                                   PersistentEntry entry) {
+                                                   EntryRecord entry) {
         return Streams.map(taskNames, t -> ImmutableTask.of(entry.id(), t, -1)).toList();
     }
 

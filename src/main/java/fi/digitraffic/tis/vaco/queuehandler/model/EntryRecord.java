@@ -9,7 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 @Value.Immutable
-public interface PersistentEntry {
+public interface EntryRecord {
     @Value.Parameter
     Long id();
 

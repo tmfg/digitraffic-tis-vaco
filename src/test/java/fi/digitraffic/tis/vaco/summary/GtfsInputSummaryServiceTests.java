@@ -8,8 +8,8 @@ import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.process.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
@@ -46,7 +46,7 @@ class GtfsInputSummaryServiceTests extends SpringBootIntegrationTestBase {
     @BeforeEach
     void setUp() throws URISyntaxException {
         ImmutableEntry entryToCreate = TestObjects.anEntry("gtfs").build();
-        PersistentEntry entry = entryRepository.create(Optional.empty(), entryToCreate).get();
+        EntryRecord entry = entryRepository.create(Optional.empty(), entryToCreate).get();
         taskRepository.createTasks(List.of(ImmutableTask.of(entry.id(), "FAKE_TASK", 1)));
         task = taskRepository.findTask(entry.id(), "FAKE_TASK").get();
         inputPath = Path.of(ClassLoader.getSystemResource("summary/211_gtfs.zip").toURI());

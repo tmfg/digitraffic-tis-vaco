@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -23,7 +23,7 @@ public class ValidationInputRepository {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public List<ValidationInputRecord> create(PersistentEntry entry, List<ValidationInput> validations) {
+    public List<ValidationInputRecord> create(EntryRecord entry, List<ValidationInput> validations) {
         if (validations == null) {
             return List.of();
         }

@@ -31,10 +31,10 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
@@ -145,7 +145,7 @@ public final class RowMappers {
         rs.getLong("company_id"),
         rs.getString("context"));
 
-    public static final Function<ObjectMapper, RowMapper<PersistentEntry>> PERSISTENT_ENTRY = RowMappers::mapEntryEntity;
+    public static final Function<ObjectMapper, RowMapper<EntryRecord>> PERSISTENT_ENTRY = RowMappers::mapEntryEntity;
     public static final Function<ObjectMapper, RowMapper<ValidationInput>> VALIDATION_INPUT = RowMappers::mapValidationInput;
     public static final Function<ObjectMapper, RowMapper<ValidationInputRecord>> VALIDATION_INPUT_RECORD = RowMappers::mapValidationInputRecord;
     public static final Function<ObjectMapper, RowMapper<ConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
@@ -225,8 +225,8 @@ public final class RowMappers {
         }
     }
 
-    private static RowMapper<PersistentEntry> mapEntryEntity(ObjectMapper objectMapper) {
-        return (rs, rowNum) -> ImmutablePersistentEntry.builder()
+    private static RowMapper<EntryRecord> mapEntryEntity(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> ImmutableEntryRecord.builder()
             .id(rs.getLong("id"))
             .publicId(rs.getString("public_id"))
             .businessId(rs.getString("business_id"))

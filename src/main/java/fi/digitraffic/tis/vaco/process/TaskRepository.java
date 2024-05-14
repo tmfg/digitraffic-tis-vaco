@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,7 +184,7 @@ public class TaskRepository {
      *
      * @param entry
      * @return
-     * @see TaskService#createTasks(PersistentEntry)
+     * @see TaskService#createTasks(EntryRecord)
      */
     public List<Task> findAvailableTasksToExecute(Entry entry) {
         return namedJdbc.query("""
@@ -245,13 +245,13 @@ public class TaskRepository {
             task.id());
     }
 
-    public List<ValidationInput> findValidationInputs(PersistentEntry entry) {
+    public List<ValidationInput> findValidationInputs(EntryRecord entry) {
         return jdbc.query("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
             RowMappers.VALIDATION_INPUT.apply(objectMapper),
             entry.id());
     }
 
-    public List<ConversionInput> findConversionInputs(PersistentEntry entry) {
+    public List<ConversionInput> findConversionInputs(EntryRecord entry) {
         return jdbc.query("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
             RowMappers.CONVERSION_INPUT.apply(objectMapper),
             entry.id());

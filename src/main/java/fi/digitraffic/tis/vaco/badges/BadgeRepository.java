@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.badges;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.EntryRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -45,7 +45,7 @@ public class BadgeRepository {
      * @return
      * @deprecated Tasks should be referenced by their public id instead of name, but refactoring this away at this time
      *             is not entirely feasible. The deprecation mark acts here as a reminder to use the alternative
-     *             overload {@link #findTaskStatus(PersistentEntry, String)} instead.
+     *             overload {@link #findTaskStatus(EntryRecord, String)} instead.
      */
     @Deprecated(since = "2024-04-04")
     public Optional<Status> findTaskStatus(String publicId, String taskName) {
@@ -65,7 +65,7 @@ public class BadgeRepository {
         }
     }
 
-    public Optional<Status> findTaskStatus(PersistentEntry entry, String taskName) {
+    public Optional<Status> findTaskStatus(EntryRecord entry, String taskName) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
                     """
