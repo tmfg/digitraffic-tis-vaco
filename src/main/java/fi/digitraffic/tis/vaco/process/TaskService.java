@@ -15,7 +15,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
-import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
@@ -146,25 +145,6 @@ public class TaskService {
         Map<String, List<String>> deps = new HashMap<>();
         deps.put(DownloadRule.PREPARE_DOWNLOAD_TASK, List.of());
         deps.put(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, List.of());
-        /*
-                deps.put(RulesetSubmissionService.VALIDATE_TASK,
-            List.of(
-                DownloadRule.PREPARE_DOWNLOAD_TASK,
-                StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
-                deps.put(RulesetSubmissionService.CONVERT_TASK, conversionDeps());
-         */
-
-        return deps;
-    }
-
-    private static List<String> conversionDeps() {
-        List<String> deps = new ArrayList<>();
-        // conversion rules may declare validations as dependencies, thus they need to be executed before running the
-        // conversion rule itself
-        deps.addAll(RuleName.ALL_EXTERNAL_VALIDATION_RULES);
-        deps.addAll(List.of(
-            DownloadRule.PREPARE_DOWNLOAD_TASK,
-            StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
         return deps;
     }
 
@@ -260,25 +240,45 @@ public class TaskService {
     }
 
     private List<Task> groupForParallelism(List<Task> sorted) {
-        Set<String> previousGroupNodes = new HashSet<>();
         List<Task> finalTasks = new ArrayList<>();
         int prioGroup = 1;
         int groupIndex = 0;
-        for (Task task : sorted) {
-            Optional<Ruleset> ruleset = rulesetService.findByName(task.name());
 
-            if ((ruleset.isPresent() && (ruleset.get().beforeDependencies().stream().anyMatch(previousGroupNodes::contains)))
-                || (ruleDeps.getOrDefault(task.name(), List.of()).stream().anyMatch(previousGroupNodes::contains))) {
-                prioGroup++;
-                groupIndex = 0;
-                previousGroupNodes.clear();
+        Map<String, Ruleset> rulesets = Streams.map(sorted, t -> rulesetService.findByName(t.name()))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Ruleset::identifyingName, Function.identity());
+
+        for (int i = 0; i < sorted.size(); i++) {
+            Set<String> previous = Streams.map((i == 0) ? List.of() : sorted.subList(0, i), Task::name).toSet();
+            Task current = sorted.get(i);
+
+            if (rulesets.containsKey(current.name())) {
+                Ruleset ruleset = rulesets.get(current.name());
+                if (anyPreviousTaskIsInCurrentTasksBeforeDependencies(previous, ruleset)
+                    || anyPreviousTaskHasCurrentAsAfterDependency(rulesets, previous, ruleset)) {
+                    prioGroup++;
+                    groupIndex = 0;
+                }
             }
-            finalTasks.add(ImmutableTask.copyOf(task).withPriority(prioGroup * 100 + groupIndex));
 
-            previousGroupNodes.add(task.name());
+            finalTasks.add(ImmutableTask.copyOf(current).withPriority(prioGroup * 100 + groupIndex));
             groupIndex++;
         }
         return finalTasks;
+    }
+
+    private boolean anyPreviousTaskIsInCurrentTasksBeforeDependencies(Set<String> before, Ruleset current) {
+        return current.beforeDependencies().stream().anyMatch(before::contains);
+    }
+
+    private boolean anyPreviousTaskHasCurrentAsAfterDependency(Map<String, Ruleset> rulesets, Set<String> before, Ruleset current) {
+        for (String possible : before) {
+            if (rulesets.containsKey(possible)) {
+                return rulesets.get(possible).afterDependencies().stream().anyMatch(s -> s.equals(current.identifyingName()));
+            }
+        }
+        return false;
     }
 
     private List<ImmutableTask> resolveRuleTasks(PersistentEntry entry,
