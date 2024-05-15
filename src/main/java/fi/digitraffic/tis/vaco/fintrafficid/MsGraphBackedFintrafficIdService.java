@@ -46,20 +46,18 @@ public class MsGraphBackedFintrafficIdService implements FintrafficIdService {
 
     @Override
     public List<FintrafficIdGroup> getGroups(String oid) {
-        return cachingService.cacheMsGraph("getGroups-" + oid, key -> {
-            GetMemberGroupsPostRequestBody getMemberGroupsPostRequestBody = new GetMemberGroupsPostRequestBody();
-            getMemberGroupsPostRequestBody.setSecurityEnabledOnly(false);
+        GetMemberGroupsPostRequestBody getMemberGroupsPostRequestBody = new GetMemberGroupsPostRequestBody();
+        getMemberGroupsPostRequestBody.setSecurityEnabledOnly(false);
 
-            GetMemberGroupsPostResponse result = graphClient.directoryObjects()
-                .byDirectoryObjectId(oid)
-                .getMemberGroups()
-                .post(getMemberGroupsPostRequestBody);
+        GetMemberGroupsPostResponse result = graphClient.directoryObjects()
+            .byDirectoryObjectId(oid)
+            .getMemberGroups()
+            .post(getMemberGroupsPostRequestBody);
 
-            return Streams.map(result.getValue(), this::getGroup)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
-        }).orElse(List.of());
+        return Streams.map(result.getValue(), this::getGroup)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .toList();
     }
 
     @Override
