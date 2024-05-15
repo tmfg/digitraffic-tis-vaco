@@ -14,12 +14,16 @@ import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableTaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
+import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
@@ -31,9 +35,7 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
-import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
@@ -91,6 +93,19 @@ public final class RowMappers {
         .build();
 
     public static final RowMapper<Task> TASK = (rs, rowNum) -> ImmutableTask.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .entryId(rs.getLong("entry_id"))
+        .name(rs.getString("name"))
+        .priority(rs.getInt("priority"))
+        .created(readZonedDateTime(rs, "created"))
+        .started(readZonedDateTime(rs, "started"))
+        .updated(readZonedDateTime(rs, "updated"))
+        .completed(readZonedDateTime(rs, "completed"))
+        .status(Status.forField(rs.getString("status")))
+        .build();
+
+    public static final RowMapper<TaskRecord> TASK_RECORD = (rs, rowNum) -> ImmutableTaskRecord.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
         .entryId(rs.getLong("entry_id"))
