@@ -95,7 +95,6 @@ public final class RowMappers {
     public static final RowMapper<Task> TASK = (rs, rowNum) -> ImmutableTask.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
-        .entryId(rs.getLong("entry_id"))
         .name(rs.getString("name"))
         .priority(rs.getInt("priority"))
         .created(readZonedDateTime(rs, "created"))

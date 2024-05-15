@@ -8,6 +8,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -38,16 +39,18 @@ import java.util.stream.Stream;
 @Service
 public class TaskService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final RecordMapper recordMapper;
     private final TaskRepository taskRepository;
     private final RulesetService rulesetService;
     private final CachingService cachingService;
 
     public TaskService(TaskRepository taskRepository,
                        RulesetService rulesetService,
-                       CachingService cachingService) {
+                       CachingService cachingService, RecordMapper recordMapper) {
         this.taskRepository = Objects.requireNonNull(taskRepository);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.cachingService = Objects.requireNonNull(cachingService);
+        this.recordMapper = recordMapper;
     }
 
     public Task trackTask(Entry entry, Task task, ProcessingState state) {
@@ -80,7 +83,7 @@ public class TaskService {
     }
 
     public List<Task> findTasksToExecute(Entry entry) {
-        return taskRepository.findAvailableTasksToExecute(entry);
+        return Streams.collect(taskRepository.findAvailableTasksToExecute(entry), recordMapper::toTask);
     }
 
     /**
@@ -316,7 +319,7 @@ public class TaskService {
 
     private static List<ImmutableTask> createTasks(List<String> taskNames,
                                                    EntryRecord entry) {
-        return Streams.map(taskNames, t -> ImmutableTask.of(entry.id(), t, -1)).toList();
+        return Streams.map(taskNames, t -> ImmutableTask.of(t, -1)).toList();
     }
 
     public boolean areAllTasksCompleted(Entry entry) {

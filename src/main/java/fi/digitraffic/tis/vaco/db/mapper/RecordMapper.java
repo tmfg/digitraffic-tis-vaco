@@ -14,7 +14,10 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
+import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
@@ -137,6 +140,20 @@ public class RecordMapper {
         return ImmutableContext.builder()
             .context(contextRecord.context())
             .businessId(businessId)
+            .build();
+    }
+
+    public Task toTask(TaskRecord taskRecord) {
+        return ImmutableTask.builder()
+            .id(taskRecord.id())
+            .publicId(taskRecord.publicId())
+            .name(taskRecord.name())
+            .priority(taskRecord.priority())
+            .created(taskRecord.created())
+            .started(taskRecord.started())
+            .updated(taskRecord.updated())
+            .completed(taskRecord.completed())
+            .status(taskRecord.status())
             .build();
     }
 }

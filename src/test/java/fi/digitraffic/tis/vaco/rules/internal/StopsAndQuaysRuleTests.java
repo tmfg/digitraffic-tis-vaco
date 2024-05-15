@@ -60,7 +60,7 @@ class StopsAndQuaysRuleTests {
     @Test
     void copiesStaticFileToOutputs() {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
-        Task saqTask = ImmutableTask.of(-1L, StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, -1).withId(5000000L);
+        Task saqTask = ImmutableTask.of(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(saqTask).build();
 
         given(taskService.findTask(entry.publicId(), StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));

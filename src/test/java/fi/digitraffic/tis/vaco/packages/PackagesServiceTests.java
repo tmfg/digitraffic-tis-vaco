@@ -49,7 +49,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     void roundtrippingPackageEntityWorks() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
         EntryRecord createdEntry = entryRepository.create(Optional.empty(), entry).get();
-        Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
+        Task task = forceTaskCreation(createdEntry, ImmutableTask.of("FAKE_TASK", 1));
         Optional<ContextRecord> context = Optional.empty(); // TODO: add actual context
         Package saved = packagesService.createPackage(recordMapper.toEntryBuilder(createdEntry, context).build(), task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Package> loaded = packagesService.findPackage(task, "FAKE_RULE");
@@ -63,7 +63,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     void providesHelperForDownloadingReferencedFile() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
         EntryRecord createdEntry = entryRepository.create(Optional.empty(), entry).get();
-        Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
+        Task task = forceTaskCreation(createdEntry, ImmutableTask.of("FAKE_TASK", 1));
         Optional<ContextRecord> context = Optional.empty(); // TODO: add actual context
         Package saved = packagesService.createPackage(recordMapper.toEntryBuilder(createdEntry, context).build(), task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Path> loaded = packagesService.downloadPackage(entry, task, "FAKE_RULE");

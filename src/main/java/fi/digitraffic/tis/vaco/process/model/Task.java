@@ -19,10 +19,6 @@ public interface Task {
     @JsonView(DataVisibility.InternalOnly.class)
     Long id();
 
-    @JsonView(DataVisibility.InternalOnly.class)
-    @Value.Parameter
-    Long entryId();
-
     @Nullable // TODO: make not nullable
     String publicId();
 

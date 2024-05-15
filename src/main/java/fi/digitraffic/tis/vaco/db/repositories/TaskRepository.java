@@ -194,8 +194,9 @@ public class TaskRepository {
      * @return
      * @see TaskService#createTasks(EntryRecord)
      */
-    public List<Task> findAvailableTasksToExecute(Entry entry) {
-        return namedJdbc.query("""
+    public List<TaskRecord> findAvailableTasksToExecute(Entry entry) {
+        return namedJdbc.query(
+              """
               WITH entry AS (SELECT id
                                FROM entry
                                WHERE public_id = :publicId),
@@ -211,7 +212,7 @@ public class TaskRepository {
                                            AND completed IS NULL
                                          ORDER BY priority ASC
                                          LIMIT 1)
-                            SELECT first_available.priority_group,
+            SELECT first_available.priority_group,
                    first_incomplete.priority_group,
                    t.*
               FROM task t,
@@ -224,10 +225,9 @@ public class TaskRepository {
                AND t.started IS NULL
              ORDER BY priority ASC
             """,
-
             new MapSqlParameterSource()
                 .addValue("publicId", entry.publicId()),
-        RowMappers.TASK);
+        RowMappers.TASK_RECORD);
     }
 
     public boolean areAllTasksCompleted(Entry entry) {

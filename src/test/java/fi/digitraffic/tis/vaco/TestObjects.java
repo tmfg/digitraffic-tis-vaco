@@ -102,7 +102,6 @@ public class TestObjects {
     public static ImmutableTask.Builder aTask(Entry entry) {
         return ImmutableTask.builder()
             .id(new Random().nextLong())
-            .entryId(new Random().nextLong())
             .name("task:name:" + UUID.randomUUID())
             .priority(new Random().nextInt());
     }

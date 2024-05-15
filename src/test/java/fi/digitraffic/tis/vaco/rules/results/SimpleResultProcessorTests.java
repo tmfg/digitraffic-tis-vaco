@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.entryWithTask;
@@ -43,7 +42,7 @@ class SimpleResultProcessorTests extends ResultProcessorTestBase {
         vacoProperties = TestObjects.vacoProperties();
         simpleResultProcessor = new SimpleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService);
 
-        entry = entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), RuleName.GTFS2NETEX_FINTRAFFIC, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(RuleName.GTFS2NETEX_FINTRAFFIC, 100).withId(9_000_000L));
         conversionTask = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of(
             "file.txt", List.of("all", "debug"),

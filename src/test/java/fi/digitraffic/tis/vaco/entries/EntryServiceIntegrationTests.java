@@ -117,8 +117,8 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(
             Streams.map(taskService.findTasks(result), this::withoutGeneratedValues).toList(),
             equalTo(List.of(
-                ImmutableTask.of(1000000L, DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
-                ImmutableTask.of(1000000L, "bananas", 200)
+                ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
+                ImmutableTask.of("bananas", 200)
             )));
     }
 

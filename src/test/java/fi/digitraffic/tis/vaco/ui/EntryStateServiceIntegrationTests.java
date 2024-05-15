@@ -66,7 +66,7 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     void setUp() throws URISyntaxException {
         ImmutableEntry entryToCreate = TestObjects.anEntry("gtfs").build();
         entry = entryRepository.create(Optional.empty(), entryToCreate).get();
-        taskRepository.createTasks(entry, List.of(ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 1)));
+        taskRepository.createTasks(entry, List.of(ImmutableTask.of(RuleName.GTFS_CANONICAL, 1)));
         task = taskRepository.findTask(entry.id(), RuleName.GTFS_CANONICAL).get();
         rule = rulesetRepository.findByName(RuleName.GTFS_CANONICAL).get();
 
