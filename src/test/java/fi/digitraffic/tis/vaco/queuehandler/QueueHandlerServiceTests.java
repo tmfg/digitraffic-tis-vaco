@@ -124,11 +124,13 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
         Optional<Company> preexistingOperatorCompany = companyHierarchyService.createCompany(ImmutableCompany.of(operatorBusinessId, operatorName, true));
         assertThat(preexistingOperatorCompany.isPresent(), equalTo(true));
         assertThat(companyHierarchyService.findByBusinessId(operatorBusinessId).isPresent(), equalTo(true));
+        assertThat(companyHierarchyService.findByBusinessId(operatorBusinessId).get().contactEmails().isEmpty(), equalTo(true));
 
         // add email to metadata
         entryRequest = entryRequest.withMetadata(metadata.put("contact-email", email));
         queueHandlerService.processQueueEntry(entryRequest).get();
 
+        // check that the company has updated
         Optional<Company> updatedCompany = companyHierarchyService.findByBusinessId(operatorBusinessId);
         assertThat(updatedCompany.isPresent(), equalTo(true));
         Company company = updatedCompany.get();
