@@ -143,6 +143,19 @@ public class CompanyRepository {
             company.id());
     }
 
+    public CompanyRecord updateContactEmails(CompanyRecord company, List<String> replacementEmails) {
+        return jdbc.queryForObject(
+            """
+                UPDATE company
+                   SET contact_emails = ?
+                 WHERE id = ?
+             RETURNING *
+            """,
+            RowMappers.COMPANY_RECORD,
+            ArraySqlValue.create(replacementEmails.toArray(new String[0])),
+            company.id());
+    }
+
     public Map<Company, Hierarchy> findRootHierarchies() {
         // 1. find roots
         Set<Long> roots = findHierarchyRoots();

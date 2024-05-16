@@ -209,4 +209,9 @@ public class CompanyHierarchyService {
     }
 
 
+    public void updateContactEmails(Company company, List<String> replacementEmails) {
+        companyRepository.findByBusinessId(company.businessId())
+            .ifPresent(ref -> companyRepository.updateContactEmails(ref, replacementEmails));
+
+    }
 }

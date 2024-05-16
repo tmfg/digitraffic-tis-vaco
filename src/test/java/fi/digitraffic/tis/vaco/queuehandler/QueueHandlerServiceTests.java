@@ -12,11 +12,13 @@ import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -61,6 +63,11 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
         fintrafficCompany = ImmutableCompany.of(Constants.FINTRAFFIC_BUSINESS_ID, TestConstants.FINTRAFFIC_COMPANY_NAME, true);
     }
 
+    @AfterEach
+    void tearDown() {
+        companyRepository.deleteByBusinessId(operatorBusinessId);
+    }
+
     @Test
     void autocreatesCompanyOnNewEntryIfSourceIsFinap() {
         assertThat(companyHierarchyService.findByBusinessId(operatorBusinessId).isPresent(), equalTo(false));
@@ -75,8 +82,6 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
         Company operator = createdCompany.get();
         assertThat(operator.businessId(), equalTo(operatorBusinessId));
         assertThat(operator.name(), equalTo(operatorName));
-
-        assertThat(companyRepository.deleteByBusinessId(operatorBusinessId), equalTo(true));
     }
 
     @Test
@@ -95,4 +100,39 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
         assertThat(queueHandlerService.processQueueEntry(entryRequest).isPresent(), equalTo(false));
     }
 
+    @Test
+    void addsContactEmailToCompanysContactEmailsIfPresent() {
+        String email = "admin@company.example.fi";
+        entryRequest = entryRequest.withMetadata(metadata.put("contact-email", email));
+
+        assertThat(companyHierarchyService.findByBusinessId(operatorBusinessId).isPresent(), equalTo(false));
+
+        queueHandlerService.processQueueEntry(entryRequest).get();
+
+        Optional<Company> createdCompany = companyHierarchyService.findByBusinessId(operatorBusinessId);
+        assertThat(createdCompany.isPresent(), equalTo(true));
+        Company company = createdCompany.get();
+
+        assertThat(Set.copyOf(company.contactEmails()).contains(email), equalTo(true));
+    }
+
+    @Test
+    void addsContactEmailToExistingCompanysContactEmailsIfNoEmailsHaveBeenDefined() {
+        String email = "admin@company.example.fi";
+
+        // pre-create the company
+        Optional<Company> preexistingOperatorCompany = companyHierarchyService.createCompany(ImmutableCompany.of(operatorBusinessId, operatorName, true));
+        assertThat(preexistingOperatorCompany.isPresent(), equalTo(true));
+        assertThat(companyHierarchyService.findByBusinessId(operatorBusinessId).isPresent(), equalTo(true));
+
+        // add email to metadata
+        entryRequest = entryRequest.withMetadata(metadata.put("contact-email", email));
+        queueHandlerService.processQueueEntry(entryRequest).get();
+
+        Optional<Company> updatedCompany = companyHierarchyService.findByBusinessId(operatorBusinessId);
+        assertThat(updatedCompany.isPresent(), equalTo(true));
+        Company company = updatedCompany.get();
+
+        assertThat(Set.copyOf(company.contactEmails()).contains(email), equalTo(true));
+    }
 }

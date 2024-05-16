@@ -145,17 +145,29 @@ public class QueueHandlerService {
             if ("FINAP".equals(callerName)) {
                 String finapOperator = operatorName.asText();
                 ImmutableCompany operatorCompany = ImmutableCompany.of(businessId, finapOperator, true);
+                if (metadata.has("contact-email")) {
+                    operatorCompany = operatorCompany.withContactEmails(metadata.get("contact-email").asText());
+                }
                 Optional<Company> createdCompany = companyHierarchyService.createCompany(operatorCompany);
 
-                createdCompany.ifPresent(newOperator -> {
+                if (createdCompany.isPresent()) {
                     logger.info("New company registration from FINAP: {} / {}", businessId, finapOperator);
 
+                    Company newOperator = createdCompany.get();
                     Optional<Company> fintrafficOrg = companyHierarchyService.findByBusinessId(FINTRAFFIC_BUSINESS_ID);
                     fintrafficOrg.ifPresent(fintraffic -> {
                         logger.debug("Registering partnership between Fintraffic ({}) and FINAP originated operator {} / {}", fintraffic.businessId(), businessId, finapOperator);
                         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, fintraffic, newOperator);
                     });
-                });
+                } else {
+                    companyHierarchyService.findByBusinessId(businessId).ifPresent(existingOperator -> {
+                        if (metadata.has("contact-email")
+                            && existingOperator.contactEmails().isEmpty()) {
+                            logger.info("Updating {}'s ({}) contact emails to be the one originating from FINAP", existingOperator.name(), existingOperator.businessId());
+                            companyHierarchyService.updateContactEmails(existingOperator, List.of(metadata.get("contact-email").asText()));
+                        }
+                    });
+                }
             } else {
                 logger.debug("Unrecognized caller '{}', will not autoregister new company", callerName);
             }
