@@ -7,9 +7,9 @@ import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.netex.ImmutableEnturNetexValidatorConfiguration;
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,7 @@ class TaskServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 .build())
             .build();
         Optional<Entry> saved = queueHandlerService.processQueueEntry(e);
-        Optional<PersistentEntry> r = entryRepository.findByPublicId(saved.get().publicId());
+        Optional<EntryRecord> r = entryRepository.findByPublicId(saved.get().publicId());
         List<Task> t = taskService.resolveTasks(r.get());
 
         assertThat(t.size(), equalTo(2));

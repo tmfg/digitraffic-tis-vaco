@@ -7,12 +7,12 @@ import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingRepository;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
-import fi.digitraffic.tis.vaco.process.TaskRepository;
+import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -59,14 +59,14 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
     RecordMapper recordMapper;
     private Path inputPath;
     private Task task;
-    private PersistentEntry entry;
+    private EntryRecord entry;
     private Ruleset rule;
 
     @BeforeEach
     void setUp() throws URISyntaxException {
         ImmutableEntry entryToCreate = TestObjects.anEntry("gtfs").build();
         entry = entryRepository.create(Optional.empty(), entryToCreate).get();
-        taskRepository.createTasks(List.of(ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 1)));
+        taskRepository.createTasks(entry, List.of(ImmutableTask.of(RuleName.GTFS_CANONICAL, 1)));
         task = taskRepository.findTask(entry.id(), RuleName.GTFS_CANONICAL).get();
         rule = rulesetRepository.findByName(RuleName.GTFS_CANONICAL).get();
 

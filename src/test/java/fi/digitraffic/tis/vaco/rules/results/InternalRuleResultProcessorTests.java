@@ -23,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.entryWithTask;
@@ -51,7 +50,7 @@ class InternalRuleResultProcessorTests extends ResultProcessorTestBase {
         vacoProperties = TestObjects.vacoProperties();
         resultProcessor = new InternalRuleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService);
 
-        entry = entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), DownloadRule.PREPARE_DOWNLOAD_TASK, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100).withId(9_000_000L));
         downloadTask = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of("archive.zip", List.of("result"));
         downloadMessage = asResultMessage(vacoProperties, DownloadRule.PREPARE_DOWNLOAD_TASK, entry, uploadedFiles);

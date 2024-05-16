@@ -38,7 +38,6 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -147,7 +146,7 @@ class RuleResultsListenerTests {
 
     @NotNull
     private static Entry entryForRule(String ruleName) {
-        return entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), ruleName, 100).withId(9_000_000L));
+        return entryWithTask(e -> ImmutableTask.of(ruleName, 100).withId(9_000_000L));
     }
 
     private void givenMessageIsInQueue(String queueName, Message gtfs2netexMessage) {

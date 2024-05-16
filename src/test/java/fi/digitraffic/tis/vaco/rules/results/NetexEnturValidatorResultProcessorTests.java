@@ -90,7 +90,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
                 }
             }
         };
-        entry = entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), RuleName.NETEX_ENTUR, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(RuleName.NETEX_ENTUR, 100).withId(9_000_000L));
         task = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of("reports.json", List.of("report"));
         resultMessage = asResultMessage(vacoProperties, RuleName.NETEX_ENTUR, entry, uploadedFiles);

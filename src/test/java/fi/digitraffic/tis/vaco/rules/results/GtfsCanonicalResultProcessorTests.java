@@ -86,7 +86,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
                 }
             }
         };
-        entry = entryWithTask(e -> ImmutableTask.of(new Random().nextLong(), RuleName.GTFS_CANONICAL, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(RuleName.GTFS_CANONICAL, 100).withId(9_000_000L));
         task = entry.tasks().get(0);
 
         gtfsCanonicalRuleset = ImmutableRuleset.of(

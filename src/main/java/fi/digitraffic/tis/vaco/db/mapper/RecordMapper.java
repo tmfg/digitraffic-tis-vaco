@@ -14,12 +14,15 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
+import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
+import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ui.model.Context;
@@ -42,21 +45,21 @@ public class RecordMapper {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public ImmutableEntry.Builder toEntryBuilder(PersistentEntry persistentEntry, Optional<ContextRecord> context) {
+    public ImmutableEntry.Builder toEntryBuilder(EntryRecord entryRecord, Optional<ContextRecord> context) {
         return ImmutableEntry.builder()
-            .publicId(persistentEntry.publicId())
-            .name(persistentEntry.name())
-            .format(persistentEntry.format())
-            .url(persistentEntry.url())
-            .businessId(persistentEntry.businessId())
-            .etag(persistentEntry.etag())
-            .metadata(persistentEntry.metadata())
-            .notifications(persistentEntry.notifications())
-            .created(persistentEntry.created())
-            .started(persistentEntry.started())
-            .updated(persistentEntry.updated())
-            .completed(persistentEntry.completed())
-            .status(persistentEntry.status())
+            .publicId(entryRecord.publicId())
+            .name(entryRecord.name())
+            .format(entryRecord.format())
+            .url(entryRecord.url())
+            .businessId(entryRecord.businessId())
+            .etag(entryRecord.etag())
+            .metadata(entryRecord.metadata())
+            .notifications(entryRecord.notifications())
+            .created(entryRecord.created())
+            .started(entryRecord.started())
+            .updated(entryRecord.updated())
+            .completed(entryRecord.completed())
+            .status(entryRecord.status())
             .context(context.map(ContextRecord::context).orElse(null));
     }
 
@@ -137,6 +140,20 @@ public class RecordMapper {
         return ImmutableContext.builder()
             .context(contextRecord.context())
             .businessId(businessId)
+            .build();
+    }
+
+    public Task toTask(TaskRecord taskRecord) {
+        return ImmutableTask.builder()
+            .id(taskRecord.id())
+            .publicId(taskRecord.publicId())
+            .name(taskRecord.name())
+            .priority(taskRecord.priority())
+            .created(taskRecord.created())
+            .started(taskRecord.started())
+            .updated(taskRecord.updated())
+            .completed(taskRecord.completed())
+            .status(taskRecord.status())
             .build();
     }
 }
