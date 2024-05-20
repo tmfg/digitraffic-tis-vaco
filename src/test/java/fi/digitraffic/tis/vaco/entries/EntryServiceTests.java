@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.entries;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingRepository;
@@ -11,7 +12,6 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
-import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +24,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Random;
 
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -121,7 +120,7 @@ class EntryServiceTests {
     }
 
     private void givenTaskInStatus(Status status) {
-        Task failed = ImmutableTask.of(new Random().nextLong(), "failed", 100).withStatus(status);
+        Task failed = ImmutableTask.of("failed", 100).withStatus(status);
         BDDMockito.given(taskService.findTasks(entry)).willReturn(List.of(failed));
     }
 

@@ -7,13 +7,13 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.entries.EntryRepository;
 import fi.digitraffic.tis.vaco.packages.model.Package;
-import fi.digitraffic.tis.vaco.process.TaskRepository;
+import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +48,8 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void roundtrippingPackageEntityWorks() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
-        PersistentEntry createdEntry = entryRepository.create(Optional.empty(), entry).get();
-        Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
+        EntryRecord createdEntry = entryRepository.create(Optional.empty(), entry).get();
+        Task task = forceTaskCreation(createdEntry, ImmutableTask.of("FAKE_TASK", 1));
         Optional<ContextRecord> context = Optional.empty(); // TODO: add actual context
         Package saved = packagesService.createPackage(recordMapper.toEntryBuilder(createdEntry, context).build(), task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Package> loaded = packagesService.findPackage(task, "FAKE_RULE");
@@ -62,8 +62,8 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
     @Test
     void providesHelperForDownloadingReferencedFile() {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
-        PersistentEntry createdEntry = entryRepository.create(Optional.empty(), entry).get();
-        Task task = forceTaskCreation(createdEntry, ImmutableTask.of(createdEntry.id(), "FAKE_TASK", 1));
+        EntryRecord createdEntry = entryRepository.create(Optional.empty(), entry).get();
+        Task task = forceTaskCreation(createdEntry, ImmutableTask.of("FAKE_TASK", 1));
         Optional<ContextRecord> context = Optional.empty(); // TODO: add actual context
         Package saved = packagesService.createPackage(recordMapper.toEntryBuilder(createdEntry, context).build(), task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
         Optional<Path> loaded = packagesService.downloadPackage(entry, task, "FAKE_RULE");
@@ -81,8 +81,8 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
      * @param task
      * @return
      */
-    private Task forceTaskCreation(PersistentEntry createdEntry, Task task) {
-        taskRepository.createTasks(List.of(task));
+    private Task forceTaskCreation(EntryRecord createdEntry, Task task) {
+        taskRepository.createTasks(createdEntry, List.of(task));
         return taskService.findTask(createdEntry.id(), task.name()).get();
     }
 }

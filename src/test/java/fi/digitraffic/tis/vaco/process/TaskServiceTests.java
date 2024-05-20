@@ -1,13 +1,17 @@
 package fi.digitraffic.tis.vaco.process;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
+import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
-import fi.digitraffic.tis.vaco.queuehandler.model.ImmutablePersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
@@ -51,7 +55,11 @@ class TaskServiceTests {
     @Mock
     private CachingService cachingService;
 
-    private ImmutablePersistentEntry entry;
+    private ObjectMapper objectMapper;
+
+    private RecordMapper recordMapper;
+
+    private EntryRecord entry;
 
     private ImmutableRuleset gtfsCanonicalRuleset;
     private ImmutableRuleset gtfs2NetexRuleset;
@@ -59,8 +67,10 @@ class TaskServiceTests {
 
     @BeforeEach
     void setUp() {
-        taskService = new TaskService(taskRepository, rulesetService, cachingService);
-        entry = ImmutablePersistentEntry.of(
+        objectMapper = new ObjectMapper();
+        recordMapper = new RecordMapper(objectMapper);
+        taskService = new TaskService(taskRepository, rulesetService, cachingService, recordMapper);
+        entry = ImmutableEntryRecord.of(
                 1000000L,
                 NanoIdUtils.randomNanoId(),
                 "entry",
@@ -116,10 +126,10 @@ class TaskServiceTests {
         });
 
         List<ImmutableTask> expectedTasks = List.of(
-            ImmutableTask.of(entry.id(), DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
-            ImmutableTask.of(entry.id(), RuleName.GTFS_CANONICAL, 200),
-            ImmutableTask.of(entry.id(), RuleName.GTFS2NETEX_FINTRAFFIC, 300),
-            ImmutableTask.of(entry.id(), RuleName.NETEX_ENTUR, 400)
+            ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
+            ImmutableTask.of(RuleName.GTFS_CANONICAL, 200),
+            ImmutableTask.of(RuleName.GTFS2NETEX_FINTRAFFIC, 300),
+            ImmutableTask.of(RuleName.NETEX_ENTUR, 400)
         );
 
         assertThat(taskService.resolveTasks(entry), equalTo(expectedTasks));

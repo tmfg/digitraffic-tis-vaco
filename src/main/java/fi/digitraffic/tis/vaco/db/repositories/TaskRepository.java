@@ -1,16 +1,19 @@
-package fi.digitraffic.tis.vaco.process;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.queuehandler.model.PersistentEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -25,55 +28,60 @@ import java.util.Optional;
 @Repository
 public class TaskRepository {
 
+    private final JdbcTemplate jdbcTemplate;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
     private final ObjectMapper objectMapper;
 
-    public TaskRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc, ObjectMapper objectMapper) {
+    public TaskRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional
-    public boolean createTasks(List<Task> tasks) {
+    public List<TaskRecord> createTasks(EntryRecord entry, List<Task> tasks) {
         try {
-            jdbc.batchUpdate("""
-                INSERT INTO task (entry_id, name, priority)
-                     VALUES (?, ?, ?)
-                  RETURNING id, entry_id, name, priority, created, started, updated, completed, status
-                """,
-                tasks,
-                100,
-                (ps, task) -> {
-                    ps.setLong(1, task.entryId());
-                    ps.setString(2, task.name());
-                    ps.setLong(3, task.priority());
-                });
-            // TODO: inspect result counts to determine everything was inserted
-            return true;
-        } catch (DuplicateKeyException dke) {
-            logger.warn("Failed to batch insert tasks", dke);
-            return false;
+            return Streams.collect(tasks, task -> createTask(entry, task));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to batch insert entry {}'s tasks", entry.publicId(), dae);
+            return List.of();
         }
     }
 
+    private TaskRecord createTask(EntryRecord entry, Task task) {
+        return jdbcTemplate.queryForObject(
+            """
+            INSERT INTO task (entry_id, name, priority)
+                 VALUES (?, ?, ?)
+              RETURNING id, entry_id, public_id, name, priority, created, started, updated, completed, status
+            """,
+            RowMappers.TASK_RECORD,
+            entry.id(),
+            task.name(),
+            task.priority()
+        );
+    }
+
     public Task startTask(Task task) {
-        Task started = jdbc.queryForObject("""
-                     UPDATE task
-                        SET started = NOW()
-                      WHERE id = ?
-                  RETURNING id, entry_id, public_id, name, priority, created, started, updated, completed, status
-                """,
+        Task started = jdbc.queryForObject(
+            """
+                 UPDATE task
+                    SET started = NOW()
+                  WHERE id = ?
+              RETURNING id, entry_id, public_id, name, priority, created, started, updated, completed, status
+            """,
             RowMappers.TASK,
             task.id());
         return markStatus(started, Status.PROCESSING);
     }
 
     public Task updateTask(Task task) {
-        return jdbc.queryForObject("""
+        return jdbc.queryForObject(
+            """
                  UPDATE task
                     SET updated = NOW()
                   WHERE id = ?
@@ -184,10 +192,11 @@ public class TaskRepository {
      *
      * @param entry
      * @return
-     * @see TaskService#createTasks(PersistentEntry)
+     * @see TaskService#createTasks(EntryRecord)
      */
-    public List<Task> findAvailableTasksToExecute(Entry entry) {
-        return namedJdbc.query("""
+    public List<TaskRecord> findAvailableTasksToExecute(Entry entry) {
+        return namedJdbc.query(
+              """
               WITH entry AS (SELECT id
                                FROM entry
                                WHERE public_id = :publicId),
@@ -203,7 +212,7 @@ public class TaskRepository {
                                            AND completed IS NULL
                                          ORDER BY priority ASC
                                          LIMIT 1)
-                            SELECT first_available.priority_group,
+            SELECT first_available.priority_group,
                    first_incomplete.priority_group,
                    t.*
               FROM task t,
@@ -216,10 +225,9 @@ public class TaskRepository {
                AND t.started IS NULL
              ORDER BY priority ASC
             """,
-
             new MapSqlParameterSource()
                 .addValue("publicId", entry.publicId()),
-        RowMappers.TASK);
+        RowMappers.TASK_RECORD);
     }
 
     public boolean areAllTasksCompleted(Entry entry) {
@@ -245,13 +253,13 @@ public class TaskRepository {
             task.id());
     }
 
-    public List<ValidationInput> findValidationInputs(PersistentEntry entry) {
+    public List<ValidationInput> findValidationInputs(EntryRecord entry) {
         return jdbc.query("SELECT * FROM validation_input qvi WHERE qvi.entry_id = ?",
             RowMappers.VALIDATION_INPUT.apply(objectMapper),
             entry.id());
     }
 
-    public List<ConversionInput> findConversionInputs(PersistentEntry entry) {
+    public List<ConversionInput> findConversionInputs(EntryRecord entry) {
         return jdbc.query("SELECT * FROM conversion_input qci WHERE qci.entry_id = ?",
             RowMappers.CONVERSION_INPUT.apply(objectMapper),
             entry.id());

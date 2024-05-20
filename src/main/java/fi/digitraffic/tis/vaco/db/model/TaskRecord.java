@@ -1,9 +1,5 @@
-package fi.digitraffic.tis.vaco.process.model;
+package fi.digitraffic.tis.vaco.db.model;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
@@ -11,15 +7,15 @@ import org.immutables.value.Value;
 import java.time.ZonedDateTime;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableTask.class)
-@JsonDeserialize(as = ImmutableTask.class)
-@Value.Style(defaultAsDefault = true)
-public interface Task {
-    @Nullable
-    @JsonView(DataVisibility.InternalOnly.class)
+public interface TaskRecord {
+
+    @Value.Parameter
     Long id();
 
-    @Nullable // TODO: make not nullable
+    @Value.Parameter
+    Long entryId();
+
+    @Value.Parameter
     String publicId();
 
     @Value.Parameter
@@ -28,7 +24,7 @@ public interface Task {
     @Value.Parameter
     int priority();
 
-    @Nullable
+    @Value.Parameter
     ZonedDateTime created();
 
     @Nullable
@@ -45,3 +41,4 @@ public interface Task {
         return Status.RECEIVED;
     }
 }
+

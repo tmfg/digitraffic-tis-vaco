@@ -90,7 +90,7 @@ class DownloadRuleTests {
     @Test
     void ruleExecutionForGtfs() throws URISyntaxException {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GTFS.fieldName());
-        Task dlTask = ImmutableTask.of(-1L, DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
+        Task dlTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Path gtfsTestFile = resolveTestFile("padasjoen_kunta.zip");
         DownloadResponse response = ImmutableDownloadResponse.builder().body(gtfsTestFile).build();
@@ -117,7 +117,7 @@ class DownloadRuleTests {
     @Test
     void ruleExecutionForGbfs() throws URISyntaxException {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GBFS.fieldName());
-        Task dlTask = ImmutableTask.of(-1L, DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
+        Task dlTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Path gbfsDiscoveryFile = resolveTestFile("lahti_gbfs/gbfs.json");
         String newEtag = "W/new etag";
@@ -165,7 +165,7 @@ class DownloadRuleTests {
         String executionContext = "context can be anything";
         String sharedETag = "foobaretag";
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GBFS.fieldName()).context(executionContext).etag(sharedETag);
-        Task dlTask = ImmutableTask.of(-1L, DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
+        Task dlTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Entry previousEntry = ImmutableEntry.copyOf(entry).withPublicId("höpöhöpö");
 
