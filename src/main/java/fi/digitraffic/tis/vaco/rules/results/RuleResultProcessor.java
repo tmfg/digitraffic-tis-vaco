@@ -21,10 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -101,15 +98,30 @@ public abstract class RuleResultProcessor implements ResultProcessor {
 
     protected void resolveTaskStatus(Entry entry, Task task) {
         Map<String, Long> severities = findingService.summarizeFindingsSeverities(task);
+        List<Finding> allFindings = findingService.findFindingsByTaskId(task);
         logger.debug("{}/{} ({}) produced findings {}", entry.publicId(), task.name(), task.publicId(), severities);
-        if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
-            || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
-            taskService.markStatus(entry, task, Status.ERRORS);
-        } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
-            taskService.markStatus(entry, task, Status.WARNINGS);
-        } else {
-            taskService.markStatus(entry, task, Status.SUCCESS);
+
+        for (Finding finding : allFindings) {
+            if (finding.message().equals("thread_execution_error")) {
+                taskService.markStatus(entry, task, Status.FAILED);
+                break;
+            }
         }
+
+        Optional<Task> oneTask = taskService.findTask(task.publicId());
+        Status taskStatus = oneTask.get().status();
+
+        if (!Status.FAILED.equals(taskStatus)){
+            if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
+                || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
+                taskService.markStatus(entry, task, Status.ERRORS);
+            } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
+                taskService.markStatus(entry, task, Status.WARNINGS);
+            } else {
+                taskService.markStatus(entry, task, Status.SUCCESS);
+            }
+        }
+
         taskService.trackTask(entry, task, ProcessingState.COMPLETE);
     }
 

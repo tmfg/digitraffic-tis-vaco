@@ -37,4 +37,9 @@ public class FindingService {
     public Map<String, Long> summarizeFindingsSeverities(Task task) {
         return findingRepository.getSeverityCounts(task);
     }
+
+    public  List<Finding> findFindingsByTaskId(Task task){
+       return findingRepository.findFindingsByTaskId(task.id());
+
+    }
 }
