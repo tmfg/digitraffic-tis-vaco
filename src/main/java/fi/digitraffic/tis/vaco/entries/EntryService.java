@@ -149,10 +149,11 @@ public class EntryService {
      * @return Fully completed entry.
      */
     private Entry buildCompleteEntry(EntryRecord entry) {
-        List<Package> packages = Streams.flatten(taskService.findTasks(entry), packagesService::findPackages).toList();
+        List<Task> tasks = taskService.findTasks(entry);
+        List<Package> packages = Streams.flatten(tasks, packagesService::findAvailablePackages).toList();
         Optional<ContextRecord> context = contextRepository.find(entry);
         return recordMapper.toEntryBuilder(entry, context)
-            .tasks(taskService.findTasks(entry))
+            .tasks(tasks)
             .validations(taskService.findValidationInputs(entry))
             .conversions(taskService.findConversionInputs(entry))
             .packages(packages)
