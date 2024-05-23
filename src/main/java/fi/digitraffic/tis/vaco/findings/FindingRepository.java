@@ -120,4 +120,22 @@ public class FindingRepository {
             r -> ((String) r.get("severity")).toUpperCase(),
             r -> (Long) r.get("count"));
     }
+
+    public List<Finding> findFindingsByName(Long taskId, String findingName) {
+        try {
+            return jdbc.query(
+                """
+                SELECT id, public_id, task_id, ruleset_id, source, message, severity, raw
+                  FROM finding
+                 WHERE task_id = ?
+                   AND message = ?
+                """,
+                RowMappers.FINDING,
+                taskId,
+                findingName);
+        } catch (EmptyResultDataAccessException erdae) {
+            return List.of();
+        }
+
+    }
 }

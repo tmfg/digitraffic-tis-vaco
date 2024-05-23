@@ -21,10 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -100,16 +97,26 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     }
 
     protected void resolveTaskStatus(Entry entry, Task task) {
+        resolveTaskStatus(entry, task, Optional.empty());
+    }
+    protected void resolveTaskStatus(Entry entry, Task task, Optional<Status> override) {
         Map<String, Long> severities = findingService.summarizeFindingsSeverities(task);
         logger.debug("{}/{} ({}) produced findings {}", entry.publicId(), task.name(), task.publicId(), severities);
-        if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
-            || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
-            taskService.markStatus(entry, task, Status.ERRORS);
-        } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
-            taskService.markStatus(entry, task, Status.WARNINGS);
+
+        if (override.isPresent()) {
+            taskService.markStatus(entry, task, override.get());
         } else {
-            taskService.markStatus(entry, task, Status.SUCCESS);
+
+            if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
+                || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
+                taskService.markStatus(entry, task, Status.ERRORS);
+            } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
+                taskService.markStatus(entry, task, Status.WARNINGS);
+            } else {
+                taskService.markStatus(entry, task, Status.SUCCESS);
+            }
         }
+
         taskService.trackTask(entry, task, ProcessingState.COMPLETE);
     }
 
