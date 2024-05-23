@@ -97,21 +97,16 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     }
 
     protected void resolveTaskStatus(Entry entry, Task task) {
+        resolveTaskStatus(entry, task, Optional.empty());
+    }
+    protected void resolveTaskStatus(Entry entry, Task task, Optional<Status> override) {
         Map<String, Long> severities = findingService.summarizeFindingsSeverities(task);
-        List<Finding> allFindings = findingService.findFindingsByTaskId(task);
         logger.debug("{}/{} ({}) produced findings {}", entry.publicId(), task.name(), task.publicId(), severities);
 
-        for (Finding finding : allFindings) {
-            if (finding.message().equals("thread_execution_error")) {
-                taskService.markStatus(entry, task, Status.FAILED);
-                break;
-            }
-        }
+        if (override.isPresent()) {
+            taskService.markStatus(entry, task, override.get());
+        } else {
 
-        Optional<Task> oneTask = taskService.findTask(task.publicId());
-        Status taskStatus = oneTask.get().status();
-
-        if (!Status.FAILED.equals(taskStatus)){
             if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
                 || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
                 taskService.markStatus(entry, task, Status.ERRORS);
