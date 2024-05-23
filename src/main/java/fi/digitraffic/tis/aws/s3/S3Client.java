@@ -7,10 +7,13 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedCopy;
@@ -159,6 +162,31 @@ public class S3Client {
                         .destinationBucket(bucket)
                         .destinationKey(targetPath.toString())))
             .completionFuture();
+    }
+
+    public HeadObjectResponse headObject(String bucketName, String key) {
+        HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .build();
+        return awsS3Client.headObject(headObjectRequest);
+    }
+
+    public boolean keyExists(String bucketName, String key) {
+        try {
+            headObject(bucketName, key);
+            return true;
+        }
+        catch (S3Exception e) {
+            if (e.statusCode() != 404) {
+                logger.error("Failed to retrieve S3 package metadata with status code {} at {}, throwing exception {}", e.statusCode(), key, e);
+            }
+        }
+        catch (Exception e) {
+            logger.error("Failed to retrieve S3 package metadata at {}, throwing exception {}", key, e);
+        }
+
+        return false;
     }
 }
 

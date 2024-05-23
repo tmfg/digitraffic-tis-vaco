@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.packages;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
@@ -99,6 +100,11 @@ public class PackagesService {
 
     public List<Package> findPackages(Task task) {
         return packagesRepository.findPackages(task);
+    }
+
+    public List<Package> findAvailablePackages(Task task) {
+        List<Package> packages = packagesRepository.findPackages(task);
+        return Streams.filter(packages, p -> s3Client.keyExists(vacoProperties.s3ProcessingBucket(), p.path())).toList();
     }
 
     public Optional<Package> findPackage(Task task, String packageName) {

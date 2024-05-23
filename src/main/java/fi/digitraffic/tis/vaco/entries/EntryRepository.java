@@ -184,7 +184,7 @@ public class EntryRepository {
 
     /**
      * !! This is used by UI MyData page only
-     * @param businessIds
+     * @param businessId
      * @return
      */
     public List<EntryRecord> findLatestForBusinessId(String businessId) {
