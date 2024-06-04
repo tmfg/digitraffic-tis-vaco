@@ -30,7 +30,7 @@
         <java.version>21</java.version>
         <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
                    avoid conflicts -->
-        <springframework.boot-version>3.2.5</springframework.boot-version>
+        <springframework.boot-version>3.3.0</springframework.boot-version>
         <junit5.version>5.9.2</junit5.version>
         <testcontainers.version>1.19.8</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
@@ -328,6 +328,14 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Since version 10 Flyway has modularized necessary database drivers to their own dependencies. 
+             See https://github.com/flyway/flyway/issues/3780
+        -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
 
