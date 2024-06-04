@@ -330,6 +330,14 @@
             <artifactId>flyway-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Since version 10 Flyway has modularized necessary database drivers to their own dependencies. 
+             See https://github.com/flyway/flyway/issues/3780
+        -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Near-optimal caching library -->
         <dependency>
