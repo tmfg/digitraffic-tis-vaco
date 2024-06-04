@@ -135,19 +135,21 @@ public final class RowMappers {
             .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
             .adGroupId(rs.getString(alias + "ad_group_id"))
             .publish(rs.getBoolean(alias + "publish"))
+            .codespaces(List.of(ArraySqlValue.read(rs, alias + "codespaces")))
             .build();
 
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
     public static final RowMapper<CompanyRecord> COMPANY_RECORD = (rs, rowNum) -> ImmutableCompanyRecord.builder()
-            .id(rs.getLong("id"))
-            .businessId(rs.getString("business_id"))
-            .name(rs.getString("name"))
-            .language(rs.getString("language"))
-            .contactEmails(List.of(ArraySqlValue.read(rs, "contact_emails")))
-            .adGroupId(rs.getString("ad_group_id"))
-            .publish(rs.getBoolean("publish"))
-            .build();
+        .id(rs.getLong("id"))
+        .businessId(rs.getString("business_id"))
+        .name(rs.getString("name"))
+        .language(rs.getString("language"))
+        .contactEmails(List.of(ArraySqlValue.read(rs, "contact_emails")))
+        .adGroupId(rs.getString("ad_group_id"))
+        .publish(rs.getBoolean("publish"))
+        .codespaces(List.of(ArraySqlValue.read(rs, "codespaces")))
+        .build();
 
     public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(
         PartnershipType.forField(rs.getString("type")),

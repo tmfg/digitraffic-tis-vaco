@@ -47,4 +47,9 @@ public interface Company {
 
     @Value.Parameter
     boolean publish();
+
+    @Value.Default
+    default List<String> codespaces() {
+        return List.of();
+    }
 }

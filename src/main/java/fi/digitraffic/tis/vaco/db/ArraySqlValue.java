@@ -46,7 +46,9 @@ public class ArraySqlValue implements SqlValue {
     }
 
     @Override
-    public void cleanup() {}
+    public void cleanup() {
+        // no-op as this class is stateless
+    }
 
     private static String determineDbTypeName(final Object[] arr) {
         // use Spring Utils similar to normal JdbcTemplate inner workings

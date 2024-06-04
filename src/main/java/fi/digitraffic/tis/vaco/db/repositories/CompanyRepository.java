@@ -54,12 +54,13 @@ public class CompanyRepository {
     public Company update(String businessId, Company company) {
         return jdbc.queryForObject(
             """
-              UPDATE company
+               UPDATE company
                   SET name = ?,
                       language = (?)::company_language,
                       ad_group_id = ?,
                       contact_emails = ?,
-                      publish = ?
+                      publish = ?,
+                      codespaces = ?
                 WHERE business_id = ?
             RETURNING *
             """,
@@ -69,6 +70,7 @@ public class CompanyRepository {
             company.adGroupId(),
             ArraySqlValue.create(company.contactEmails().toArray(new String[0])),
             company.publish(),
+            ArraySqlValue.create(company.codespaces().toArray(new String[0])),
             businessId);
     }
 
