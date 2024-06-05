@@ -200,7 +200,6 @@
             <artifactId>apache-client</artifactId>
         </dependency>
         <!-- asynchronous HTTP client for all service clients -->
-        <!-- synchronous asynchronous HTTP client for all service clients -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>netty-nio-client</artifactId>
@@ -210,7 +209,7 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
         </dependency>
-        <!-- AWS Simple Storage Service transfer manager provider specialized implementations of common operations -->
+        <!-- AWS Simple Storage Service transfer manager provides specialized implementations of common operations -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3-transfer-manager</artifactId>

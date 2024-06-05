@@ -32,4 +32,9 @@ public interface CompanyRecord {
 
     @Value.Parameter
     boolean publish();
+
+    @Value.Default
+    default List<String> codespaces() {
+        return List.of();
+    }
 }

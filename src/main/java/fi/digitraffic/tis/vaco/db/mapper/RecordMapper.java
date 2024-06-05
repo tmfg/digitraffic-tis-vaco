@@ -123,6 +123,7 @@ public class RecordMapper {
             .language(companyRecord.language())
             .adGroupId(companyRecord.adGroupId())
             .publish(companyRecord.publish())
+            .codespaces(companyRecord.codespaces())
             .build();
     }
 

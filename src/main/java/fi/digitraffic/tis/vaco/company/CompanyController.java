@@ -52,6 +52,7 @@ public class CompanyController {
                 String.format("An company with business ID %s already exists", company.businessId())));
     }
 
+    @PreAuthorize("hasAuthority('vaco.apiuser')")
     @GetMapping(path = "/{businessId}")
     @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Company>> getCompanyByBusinessId(@PathVariable("businessId") String businessId) {
