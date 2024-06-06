@@ -10,6 +10,8 @@ public enum MessageQueue {
     RULE_PROCESSING(QueueNames.VACO_RULES_PROCESSING_TEMPLATE),
     // TODO: This queue needs to be renamed/migrated with more rigorous process than just direct code renaming as it
     //       requires AWS infra changes as well.
+
+    DLQ(QueueNames.QLQ),
     ERRORS(QueueNames.VACO_ERRORS);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());

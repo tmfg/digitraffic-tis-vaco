@@ -331,6 +331,9 @@ public class TaskService {
         cachingService.invalidateEntry(entry);
         return marked;
     }
+    public Task markStatus(Task task, Status status) {
+        return taskRepository.markStatus(task, status);
+    }
 
     /**
      * Looks up possible internal task dependencies and inspects their success for given entry+task pair.

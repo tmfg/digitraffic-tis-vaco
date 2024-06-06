@@ -1,7 +1,9 @@
 package fi.digitraffic.tis.vaco.rules;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -85,7 +87,7 @@ public class RuleResultsListener {
 
     @Scheduled(fixedRateString = "${vaco.scheduling.findings.poll-rate}")
     public void handleErrorsQueue() {
-        listen(MessageQueue.ERRORS.getQueueName(), ErrorMessage.class, this::handleErrors);
+        listenValue(MessageQueue.ERRORS.getQueueName(), ErrorMessage.class, this::handleErrors);
     }
 
     private CompletableFuture<Boolean> handleErrors(ErrorMessage errorMessage) {
@@ -96,9 +98,34 @@ public class RuleResultsListener {
         });
     }
 
+    @Scheduled(fixedRateString = "${vaco.scheduling.dlq.poll-rate}")
+    public void handleDeadLetterQueue() {
+        listenTree(MessageQueue.DLQ.getQueueName(), this::handleDeadLetter);
+    }
+
     @Scheduled(fixedRateString = "${vaco.scheduling.rules-results.poll-rate}")
     public void handleRuleResultsIngestQueue() {
-        listen(MessageQueue.RULE_RESULTS_INGEST.getQueueName(), ResultMessage.class, this::handleResult);
+        listenValue(MessageQueue.RULE_RESULTS_INGEST.getQueueName(), ResultMessage.class, this::handleResult);
+    }
+
+    @VisibleForTesting
+    protected CompletableFuture<Boolean> handleDeadLetter(JsonNode jsonNode) {
+        return CompletableFuture.supplyAsync(() -> {
+            logger.info("Dead letter Queue Message {}", jsonNode);
+
+            Optional<String> taskPublicId = Optional.ofNullable(jsonNode)
+                .filter(node -> node.has("task"))
+                .map(node -> node.get("task").get("publicId"))
+                .map(JsonNode::asText);
+
+            return taskPublicId
+                .flatMap(taskService::findTask)
+                .map(task -> {
+                    taskService.markStatus(task, Status.FAILED);
+                    return true;
+                }).orElse(false);
+        });
+
     }
 
     private CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {
@@ -188,16 +215,38 @@ public class RuleResultsListener {
         }
     }
 
-    private <M, R> void listen(String queueName, Class<M> cls, Function<M, CompletableFuture<R>> function) {
+    private <M, R> void listenTree(String queueName, Function<JsonNode, CompletableFuture<R>> process) {
+
+        Function<String, JsonNode> x = message -> {
+            try {
+                return objectMapper.readTree(message);
+            } catch (JsonProcessingException e) {
+                throw new RuleExecutionException("Failed to deserialize message in queue " + queueName, e);
+            }
+        };
+        listen(queueName, x, process);
+    }
+
+    private <M, R> void listenValue(String queueName, Class<M> cls, Function<M, CompletableFuture<R>> process) {
+
+        Function<String, M> x = message -> {
+            try {
+                return objectMapper.readValue(message, cls);
+            } catch (JsonProcessingException e) {
+                throw new RuleExecutionException("Failed to deserialize message in queue " + queueName, e);
+            }
+        };
+        listen(queueName, x, process);
+    }
+
+    private <M, R> void listen(String queueName, Function<String, M> read, Function<M, CompletableFuture<R>> process) {
         try {
             List<R> ignored = messagingService.readMessages(queueName)
                 .map(m -> {
                     try {
                         logger.trace("Processing message {}", m);
-                        M message = objectMapper.readValue(m.body(), cls);
-                        return function.apply(message);
-                    } catch (JsonProcessingException e) {
-                        throw new RuleExecutionException("Failed to deserialize message in queue " + queueName, e);
+                        M message = read.apply(m.body());
+                        return process.apply(message);
                     } finally {
                         logger.trace("Deleting message {}", m);
                         messagingService.deleteMessage(queueName, m);
