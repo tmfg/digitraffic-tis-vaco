@@ -13,6 +13,7 @@ public final class QueueNames {
     public static final String VACO_RULES_RESULTS = "rules-results";
     public static final String VACO_RULES_PROCESSING_TEMPLATE = "rules-processing-{ruleName}";
     public static final String VACO_ERRORS = "vaco-errors";
+    public static final String QLQ = "DLQ-rules-processing";
 
     private QueueNames() {}
 }

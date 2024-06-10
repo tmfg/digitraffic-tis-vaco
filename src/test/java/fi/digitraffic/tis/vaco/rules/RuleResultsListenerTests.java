@@ -1,11 +1,13 @@
 package fi.digitraffic.tis.vaco.rules;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
@@ -48,7 +50,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RuleResultsListenerTests {
@@ -123,6 +125,39 @@ class RuleResultsListenerTests {
     @Test
     void enturNetex2GtfsConversionUsesSimpleResultProcessor() throws JsonProcessingException {
         assertResultProcessorIsUsed(RuleName.NETEX2GTFS_ENTUR, simpleResultProcessor);
+    }
+
+    @Test
+    void deadLetterQueueTest() throws JsonProcessingException {
+
+        String jsonString = """
+                {
+                  "entry": { "publicId":"abc1"},
+                  "task": { "id":2, "publicId":"abc2"}
+                }
+            """;
+
+        JsonNode message = objectMapper.readValue(jsonString, JsonNode.class);
+        Task task = ImmutableTask.of("dlqTest", 100).withPublicId("abc2");
+
+        given(taskService.findTask(task.publicId())).willReturn(Optional.of(task));
+        given(taskService.markStatus(task, Status.FAILED)).willReturn(task);
+        assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(true));
+
+    }
+
+    @Test
+    void deadLetterQueueWithoutTaskTest() throws JsonProcessingException {
+
+        String jsonString = """
+                {
+                  "entry": { "publicId":"abc1" }
+                }
+            """;
+
+        JsonNode message = objectMapper.readValue(jsonString, JsonNode.class);
+        assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(false));
+
     }
 
     private void assertResultProcessorIsUsed(String ruleName, ResultProcessor resultProcessor) throws JsonProcessingException {
