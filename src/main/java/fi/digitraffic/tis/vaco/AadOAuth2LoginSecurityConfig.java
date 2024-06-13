@@ -14,13 +14,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
-import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
-import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -102,19 +99,6 @@ public class AadOAuth2LoginSecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
-
-    @Bean
-    public OAuth2TokenValidator<Jwt> issuerClaimValidator(
-        @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String jwkIssuerUri) {
-        return JwtValidators.createDefaultWithIssuer(jwkIssuerUri);
-    }
-
-    @Bean
-    public OAuth2TokenValidator<Jwt> audienceClaimValidator(@Value("${vaco.azure-ad.client-id}") String clientId) {
-        return new JwtTokenValidator(
-            token -> token.getAudience().contains(clientId),
-            new OAuth2Error(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT));
     }
 
     @Bean
