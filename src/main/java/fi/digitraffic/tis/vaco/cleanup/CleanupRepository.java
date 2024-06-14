@@ -22,8 +22,6 @@ public class CleanupRepository {
         this.jdbc = Objects.requireNonNull(jdbc);
     }
 
-    // TODO: Once we have context id, these queries need to be reworked to use that instead of url as uniqueness marker
-
     /**
      * Removes entries which are older than specified, keeping at least specified amount of entries for each url.
      *
@@ -34,19 +32,20 @@ public class CleanupRepository {
      */
     public List<String> cleanupHistory(Duration olderThan, int keepAtLeast, int removeAtMostInTotal) {
         try {
-            return jdbc.queryForList("""
-              DELETE
-                FROM entry e
-               WHERE id IN (SELECT e.id AS id
-                              FROM (SELECT e.id,
-                                           e.created,
-                                           ROW_NUMBER() OVER (PARTITION BY url ORDER BY created DESC) newest_to_oldest
-                                      FROM entry e) AS e
-                             WHERE e.newest_to_oldest > ?
-                                OR e.created < NOW() - ?
-                             LIMIT ?)
-           RETURNING e.public_id;
-            """,
+            return jdbc.queryForList(
+                """
+                   DELETE
+                     FROM entry e
+                    WHERE id IN (SELECT e.id AS id
+                                   FROM (SELECT e.id,
+                                                e.created,
+                                                ROW_NUMBER() OVER (PARTITION BY e.context_id ORDER BY created DESC) newest_to_oldest
+                                           FROM entry e) AS e
+                                  WHERE e.newest_to_oldest > ?
+                                     OR e.created < NOW() - ?
+                                  LIMIT ?)
+                RETURNING e.public_id;
+                """,
                 String.class,
                 keepAtLeast, RowMappers.writeInterval(olderThan), removeAtMostInTotal
             );
@@ -65,20 +64,21 @@ public class CleanupRepository {
      */
     public List<String> compressHistory() {
         try {
-            return jdbc.queryForList("""
-              DELETE
-                FROM entry e
-               WHERE id IN (SELECT e.id AS id
-                              FROM (SELECT e.id,
-                                           e.created,
-                                           ROW_NUMBER() OVER (PARTITION BY url ORDER BY created DESC) newest_to_oldest,
-                                           ROW_NUMBER() OVER (PARTITION BY url ORDER BY created ASC) oldest_to_newest
-                                      FROM entry e
-                                     WHERE e.status = 'cancelled') AS e
-                             WHERE e.newest_to_oldest != 1
-                               AND e.oldest_to_newest != 1)
-           RETURNING e.public_id;
-            """,
+            return jdbc.queryForList(
+                """
+                   DELETE
+                     FROM entry e
+                    WHERE id IN (SELECT e.id AS id
+                                   FROM (SELECT e.id,
+                                                e.created,
+                                                ROW_NUMBER() OVER (PARTITION BY e.context_id ORDER BY created DESC) newest_to_oldest,
+                                                ROW_NUMBER() OVER (PARTITION BY e.context_id ORDER BY created ASC) oldest_to_newest
+                                           FROM entry e
+                                          WHERE e.status = 'cancelled') AS e
+                                  WHERE e.newest_to_oldest != 1
+                                    AND e.oldest_to_newest != 1)
+                RETURNING e.public_id;
+                """,
                 String.class
             );
         } catch (DataAccessException dae) {
