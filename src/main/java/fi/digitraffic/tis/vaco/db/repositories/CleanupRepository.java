@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.cleanup;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import org.slf4j.Logger;

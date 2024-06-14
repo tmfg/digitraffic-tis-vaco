@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.cleanup;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.repositories.CleanupRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
