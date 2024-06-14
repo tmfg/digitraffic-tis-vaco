@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.featureflags;
 
+import fi.digitraffic.tis.vaco.db.repositories.FeatureFlagsRepository;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.featureflags;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
