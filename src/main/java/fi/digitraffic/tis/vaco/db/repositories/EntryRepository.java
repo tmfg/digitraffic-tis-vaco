@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.entries;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;

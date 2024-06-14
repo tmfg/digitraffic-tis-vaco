@@ -4,7 +4,7 @@ import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.Retryable;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
 import org.immutables.value.Value;
 import org.junit.jupiter.api.AfterEach;

@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.messaging;
 
 import fi.digitraffic.tis.vaco.caching.CachingFailureException;
 import fi.digitraffic.tis.vaco.caching.CachingService;
-import fi.digitraffic.tis.vaco.entries.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
