@@ -15,10 +15,12 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableFeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableTaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
@@ -26,8 +28,6 @@ import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
-import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
@@ -72,8 +72,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 public final class RowMappers {
-
-
 
     private RowMappers() {}
 
@@ -219,13 +217,12 @@ public final class RowMappers {
         };
     }
 
-    public static final RowMapper<FeatureFlag> FEATURE_FLAG = (rs, rowNum) -> ImmutableFeatureFlag.builder()
-        .id(rs.getLong("id"))
-        .modified(readZonedDateTime(rs, "modified"))
-        .modifiedBy(rs.getString("modified_by"))
-        .name(rs.getString("name"))
-        .enabled(rs.getBoolean("enabled"))
-        .build();
+    public static final RowMapper<FeatureFlagRecord> FEATURE_FLAG_RECORD = (rs, rowNum) -> ImmutableFeatureFlagRecord.of(
+            rs.getLong("id"),
+            rs.getString("name"),
+            readZonedDateTime(rs, "modified")
+        ).withModifiedBy(rs.getString("modified_by"))
+        .withEnabled(rs.getBoolean("enabled"));
 
     public static final RowMapper<IntermediateHierarchyLink> INTERMEDIATE_HIERARCHY_LINK = (rs, rowNum) -> ImmutableIntermediateHierarchyLink.builder()
         .parentId(nullableLong(rs, "parent_id"))
