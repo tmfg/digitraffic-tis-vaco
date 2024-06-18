@@ -1,7 +1,7 @@
-package fi.digitraffic.tis.vaco.featureflags;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
+import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -19,29 +19,29 @@ public class FeatureFlagsRepository {
         this.jdbc = Objects.requireNonNull(jdbc);
     }
 
-    public List<FeatureFlag> listFeatureFlags() {
+    public List<FeatureFlagRecord> listFeatureFlags() {
         return jdbc.query("""
             SELECT ff.*
               FROM feature_flag ff
             """,
-            RowMappers.FEATURE_FLAG);
+            RowMappers.FEATURE_FLAG_RECORD);
     }
 
-    public Optional<FeatureFlag> findFeatureFlag(String name) {
+    public Optional<FeatureFlagRecord> findFeatureFlag(String name) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                 SELECT ff.*
                   FROM feature_flag ff
                  WHERE name = ?
                 """,
-                RowMappers.FEATURE_FLAG,
+                RowMappers.FEATURE_FLAG_RECORD,
                 name));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }
     }
 
-    public FeatureFlag setFeatureFlag(FeatureFlag featureFlag, boolean enabled, String modifierOid) {
+    public FeatureFlagRecord setFeatureFlag(FeatureFlagRecord featureFlag, boolean enabled, String modifierOid) {
         return jdbc.queryForObject("""
                UPDATE feature_flag
                   SET name = ?,
@@ -51,7 +51,7 @@ public class FeatureFlagsRepository {
                WHERE id = ?
             RETURNING *
             """,
-            RowMappers.FEATURE_FLAG,
+            RowMappers.FEATURE_FLAG_RECORD,
             featureFlag.name(),
             enabled,
             modifierOid,

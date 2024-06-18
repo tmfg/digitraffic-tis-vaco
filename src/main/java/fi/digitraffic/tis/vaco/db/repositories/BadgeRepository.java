@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.badges;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -38,40 +38,13 @@ public class BadgeRepository {
         }
     }
 
-    /**
-     *
-     * @param publicId
-     * @param taskName
-     * @return
-     * @deprecated Tasks should be referenced by their public id instead of name, but refactoring this away at this time
-     *             is not entirely feasible. The deprecation mark acts here as a reminder to use the alternative
-     *             overload {@link #findTaskStatus(EntryRecord, String)} instead.
-     */
-    @Deprecated(since = "2024-04-04")
-    public Optional<Status> findTaskStatus(String publicId, String taskName) {
-        try {
-            return Optional.ofNullable(jdbc.queryForObject("""
-                SELECT t.status
-                  FROM task t
-                 WHERE t.entry_id = (SELECT id FROM entry e WHERE e.public_id = ?)
-                   AND t.name = ?
-                """,
-                RowMappers.STATUS,
-                publicId,
-                taskName));
-        } catch (DataAccessException dae) {
-            logger.warn("Failed to fetch status of entry {}'s task {}", publicId, taskName);
-            return Optional.empty();
-        }
-    }
-
     public Optional<Status> findTaskStatus(EntryRecord entry, String taskName) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
                     """
                     SELECT t.status
                       FROM task t
-                     WHERE t.entry_id = (SELECT id FROM entry e WHERE e.public_id = ?)
+                     WHERE t.entry_id = (SELECT id FROM entry e WHERE e.id = ?)
                        AND t.name = ?
                     """,
                     RowMappers.STATUS,

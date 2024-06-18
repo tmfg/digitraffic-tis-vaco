@@ -13,9 +13,12 @@ import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
+import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
+import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -155,6 +158,15 @@ public class RecordMapper {
             .updated(taskRecord.updated())
             .completed(taskRecord.completed())
             .status(taskRecord.status())
+            .build();
+    }
+
+    public FeatureFlag toFeatureFlag(FeatureFlagRecord featureFlagRecord) {
+        return ImmutableFeatureFlag.builder()
+            .name(featureFlagRecord.name())
+            .enabled(featureFlagRecord.enabled())
+            .modified(featureFlagRecord.modified())
+            .modifiedBy(featureFlagRecord.modifiedBy())
             .build();
     }
 }

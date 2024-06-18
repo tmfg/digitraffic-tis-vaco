@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.cleanup;
 import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.repositories.CleanupRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

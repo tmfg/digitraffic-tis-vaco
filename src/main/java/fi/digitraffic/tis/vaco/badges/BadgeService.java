@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.badges;
 
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.repositories.BadgeRepository;
+import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +16,14 @@ public class BadgeService {
 
     private final CachingService cachingService;
 
-    public BadgeService(BadgeRepository badgeRepository, CachingService cachingService) {
+    private final EntryRepository entryRepository;
+
+    public BadgeService(BadgeRepository badgeRepository,
+                        CachingService cachingService,
+                        EntryRepository entryRepository) {
         this.badgeRepository = Objects.requireNonNull(badgeRepository);
         this.cachingService = Objects.requireNonNull(cachingService);
+        this.entryRepository = Objects.requireNonNull(entryRepository);
     }
 
     public Optional<ClassPathResource> getBadge(String publicId) {
@@ -26,7 +33,10 @@ public class BadgeService {
     }
 
     public Optional<ClassPathResource> getBadge(String publicId, String taskName) {
-        return cachingService.cacheStatus(publicId + "/" + taskName, k -> badgeRepository.findTaskStatus(publicId, taskName).orElse(null))
+        return cachingService.cacheStatus(publicId + "/" + taskName, k ->
+                entryRepository.findByPublicId(publicId)
+                    .flatMap(entry -> badgeRepository.findTaskStatus(entry, taskName))
+                    .orElse(null))
             .flatMap(s ->
                 cachingService.cacheClassPathResource("badges/" + s.fieldName() + ".svg", ClassPathResource::new));
     }
