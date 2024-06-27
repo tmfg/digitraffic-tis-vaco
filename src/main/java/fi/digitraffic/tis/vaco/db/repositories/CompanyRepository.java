@@ -28,13 +28,15 @@ import java.util.stream.Collectors;
 public class CompanyRepository {
 
     private final JdbcTemplate jdbc;
+
     private final NamedParameterJdbcTemplate namedJdbc;
+
     private final RecordMapper recordMapper;
 
     public CompanyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc, RecordMapper recordMapper) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
-        this.recordMapper = recordMapper;
+        this.recordMapper = Objects.requireNonNull(recordMapper);
     }
 
     public CompanyRecord create(Company company) {
@@ -276,6 +278,15 @@ public class CompanyRepository {
                 RowMappers.COMPANY),
             Company::businessId,
             Function.identity());
+    }
+
+    public List<CompanyRecord> listAll() {
+        return jdbc.query(
+            """
+            SELECT *
+              FROM company
+            """,
+            RowMappers.COMPANY_RECORD);
     }
 
     public boolean deleteByBusinessId(String businessId) {

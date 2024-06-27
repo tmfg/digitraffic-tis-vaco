@@ -1,9 +1,7 @@
 package fi.digitraffic.tis.vaco.exports.utils;
 
 import jakarta.xml.bind.JAXBElement;
-import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.ObjectFactory;
-import org.rutebanken.netex.model.Operator;
 import org.rutebanken.netex.model.Organisation_VersionStructure;
 import org.rutebanken.netex.model.OrganisationsInFrame_RelStructure;
 import org.rutebanken.netex.model.PublicationDeliveryStructure;
@@ -18,7 +16,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Adaptation of Entur's <a href="https://github.com/entur/uttu/blob/master/src/main/java/no/entur/uttu/export/netex/producer/NetexObjectFactory.java"><code>NetexObjectFactory</code></code></a>
@@ -87,17 +84,12 @@ public class NetexObjectFactory {
 
     public ResourceFrame createResourceFrame(
         String resourceFrameId,
-        Collection<Authority> authorities,
-        Collection<Operator> operators
+        Collection<Organisation_VersionStructure> organisations
     ) {
         OrganisationsInFrame_RelStructure organisationsStruct = objectFactory
             .createOrganisationsInFrame_RelStructure()
             .withOrganisation_(
-                Stream
-                    .concat(
-                        authorities.stream().map(Organisation_VersionStructure.class::cast),
-                        operators.stream().map(Organisation_VersionStructure.class::cast)
-                    )
+                organisations.stream()
                     .distinct()
                     .collect(toDistinctOrganisation())
                     .values()
