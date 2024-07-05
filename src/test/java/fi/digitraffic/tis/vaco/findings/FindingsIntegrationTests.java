@@ -62,6 +62,8 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
         createSystemErrorFinding("runtime_exception_in_validator_error");
         createSystemErrorFinding("thread_execution_error");
         createSystemErrorFinding("u_r_i_syntax_error");
+        createSystemErrorFinding("trip_distance_exceeds_shape_distance");
+
 
     }
 
@@ -98,6 +100,10 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
 
         AggregatedFinding uriSyntaxError = ruleReport.findings().get(5);
         assertThatSeverityIsError(uriSyntaxError, "u_r_i_syntax_error");
+
+        AggregatedFinding tripsDistanceError = ruleReport.findings().get(6);
+        assertThatSeverityIsError(tripsDistanceError, "trip_distance_exceeds_shape_distance");
+
 
     }
 
