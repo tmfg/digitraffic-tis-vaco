@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
@@ -30,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -38,6 +38,8 @@ import java.util.zip.ZipFile;
 public class NetexInputSummaryService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final SummaryRepository summaryRepository;
+    List<String> operators = new ArrayList<>();
+    int operatorTotalCount = 0;
 
     public NetexInputSummaryService(SummaryRepository summaryRepository) {
         this.summaryRepository = summaryRepository;
@@ -46,7 +48,6 @@ public class NetexInputSummaryService {
     public void generateNetexInputSummaries(Path downloadedPackagePath, Long taskId) throws IOException {
         logger.info("Starting NeTEx input summary generation for task {}", taskId);
         ImmutableNetexInputSummary.Builder netexInputSummaryBuilder = getEmptyNetexSummaryBuilder();
-        int operatorTotalCount = 0;
         int routeTotalCount = 0;
         int lineTotalCount = 0;
         int stopPlaceTotalCount = 0;
@@ -75,7 +76,7 @@ public class NetexInputSummaryService {
                                     StartElement startElement = nextEvent.asStartElement();
                                     switch (startElement.getName().getLocalPart()) {
                                         case "Operator" -> {
-                                            operatorTotalCount++;
+
                                             processOperator(reader, startElement,
                                                 netexInputSummaryBuilder, zipFile.getName(), taskId);
                                         }
@@ -136,35 +137,39 @@ public class NetexInputSummaryService {
             cardContent.add(ImmutableLabelValuePair.of("id", id.getValue()));
         }
 
-        while (reader.hasNext()) {
-            try {
-                XMLEvent nextEvent = reader.nextEvent();
-                if (nextEvent.isStartElement()) {
-                    StartElement startElement = nextEvent.asStartElement();
-                    String localPart = startElement.getName().getLocalPart();
-                    nextEvent = reader.nextEvent();
-                    switch (localPart) {
-                        case "Name" -> collectCharacters("name", nextEvent, (k, s) -> cardBuilder.title(s));
-                        case "Email" -> collectCharacters("email", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
-                        case "Url" -> collectCharacters("website", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
-                        case "Phone" -> collectCharacters("phone", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
-                    }
-                }
-                if (nextEvent.isEndElement()) {
-                    EndElement endElement = nextEvent.asEndElement();
-                    if (endElement.getName().getLocalPart().equals("Operator")) {
-                        break;
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Failed to process operator in {} as part of task {}", fileName, taskId, e);
-            }
-        }
+        if (id == null || !operators.contains(id.getValue())) {
 
-        Card operator = cardBuilder.content(cardContent).build();
-        netexInputSummaryBuilder.addOperators(operator);
+           while (reader.hasNext()) {
+               try {
+                   XMLEvent nextEvent = reader.nextEvent();
+                   if (nextEvent.isStartElement()) {
+                       StartElement startElement = nextEvent.asStartElement();
+                       String localPart = startElement.getName().getLocalPart();
+                       nextEvent = reader.nextEvent();
+                       switch (localPart) {
+                           case "Name" -> collectCharacters("name", nextEvent, (k, s) -> cardBuilder.title(s));
+                           case "Email" -> collectCharacters("email", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
+                           case "Url" -> collectCharacters("website", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
+                           case "Phone" -> collectCharacters("phone", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
+                       }
+                   }
+                   if (nextEvent.isEndElement()) {
+                       EndElement endElement = nextEvent.asEndElement();
+                       if (endElement.getName().getLocalPart().equals("Operator")) {
+                           break;
+                       }
+                   }
+               } catch (Exception e) {
+                   logger.error("Failed to process operator in {} as part of task {}", fileName, taskId, e);
+               }
+           }
+           Card operator = cardBuilder.content(cardContent).build();
+           netexInputSummaryBuilder.addOperators(operator);
+           operatorTotalCount++;
+           operators.add(Objects.requireNonNull(id).getValue());
+       }
+
     }
-
     private void collectCharacters(String key, XMLEvent event, BiConsumer<String, String> content) {
         if (event.isCharacters()) {
             String value = event.asCharacters().getData();
