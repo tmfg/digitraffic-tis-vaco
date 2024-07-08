@@ -69,6 +69,10 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
             List<ValidationResult> validationReport = objectMapper.readValue(reportsFile.toFile(), objectMapper.getTypeFactory().constructCollectionType(List.class, ValidationResult.class));
             return Streams.flatten(validationReport, report -> report.validationReport().validationReportEntries())
                     .map(reportEntry -> {
+                        String message =  reportEntry.message();
+                        if (message.contains(":")) {
+                            message = message.substring(0, message.indexOf(":"));
+                        }
                         try {
                             return ImmutableFinding.of(
                                     entry.publicId(),
@@ -77,7 +81,7 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
                                         .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
                                         .id(),
                                     ruleName,
-                                    reportEntry.message(),
+                                    message,
                                     reportEntry.severity())
                                 .withRaw(objectMapper.writeValueAsBytes(reportEntry));
                         } catch (JsonProcessingException e) {
