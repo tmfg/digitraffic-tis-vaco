@@ -38,8 +38,6 @@ import java.util.zip.ZipFile;
 public class NetexInputSummaryService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final SummaryRepository summaryRepository;
-    List<String> operators = new ArrayList<>();
-    int operatorTotalCount = 0;
 
     public NetexInputSummaryService(SummaryRepository summaryRepository) {
         this.summaryRepository = summaryRepository;
@@ -54,6 +52,8 @@ public class NetexInputSummaryService {
         int quayTotalCount = 0;
         int journeyPatternTotalCount = 0;
         int serviceJourneysTotalCount = 0;
+        List<String> operators = new ArrayList<>();
+        int operatorTotalCount = 0;
 
         try (ZipFile zipFile = new ZipFile(downloadedPackagePath.toFile())) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -76,9 +76,11 @@ public class NetexInputSummaryService {
                                     StartElement startElement = nextEvent.asStartElement();
                                     switch (startElement.getName().getLocalPart()) {
                                         case "Operator" -> {
-
-                                            processOperator(reader, startElement,
-                                                netexInputSummaryBuilder, zipFile.getName(), taskId);
+                                            Object operator = processOperator(reader, startElement,
+                                                netexInputSummaryBuilder, zipFile.getName(), taskId, operators);
+                                            if (operator != null) {
+                                                operatorTotalCount++;
+                                            }
                                         }
                                         case "Route" -> {
                                             routeTotalCount++;
@@ -124,51 +126,51 @@ public class NetexInputSummaryService {
         summaryRepository.persistTaskSummaryItem(taskId, "counts", RendererType.LIST, netexInputSummary.counts());
     }
 
-    void processOperator(XMLEventReader reader,
+    Object processOperator(XMLEventReader reader,
                          StartElement operatorStartElement,
                          ImmutableNetexInputSummary.Builder netexInputSummaryBuilder,
                          String fileName,
-                         Long taskId) {
+                         Long taskId, List<String> operators) {
         ImmutableCard.Builder cardBuilder = ImmutableCard.builder();
         List<LabelValuePair> cardContent = new ArrayList<>();
 
         Attribute id = operatorStartElement.getAttributeByName(new QName("id"));
         if (id != null) {
             cardContent.add(ImmutableLabelValuePair.of("id", id.getValue()));
+            if (operators.contains(id.getValue())) {
+                return null;
+            }
         }
 
-        if (id == null || !operators.contains(id.getValue())) {
+        while (reader.hasNext()) {
+            try {
+                XMLEvent nextEvent = reader.nextEvent();
+                if (nextEvent.isStartElement()) {
+                    StartElement startElement = nextEvent.asStartElement();
+                    String localPart = startElement.getName().getLocalPart();
+                    nextEvent = reader.nextEvent();
+                    switch (localPart) {
+                        case "Name" -> collectCharacters("name", nextEvent, (k, s) -> cardBuilder.title(s));
+                        case "Email" -> collectCharacters("email", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
+                        case "Url" -> collectCharacters("website", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
+                        case "Phone" -> collectCharacters("phone", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
+                    }
+                }
+                if (nextEvent.isEndElement()) {
+                    EndElement endElement = nextEvent.asEndElement();
+                    if (endElement.getName().getLocalPart().equals("Operator")) {
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Failed to process operator in {} as part of task {}", fileName, taskId, e);
+            }
+        }
+        Card operator = cardBuilder.content(cardContent).build();
+        netexInputSummaryBuilder.addOperators(operator);
+        operators.add(Objects.requireNonNull(id).getValue());
 
-           while (reader.hasNext()) {
-               try {
-                   XMLEvent nextEvent = reader.nextEvent();
-                   if (nextEvent.isStartElement()) {
-                       StartElement startElement = nextEvent.asStartElement();
-                       String localPart = startElement.getName().getLocalPart();
-                       nextEvent = reader.nextEvent();
-                       switch (localPart) {
-                           case "Name" -> collectCharacters("name", nextEvent, (k, s) -> cardBuilder.title(s));
-                           case "Email" -> collectCharacters("email", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
-                           case "Url" -> collectCharacters("website", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
-                           case "Phone" -> collectCharacters("phone", nextEvent, (k, s) -> cardContent.add(ImmutableLabelValuePair.of(k, s)));
-                       }
-                   }
-                   if (nextEvent.isEndElement()) {
-                       EndElement endElement = nextEvent.asEndElement();
-                       if (endElement.getName().getLocalPart().equals("Operator")) {
-                           break;
-                       }
-                   }
-               } catch (Exception e) {
-                   logger.error("Failed to process operator in {} as part of task {}", fileName, taskId, e);
-               }
-           }
-           Card operator = cardBuilder.content(cardContent).build();
-           netexInputSummaryBuilder.addOperators(operator);
-           operatorTotalCount++;
-           operators.add(Objects.requireNonNull(id).getValue());
-       }
-
+        return operator;
     }
     private void collectCharacters(String key, XMLEvent event, BiConsumer<String, String> content) {
         if (event.isCharacters()) {
