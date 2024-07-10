@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class NetexEnturValidatorResultProcessor extends RuleResultProcessor implements ResultProcessor {
@@ -65,13 +67,16 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
     }
 
     private List<ImmutableFinding> scanReportsFile(Entry entry, Task task, String ruleName, Path reportsFile) {
+        String regex = "^(cvc-[a-zA-Z-]+(?:\\.[0-9a-zA-Z]+)+):.*";
+        Pattern pattern = Pattern.compile(regex);
         try {
             List<ValidationResult> validationReport = objectMapper.readValue(reportsFile.toFile(), objectMapper.getTypeFactory().constructCollectionType(List.class, ValidationResult.class));
             return Streams.flatten(validationReport, report -> report.validationReport().validationReportEntries())
                     .map(reportEntry -> {
                         String message =  reportEntry.message();
-                        if (message.contains(":")) {
-                            message = message.substring(0, message.indexOf(":"));
+                        Matcher matcher = pattern.matcher(message);
+                        if (matcher.find()) {
+                            message = matcher.group(1);
                         }
                         try {
                             return ImmutableFinding.of(
