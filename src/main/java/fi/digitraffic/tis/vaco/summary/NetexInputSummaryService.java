@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -52,7 +53,7 @@ public class NetexInputSummaryService {
         int quayTotalCount = 0;
         int journeyPatternTotalCount = 0;
         int serviceJourneysTotalCount = 0;
-        List<String> operators = new ArrayList<>();
+        HashSet<String> operators = new HashSet<>();
         int operatorTotalCount = 0;
 
         try (ZipFile zipFile = new ZipFile(downloadedPackagePath.toFile())) {
@@ -76,11 +77,7 @@ public class NetexInputSummaryService {
                                     StartElement startElement = nextEvent.asStartElement();
                                     switch (startElement.getName().getLocalPart()) {
                                         case "Operator" -> {
-                                            Object operator = processOperator(reader, startElement,
-                                                netexInputSummaryBuilder, zipFile.getName(), taskId, operators);
-                                            if (operator != null) {
-                                                operatorTotalCount++;
-                                            }
+                                            operatorTotalCount += processOperator(reader, startElement, netexInputSummaryBuilder, zipFile.getName(), taskId, operators);
                                         }
                                         case "Route" -> {
                                             routeTotalCount++;
@@ -126,11 +123,12 @@ public class NetexInputSummaryService {
         summaryRepository.persistTaskSummaryItem(taskId, "counts", RendererType.LIST, netexInputSummary.counts());
     }
 
-    Object processOperator(XMLEventReader reader,
-                         StartElement operatorStartElement,
-                         ImmutableNetexInputSummary.Builder netexInputSummaryBuilder,
-                         String fileName,
-                         Long taskId, List<String> operators) {
+    int processOperator(XMLEventReader reader,
+                           StartElement operatorStartElement,
+                           ImmutableNetexInputSummary.Builder netexInputSummaryBuilder,
+                           String fileName,
+                           Long taskId,
+                           HashSet<String> operators) {
         ImmutableCard.Builder cardBuilder = ImmutableCard.builder();
         List<LabelValuePair> cardContent = new ArrayList<>();
 
@@ -138,7 +136,7 @@ public class NetexInputSummaryService {
         if (id != null) {
             cardContent.add(ImmutableLabelValuePair.of("id", id.getValue()));
             if (operators.contains(id.getValue())) {
-                return null;
+                return 0;
             }
         }
 
@@ -170,7 +168,7 @@ public class NetexInputSummaryService {
         netexInputSummaryBuilder.addOperators(operator);
         operators.add(Objects.requireNonNull(id).getValue());
 
-        return operator;
+        return 1;
     }
     private void collectCharacters(String key, XMLEvent event, BiConsumer<String, String> content) {
         if (event.isCharacters()) {
