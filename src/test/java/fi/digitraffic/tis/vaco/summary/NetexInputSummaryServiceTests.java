@@ -43,16 +43,17 @@ public class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    void setUp() throws URISyntaxException {
+    void setUp() {
         ImmutableEntry entryToCreate = TestObjects.anEntry("netex").build();
         EntryRecord entry = entryRepository.create(Optional.empty(), entryToCreate).get();
         taskRepository.createTasks(entry, List.of(ImmutableTask.of("FAKE_TASK", 1)));
         task = taskRepository.findTask(entry.id(), "FAKE_TASK").get();
-        inputPath = Path.of(ClassLoader.getSystemResource("summary/211_netex.zip").toURI());
     }
 
     @Test
-    void testNetexSummariesGeneration() {
+    void testNetexSummariesGeneration() throws URISyntaxException {
+
+        inputPath = Path.of(ClassLoader.getSystemResource("summary/211_netex.zip").toURI());
         assertDoesNotThrow(() -> netexInputSummaryService.generateNetexInputSummaries(inputPath, task.id()));
         List<Summary> summaries = summaryRepository.findTaskSummaryByTaskId(task.id());
 
@@ -141,5 +142,34 @@ public class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase
                 }
             }
         });
+    }
+
+    @Test
+    void testOperatorCount() throws URISyntaxException {
+
+        inputPath = Path.of(ClassLoader.getSystemResource("summary/test_netex.zip").toURI());
+        assertDoesNotThrow(() -> netexInputSummaryService.generateNetexInputSummaries(inputPath, task.id()));
+        List<Summary> summaries = summaryRepository.findTaskSummaryByTaskId(task.id());
+
+        summaries.forEach(summary -> {
+            if (summary.name().equals("operators")) {
+                List<Card> operators;
+                try {
+                    operators = objectMapper.readValue(summary.raw(), new TypeReference<>() {
+                    });
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                assertNotNull(operators);
+                assertEquals(4, operators.size());
+                assertEquals("VR", operators.get(0).title());
+                assertEquals("Sinisten vaunujen ystävät ry", operators.get(1).title());
+                assertEquals("Haapamäen museoveturiyhdistys ry", operators.get(2).title());
+                assertEquals("Pohjois-Suomen Rautatieharrastajat ry", operators.get(3).title());
+            }
+
+        });
+
     }
 }
