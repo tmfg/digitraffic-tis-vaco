@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
@@ -29,7 +28,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -46,13 +47,14 @@ public class NetexInputSummaryService {
     public void generateNetexInputSummaries(Path downloadedPackagePath, Long taskId) throws IOException {
         logger.info("Starting NeTEx input summary generation for task {}", taskId);
         ImmutableNetexInputSummary.Builder netexInputSummaryBuilder = getEmptyNetexSummaryBuilder();
-        int operatorTotalCount = 0;
         int routeTotalCount = 0;
         int lineTotalCount = 0;
         int stopPlaceTotalCount = 0;
         int quayTotalCount = 0;
         int journeyPatternTotalCount = 0;
         int serviceJourneysTotalCount = 0;
+        HashSet<String> operators = new HashSet<>();
+        int operatorTotalCount = 0;
 
         try (ZipFile zipFile = new ZipFile(downloadedPackagePath.toFile())) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -75,9 +77,7 @@ public class NetexInputSummaryService {
                                     StartElement startElement = nextEvent.asStartElement();
                                     switch (startElement.getName().getLocalPart()) {
                                         case "Operator" -> {
-                                            operatorTotalCount++;
-                                            processOperator(reader, startElement,
-                                                netexInputSummaryBuilder, zipFile.getName(), taskId);
+                                            operatorTotalCount += processOperator(reader, startElement, netexInputSummaryBuilder, zipFile.getName(), taskId, operators);
                                         }
                                         case "Route" -> {
                                             routeTotalCount++;
@@ -123,17 +123,21 @@ public class NetexInputSummaryService {
         summaryRepository.persistTaskSummaryItem(taskId, "counts", RendererType.LIST, netexInputSummary.counts());
     }
 
-    void processOperator(XMLEventReader reader,
-                         StartElement operatorStartElement,
-                         ImmutableNetexInputSummary.Builder netexInputSummaryBuilder,
-                         String fileName,
-                         Long taskId) {
+    int processOperator(XMLEventReader reader,
+                           StartElement operatorStartElement,
+                           ImmutableNetexInputSummary.Builder netexInputSummaryBuilder,
+                           String fileName,
+                           Long taskId,
+                           HashSet<String> operators) {
         ImmutableCard.Builder cardBuilder = ImmutableCard.builder();
         List<LabelValuePair> cardContent = new ArrayList<>();
 
         Attribute id = operatorStartElement.getAttributeByName(new QName("id"));
         if (id != null) {
             cardContent.add(ImmutableLabelValuePair.of("id", id.getValue()));
+            if (operators.contains(id.getValue())) {
+                return 0;
+            }
         }
 
         while (reader.hasNext()) {
@@ -160,11 +164,12 @@ public class NetexInputSummaryService {
                 logger.error("Failed to process operator in {} as part of task {}", fileName, taskId, e);
             }
         }
-
         Card operator = cardBuilder.content(cardContent).build();
         netexInputSummaryBuilder.addOperators(operator);
-    }
+        operators.add(Objects.requireNonNull(id).getValue());
 
+        return 1;
+    }
     private void collectCharacters(String key, XMLEvent event, BiConsumer<String, String> content) {
         if (event.isCharacters()) {
             String value = event.asCharacters().getData();
