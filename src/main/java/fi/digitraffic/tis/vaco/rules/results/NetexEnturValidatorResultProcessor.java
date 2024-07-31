@@ -36,6 +36,7 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
     private final RulesetService rulesetService;
+    private static final Pattern pattern = Pattern.compile("^(cvc-[a-zA-Z-]+(?:\\.[0-9a-zA-Z]+)+):.*");
 
     protected NetexEnturValidatorResultProcessor(PackagesService packagesService,
                                                  S3Client s3Client,
@@ -67,8 +68,7 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
     }
 
     private List<ImmutableFinding> scanReportsFile(Entry entry, Task task, String ruleName, Path reportsFile) {
-        String regex = "^(cvc-[a-zA-Z-]+(?:\\.[0-9a-zA-Z]+)+):.*";
-        Pattern pattern = Pattern.compile(regex);
+
         try {
             List<ValidationResult> validationReport = objectMapper.readValue(reportsFile.toFile(), objectMapper.getTypeFactory().constructCollectionType(List.class, ValidationResult.class));
             return Streams.flatten(validationReport, report -> report.validationReport().validationReportEntries())
