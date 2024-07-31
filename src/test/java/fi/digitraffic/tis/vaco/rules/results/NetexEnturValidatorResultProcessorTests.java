@@ -123,8 +123,30 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
         List<Finding> findings = generatedFindings.getValue();
 
         // TODO: chore for the bored yet excited: better assertions for these
-        assertThat(findings.size(), equalTo(3));
+        assertThat(findings.size(), equalTo(10));
         findings.forEach(f -> assertThat(f.source(), equalTo(RuleName.NETEX_ENTUR)));
+    }
+
+    @Test
+    void repetitiveFindingsGetSplit() {
+
+        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
+        given(rulesetService.findByName(RuleName.NETEX_ENTUR)).willReturn(Optional.of(netexEnturRuleset));
+        given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
+        given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
+        givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
+        givenTaskProcessingStateIsMarkedAs(entry, task, ProcessingState.COMPLETE);
+
+        resultProcessor.processResults(resultMessage, entry, task);
+        List<Finding> findings = generatedFindings.getValue();
+
+        assertThat(findings.size(), equalTo(10));
+        assertThat(findings.get(0).message(), equalTo("Content is not allowed in prolog."));
+        assertThat(findings.get(3).message(), equalTo("cvc-datatype-valid.1.2.1"));
+        assertThat(findings.get(4).message(), equalTo("cvc-type.3.1.3"));
+        assertThat(findings.get(8).message(), equalTo("cvc-complex-type.2.4.b"));
+        assertThat(findings.get(9).message(), equalTo("cvc-identity-constraint.4.3"));
+
     }
 
 }
