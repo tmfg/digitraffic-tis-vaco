@@ -21,6 +21,8 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
+import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 @Testcontainers
@@ -98,5 +100,11 @@ public abstract class AwsIntegrationTestBase {
 
     protected static CreateBucketResponse createBucket(String bucketName) {
         return awsS3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
+    }
+
+
+    protected static CreateQueueResponse createQueue(String queueName){
+        return sqsClient.createQueue(CreateQueueRequest.builder().queueName(queueName).build());
+
     }
 }

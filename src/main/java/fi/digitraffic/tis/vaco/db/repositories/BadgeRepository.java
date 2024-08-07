@@ -33,7 +33,7 @@ public class BadgeRepository {
                 RowMappers.STATUS,
                 publicId));
         } catch (DataAccessException dae) {
-            logger.warn("Failed to fetch status of entry {}", publicId);
+            logger.warn("Failed to fetch status of entry {}", publicId, dae);
             return Optional.empty();
         }
     }
