@@ -72,7 +72,8 @@ public class RuleResultsListener {
                                GtfsCanonicalResultProcessor gtfsResultProcessor,
                                SimpleResultProcessor simpleResultProcessor,
                                InternalRuleResultProcessor internalRuleResultProcessor,
-                               SummaryService summaryService, GtfsToNetexResultProcessor gtfsToNetexResultProcessor) {
+                               SummaryService summaryService,
+                               GtfsToNetexResultProcessor gtfsToNetexResultProcessor) {
         this.messagingService = Objects.requireNonNull(messagingService);
         this.findingService = Objects.requireNonNull(findingService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -85,7 +86,7 @@ public class RuleResultsListener {
         this.simpleResultProcessor = Objects.requireNonNull(simpleResultProcessor);
         this.internalRuleResultProcessor = Objects.requireNonNull(internalRuleResultProcessor);
         this.summaryService = Objects.requireNonNull(summaryService);
-        this.gtfsToNetexResultProcessor = gtfsToNetexResultProcessor;
+        this.gtfsToNetexResultProcessor = Objects.requireNonNull(gtfsToNetexResultProcessor);
     }
 
     @Scheduled(fixedRateString = "${vaco.scheduling.findings.poll-rate}")
