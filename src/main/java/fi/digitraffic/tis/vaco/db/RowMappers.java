@@ -147,6 +147,7 @@ public final class RowMappers {
         .adGroupId(rs.getString("ad_group_id"))
         .publish(rs.getBoolean("publish"))
         .codespaces(List.of(ArraySqlValue.read(rs, "codespaces")))
+        .notificationWebhookUri(rs.getString("notification_webhook_uri"))
         .build();
 
     public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(
