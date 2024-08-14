@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.notifications.email.EmailService;
+import fi.digitraffic.tis.vaco.notifications.email.EmailNotifier;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
@@ -40,7 +40,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
     // internal tasks are direct dependencies
     private final DownloadRule downloadRule;
     private final StopsAndQuaysRule stopsAndQuaysRule;
-    private final EmailService emailService;
+    private final EmailNotifier emailNotifier;
     private final EntryService entryService;
 
     public DelegationJobQueueSqsListener(MessagingService messagingService,
@@ -48,7 +48,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                                          RulesetService rulesetService,
                                          DownloadRule downloadRule,
                                          StopsAndQuaysRule stopsAndQuaysRule,
-                                         EmailService emailService,
+                                         EmailNotifier emailNotifier,
                                          EntryService entryService,
                                          RulesetSubmissionService rulesetSubmissionService,
                                          NotificationsService notificationsService) {
@@ -58,7 +58,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         this.downloadRule = Objects.requireNonNull(downloadRule);
         this.knownExternalRules = Objects.requireNonNull(rulesetService).listAllNames();
         this.stopsAndQuaysRule = Objects.requireNonNull(stopsAndQuaysRule);
-        this.emailService = Objects.requireNonNull(emailService);
+        this.emailNotifier = Objects.requireNonNull(emailNotifier);
         this.entryService = Objects.requireNonNull(entryService);
         this.rulesetSubmissionService = Objects.requireNonNull(rulesetSubmissionService);
         this.notificationsService = Objects.requireNonNull(notificationsService);
@@ -108,7 +108,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 entryService.markComplete(entry);
                 entryService.updateStatus(entry);
                 notificationsService.notifyEntryComplete(entry);
-                emailService.notifyEntryComplete(entry);
+                emailNotifier.notifyEntryComplete(entry);
             } else {
                 // some kind of limbo/crash
             }

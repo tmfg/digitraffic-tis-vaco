@@ -12,7 +12,6 @@ import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
-import fi.digitraffic.tis.vaco.notifications.email.EmailService;
 import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
@@ -49,9 +48,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
-class EmailServiceTests extends AwsIntegrationTestBase {
+class EmailNotifierTests extends AwsIntegrationTestBase {
 
-    private EmailService emailService;
+    private EmailNotifier emailNotifier;
     private ObjectMapper objectMapper;
     private JacksonRuntime jmesPath;
     private VacoProperties vacoProperties;
@@ -71,7 +70,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         jmesPath = new JacksonRuntime();
         vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null), null, null, null);
 
-        emailService = new EmailService(
+        emailNotifier = new EmailNotifier(
             vacoProperties,
             new MessageMapper(vacoProperties),
             sesClient,
@@ -96,7 +95,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
 
     @Test
     void sendGivenMessageToSpecifiedAddresses() throws IOException, InterruptedException {
-        emailService.sendMessage(
+        emailNotifier.sendMessage(
             ImmutableRecipients.builder()
                 .addTo("subjects@commonwealth")
                 .addCc("church@commonwealth")
@@ -128,7 +127,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         List<String> lackeys = IntStream.range(0, 120).mapToObj(i -> "lackey-" + i + "@commonwealth").toList();
         List<String> militia = IntStream.range(0, 70).mapToObj(i -> "militia-" + i + "@commonwealth").toList();
 
-        emailService.sendMessage(
+        emailNotifier.sendMessage(
             ImmutableRecipients.builder()
                 .addAllCc(lackeys)
                 .addAllBcc(militia)
@@ -190,7 +189,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
         BDDMockito.given(adminToolsRepository.getDataDeliveryOverview(Set.of(org.businessId()))).willReturn(List.of(entry));
         BDDMockito.given(encryptionService.encrypt(any(MagicToken.class))).willAnswer(a -> "magic/link/for/" + ((ImmutableMagicToken) a.getArgument(0)).token());
 
-        emailService.sendFeedStatusEmail(org);
+        emailNotifier.sendFeedStatusEmail(org);
         JsonNode messages = readReceivedMessages();
 
         assertAll(
@@ -218,7 +217,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
 
         BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(false);
 
-        emailService.sendFeedStatusEmail(org);
+        emailNotifier.sendFeedStatusEmail(org);
 
         assertAll(messagesSent(readReceivedMessages(), 0));
     }
@@ -229,7 +228,7 @@ class EmailServiceTests extends AwsIntegrationTestBase {
 
         BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.entryCompleteEmail")).willReturn(false);
 
-        emailService.notifyEntryComplete(entry);
+        emailNotifier.notifyEntryComplete(entry);
 
         assertAll(messagesSent(readReceivedMessages(), 0));
     }

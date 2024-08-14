@@ -2,7 +2,8 @@ package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.notifications.email.EmailService;
+import fi.digitraffic.tis.vaco.notifications.NotificationsService;
+import fi.digitraffic.tis.vaco.notifications.email.EmailNotifier;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
@@ -43,9 +44,11 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     @Autowired
     private RulesetService rulesetService;
     @Autowired
-    private EmailService emailService;
+    private EmailNotifier emailNotifier;
     @Autowired
     private EntryService entryService;
+    @Autowired
+    private NotificationsService notificationsService;
 
     @Mock
     private Acknowledgement acknowledgement;
@@ -69,9 +72,10 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
             rulesetService,
             downloadRule,
             stopsAndQuaysRule,
-            emailService,
+            emailNotifier,
             entryService,
-            rulesetSubmissionService);
+            rulesetSubmissionService,
+            notificationsService);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)

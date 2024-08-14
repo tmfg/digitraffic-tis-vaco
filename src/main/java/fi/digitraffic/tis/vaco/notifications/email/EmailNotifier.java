@@ -11,12 +11,12 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
-import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
+import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.notifications.email.model.Message;
 import fi.digitraffic.tis.vaco.notifications.email.model.Recipients;
-import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
@@ -24,7 +24,7 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.SesException;
 
@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-@Service
-public class EmailService {
+@Component
+public class EmailNotifier {
     private final AdminToolsRepository adminToolsRepository;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -45,13 +45,13 @@ public class EmailService {
     private final FeatureFlagsService featureFlagsService;
     private final EncryptionService encryptionService;
 
-    public EmailService(VacoProperties vacoProperties,
-                        MessageMapper messageMapper,
-                        SesClient sesClient,
-                        CompanyHierarchyService companyHierarchyService,
-                        FeatureFlagsService featureFlagsService,
-                        EncryptionService encryptionService,
-                        AdminToolsRepository adminToolsRepository) {
+    public EmailNotifier(VacoProperties vacoProperties,
+                         MessageMapper messageMapper,
+                         SesClient sesClient,
+                         CompanyHierarchyService companyHierarchyService,
+                         FeatureFlagsService featureFlagsService,
+                         EncryptionService encryptionService,
+                         AdminToolsRepository adminToolsRepository) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
