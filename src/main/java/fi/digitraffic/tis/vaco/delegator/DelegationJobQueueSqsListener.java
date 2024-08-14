@@ -108,7 +108,6 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 entryService.markComplete(entry);
                 entryService.updateStatus(entry);
                 notificationsService.notifyEntryComplete(entry);
-                emailNotifier.notifyEntryComplete(entry);
             } else {
                 // some kind of limbo/crash
             }
