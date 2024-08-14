@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.messaging.SqsListenerBase;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
+import fi.digitraffic.tis.vaco.notifications.NotificationsService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -32,6 +33,7 @@ import java.util.Set;
 public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDelegationJobMessage> {
 
     private final MessagingService messagingService;
+    private final NotificationsService notificationsService;
     private final RulesetSubmissionService rulesetSubmissionService;
     private final TaskService taskService;
     private final Set<String> knownExternalRules;
@@ -47,7 +49,9 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                                          DownloadRule downloadRule,
                                          StopsAndQuaysRule stopsAndQuaysRule,
                                          EmailService emailService,
-                                         EntryService entryService, RulesetSubmissionService rulesetSubmissionService) {
+                                         EntryService entryService,
+                                         RulesetSubmissionService rulesetSubmissionService,
+                                         NotificationsService notificationsService) {
         super((message, stats) -> messagingService.submitProcessingJob(message.withRetryStatistics(stats)));
         this.messagingService = Objects.requireNonNull(messagingService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -56,7 +60,8 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         this.stopsAndQuaysRule = Objects.requireNonNull(stopsAndQuaysRule);
         this.emailService = Objects.requireNonNull(emailService);
         this.entryService = Objects.requireNonNull(entryService);
-        this.rulesetSubmissionService = rulesetSubmissionService;
+        this.rulesetSubmissionService = Objects.requireNonNull(rulesetSubmissionService);
+        this.notificationsService = Objects.requireNonNull(notificationsService);
     }
 
     @SqsListener(QueueNames.VACO_JOBS)
@@ -102,6 +107,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 logger.debug("Job for entry {} complete!", entry.publicId());
                 entryService.markComplete(entry);
                 entryService.updateStatus(entry);
+                notificationsService.notifyEntryComplete(entry);
                 emailService.notifyEntryComplete(entry);
             } else {
                 // some kind of limbo/crash
