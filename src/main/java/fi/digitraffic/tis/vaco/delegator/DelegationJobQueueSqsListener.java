@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.utilities.model.ProcessingState;
-import fi.digitraffic.tis.vaco.email.EmailService;
+import fi.digitraffic.tis.vaco.notifications.email.EmailService;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;

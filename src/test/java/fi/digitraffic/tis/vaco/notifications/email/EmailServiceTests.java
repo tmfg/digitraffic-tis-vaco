@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.email;
+package fi.digitraffic.tis.vaco.notifications.email;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,7 +12,8 @@ import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
-import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
+import fi.digitraffic.tis.vaco.notifications.email.EmailService;
+import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;

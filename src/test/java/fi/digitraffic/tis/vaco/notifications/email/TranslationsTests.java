@@ -1,12 +1,12 @@
-package fi.digitraffic.tis.vaco.email;
+package fi.digitraffic.tis.vaco.notifications.email;
 
+import fi.digitraffic.tis.vaco.notifications.email.Translations;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.*;
 
 class TranslationsTests {
 

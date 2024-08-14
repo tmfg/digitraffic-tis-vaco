@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.email;
+package fi.digitraffic.tis.vaco.notifications.email;
 
 import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.html.ContentBuilder;
@@ -11,11 +11,11 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
-import fi.digitraffic.tis.vaco.email.mapper.MessageMapper;
+import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
-import fi.digitraffic.tis.vaco.email.model.Message;
-import fi.digitraffic.tis.vaco.email.model.Recipients;
+import fi.digitraffic.tis.vaco.notifications.email.model.Message;
+import fi.digitraffic.tis.vaco.notifications.email.model.Recipients;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
