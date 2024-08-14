@@ -30,7 +30,7 @@ public interface CreateEntryRequest {
     String businessId();
 
     @Nullable
-    @Schema(description = "This is currently not used in any way", example = "{}")
+    @Schema(description = "Freeform metadata field meant for carrying information through the processing pipeline as is.", example = "{}")
     JsonNode metadata();
 
     @Nullable
