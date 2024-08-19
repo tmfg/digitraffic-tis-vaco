@@ -179,11 +179,11 @@ public class S3Client {
         }
         catch (S3Exception e) {
             if (e.statusCode() != 404) {
-                logger.error("Failed to retrieve S3 package metadata with status code {} at {}, throwing exception {}", e.statusCode(), key, e);
+                logger.error("Failed to retrieve S3 package metadata with status code {} at {}", e.statusCode(), key, e);
             }
         }
         catch (Exception e) {
-            logger.error("Failed to retrieve S3 package metadata at {}, throwing exception {}", key, e);
+            logger.error("Failed to retrieve S3 package metadata at {}", key, e);
         }
 
         return false;
