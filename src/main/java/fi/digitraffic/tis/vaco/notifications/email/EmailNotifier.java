@@ -11,10 +11,11 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
-import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
-import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
+import fi.digitraffic.tis.vaco.notifications.Notifier;
 import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
+import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableMessage;
+import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.notifications.email.model.Message;
 import fi.digitraffic.tis.vaco.notifications.email.model.Recipients;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -34,7 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Component
-public class EmailNotifier {
+public class EmailNotifier implements Notifier {
     private final AdminToolsRepository adminToolsRepository;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -115,6 +116,7 @@ public class EmailNotifier {
         }
     }
 
+    @Override
     public void notifyEntryComplete(Entry entry) {
         if (!featureFlagsService.isFeatureFlagEnabled("emails.entryCompleteEmail")) {
             logger.info("Feature flag 'emails.entryCompleteEmail' is currently disabled, entry complete email sending for {} skipped.", entry.publicId());
