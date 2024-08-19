@@ -41,7 +41,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @RestController
-@RequestMapping("/queue")
+@RequestMapping({"/queue", "/v1/queue"})
 @PreAuthorize("hasAuthority('vaco.apiuser')")
 public class QueueController {
 
