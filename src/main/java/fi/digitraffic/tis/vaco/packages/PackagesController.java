@@ -18,7 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Objects;
 
 @RestController
-@RequestMapping({"/packages", "/v1/packages"})
+@RequestMapping({"/v1/packages", "/packages"})
 @PreAuthorize("hasAuthority('vaco.apiuser')")
 public class PackagesController {
 
