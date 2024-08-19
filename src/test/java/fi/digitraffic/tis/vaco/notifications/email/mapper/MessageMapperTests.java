@@ -2,9 +2,8 @@ package fi.digitraffic.tis.vaco.notifications.email.mapper;
 
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.Email;
-import fi.digitraffic.tis.vaco.email.model.ImmutableRecipients;
-import fi.digitraffic.tis.vaco.email.model.ImmutableMessage;
-import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
+import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableRecipients;
+import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.ses.model.Destination;
