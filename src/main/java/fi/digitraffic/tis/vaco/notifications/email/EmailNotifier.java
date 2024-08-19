@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.notifications.Notifier;
 import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
@@ -18,7 +19,6 @@ import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.notifications.email.model.Message;
 import fi.digitraffic.tis.vaco.notifications.email.model.Recipients;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
@@ -117,7 +117,7 @@ public class EmailNotifier implements Notifier {
     }
 
     @Override
-    public void notifyEntryComplete(Entry entry) {
+    public void notifyEntryComplete(EntryRecord entry) {
         if (!featureFlagsService.isFeatureFlagEnabled("emails.entryCompleteEmail")) {
             logger.info("Feature flag 'emails.entryCompleteEmail' is currently disabled, entry complete email sending for {} skipped.", entry.publicId());
         } else if (!entry.notifications().isEmpty()) {
@@ -139,7 +139,7 @@ public class EmailNotifier implements Notifier {
         }
     }
 
-    private String createEntryCompleteEmail(Translations translations, Entry entry) {
+    private String createEntryCompleteEmail(Translations translations, EntryRecord entry) {
         HtmlBuilder builder = new HtmlBuilder();
         HtmlBuildOptions buildOptions = new HtmlBuildOptions(0, false);
 

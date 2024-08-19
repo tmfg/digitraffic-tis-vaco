@@ -134,6 +134,7 @@ public final class RowMappers {
             .adGroupId(rs.getString(alias + "ad_group_id"))
             .publish(rs.getBoolean(alias + "publish"))
             .codespaces(List.of(ArraySqlValue.read(rs, alias + "codespaces")))
+            .notificationWebhookUri(rs.getString(alias +  "notification_webhook_uri"))
             .build();
 
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
