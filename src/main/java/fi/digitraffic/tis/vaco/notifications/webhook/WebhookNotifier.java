@@ -3,11 +3,14 @@ package fi.digitraffic.tis.vaco.notifications.webhook;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
+import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import fi.digitraffic.tis.vaco.notifications.Notifier;
@@ -20,6 +23,8 @@ import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -37,6 +42,8 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 @Component
 public class WebhookNotifier implements Notifier {
 
+    private final ContextRepository contextRepository;
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final CompanyRepository companyRepository;
@@ -44,7 +51,10 @@ public class WebhookNotifier implements Notifier {
     private final VacoHttpClient httpClient;
 
     private final ObjectMapper objectMapper;
+
     private final PackagesService packagesService;
+    private final RecordMapper recordMapper;
+
     private final TaskService taskService;
 
     private final VacoProperties vacoProperties;
@@ -54,13 +64,17 @@ public class WebhookNotifier implements Notifier {
                            ObjectMapper objectMapper,
                            VacoProperties vacoProperties,
                            TaskService taskService,
-                           PackagesService packagesService) {
+                           PackagesService packagesService,
+                           RecordMapper recordMapper,
+                           ContextRepository contextRepository) {
         this.companyRepository = Objects.requireNonNull(companyRepository);
         this.httpClient = Objects.requireNonNull(httpClient);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.taskService = Objects.requireNonNull(taskService);
         this.packagesService = Objects.requireNonNull(packagesService);
+        this.recordMapper = Objects.requireNonNull(recordMapper);
+        this.contextRepository = Objects.requireNonNull(contextRepository);
     }
 
     @Override
@@ -72,12 +86,14 @@ public class WebhookNotifier implements Notifier {
                     Notification entryCompleteNotification = ImmutableNotification.builder()
                         .name(NotificationType.ENTRY_COMPLETE_V1.getTypeName())
                         .payload(ImmutableEntryCompletePayload.builder()
-                            .publicId(entry.publicId())
+                            .entry(asEntry(entry))
                             .packages(packagesAsTaskGroupedLinks(entry))
                             .build())
                         .build();
                     try {
-                        return Optional.of(httpClient.sendWebhook(webhookUri, objectMapper.writeValueAsBytes(entryCompleteNotification)));
+                        return Optional.of(httpClient.sendWebhook(webhookUri, objectMapper
+                            .writerWithView(DataVisibility.Webhook.class)
+                            .writeValueAsBytes(entryCompleteNotification)));
                     } catch (JsonProcessingException e) {
                         throw new InvalidMappingException("Failed to map webhook payload to JSON", e);
                     }
@@ -91,6 +107,12 @@ public class WebhookNotifier implements Notifier {
         if (notification.isPresent()) {
             logger.info("Webhook {} notification sent for entry {}/ company {}", NotificationType.ENTRY_COMPLETE_V1, entry.publicId(), entry.businessId());
         }
+    }
+
+    private @NotNull ImmutableEntry asEntry(EntryRecord entry) {
+        return recordMapper.toEntryBuilder(entry, contextRepository.find(entry))
+            .tasks(taskService.findTasks(entry))
+            .build();
     }
 
     private Map<String, Map<String, Link>> packagesAsTaskGroupedLinks(EntryRecord entry) {

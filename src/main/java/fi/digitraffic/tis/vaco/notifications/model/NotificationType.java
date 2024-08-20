@@ -14,6 +14,6 @@ public enum NotificationType {
     }
 
     public static class Name {
-        public static final String ENTRY_COMPLETE_V1 = "entryComplete.v1";
+        public static final String ENTRY_COMPLETE_V1 = "entry.complete.v1";
     }
 }
