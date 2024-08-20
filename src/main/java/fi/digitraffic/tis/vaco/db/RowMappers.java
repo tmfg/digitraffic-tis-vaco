@@ -124,6 +124,10 @@ public final class RowMappers {
         .path(rs.getString("path"))
         .build();
 
+    /**
+     * @deprecated Replace with {@link #COMPANY_RECORD}
+     */
+    @Deprecated(since = "2024-08-20")
     public static final Function<String, RowMapper<Company>> ALIASED_COMPANY = alias ->
         (rs, rowNum) -> ImmutableCompany.builder()
             .id(rs.getLong(alias + "id"))
@@ -137,6 +141,10 @@ public final class RowMappers {
             .notificationWebhookUri(rs.getString(alias +  "notification_webhook_uri"))
             .build();
 
+    /**
+     * @deprecated Replace with {@link #COMPANY_RECORD}
+     */
+    @Deprecated(since = "2024-08-20")
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
     public static final RowMapper<CompanyRecord> COMPANY_RECORD = (rs, rowNum) -> ImmutableCompanyRecord.builder()
