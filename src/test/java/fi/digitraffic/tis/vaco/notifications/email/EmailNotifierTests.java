@@ -12,6 +12,7 @@ import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
+import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableRecipients;
@@ -225,10 +226,17 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
     @Test
     void willNotSendEntryCompleteEmailIfFeatureFlagIsDisabled() throws IOException, InterruptedException {
         ImmutableEntry entry = TestObjects.anEntry("gtfs").build();
+        ImmutableEntryRecord record = ImmutableEntryRecord.of(
+            123456L,
+            entry.publicId(),
+            entry.name(),
+            entry.format(),
+            entry.url(),
+            entry.businessId());
 
         BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.entryCompleteEmail")).willReturn(false);
 
-        emailNotifier.notifyEntryComplete(entry);
+        emailNotifier.notifyEntryComplete(record);
 
         assertAll(messagesSent(readReceivedMessages(), 0));
     }
