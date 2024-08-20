@@ -124,6 +124,10 @@ public final class RowMappers {
         .path(rs.getString("path"))
         .build();
 
+    /**
+     * @deprecated Replace with {@link #COMPANY_RECORD}
+     */
+    @Deprecated(since = "2024-08-20")
     public static final Function<String, RowMapper<Company>> ALIASED_COMPANY = alias ->
         (rs, rowNum) -> ImmutableCompany.builder()
             .id(rs.getLong(alias + "id"))
@@ -134,8 +138,13 @@ public final class RowMappers {
             .adGroupId(rs.getString(alias + "ad_group_id"))
             .publish(rs.getBoolean(alias + "publish"))
             .codespaces(List.of(ArraySqlValue.read(rs, alias + "codespaces")))
+            .notificationWebhookUri(rs.getString(alias +  "notification_webhook_uri"))
             .build();
 
+    /**
+     * @deprecated Replace with {@link #COMPANY_RECORD}
+     */
+    @Deprecated(since = "2024-08-20")
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
     public static final RowMapper<CompanyRecord> COMPANY_RECORD = (rs, rowNum) -> ImmutableCompanyRecord.builder()
@@ -147,6 +156,7 @@ public final class RowMappers {
         .adGroupId(rs.getString("ad_group_id"))
         .publish(rs.getBoolean("publish"))
         .codespaces(List.of(ArraySqlValue.read(rs, "codespaces")))
+        .notificationWebhookUri(rs.getString("notification_webhook_uri"))
         .build();
 
     public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(

@@ -2,15 +2,15 @@ package fi.digitraffic.tis.vaco.delegator;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.email.EmailService;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
-import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
+import fi.digitraffic.tis.vaco.notifications.NotificationsService;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
@@ -43,9 +43,9 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
     @Autowired
     private RulesetService rulesetService;
     @Autowired
-    private EmailService emailService;
-    @Autowired
     private EntryService entryService;
+    @Autowired
+    private NotificationsService notificationsService;
 
     @Mock
     private Acknowledgement acknowledgement;
@@ -69,9 +69,9 @@ class DelegationJobQueueSqsListenerTests extends SpringBootIntegrationTestBase {
             rulesetService,
             downloadRule,
             stopsAndQuaysRule,
-            emailService,
             entryService,
-            rulesetSubmissionService);
+            rulesetSubmissionService,
+            notificationsService);
         entry = createQueueEntryForTesting();
         jobMessage = ImmutableDelegationJobMessage.builder()
             .entry(entry)

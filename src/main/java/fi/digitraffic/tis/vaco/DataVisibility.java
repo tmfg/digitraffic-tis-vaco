@@ -17,4 +17,9 @@ public final class DataVisibility {
      * Private/internal data, such as database id:s, which we do not want to expose.
      */
     public interface InternalOnly {}
+
+    /**
+     * Data which can be exceptionally exposed in webhook payloads. Use sparingly.
+     */
+    public interface Webhook {}
 }

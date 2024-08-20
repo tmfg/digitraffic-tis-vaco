@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.email.model;
+package fi.digitraffic.tis.vaco.notifications.email.model;
 
 import org.immutables.value.Value;
 

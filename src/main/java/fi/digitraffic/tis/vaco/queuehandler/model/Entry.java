@@ -55,7 +55,7 @@ public interface Entry {
     List<ConversionInput> conversions();
 
     @Nullable
-    @JsonView(DataVisibility.InternalOnly.class)
+    @JsonView({DataVisibility.InternalOnly.class})
     List<Package> packages();
 
     /**
@@ -63,6 +63,7 @@ public interface Entry {
      * @return List of emails as strings.
      */
     @Value.Default
+    @JsonView(DataVisibility.AdminRestricted.class)
     default List<String> notifications() {
         return List.of();
     }

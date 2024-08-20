@@ -127,6 +127,7 @@ public class RecordMapper {
             .adGroupId(companyRecord.adGroupId())
             .publish(companyRecord.publish())
             .codespaces(companyRecord.codespaces())
+            .notificationWebhookUri(companyRecord.notificationWebhookUri())
             .build();
     }
 

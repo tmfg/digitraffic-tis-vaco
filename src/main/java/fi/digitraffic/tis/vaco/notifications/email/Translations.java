@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.email;
+package fi.digitraffic.tis.vaco.notifications.email;
 
 import java.util.Locale;
 import java.util.Map;

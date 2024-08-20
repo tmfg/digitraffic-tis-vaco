@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,7 +35,7 @@ class HttpClientTests {
     }
 
     @Test
-    void usesProvidedDefaultUriSchemeForSchemelessUris() throws URISyntaxException {
+    void usesProvidedDefaultUriSchemeForSchemelessUris() {
         URI uri = httpClient.toUri("exaple.org");
         assertThat(uri.getScheme(), equalTo(HttpClientConfiguration.DEFAULT_SCHEME));
     }
@@ -47,7 +46,7 @@ class HttpClientTests {
      * this test ensures this doesn't happen.
      */
     @Test
-    void doesntDoubleEncodeUrisWithPredefinedParameters() throws URISyntaxException {
+    void doesntDoubleEncodeUrisWithPredefinedParameters() {
         String original = "https://example.org/keep%2f/?foo=%2fthis-is-on-purpose";
         URI uri = httpClient.toUri(original);
         assertThat(uri.toString(), equalTo(original));

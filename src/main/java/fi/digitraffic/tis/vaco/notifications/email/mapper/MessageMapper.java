@@ -1,11 +1,11 @@
-package fi.digitraffic.tis.vaco.email.mapper;
+package fi.digitraffic.tis.vaco.notifications.email.mapper;
 
 import com.google.common.collect.Iterators;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.email.model.Message;
-import fi.digitraffic.tis.vaco.email.model.Recipients;
+import fi.digitraffic.tis.vaco.notifications.email.model.Message;
+import fi.digitraffic.tis.vaco.notifications.email.model.Recipients;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.ses.model.Destination;
 import software.amazon.awssdk.services.ses.model.SendEmailRequest;
