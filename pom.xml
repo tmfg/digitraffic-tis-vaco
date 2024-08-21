@@ -443,7 +443,8 @@
                     <from>
                         <!-- base image is not set to specific artifact id to allow for rolling updates to be taken into
                              use automatically -->
-                        <image>cgr.dev/chainguard/jdk-lts:latest</image>
+                        <!-- <image>cgr.dev/chainguard/jdk-lts:latest</image> -->
+                        <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                 </configuration>
             </plugin>
