@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.EntryStateService;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;

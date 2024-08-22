@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.ruleset;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;

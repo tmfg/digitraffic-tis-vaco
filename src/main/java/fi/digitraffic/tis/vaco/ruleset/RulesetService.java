@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.ruleset;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
