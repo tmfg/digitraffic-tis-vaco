@@ -182,13 +182,6 @@ public class RulesetRepository {
         return Set.copyOf(jdbc.queryForList("SELECT DISTINCT identifying_name FROM ruleset", String.class));
     }
 
-    public List<Ruleset> listAll() {
-        return jdbc.query("""
-            SELECT * FROM ruleset
-            """,
-            RowMappers.RULESET);
-    }
-
     public boolean anyPrerequisiteDependencyFailed(Entry entry, Ruleset ruleset) {
         return Boolean.FALSE.equals(jdbc.queryForObject("""
             SELECT EXISTS(WITH entry AS (SELECT *
