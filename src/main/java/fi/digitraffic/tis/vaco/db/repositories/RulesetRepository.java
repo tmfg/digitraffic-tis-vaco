@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -160,14 +161,14 @@ public class RulesetRepository {
                 ArraySqlValue.create(ruleset.afterDependencies().toArray(new String[0])));
     }
 
-    public Optional<Ruleset> findByName(String rulesetName) {
+    public Optional<RulesetRecord> findByName(String rulesetName) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                     SELECT *
                       FROM ruleset
                      WHERE identifying_name = ?
                     """,
-                RowMappers.RULESET,
+                RowMappers.RULESET_RECORD,
                 rulesetName));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();

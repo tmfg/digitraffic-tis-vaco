@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
+import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
@@ -28,6 +29,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.model.Context;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
 import org.springframework.stereotype.Component;
@@ -168,6 +171,21 @@ public class RecordMapper {
             .enabled(featureFlagRecord.enabled())
             .modified(featureFlagRecord.modified())
             .modifiedBy(featureFlagRecord.modifiedBy())
+            .build();
+    }
+
+    public Ruleset toRuleset(RulesetRecord rulesetRecord) {
+        return ImmutableRuleset.builder()
+            .id(rulesetRecord.id())
+            .publicId(rulesetRecord.publicId())
+            .ownerId(rulesetRecord.ownerId())
+            .identifyingName(rulesetRecord.identifyingName())
+            .description(rulesetRecord.description())
+            .category(rulesetRecord.category())
+            .type(rulesetRecord.type())
+            .format(rulesetRecord.format())
+            .beforeDependencies(rulesetRecord.beforeDependencies())
+            .afterDependencies(rulesetRecord.afterDependencies())
             .build();
     }
 }
