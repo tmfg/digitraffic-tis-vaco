@@ -14,7 +14,7 @@ import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
+import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.GtfsInputSummaryService;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
@@ -45,21 +45,31 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     EntryStateService entryStateService;
+
     @Autowired
     private GtfsInputSummaryService gtfsInputSummaryService;
+
     @Autowired
     EntryRepository entryRepository;
+
     @Autowired
     private TaskRepository taskRepository;
+
     @Autowired
     private RulesetRepository rulesetRepository;
+
     @Autowired
     private FindingRepository findingRepository;
+
     @Autowired
     RecordMapper recordMapper;
+
     private Path inputPath;
+
     private Task task;
+
     private EntryRecord entry;
+
     private Ruleset rule;
 
     @BeforeEach
@@ -68,7 +78,7 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
         entry = entryRepository.create(Optional.empty(), entryToCreate).get();
         taskRepository.createTasks(entry, List.of(ImmutableTask.of(RuleName.GTFS_CANONICAL, 1)));
         task = taskRepository.findTask(entry.id(), RuleName.GTFS_CANONICAL).get();
-        rule = rulesetRepository.findByName(RuleName.GTFS_CANONICAL).get();
+        rule = recordMapper.toRuleset(rulesetRepository.findByName(RuleName.GTFS_CANONICAL).get());
 
         inputPath = Path.of(ClassLoader.getSystemResource("summary/211_gtfs.zip").toURI());
 

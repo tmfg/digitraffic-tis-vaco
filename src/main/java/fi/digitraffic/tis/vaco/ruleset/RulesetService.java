@@ -3,6 +3,8 @@ package fi.digitraffic.tis.vaco.ruleset;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -21,13 +23,15 @@ public class RulesetService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final CachingService cachingService;
+    private final RecordMapper recordMapper;
 
     private final RulesetRepository rulesetRepository;
 
     public RulesetService(CachingService cachingService,
-                          RulesetRepository rulesetRepository) {
+                          RulesetRepository rulesetRepository, RecordMapper recordMapper) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
+        this.recordMapper = recordMapper;
     }
 
     public Set<Ruleset> selectRulesets(String businessId) {
@@ -63,7 +67,7 @@ public class RulesetService {
     public Optional<Ruleset> findByName(String rulesetName) {
         return cachingService.cacheRuleset(
             rulesetName,
-            name -> rulesetRepository.findByName(name).orElse(null));
+            name -> rulesetRepository.findByName(name).map(recordMapper::toRuleset).orElse(null));
     }
 
     /**
