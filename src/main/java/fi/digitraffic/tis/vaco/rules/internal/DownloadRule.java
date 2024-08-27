@@ -80,11 +80,11 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                 Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
                 Path tempDirPath = TempFiles.getTaskTempDirectory(vacoProperties, entry, tracked);
 
-                try {
-                    S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), PREPARE_DOWNLOAD_TASK, PREPARE_DOWNLOAD_TASK);
-                    S3Path ruleS3Input = ruleBasePath.resolve("input");
-                    S3Path ruleS3Output = ruleBasePath.resolve("output");
+                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), PREPARE_DOWNLOAD_TASK, PREPARE_DOWNLOAD_TASK);
+                S3Path ruleS3Input = ruleBasePath.resolve("input");
+                S3Path ruleS3Output = ruleBasePath.resolve("output");
 
+                try {
                     // download: maybe fetch files and validate it
                     Optional<S3Path> result = download(entry, tempDirPath, tracked, ruleS3Output);
 
@@ -112,7 +112,14 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                 }  catch (Exception e) {
                     logger.warn("Caught unrecoverable exception during file download", e);
                     taskService.markStatus(entry, tracked, Status.FAILED);
-                    return null;
+                    return ImmutableResultMessage.builder()
+                        .entryId(entry.publicId())
+                        .taskId(tracked.id())
+                        .ruleName(PREPARE_DOWNLOAD_TASK)
+                        .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
+                        .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
+                        .uploadedFiles(Map.of())
+                        .build();
                 } finally {
                     try (Stream<Path> tempFiles = Files.walk(tempDirPath)) {
                         tempFiles.sorted(Comparator.reverseOrder())

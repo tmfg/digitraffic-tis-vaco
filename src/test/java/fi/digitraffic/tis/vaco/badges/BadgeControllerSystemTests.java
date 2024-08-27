@@ -12,11 +12,14 @@ import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
+import fi.digitraffic.tis.vaco.messaging.model.JobMessage;
+import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
+import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -55,10 +58,14 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     @Autowired
     private RecordMapper recordMapper;
 
-    @Mock
-    private HttpServletResponse response;
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private TestQueueListener testQueueListener;
+
+    @Mock
+    private HttpServletResponse response;
 
     @BeforeAll
     static void beforeAll() {
@@ -104,8 +111,9 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     @Test
     void newEntry_statusIsCancelled() throws InterruptedException {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
-        Task validationTask = ImmutableTask.of(RuleName.GTFS_CANONICAL, 100);
-        Entry entry = entryBuilder.addTasks(validationTask).build();
+        Task downloadTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100);
+        Task validationTask = ImmutableTask.of(RuleName.GTFS_CANONICAL, 200);
+        Entry entry = entryBuilder.addTasks(downloadTask, validationTask).build();
         assertThat(entry.tasks(), not(empty()));
         Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
         assertThat(entryRecord.isPresent(), equalTo(true));
@@ -113,7 +121,6 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         assertThat(tasks1, not(empty()));
         List<TaskRecord> tasks = taskRepository.createTasks(entryRecord.get(), tasks1);
         assertThat(tasks, not(empty()));
-
 
         Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty())
             .tasks(Streams.collect(tasks, recordMapper::toTask))
@@ -124,12 +131,42 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .build();
         messagingService.submitProcessingJob(job);
 
-        Thread.sleep(5000);
+        waitForMessagesInQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL), 1, 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
 
-        ClassPathResource classPathResource = badgeController.entryBadge(entryRecord.get().publicId(), response);
-        assertThat(classPathResource, notNullValue());
+        ClassPathResource entryBadge = badgeController.entryBadge(entryRecord.get().publicId(), response);
+        assertThat(entryBadge, notNullValue());
+        verifyBadgeIs(Status.FAILED);
+
+        ClassPathResource taskBadge = badgeController.taskBadge(entryRecord.get().publicId(), RuleName.GTFS_CANONICAL, response);
+        assertThat(taskBadge, notNullValue());
         verifyBadgeIs(Status.CANCELLED);
 
+    }
+
+    private void waitForEntryProcessingToFinish(String publicId, int maxWait) throws InterruptedException {
+        long until = System.currentTimeMillis() + maxWait;
+        while (entryRepository.findByPublicId(publicId).map(EntryRecord::completed).isEmpty()
+            && (System.currentTimeMillis() < until)) {
+            Thread.sleep(100);
+        }
+    }
+
+    private List<JobMessage> waitForMessagesInQueue(String queue, int count, int maxWait) throws InterruptedException {
+        long until = System.currentTimeMillis() + maxWait;
+        while (messagesAvailable(queue) <= count
+               && (System.currentTimeMillis() < until)) {
+            Thread.sleep(100);
+        }
+        return readMessages(queue);
+    }
+
+    private int messagesAvailable(String queue) {
+        return readMessages(queue).size();
+    }
+
+    private List<JobMessage> readMessages(String queue) {
+        return testQueueListener.getProcessingMessages().getOrDefault(queue, List.of());
     }
 
     boolean assertBadgeIs(Status status, Optional<EntryRecord> entryRecord) throws InterruptedException {
@@ -147,6 +184,5 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     private void verifyBadgeIs(Status status) {
         String expectedName = status.fieldName();
         verify(response, times(1)).addHeader(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + expectedName + ".svg\"");
-
     }
 }
