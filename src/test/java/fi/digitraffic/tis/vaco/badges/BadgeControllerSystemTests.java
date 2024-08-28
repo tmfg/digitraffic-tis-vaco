@@ -12,8 +12,6 @@ import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
-import fi.digitraffic.tis.vaco.messaging.model.JobMessage;
-import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -60,9 +58,6 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private TaskRepository taskRepository;
-
-    @Autowired
-    private TestQueueListener testQueueListener;
 
     @Mock
     private HttpServletResponse response;
@@ -131,7 +126,6 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .build();
         messagingService.submitProcessingJob(job);
 
-        waitForMessagesInQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL), 1, 5_000);
         waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
 
         ClassPathResource entryBadge = badgeController.entryBadge(entryRecord.get().publicId(), response);
@@ -150,23 +144,6 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             && (System.currentTimeMillis() < until)) {
             Thread.sleep(100);
         }
-    }
-
-    private List<JobMessage> waitForMessagesInQueue(String queue, int count, int maxWait) throws InterruptedException {
-        long until = System.currentTimeMillis() + maxWait;
-        while (messagesAvailable(queue) <= count
-               && (System.currentTimeMillis() < until)) {
-            Thread.sleep(100);
-        }
-        return readMessages(queue);
-    }
-
-    private int messagesAvailable(String queue) {
-        return readMessages(queue).size();
-    }
-
-    private List<JobMessage> readMessages(String queue) {
-        return testQueueListener.getProcessingMessages().getOrDefault(queue, List.of());
     }
 
     boolean assertBadgeIs(Status status, Optional<EntryRecord> entryRecord) throws InterruptedException {
