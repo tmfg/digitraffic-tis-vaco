@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.cleanup;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.db.repositories.CleanupRepository;
+import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +26,7 @@ class CleanupServiceTests {
     private VacoProperties vacoProperties;
 
     @Mock
-    private CleanupRepository cleanupRepository;
+    private EntryRepository entryRepository;
 
     @Mock
     private FeatureFlagsService featureFlagsService;
@@ -34,12 +34,12 @@ class CleanupServiceTests {
     @BeforeEach
     void setUp() {
         vacoProperties = TestObjects.vacoProperties();
-        cleanupService = new CleanupService(vacoProperties, cleanupRepository, featureFlagsService);
+        cleanupService = new CleanupService(vacoProperties, featureFlagsService, entryRepository);
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(cleanupRepository, featureFlagsService);
+        verifyNoMoreInteractions(entryRepository, featureFlagsService);
     }
 
     @Test
