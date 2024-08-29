@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Deprecated(since = "2024-08-29")
 @Repository
 public class SummaryRepository {
     private final Logger logger = LoggerFactory.getLogger(getClass());
