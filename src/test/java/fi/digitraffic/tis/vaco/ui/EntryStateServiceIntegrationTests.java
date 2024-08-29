@@ -5,7 +5,7 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
-import fi.digitraffic.tis.vaco.findings.FindingRepository;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;

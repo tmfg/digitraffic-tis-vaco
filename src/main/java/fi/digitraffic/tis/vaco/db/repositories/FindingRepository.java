@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.findings;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 
-@Deprecated(since = "2024-08-29")
 @Repository
 public class FindingRepository {
 

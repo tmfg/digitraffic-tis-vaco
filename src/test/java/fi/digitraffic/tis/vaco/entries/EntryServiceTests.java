@@ -7,7 +7,7 @@ import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.FindingRepository;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;

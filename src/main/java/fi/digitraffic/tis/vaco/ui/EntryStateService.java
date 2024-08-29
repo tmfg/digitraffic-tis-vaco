@@ -5,7 +5,7 @@ import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
-import fi.digitraffic.tis.vaco.findings.FindingRepository;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
