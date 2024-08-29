@@ -40,10 +40,6 @@ public abstract class S3Path {
         }
     }
 
-    public String getLast() {
-        return path().get(path().size() - 1);
-    }
-
     public ImmutableS3Path resolve(String more) {
         List<String> newPath = new ArrayList<>(path());
         newPath.addAll(Arrays.asList(more.split(("/"))));

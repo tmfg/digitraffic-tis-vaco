@@ -180,7 +180,7 @@ public class NetexInputSummaryService {
     Route processRoute(XMLEventReader reader,
                        StartElement routeStartElement,
                        String fileName,
-                       Long taskId) throws Exception {
+                       Long taskId) {
         ImmutableRoute.Builder routeBuilder = ImmutableRoute.builder();
         Attribute id = routeStartElement.getAttributeByName(new QName("id"));
         if (id != null) {
@@ -210,8 +210,9 @@ public class NetexInputSummaryService {
     }
 
     Line processLine(XMLEventReader reader,
-                     StartElement lineStartElement, String fileName,
-                     Long taskId) throws Exception {
+                     StartElement lineStartElement,
+                     String fileName,
+                     Long taskId) {
         ImmutableLine.Builder lineBuilder = ImmutableLine.builder();
         Attribute id = lineStartElement.getAttributeByName(new QName("id"));
         if (id != null) {

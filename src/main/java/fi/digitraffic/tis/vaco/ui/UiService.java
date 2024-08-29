@@ -56,7 +56,7 @@ public class UiService {
     private MyDataEntrySummary convertToSummary(EntryRecord pe) {
         Optional<ContextRecord> context = contextRepository.find(pe);
         return ImmutableMyDataEntrySummary.of(pe.publicId(), pe.name(), pe.format(), pe.status())
-            .withContext(context.map(c -> c.context()).orElse(null))
+            .withContext(context.map(ContextRecord::context).orElse(null))
             .withCreated(pe.created())
             .withStarted(pe.started())
             .withUpdated(pe.updated())

@@ -137,7 +137,7 @@ public class GtfsInputSummaryService {
             List<FeedInfo> feedInfoList = getCsvBeans(inputStream, FeedInfo.class);
             if (!feedInfoList.isEmpty()) {
                 return gtfsTaskSummary
-                    .withFeedInfo(feedInfoList.get(0))
+                    .withFeedInfo(feedInfoList.getFirst())
                     .withComponents(Streams.append(
                         gtfsTaskSummary.components(),
                         "Feed information"));

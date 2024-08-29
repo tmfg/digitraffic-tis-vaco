@@ -84,10 +84,6 @@ public class CompanyHierarchyService {
         return companyRepository.listAllWithEntries();
     }
 
-    public Set<Company> findAllByAdGroupIds(List<String> adGroupIds) {
-        return companyRepository.findAllByAdGroupIds(adGroupIds);
-    }
-
     public Optional<Company> findByAdGroupId(String groupId) {
         return companyRepository.findByAdGroupId(groupId);
     }

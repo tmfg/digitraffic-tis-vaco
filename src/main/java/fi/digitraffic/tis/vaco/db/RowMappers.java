@@ -287,16 +287,6 @@ public final class RowMappers {
             .build();
     }
 
-    public static final RowMapper<CompanyLatestEntry> COMPANY_LATEST_ENTRY = (rs, rowNum) -> ImmutableCompanyLatestEntry.builder()
-        .companyName(rs.getString("company_name"))
-        .businessId(rs.getString("business_id"))
-        .publicId(rs.getString("public_id"))
-        .format(rs.getString("format"))
-        .convertedFormat(rs.getString("converted_format"))
-        .created(readZonedDateTime(rs, "created"))
-        .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
-        .build();
-
     public static final RowMapper<CompanyLatestEntry> DATA_DELIVERY = (rs, rowNum) -> ImmutableCompanyLatestEntry.builder()
         .companyName(rs.getString("company_name"))
         .businessId(rs.getString("business_id"))
@@ -392,7 +382,7 @@ public final class RowMappers {
             try {
                 return objectMapper.readValue(v, type);
             } catch (JsonProcessingException e) {
-                LOGGER.error("Failed to read JSONB as valid " + type, e);
+                LOGGER.error("Failed to read JSONB as valid {}", type, e);
             }
             // TODO: This is potentially fatal, we could re-throw instead
             return null;

@@ -84,7 +84,7 @@ public class EntryStateService {
         List<AggregatedFinding> aggregatedWithFindings = new ArrayList<>();
         findingsByMessage.forEach((code, findings) -> aggregatedWithFindings.add(ImmutableAggregatedFinding.builder()
                 .code(code)
-                .severity(findings.get(0).severity())
+                .severity(findings.getFirst().severity())
                 .total(findings.size())
                 .findings(Streams.collect(findings, recordMapper::toFinding))
             .build()));
@@ -92,7 +92,7 @@ public class EntryStateService {
         aggregatedWithFindings.sort(new SortFindingsBySeverity());
 
         List<Package> taskPackages = entry.packages() != null
-            ? Streams.filter(entry.packages(), p -> p.task().equals(task.id())).toList()
+            ? Streams.filter(entry.packages(), p -> p.task().id().equals(task.id())).toList()
             : List.of();
         Optional<Ruleset> rule = Optional.ofNullable(rulesets.get(task.name()));
 

@@ -33,12 +33,14 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final RulesetService rulesetService;
-    private final ObjectMapper objectMapper;
-    private final TaskService taskService;
     private final FindingService findingService;
 
-    public GtfsCanonicalResultProcessor(VacoProperties vacoProperties, PackagesService packagesService,
+    private final RulesetService rulesetService;
+
+    private final ObjectMapper objectMapper;
+
+    public GtfsCanonicalResultProcessor(VacoProperties vacoProperties,
+                                        PackagesService packagesService,
                                         S3Client s3Client,
                                         TaskService taskService,
                                         FindingService findingService,
@@ -47,8 +49,7 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.taskService = taskService;
-        this.findingService = findingService;
+        this.findingService = Objects.requireNonNull(findingService);
     }
 
     @Override

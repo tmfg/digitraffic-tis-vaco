@@ -218,7 +218,7 @@ public class TaskService {
         List<Task> rootKeys = new ArrayList<>(roots.values());
         // while S is not empty do)
         while (!rootKeys.isEmpty()) {
-            Task n = rootKeys.get(0);
+            Task n = rootKeys.getFirst();
             //    remove a node n from S
             rootKeys.remove(n);
             //    add n to L
@@ -314,11 +314,10 @@ public class TaskService {
         List<String> completeTasks = new ArrayList<>(allowedRuleTasks);
         completeTasks.addAll(preDependencies);
         completeTasks.addAll(postDependencies);
-        return createTasks(completeTasks, entry);
+        return createTasks(completeTasks);
     }
 
-    private static List<ImmutableTask> createTasks(List<String> taskNames,
-                                                   EntryRecord entry) {
+    private static List<ImmutableTask> createTasks(List<String> taskNames) {
         return Streams.map(taskNames, t -> ImmutableTask.of(t, -1)).toList();
     }
 

@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.messaging;
 
 import fi.digitraffic.tis.vaco.caching.CachingFailureException;
 import fi.digitraffic.tis.vaco.caching.CachingService;
-import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
@@ -30,16 +29,13 @@ public class MessagingService {
     private final SqsClient sqsClient;
     private final SqsTemplate sqsTemplate;
     private final CachingService cachingService;
-    private final EntryRepository entryRepository;
 
     public MessagingService(SqsClient sqsClient,
                             SqsTemplate sqsTemplate,
-                            CachingService cachingService,
-                            EntryRepository entryRepository) {
+                            CachingService cachingService) {
         this.sqsClient = Objects.requireNonNull(sqsClient);
         this.sqsTemplate = Objects.requireNonNull(sqsTemplate);
         this.cachingService = Objects.requireNonNull(cachingService);
-        this.entryRepository = Objects.requireNonNull(entryRepository);
     }
 
     public <P> CompletableFuture<P> sendMessage(String queueName, P payload) {

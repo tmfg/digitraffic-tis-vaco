@@ -47,7 +47,7 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
             taskService.trackTask(entry, task, ProcessingState.COMPLETE);
             return false;
         } else {
-            String sourceFile = packages.get("result").get(0);
+            String sourceFile = packages.get("result").getFirst();
             S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
             packagesService.registerPackage(ImmutablePackage.of(
                 task,
