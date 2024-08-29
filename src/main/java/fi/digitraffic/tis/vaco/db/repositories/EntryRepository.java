@@ -242,4 +242,20 @@ public class EntryRepository {
             entry.publicId()
         ) == 1;
     }
+
+    public Optional<Status> findEntryStatus(String publicId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                SELECT status
+                  FROM entry
+                 WHERE public_id = ?
+                """,
+                RowMappers.STATUS,
+                publicId));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to fetch status of entry {}", publicId);
+            return Optional.empty();
+        }
+    }
+
 }

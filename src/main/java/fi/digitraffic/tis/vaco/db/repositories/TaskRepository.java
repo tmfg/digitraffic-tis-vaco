@@ -282,4 +282,22 @@ public class TaskRepository {
             return Optional.empty();
         }
     }
+
+    public Optional<Status> findTaskStatus(EntryRecord entry, String taskName) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                """
+                SELECT t.status
+                  FROM task t
+                 WHERE t.entry_id = (SELECT id FROM entry e WHERE e.id = ?)
+                   AND t.name = ?
+                """,
+                RowMappers.STATUS,
+                entry.id(),
+                taskName));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to fetch status of entry {}'s task {}", entry.id(), taskName);
+            return Optional.empty();
+        }
+    }
 }
