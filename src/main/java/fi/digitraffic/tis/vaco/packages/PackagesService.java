@@ -11,7 +11,7 @@ import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.PackageRecord;
-import fi.digitraffic.tis.vaco.db.repositories.PackagesRepository;
+import fi.digitraffic.tis.vaco.db.repositories.PackageRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -41,7 +41,7 @@ public class PackagesService {
 
     private final CachingService cachingService;
 
-    private final PackagesRepository packagesRepository;
+    private final PackageRepository packageRepository;
 
     private final TaskRepository taskRepository;
 
@@ -49,13 +49,13 @@ public class PackagesService {
                            S3Client s3Client,
                            S3Packager s3Packager,
                            CachingService cachingService,
-                           PackagesRepository packagesRepository,
+                           PackageRepository packageRepository,
                            TaskRepository taskRepository, RecordMapper recordMapper) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.s3Packager = Objects.requireNonNull(s3Packager);
         this.cachingService = Objects.requireNonNull(cachingService);
-        this.packagesRepository = Objects.requireNonNull(packagesRepository);
+        this.packageRepository = Objects.requireNonNull(packageRepository);
         this.taskRepository = Objects.requireNonNull(taskRepository);
         this.recordMapper = recordMapper;
     }
@@ -107,11 +107,11 @@ public class PackagesService {
      * @return Saved Package with updated ids, references etc.
      */
     public Package registerPackage(Package p) {
-        return recordMapper.toPackage(p.task(), packagesRepository.upsertPackage(p));
+        return recordMapper.toPackage(p.task(), packageRepository.upsertPackage(p));
     }
 
     public List<Package> findAvailablePackages(Task task) {
-        List<PackageRecord> packages = packagesRepository.findPackages(task);
+        List<PackageRecord> packages = packageRepository.findPackages(task);
         return Streams.filter(packages, p -> s3Client.keyExists(vacoProperties.s3ProcessingBucket(), p.path()))
             .map(p -> recordMapper.toPackage(task, p))
             .toList();
@@ -119,7 +119,7 @@ public class PackagesService {
 
     public Optional<Package> findPackage(Task task, String packageName) {
         return taskRepository.findByPublicId(task.publicId())
-            .flatMap(t -> packagesRepository.findPackage(t, packageName))
+            .flatMap(t -> packageRepository.findPackage(t, packageName))
             .map(packageRecord -> recordMapper.toPackage(task, packageRecord));
     }
 

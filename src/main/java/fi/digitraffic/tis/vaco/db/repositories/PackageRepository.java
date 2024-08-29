@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class PackagesRepository {
+public class PackageRepository {
 
     private final JdbcTemplate jdbc;
 
-    public PackagesRepository(JdbcTemplate jdbc) {
+    public PackageRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

@@ -11,11 +11,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Repository
-public class FeatureFlagsRepository {
+public class FeatureFlagRepository {
 
     private final JdbcTemplate jdbc;
 
-    public FeatureFlagsRepository(JdbcTemplate jdbc) {
+    public FeatureFlagRepository(JdbcTemplate jdbc) {
         this.jdbc = Objects.requireNonNull(jdbc);
     }
 
