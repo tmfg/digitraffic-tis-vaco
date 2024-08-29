@@ -50,7 +50,7 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
             String sourceFile = packages.get("result").get(0);
             S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
             packagesService.registerPackage(ImmutablePackage.of(
-                task.id(),
+                task,
                 "result",
                 dlFile.toString()));
             taskService.markStatus(entry, task, Status.SUCCESS);

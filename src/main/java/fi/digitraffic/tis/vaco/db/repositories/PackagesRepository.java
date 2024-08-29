@@ -1,6 +1,8 @@
 package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.PackageRecord;
+import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -19,7 +21,7 @@ public class PackagesRepository {
         this.jdbc = jdbc;
     }
 
-    public Optional<Package> findPackage(Task task, String packageName) {
+    public Optional<PackageRecord> findPackage(TaskRecord task, String packageName) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                     SELECT *
@@ -27,14 +29,14 @@ public class PackagesRepository {
                      WHERE task_id = ?
                        AND name = ?
                     """,
-                RowMappers.PACKAGE,
+                RowMappers.PACKAGE_RECORD,
                 task.id(), packageName));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();
         }
     }
 
-    public Package upsertPackage(Package p) {
+    public PackageRecord upsertPackage(Package p) {
         return jdbc.queryForObject("""
                 INSERT INTO package(task_id, path, name)
                      VALUES (?, ?, ?)
@@ -42,8 +44,10 @@ public class PackagesRepository {
                          DO UPDATE SET path = excluded.path
                   RETURNING *
                 """,
-            RowMappers.PACKAGE,
-            p.taskId(), p.path(), p.name());
+            RowMappers.PACKAGE_RECORD,
+            p.task().id(),
+            p.path(),
+            p.name());
     }
 
     public List<Package> findPackages(Task task) {

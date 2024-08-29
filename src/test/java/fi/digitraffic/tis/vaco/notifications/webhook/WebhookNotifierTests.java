@@ -122,7 +122,7 @@ class WebhookNotifierTests {
         when(taskService.findTasks(entry)).thenReturn(tasks);
 
         // with one produced package
-        List<Package> packages = List.of(ImmutablePackage.of(fakeTask.id(), "testpackage", "/path/to/blob"));
+        List<Package> packages = List.of(ImmutablePackage.of(fakeTask, "testpackage", "/path/to/blob"));
         when(packagesService.findAvailablePackages(fakeTask)).thenReturn(packages);
 
         // when webhook is sent

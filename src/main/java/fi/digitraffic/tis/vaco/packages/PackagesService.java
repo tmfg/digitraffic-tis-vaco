@@ -9,7 +9,9 @@ import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.repositories.PackagesRepository;
+import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -28,25 +30,33 @@ import java.util.function.Predicate;
 public class PackagesService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final RecordMapper recordMapper;
 
     private final VacoProperties vacoProperties;
+
     private final S3Client s3Client;
+
     private final S3Packager s3Packager;
 
     private final CachingService cachingService;
 
     private final PackagesRepository packagesRepository;
 
+    private final TaskRepository taskRepository;
+
     public PackagesService(VacoProperties vacoProperties,
                            S3Client s3Client,
                            S3Packager s3Packager,
                            CachingService cachingService,
-                           PackagesRepository packagesRepository) {
+                           PackagesRepository packagesRepository,
+                           TaskRepository taskRepository, RecordMapper recordMapper) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.s3Packager = Objects.requireNonNull(s3Packager);
         this.cachingService = Objects.requireNonNull(cachingService);
         this.packagesRepository = Objects.requireNonNull(packagesRepository);
+        this.taskRepository = Objects.requireNonNull(taskRepository);
+        this.recordMapper = recordMapper;
     }
 
     /**
@@ -79,7 +89,7 @@ public class PackagesService {
 
         // store database reference
         return registerPackage(ImmutablePackage.of(
-                task.id(),
+                task,
                 packageName,
                 ImmutableS3Path.builder()
                     .from(packageContentsS3Path)
@@ -96,7 +106,7 @@ public class PackagesService {
      * @return Saved Package with updated ids, references etc.
      */
     public Package registerPackage(Package p) {
-        return packagesRepository.upsertPackage(p);
+        return recordMapper.toPackage(p.task(), packagesRepository.upsertPackage(p));
     }
 
     public List<Package> findPackages(Task task) {
@@ -109,7 +119,9 @@ public class PackagesService {
     }
 
     public Optional<Package> findPackage(Task task, String packageName) {
-        return packagesRepository.findPackage(task, packageName);
+        return taskRepository.findByPublicId(task.publicId())
+            .flatMap(t -> packagesRepository.findPackage(t, packageName))
+            .map(packageRecord -> recordMapper.toPackage(task, packageRecord));
     }
 
     public Optional<Path> downloadPackage(Entry entry, Task task, String packageName) {

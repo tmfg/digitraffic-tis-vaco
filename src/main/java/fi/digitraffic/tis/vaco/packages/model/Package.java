@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.process.model.Task;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -13,12 +14,8 @@ import org.immutables.value.Value;
 public interface Package {
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)
-    Long id();
-
-    @Nullable
-    @JsonView(DataVisibility.InternalOnly.class)
     @Value.Parameter
-    Long taskId();
+    Task task();
 
     @Value.Parameter
     String name();

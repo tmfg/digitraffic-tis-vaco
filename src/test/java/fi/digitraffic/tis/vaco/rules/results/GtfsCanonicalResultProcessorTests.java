@@ -108,7 +108,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
     void mapsGtfsCanonicalNoticesToFindings() {
         resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("report.json", List.of("report")));
 
-        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.findFindingsByName(entry, task, "thread_execution_error")).willReturn(List.of());
@@ -129,7 +129,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
     void mapsGtfsCanonicalSystemErrorsToFindings() {
         resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("system_errors.json", List.of("report")));
 
-        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.findFindingsByName(entry, task, "thread_execution_error")).willReturn(List.of());
@@ -150,7 +150,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
     void GtfsCanonicalRuntimeErrorGivesWarning() {
         resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("system_errors.json", List.of("report")));
 
-        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.findFindingsByName(entry, task, "thread_execution_error")).willReturn(List.of());

@@ -167,6 +167,10 @@ public class TaskRepository {
         }
     }
 
+    /**
+     * @deprecated Use {@link #findByPublicId(String)} instead and migrate to {@link TaskRecord} where applicable.
+     */
+    @Deprecated(since = "2024-08-29")
     public Optional<Task> findTask(String taskPublicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
@@ -265,4 +269,17 @@ public class TaskRepository {
             entry.id());
     }
 
+    public Optional<TaskRecord> findByPublicId(String publicId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                SELECT *
+                  FROM task
+                 WHERE public_id = ?
+                """,
+                RowMappers.TASK_RECORD,
+                publicId));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 }

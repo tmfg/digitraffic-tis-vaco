@@ -90,7 +90,7 @@ public class EntryStateService {
         aggregatedWithFindings.sort(new SortFindingsBySeverity());
 
         List<Package> taskPackages = entry.packages() != null
-            ? Streams.filter(entry.packages(), p -> p.taskId().equals(task.id())).toList()
+            ? Streams.filter(entry.packages(), p -> p.task().equals(task.id())).toList()
             : List.of();
         Optional<Ruleset> rule = Optional.ofNullable(rulesets.get(task.name()));
 

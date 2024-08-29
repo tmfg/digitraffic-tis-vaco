@@ -21,10 +21,12 @@ import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutablePackageRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableRulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableTaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
@@ -136,7 +138,12 @@ public final class RowMappers {
 
     public static final RowMapper<Status> STATUS = (rs, rowNum) -> Status.forField(rs.getString("status"));
 
-    public static final RowMapper<Package> PACKAGE = (rs, rowNum) -> (Package) ImmutablePackage.builder()
+    public static final RowMapper<Package> PACKAGE = (rs, rowNum) -> ImmutablePackage.builder()
+        .name(rs.getString("name"))
+        .path(rs.getString("path"))
+        .build();
+
+    public static final RowMapper<PackageRecord> PACKAGE_RECORD = (rs, rowNum) -> ImmutablePackageRecord.builder()
         .id(rs.getLong("id"))
         .taskId(rs.getLong("task_id"))
         .name(rs.getString("name"))

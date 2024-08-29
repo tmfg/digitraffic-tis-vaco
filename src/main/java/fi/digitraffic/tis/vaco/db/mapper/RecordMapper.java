@@ -14,12 +14,15 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
+import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
+import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -33,6 +36,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.model.Context;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
+import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -187,5 +191,13 @@ public class RecordMapper {
             .beforeDependencies(rulesetRecord.beforeDependencies())
             .afterDependencies(rulesetRecord.afterDependencies())
             .build();
+    }
+
+    public Package toPackage(@Nullable Task task, PackageRecord packageRecord) {
+        return ImmutablePackage.of(
+            task,
+            packageRecord.name(),
+            packageRecord.path()
+        );
     }
 }
