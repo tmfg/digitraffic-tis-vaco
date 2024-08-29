@@ -27,7 +27,7 @@ public class FindingRepository {
         this.jdbc = jdbc;
     }
 
-    public Finding create(Finding finding) {
+    public FindingRecord create(Finding finding) {
         return jdbc.queryForObject("""
             INSERT INTO finding (task_id, ruleset_id, source, message, severity, raw)
                  VALUES (
@@ -43,7 +43,7 @@ public class FindingRepository {
                              ?)
               RETURNING id, public_id, task_id, ruleset_id, source, message, severity, raw
             """,
-            RowMappers.FINDING,
+            RowMappers.FINDING_RECORD,
             finding.taskId(),
             finding.rulesetId(),
             finding.source(),
@@ -122,7 +122,7 @@ public class FindingRepository {
             r -> (Long) r.get("count"));
     }
 
-    public List<Finding> findFindingsByName(Long taskId, String findingName) {
+    public List<FindingRecord> findFindingsByName(Long taskId, String findingName) {
         try {
             return jdbc.query(
                 """
@@ -131,7 +131,7 @@ public class FindingRepository {
                  WHERE task_id = ?
                    AND message = ?
                 """,
-                RowMappers.FINDING,
+                RowMappers.FINDING_RECORD,
                 taskId,
                 findingName);
         } catch (EmptyResultDataAccessException erdae) {

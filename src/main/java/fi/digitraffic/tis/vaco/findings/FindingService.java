@@ -1,11 +1,11 @@
 package fi.digitraffic.tis.vaco.findings;
 
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +15,13 @@ import java.util.Map;
 @Service
 public class FindingService {
     private final FindingRepository findingRepository;
+    private final RecordMapper recordMapper;
     private final RulesetRepository rulesetRepository;
 
-    public FindingService(FindingRepository findingRepository, RulesetRepository rulesetRepository) {
+    public FindingService(FindingRepository findingRepository, RulesetRepository rulesetRepository, RecordMapper recordMapper) {
         this.findingRepository = findingRepository;
         this.rulesetRepository = rulesetRepository;
+        this.recordMapper = recordMapper;
     }
 
     public void reportFinding(Finding finding) {
@@ -40,7 +42,7 @@ public class FindingService {
         return findingRepository.getSeverityCounts(task);
     }
 
-    public List<Finding> findFindingsByName(Entry entry, Task task, String findingName) {
-        return findingRepository.findFindingsByName(task.id(), findingName);
+    public List<Finding> findFindingsByName(Task task, String findingName) {
+        return Streams.collect(findingRepository.findFindingsByName(task.id(), findingName), recordMapper::toFinding);
     }
 }

@@ -34,8 +34,6 @@ import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.model.Finding;
-import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -195,17 +193,6 @@ public final class RowMappers {
     public static final Function<ObjectMapper, RowMapper<ValidationInputRecord>> VALIDATION_INPUT_RECORD = RowMappers::mapValidationInputRecord;
     public static final Function<ObjectMapper, RowMapper<ConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
     public static final Function<ObjectMapper, RowMapper<ConversionInputRecord>> CONVERSION_INPUT_RECORD = RowMappers::mapConversionInputRecord;
-
-    public static final RowMapper<Finding> FINDING = (rs, rowNum) -> ImmutableFinding.builder()
-        .id(rs.getLong("id"))
-        .publicId(rs.getString("public_id"))
-        .taskId(rs.getLong("task_id"))
-        .rulesetId(rs.getLong("ruleset_id"))
-        .source(rs.getString("source"))
-        .message(rs.getString("message"))
-        .severity(rs.getString("severity"))
-        .raw(rs.getBytes("raw"))
-        .build();
 
     public static final RowMapper<FindingRecord> FINDING_RECORD = (rs, rowNum) -> ImmutableFindingRecord.builder()
         .id(rs.getLong("id"))

@@ -68,7 +68,7 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
             return storeFindings(findings);
         });
 
-        List<Finding> allFindings = findingService.findFindingsByName(entry, task, "thread_execution_error");
+        List<Finding> allFindings = findingService.findFindingsByName(task, "thread_execution_error");
         Optional<Status> status;
         if (allFindings.isEmpty()) {
             status = Optional.empty();

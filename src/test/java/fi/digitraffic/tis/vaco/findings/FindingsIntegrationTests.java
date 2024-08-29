@@ -75,12 +75,12 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     private void createSystemErrorFinding(String error) {
-        Finding SystemErrorFinding = TestObjects.aFinding(rule.id(), task.id())
+        Finding systemErrorFinding = TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.ERROR)
             .message(error)
             .source(RuleName.GTFS_CANONICAL)
             .build();
-        findingRepository.create(SystemErrorFinding);
+        findingRepository.create(systemErrorFinding);
     }
 
     @Test

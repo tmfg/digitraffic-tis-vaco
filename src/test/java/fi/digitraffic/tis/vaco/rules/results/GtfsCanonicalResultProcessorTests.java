@@ -111,7 +111,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
-        given(findingService.findFindingsByName(entry, task, "thread_execution_error")).willReturn(List.of());
+        given(findingService.findFindingsByName(task, "thread_execution_error")).willReturn(List.of());
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
         givenTaskProcessingStateIsMarkedAs(entry, task, ProcessingState.COMPLETE);
@@ -132,7 +132,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
-        given(findingService.findFindingsByName(entry, task, "thread_execution_error")).willReturn(List.of());
+        given(findingService.findFindingsByName(task, "thread_execution_error")).willReturn(List.of());
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
         givenTaskProcessingStateIsMarkedAs(entry, task, ProcessingState.COMPLETE);
@@ -153,7 +153,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
-        given(findingService.findFindingsByName(entry, task, "thread_execution_error")).willReturn(List.of());
+        given(findingService.findFindingsByName(task, "thread_execution_error")).willReturn(List.of());
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
         givenTaskProcessingStateIsMarkedAs(entry, task, ProcessingState.COMPLETE);
