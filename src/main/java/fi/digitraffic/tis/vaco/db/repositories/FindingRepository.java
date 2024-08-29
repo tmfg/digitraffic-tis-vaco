@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ public class FindingRepository {
             finding.raw());
     }
 
-    public List<Finding> findFindingsByTaskId(Long taskId) {
+    public List<FindingRecord> findFindingsByTaskId(Long taskId) {
         try {
             return jdbc.query(
                 """
@@ -61,7 +62,7 @@ public class FindingRepository {
                   FROM finding
                  WHERE task_id = ?
                 """,
-                RowMappers.FINDING,
+                RowMappers.FINDING_RECORD,
                 taskId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();

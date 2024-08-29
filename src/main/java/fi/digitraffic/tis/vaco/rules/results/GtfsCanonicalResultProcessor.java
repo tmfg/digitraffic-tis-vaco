@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.rules.results;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
-import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -23,7 +22,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements ResultProcessor {
@@ -90,7 +93,6 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
                     .map(sn -> {
                         try {
                             return ImmutableFinding.of(
-                                    entry.publicId(),
                                     task.id(),
                                     rulesetId,
                                     ruleName,

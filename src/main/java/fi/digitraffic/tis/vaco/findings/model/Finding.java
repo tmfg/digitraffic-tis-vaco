@@ -21,11 +21,6 @@ public interface Finding {
     @Value.Parameter
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)
-    String entryId();
-
-    @Value.Parameter
-    @Nullable
-    @JsonView(DataVisibility.InternalOnly.class)
     Long taskId();
 
     @Value.Parameter

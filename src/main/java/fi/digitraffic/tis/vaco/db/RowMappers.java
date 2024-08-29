@@ -16,11 +16,13 @@ import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePackageRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableRulesetRecord;
@@ -195,6 +197,17 @@ public final class RowMappers {
     public static final Function<ObjectMapper, RowMapper<ConversionInputRecord>> CONVERSION_INPUT_RECORD = RowMappers::mapConversionInputRecord;
 
     public static final RowMapper<Finding> FINDING = (rs, rowNum) -> ImmutableFinding.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .taskId(rs.getLong("task_id"))
+        .rulesetId(rs.getLong("ruleset_id"))
+        .source(rs.getString("source"))
+        .message(rs.getString("message"))
+        .severity(rs.getString("severity"))
+        .raw(rs.getBytes("raw"))
+        .build();
+
+    public static final RowMapper<FindingRecord> FINDING_RECORD = (rs, rowNum) -> ImmutableFindingRecord.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
         .taskId(rs.getLong("task_id"))

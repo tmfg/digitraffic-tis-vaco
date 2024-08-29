@@ -4,6 +4,8 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
@@ -47,21 +49,22 @@ public class EntryStateService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final FindingRepository findingRepository;
+    private final RecordMapper recordMapper;
     private final SummaryRepository summaryRepository;
     private final VacoProperties vacoProperties;
 
-    public EntryStateService(FindingRepository findingRepository, SummaryRepository summaryRepository, VacoProperties vacoProperties) {
+    public EntryStateService(FindingRepository findingRepository, SummaryRepository summaryRepository, VacoProperties vacoProperties, RecordMapper recordMapper) {
         this.findingRepository = Objects.requireNonNull(findingRepository);
         this.summaryRepository = Objects.requireNonNull(summaryRepository);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.recordMapper = recordMapper;
     }
 
     public TaskReport getTaskReport(Task task, Entry entry, Map<String, Ruleset> rulesets) {
-        List<Finding> allFindings = findingRepository.findFindingsByTaskId(task.id());
+        List<FindingRecord> allFindings = findingRepository.findFindingsByTaskId(task.id());
 
-        Map<String, Long> findingCountersBySeverity =
-            allFindings.stream().collect(Collectors.groupingBy(f -> f.severity().toUpperCase(),
-                Collectors.counting()));
+        Map<String, Long> findingCountersBySeverity = allFindings.stream()
+            .collect(Collectors.groupingBy(f -> f.severity().toUpperCase(), Collectors.counting()));
         // Order of severities matters for UI:
         List<String> countersBySeverityKeys = new ArrayList<>(findingCountersBySeverity.keySet());
         countersBySeverityKeys.sort(new SortStringsBySeverity());
@@ -77,14 +80,14 @@ public class EntryStateService {
                 .build())
         );
 
-        Map<String, List<Finding>> findingsByMessage =
-            allFindings.stream().collect(Collectors.groupingBy(f -> f.message().toLowerCase()));
+        Map<String, List<FindingRecord>> findingsByMessage = allFindings.stream()
+            .collect(Collectors.groupingBy(f -> f.message().toLowerCase()));
         List<AggregatedFinding> aggregatedWithFindings = new ArrayList<>();
         findingsByMessage.forEach((code, findings) -> aggregatedWithFindings.add(ImmutableAggregatedFinding.builder()
                 .code(code)
                 .severity(findings.get(0).severity())
                 .total(findings.size())
-                .findings(findings)
+                .findings(Streams.collect(findings, recordMapper::toFinding))
             .build()));
         // aggregatedWithFindings should also be ordered from highest to lowest severity:
         aggregatedWithFindings.sort(new SortFindingsBySeverity());
