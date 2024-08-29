@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.aws.S3Packager;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.repositories.PackagesRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
@@ -109,13 +110,11 @@ public class PackagesService {
         return recordMapper.toPackage(p.task(), packagesRepository.upsertPackage(p));
     }
 
-    public List<Package> findPackages(Task task) {
-        return packagesRepository.findPackages(task);
-    }
-
     public List<Package> findAvailablePackages(Task task) {
-        List<Package> packages = packagesRepository.findPackages(task);
-        return Streams.filter(packages, p -> s3Client.keyExists(vacoProperties.s3ProcessingBucket(), p.path())).toList();
+        List<PackageRecord> packages = packagesRepository.findPackages(task);
+        return Streams.filter(packages, p -> s3Client.keyExists(vacoProperties.s3ProcessingBucket(), p.path()))
+            .map(p -> recordMapper.toPackage(task, p))
+            .toList();
     }
 
     public Optional<Package> findPackage(Task task, String packageName) {

@@ -34,8 +34,6 @@ import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
-import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
-import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -137,11 +135,6 @@ public final class RowMappers {
         .build();
 
     public static final RowMapper<Status> STATUS = (rs, rowNum) -> Status.forField(rs.getString("status"));
-
-    public static final RowMapper<Package> PACKAGE = (rs, rowNum) -> ImmutablePackage.builder()
-        .name(rs.getString("name"))
-        .path(rs.getString("path"))
-        .build();
 
     public static final RowMapper<PackageRecord> PACKAGE_RECORD = (rs, rowNum) -> ImmutablePackageRecord.builder()
         .id(rs.getLong("id"))

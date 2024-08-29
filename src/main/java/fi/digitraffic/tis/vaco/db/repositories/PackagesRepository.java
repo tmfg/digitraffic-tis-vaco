@@ -50,14 +50,14 @@ public class PackagesRepository {
             p.name());
     }
 
-    public List<Package> findPackages(Task task) {
+    public List<PackageRecord> findPackages(Task task) {
         try {
             return jdbc.query("""
                 SELECT *
                   FROM package
                  WHERE task_id = ?
                 """,
-                RowMappers.PACKAGE,
+                RowMappers.PACKAGE_RECORD,
                 task.id());
         } catch (EmptyResultDataAccessException e) {
             return List.of();
