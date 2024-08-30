@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Repository
 public class FindingRepository {
@@ -24,7 +25,7 @@ public class FindingRepository {
     private final JdbcTemplate jdbc;
 
     public FindingRepository(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+        this.jdbc = Objects.requireNonNull(jdbc);
     }
 
     public FindingRecord create(Finding finding) {

@@ -63,7 +63,7 @@ public class EntryStateService {
         this.findingRepository = Objects.requireNonNull(findingRepository);
         this.summaryRepository = Objects.requireNonNull(summaryRepository);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
-        this.recordMapper = recordMapper;
+        this.recordMapper = Objects.requireNonNull(recordMapper);
     }
 
     public TaskReport getTaskReport(Task task, Entry entry, Map<String, Ruleset> rulesets) {

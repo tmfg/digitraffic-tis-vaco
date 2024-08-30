@@ -4,10 +4,10 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.me.MeService;
-import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import org.springframework.stereotype.Service;
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,12 +29,16 @@ public class UiService {
     private final EntryRepository entryRepository;
     private final ContextRepository contextRepository;
 
-    public UiService(MeService meService, CompanyHierarchyService companyHierarchyService, CachingService cachingService, EntryRepository entryRepository, ContextRepository contextRepository) {
-        this.meService = meService;
-        this.companyHierarchyService = companyHierarchyService;
-        this.cachingService = cachingService;
-        this.entryRepository = entryRepository;
-        this.contextRepository = contextRepository;
+    public UiService(MeService meService,
+                     CompanyHierarchyService companyHierarchyService,
+                     CachingService cachingService,
+                     EntryRepository entryRepository,
+                     ContextRepository contextRepository) {
+        this.meService = Objects.requireNonNull(meService);
+        this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
+        this.cachingService = Objects.requireNonNull(cachingService);
+        this.entryRepository = Objects.requireNonNull(entryRepository);
+        this.contextRepository = Objects.requireNonNull(contextRepository);
     }
 
     public List<MyDataEntrySummary> getAllEntriesVisibleForCurrentUser() {

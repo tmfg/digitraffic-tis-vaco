@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -45,8 +46,8 @@ public class GtfsInputSummaryService {
 
     public GtfsInputSummaryService(SummaryRepository summaryRepository,
                                    ObjectMapper objectMapper) {
-        this.summaryRepository = summaryRepository;
-        this.objectMapper = objectMapper;
+        this.summaryRepository = Objects.requireNonNull(summaryRepository);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public void generateGtfsInputSummaries(Path downloadedPackagePath, Long taskId) throws IOException {

@@ -31,7 +31,7 @@ public class RulesetService {
                           RulesetRepository rulesetRepository, RecordMapper recordMapper) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
-        this.recordMapper = recordMapper;
+        this.recordMapper = Objects.requireNonNull(recordMapper);
     }
 
     public Set<Ruleset> selectRulesets(String businessId) {

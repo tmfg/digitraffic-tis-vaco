@@ -39,7 +39,7 @@ public class TaskRepository {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.jdbcTemplate = jdbcTemplate;
+        this.jdbcTemplate = Objects.requireNonNull(jdbcTemplate);
     }
 
     @Transactional

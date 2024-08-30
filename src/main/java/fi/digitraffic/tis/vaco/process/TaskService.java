@@ -50,7 +50,7 @@ public class TaskService {
         this.taskRepository = Objects.requireNonNull(taskRepository);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.cachingService = Objects.requireNonNull(cachingService);
-        this.recordMapper = recordMapper;
+        this.recordMapper = Objects.requireNonNull(recordMapper);
     }
 
     public Task trackTask(Entry entry, Task task, ProcessingState state) {

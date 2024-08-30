@@ -31,6 +31,7 @@ import java.util.function.Predicate;
 public class PackagesService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final RecordMapper recordMapper;
 
     private final VacoProperties vacoProperties;
@@ -50,14 +51,15 @@ public class PackagesService {
                            S3Packager s3Packager,
                            CachingService cachingService,
                            PackageRepository packageRepository,
-                           TaskRepository taskRepository, RecordMapper recordMapper) {
+                           TaskRepository taskRepository,
+                           RecordMapper recordMapper) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.s3Packager = Objects.requireNonNull(s3Packager);
         this.cachingService = Objects.requireNonNull(cachingService);
         this.packageRepository = Objects.requireNonNull(packageRepository);
         this.taskRepository = Objects.requireNonNull(taskRepository);
-        this.recordMapper = recordMapper;
+        this.recordMapper = Objects.requireNonNull(recordMapper);
     }
 
     /**

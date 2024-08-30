@@ -40,11 +40,13 @@ public class CompanyHierarchyService {
      */
     private Map<String, LightweightHierarchy> hierarchies;
 
-    public CompanyHierarchyService(CompanyRepository companyRepository, RecordMapper recordMapper, PartnershipRepository partnershipRepository) {
+    public CompanyHierarchyService(CompanyRepository companyRepository,
+                                   RecordMapper recordMapper,
+                                   PartnershipRepository partnershipRepository) {
         this.companyRepository = Objects.requireNonNull(companyRepository);
         reloadRootHierarchies();
-        this.recordMapper = recordMapper;
-        this.partnershipRepository = partnershipRepository;
+        this.recordMapper = Objects.requireNonNull(recordMapper);
+        this.partnershipRepository = Objects.requireNonNull(partnershipRepository);
     }
 
     /**

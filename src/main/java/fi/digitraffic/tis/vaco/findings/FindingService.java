@@ -11,17 +11,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class FindingService {
+
     private final FindingRepository findingRepository;
+
     private final RecordMapper recordMapper;
+
     private final RulesetRepository rulesetRepository;
 
-    public FindingService(FindingRepository findingRepository, RulesetRepository rulesetRepository, RecordMapper recordMapper) {
-        this.findingRepository = findingRepository;
-        this.rulesetRepository = rulesetRepository;
-        this.recordMapper = recordMapper;
+    public FindingService(FindingRepository findingRepository,
+                          RulesetRepository rulesetRepository,
+                          RecordMapper recordMapper) {
+        this.findingRepository = Objects.requireNonNull(findingRepository);
+        this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
+        this.recordMapper = Objects.requireNonNull(recordMapper);
     }
 
     public void reportFinding(Finding finding) {

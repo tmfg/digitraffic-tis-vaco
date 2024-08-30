@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class SummaryRepository {
@@ -23,7 +24,7 @@ public class SummaryRepository {
     private final ObjectMapper objectMapper;
 
     public SummaryRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
-        this.jdbc = jdbc;
+        this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = objectMapper;
     }
 
