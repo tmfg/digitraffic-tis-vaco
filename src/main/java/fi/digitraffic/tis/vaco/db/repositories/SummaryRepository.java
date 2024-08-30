@@ -16,8 +16,11 @@ import java.util.List;
 @Deprecated(since = "2024-08-29")
 @Repository
 public class SummaryRepository {
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final JdbcTemplate jdbc;
+
     private final ObjectMapper objectMapper;
 
     public SummaryRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
@@ -38,15 +41,15 @@ public class SummaryRepository {
             summary.raw());
     }
 
-    public List<Summary> findTaskSummaryByTaskId(Long taskId) {
+    public List<SummaryRecord> findSummaryByTaskId(Long taskId) {
         try {
             return jdbc.query(
                 """
-                SELECT ts.id, ts.task_id, ts.name, ts.renderer_type, ts.raw
-                  FROM summary ts
-                 WHERE ts.task_id = ?
+                SELECT s.id, s.task_id, s.name, s.renderer_type, s.raw, s.created
+                  FROM summary s
+                 WHERE s.task_id = ?
                 """,
-                RowMappers.SUMMARY,
+                RowMappers.SUMMARY_RECORD,
                 taskId);
         } catch (EmptyResultDataAccessException erdae) {
             return List.of();
@@ -58,18 +61,18 @@ public class SummaryRepository {
         try {
             return jdbc.query(
                 """
-                SELECT ts.id, ts.task_id, ts.name, ts.renderer_type, ts.raw
-                  FROM summary ts
-                  JOIN task t ON ts.task_id = t.id
+                SELECT s.id, s.task_id, s.name, s.renderer_type, s.raw, s.created
+                  FROM summary s
+                  JOIN task t ON s.task_id = t.id
                  WHERE t.entry_id = (SELECT id FROM entry WHERE public_id = ?)
                  ORDER BY CASE
-                    WHEN ts.name = 'agencies' THEN 1
-                    WHEN ts.name = 'operators' THEN 1
-                    WHEN ts.name = 'feedInfo' THEN 2
-                    WHEN ts.name = 'lines' THEN 2
-                    WHEN ts.name = 'files' THEN 3
-                    WHEN ts.name = 'counts' THEN 4
-                    WHEN ts.name = 'components' THEN 5
+                    WHEN s.name = 'agencies' THEN 1
+                    WHEN s.name = 'operators' THEN 1
+                    WHEN s.name = 'feedInfo' THEN 2
+                    WHEN s.name = 'lines' THEN 2
+                    WHEN s.name = 'files' THEN 3
+                    WHEN s.name = 'counts' THEN 4
+                    WHEN s.name = 'components' THEN 5
                     ELSE 6
                  END ASC
                 """,
