@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;

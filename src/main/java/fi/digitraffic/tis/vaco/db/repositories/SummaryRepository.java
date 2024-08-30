@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.summary;
+package fi.digitraffic.tis.vaco.db.repositories;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +27,7 @@ public class SummaryRepository {
         this.objectMapper = objectMapper;
     }
 
-    <T> void persistTaskSummaryItem(Long taskId, String itemName, RendererType rendererType, T data) {
+    public <T> void persistTaskSummaryItem(Long taskId, String itemName, RendererType rendererType, T data) {
         try {
             create(ImmutableSummary.of(taskId, itemName, rendererType, objectMapper.writeValueAsBytes(data)));
         }

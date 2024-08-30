@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.summary.SummaryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;

@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.summary;
 
+import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.netex.ImmutableLine;
 import fi.digitraffic.tis.vaco.summary.model.netex.ImmutableNetexInputSummary;

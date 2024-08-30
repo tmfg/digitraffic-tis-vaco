@@ -4,6 +4,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.exceptions.CsvException;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
