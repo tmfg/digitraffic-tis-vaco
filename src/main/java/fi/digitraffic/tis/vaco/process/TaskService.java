@@ -357,6 +357,7 @@ public class TaskService {
 
 
     public Optional<Task> findTask(String taskPublicId) {
-        return taskRepository.findTask(taskPublicId);
+        return taskRepository.findByPublicId(taskPublicId)
+            .map(recordMapper::toTask);
     }
 }

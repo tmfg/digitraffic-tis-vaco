@@ -314,7 +314,6 @@ public final class RowMappers {
             Class<?> cc = findSubtypeFromAnnotation(name);
 
             return ImmutableValidationInput.builder()
-                    .id(rs.getLong("id"))
                     .name(rs.getString("name"))
                     .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
                     .build();

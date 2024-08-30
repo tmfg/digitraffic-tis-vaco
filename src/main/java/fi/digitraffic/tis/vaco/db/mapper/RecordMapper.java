@@ -81,7 +81,6 @@ public class RecordMapper {
         Class<?> cc = findSubtypeFromAnnotation(validationInputRecord.name());
 
         return ImmutableValidationInput.builder()
-            .id(validationInputRecord.id())
             .name(validationInputRecord.name())
             .config(readValue(objectMapper, validationInputRecord.config(), (Class<RuleConfiguration>) cc))
             .build();
