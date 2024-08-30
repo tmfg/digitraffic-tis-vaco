@@ -47,12 +47,19 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 public class EntryStateService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final FindingRepository findingRepository;
+
     private final RecordMapper recordMapper;
+
     private final SummaryRepository summaryRepository;
+
     private final VacoProperties vacoProperties;
 
-    public EntryStateService(FindingRepository findingRepository, SummaryRepository summaryRepository, VacoProperties vacoProperties, RecordMapper recordMapper) {
+    public EntryStateService(FindingRepository findingRepository,
+                             SummaryRepository summaryRepository,
+                             VacoProperties vacoProperties,
+                             RecordMapper recordMapper) {
         this.findingRepository = Objects.requireNonNull(findingRepository);
         this.summaryRepository = Objects.requireNonNull(summaryRepository);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);

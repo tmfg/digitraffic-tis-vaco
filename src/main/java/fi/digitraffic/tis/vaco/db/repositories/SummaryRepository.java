@@ -1,11 +1,9 @@
 package fi.digitraffic.tis.vaco.db.repositories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
-import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,23 +25,17 @@ public class SummaryRepository {
         this.objectMapper = objectMapper;
     }
 
-    public <T> void persistTaskSummaryItem(Long taskId, String itemName, RendererType rendererType, T data) {
-        try {
-            create(ImmutableSummary.of(taskId, itemName, rendererType, objectMapper.writeValueAsBytes(data)));
-        }
-        catch (JsonProcessingException e) {
-            logger.error("Failed to persist {}'s summary data {} generated for task {}", itemName, data, taskId, e);
-        }
-    }
-
-    public Summary create(Summary summary) {
+    public SummaryRecord create(Summary summary) {
         return jdbc.queryForObject("""
             INSERT INTO summary (task_id, name, renderer_type, raw)
                  VALUES (?, ?, ?::summary_renderer_type, ?)
-              RETURNING id, task_id, name, renderer_type, raw
+              RETURNING id, task_id, name, renderer_type, raw, created
             """,
-            RowMappers.SUMMARY,
-            summary.taskId(), summary.name(), summary.rendererType().fieldName(), summary.raw());
+            RowMappers.SUMMARY_RECORD,
+            summary.taskId(),
+            summary.name(),
+            summary.rendererType().fieldName(),
+            summary.raw());
     }
 
     public List<Summary> findTaskSummaryByTaskId(Long taskId) {

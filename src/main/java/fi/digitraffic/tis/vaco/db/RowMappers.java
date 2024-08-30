@@ -26,11 +26,13 @@ import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePackageRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableRulesetRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableSummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableTaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
+import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -211,6 +213,15 @@ public final class RowMappers {
         .name(rs.getString("name"))
         .rendererType(RendererType.forField(rs.getString("renderer_type")))
         .raw(rs.getBytes("raw"))
+        .build();
+
+    public static final RowMapper<SummaryRecord> SUMMARY_RECORD = (rs, rowNum) -> ImmutableSummaryRecord.builder()
+        .id(rs.getLong("id"))
+        .taskId(rs.getLong("task_id"))
+        .name(rs.getString("name"))
+        .raw(rs.getBytes("raw"))
+        .created(readZonedDateTime(rs, "created"))
+        .rendererType(RendererType.forField(rs.getString("renderer_type")))
         .build();
 
     public static final Function<ObjectMapper, RowMapper<Summary>> SUMMARY_WITH_CONTENT =
@@ -400,8 +411,8 @@ public final class RowMappers {
         });
     }
 
-    private static ZonedDateTime readZonedDateTime(ResultSet rs, String created) throws SQLException {
-        return nullable(rs.getTimestamp(created), ts -> ts.toInstant().atZone(ZoneId.of("UTC").normalized()));
+    private static ZonedDateTime readZonedDateTime(ResultSet rs, String timestampFieldName) throws SQLException {
+        return nullable(rs.getTimestamp(timestampFieldName), ts -> ts.toInstant().atZone(ZoneId.of("UTC").normalized()));
     }
 
     private static <R> R fromJsonb(ResultSet rs, String field, Function<String, R> mapper) {

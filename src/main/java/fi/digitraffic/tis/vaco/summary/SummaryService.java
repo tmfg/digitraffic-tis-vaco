@@ -11,22 +11,26 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class SummaryService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final PackagesService packagesService;
+
     private final GtfsInputSummaryService gtfsInputSummaryService;
+
     private final NetexInputSummaryService netexInputSummaryService;
 
     public SummaryService(PackagesService packagesService,
                           GtfsInputSummaryService gtfsInputSummaryService,
                           NetexInputSummaryService netexInputSummaryService) {
-        this.packagesService = packagesService;
-        this.gtfsInputSummaryService = gtfsInputSummaryService;
-        this.netexInputSummaryService = netexInputSummaryService;
+        this.packagesService = Objects.requireNonNull(packagesService);
+        this.gtfsInputSummaryService = Objects.requireNonNull(gtfsInputSummaryService);
+        this.netexInputSummaryService = Objects.requireNonNull(netexInputSummaryService);
     }
 
     public void generateSummaries(Entry entry, Task task) {
