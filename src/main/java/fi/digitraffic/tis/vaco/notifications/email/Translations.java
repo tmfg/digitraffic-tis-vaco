@@ -5,12 +5,10 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 public class Translations {
-    private final Locale locale;
     private final ResourceBundle bundle;
 
     public Translations(String language, String bundleName) {
-        this.locale = new Locale(language);
-        this.bundle = ResourceBundle.getBundle(bundleName, locale);
+        this.bundle = ResourceBundle.getBundle(bundleName, Locale.forLanguageTag(language));
     }
 
     public String get(String key) {

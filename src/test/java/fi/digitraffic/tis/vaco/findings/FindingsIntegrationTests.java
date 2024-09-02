@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
@@ -74,12 +75,12 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     private void createSystemErrorFinding(String error) {
-        Finding SystemErrorFinding = TestObjects.aFinding(entry.publicId(), rule.id(), task.id())
+        Finding systemErrorFinding = TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.ERROR)
             .message(error)
             .source(RuleName.GTFS_CANONICAL)
             .build();
-        findingRepository.create(SystemErrorFinding);
+        findingRepository.create(systemErrorFinding);
     }
 
     @Test

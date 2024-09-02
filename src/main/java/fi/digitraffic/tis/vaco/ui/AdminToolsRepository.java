@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+@Deprecated(since = "2024-08-29")
 @Repository
 public class AdminToolsRepository {
 

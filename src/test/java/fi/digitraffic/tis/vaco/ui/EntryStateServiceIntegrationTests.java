@@ -5,7 +5,7 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
-import fi.digitraffic.tis.vaco.findings.FindingRepository;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -82,20 +82,20 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
         inputPath = Path.of(ClassLoader.getSystemResource("summary/211_gtfs.zip").toURI());
 
-        Finding criticalFinding = TestObjects.aFinding(entry.publicId(), rule.id(), task.id())
+        Finding criticalFinding = TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.CRITICAL)
             .message("code1")
             .source(RuleName.GTFS_CANONICAL)
             .build();
         findingRepository.create(criticalFinding);
         findingRepository.create(criticalFinding);
-        findingRepository.create(TestObjects.aFinding(entry.publicId(), rule.id(), task.id())
+        findingRepository.create(TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.CRITICAL)
             .message("code2")
             .source(RuleName.GTFS_CANONICAL)
             .build());
 
-        Finding errorFinding = TestObjects.aFinding(entry.publicId(), rule.id(), task.id())
+        Finding errorFinding = TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.ERROR)
             .message("code3")
             .source(RuleName.GTFS_CANONICAL)
@@ -104,20 +104,20 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
         findingRepository.create(errorFinding);
         findingRepository.create(errorFinding);
 
-        Finding warningFinding = TestObjects.aFinding(entry.publicId(), rule.id(), task.id())
+        Finding warningFinding = TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.WARNING)
             .message("code4")
             .source(RuleName.GTFS_CANONICAL)
             .build();
         findingRepository.create(warningFinding);
         findingRepository.create(warningFinding);
-        findingRepository.create(TestObjects.aFinding(entry.publicId(), rule.id(), task.id())
+        findingRepository.create(TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.WARNING)
             .message("code5")
             .source(RuleName.GTFS_CANONICAL)
             .build());
 
-        Finding infoFinding = TestObjects.aFinding(entry.publicId(), rule.id(), task.id())
+        Finding infoFinding = TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.INFO)
             .message("code6")
             .source(RuleName.GTFS_CANONICAL)

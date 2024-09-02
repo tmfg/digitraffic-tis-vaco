@@ -52,8 +52,8 @@ class SimpleResultProcessorTests extends ResultProcessorTestBase {
 
     @Test
     void producesPackagesByDefault() {
-        givenPackageIsCreated("all", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "all", IGNORED_PATH_VALUE));
-        givenPackageIsCreated("debug", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask.id(), "debug", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("all", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask, "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("debug", entry, conversionTask).willReturn(ImmutablePackage.of(conversionTask, "debug", IGNORED_PATH_VALUE));
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
         givenTaskProcessingStateIsMarkedAs(entry, entry.tasks().get(0), ProcessingState.COMPLETE);
 

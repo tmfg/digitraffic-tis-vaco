@@ -2,7 +2,6 @@ package fi.digitraffic.tis.vaco.configuration;
 
 import fi.digitraffic.tis.vaco.VacoException;
 import jakarta.xml.bind.JAXBContext;
-import static jakarta.xml.bind.JAXBContext.newInstance;
 import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
@@ -14,9 +13,12 @@ import org.springframework.http.converter.xml.AbstractXmlHttpMessageConverter;
 
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static jakarta.xml.bind.JAXBContext.newInstance;
 
 /**
  * Enables support for serializing {@link JAXBElement} or any given JAXB managed entities directly from controllers as
@@ -69,7 +71,7 @@ public class JaxbHttpMessageConverter extends AbstractXmlHttpMessageConverter<Ob
             logger.info("Created context {}", jaxbContext.getClass());
             return jaxbContext;
         } catch (JAXBException e) {
-            throw new VacoException("Could not create instance of JAXB context for class " + clazz, e);
+            throw new VacoException("Failed to create instance of JAXB context from classes " + Arrays.toString(clazz), e);
         }
     }
 }

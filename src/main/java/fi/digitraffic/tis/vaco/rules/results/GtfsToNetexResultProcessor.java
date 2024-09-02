@@ -77,7 +77,6 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
                     }
                         try {
                             return ImmutableFinding.of(
-                                    entry.publicId(),
                                     task.id(),
                                     rulesetId,
                                     ruleName,

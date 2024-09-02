@@ -7,19 +7,8 @@ import fi.digitraffic.tis.vaco.VacoException;
  */
 public class UnknownEntityException extends VacoException {
 
-    private final String identifier;
-
     public UnknownEntityException(String identifier, String message) {
         super(message + "'" + identifier + "'");
-        this.identifier = identifier;
     }
 
-    public UnknownEntityException(String identifier, String message, Throwable cause) {
-        super(message + "'" + identifier + "'", cause);
-        this.identifier = identifier;
-    }
-
-    public String getIdentifier() {
-        return identifier;
-    }
 }

@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.rules.results;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
-import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -23,19 +22,25 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements ResultProcessor {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final RulesetService rulesetService;
-    private final ObjectMapper objectMapper;
-    private final TaskService taskService;
     private final FindingService findingService;
 
-    public GtfsCanonicalResultProcessor(VacoProperties vacoProperties, PackagesService packagesService,
+    private final RulesetService rulesetService;
+
+    private final ObjectMapper objectMapper;
+
+    public GtfsCanonicalResultProcessor(VacoProperties vacoProperties,
+                                        PackagesService packagesService,
                                         S3Client s3Client,
                                         TaskService taskService,
                                         FindingService findingService,
@@ -44,8 +49,7 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.taskService = taskService;
-        this.findingService = findingService;
+        this.findingService = Objects.requireNonNull(findingService);
     }
 
     @Override
@@ -65,7 +69,7 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
             return storeFindings(findings);
         });
 
-        List<Finding> allFindings = findingService.findFindingsByName(entry, task, "thread_execution_error");
+        List<Finding> allFindings = findingService.findFindingsByName(task, "thread_execution_error");
         Optional<Status> status;
         if (allFindings.isEmpty()) {
             status = Optional.empty();
@@ -90,7 +94,6 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
                     .map(sn -> {
                         try {
                             return ImmutableFinding.of(
-                                    entry.publicId(),
                                     task.id(),
                                     rulesetId,
                                     ruleName,

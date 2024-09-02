@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.cleanup;
 import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.db.repositories.CleanupRepository;
+import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,18 +19,20 @@ import java.util.Set;
 @Service
 public class CleanupService {
 
-    private final FeatureFlagsService featureFlagsService;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final Cleanup cleanupProperties;
 
-    private final CleanupRepository cleanupRepository;
+    private final FeatureFlagsService featureFlagsService;
+
+    private final EntryRepository entryRepository;
 
     public CleanupService(VacoProperties vacoProperties,
-                          CleanupRepository cleanupRepository, FeatureFlagsService featureFlagsService) {
+                          FeatureFlagsService featureFlagsService,
+                          EntryRepository entryRepository) {
         this.cleanupProperties = vacoProperties.cleanup();
-        this.cleanupRepository = Objects.requireNonNull(cleanupRepository);
-        this.featureFlagsService = featureFlagsService;
+        this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
+        this.entryRepository = Objects.requireNonNull(entryRepository);
     }
 
     @Scheduled(cron = "${vaco.scheduling.cleanup.cron}")
@@ -48,9 +50,9 @@ public class CleanupService {
 
     public Set<String> runCleanup(Duration olderThan, Integer keepAtLeast, Integer atMostInTotal) {
         // 1. remove in-between cancelled entries no one cares about
-        List<String> removedByCompression = cleanupRepository.compressHistory();
+        List<String> removedByCompression = entryRepository.compressHistory();
         // 2. run generic cleanup
-        List<String> removedByCleanup = cleanupRepository.cleanupHistory(
+        List<String> removedByCleanup = entryRepository.cleanupHistory(
             cleanupOlderThan(olderThan),
             cleanupKeepAtLeast(keepAtLeast),
             cleanupRemoveAtMostInTotal(atMostInTotal));

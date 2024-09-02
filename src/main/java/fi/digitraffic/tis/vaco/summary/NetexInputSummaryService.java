@@ -1,5 +1,9 @@
 package fi.digitraffic.tis.vaco.summary;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
+import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.netex.ImmutableLine;
 import fi.digitraffic.tis.vaco.summary.model.netex.ImmutableNetexInputSummary;
@@ -37,11 +41,17 @@ import java.util.zip.ZipFile;
 
 @Service
 public class NetexInputSummaryService {
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final ObjectMapper objectMapper;
+
     private final SummaryRepository summaryRepository;
 
-    public NetexInputSummaryService(SummaryRepository summaryRepository) {
-        this.summaryRepository = summaryRepository;
+    public NetexInputSummaryService(ObjectMapper objectMapper,
+                                    SummaryRepository summaryRepository) {
+        this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.summaryRepository = Objects.requireNonNull(summaryRepository);
     }
 
     public void generateNetexInputSummaries(Path downloadedPackagePath, Long taskId) throws IOException {
@@ -117,10 +127,10 @@ public class NetexInputSummaryService {
 
         netexInputSummaryBuilder.counts(counts);
         NetexInputSummary netexInputSummary = netexInputSummaryBuilder.build();
-        summaryRepository.persistTaskSummaryItem(taskId, "operators", RendererType.CARD, netexInputSummary.operators());
-        summaryRepository.persistTaskSummaryItem(taskId, "lines", RendererType.CARD, netexInputSummary.lines());
-        summaryRepository.persistTaskSummaryItem(taskId, "files", RendererType.LIST, netexInputSummary.files());
-        summaryRepository.persistTaskSummaryItem(taskId, "counts", RendererType.LIST, netexInputSummary.counts());
+        persistTaskSummaryItem(taskId, "operators", RendererType.CARD, netexInputSummary.operators());
+        persistTaskSummaryItem(taskId, "lines", RendererType.CARD, netexInputSummary.lines());
+        persistTaskSummaryItem(taskId, "files", RendererType.LIST, netexInputSummary.files());
+        persistTaskSummaryItem(taskId, "counts", RendererType.LIST, netexInputSummary.counts());
     }
 
     int processOperator(XMLEventReader reader,
@@ -180,7 +190,7 @@ public class NetexInputSummaryService {
     Route processRoute(XMLEventReader reader,
                        StartElement routeStartElement,
                        String fileName,
-                       Long taskId) throws Exception {
+                       Long taskId) {
         ImmutableRoute.Builder routeBuilder = ImmutableRoute.builder();
         Attribute id = routeStartElement.getAttributeByName(new QName("id"));
         if (id != null) {
@@ -210,8 +220,9 @@ public class NetexInputSummaryService {
     }
 
     Line processLine(XMLEventReader reader,
-                     StartElement lineStartElement, String fileName,
-                     Long taskId) throws Exception {
+                     StartElement lineStartElement,
+                     String fileName,
+                     Long taskId) {
         ImmutableLine.Builder lineBuilder = ImmutableLine.builder();
         Attribute id = lineStartElement.getAttributeByName(new QName("id"));
         if (id != null) {
@@ -268,5 +279,14 @@ public class NetexInputSummaryService {
             .lines(Collections.emptyList())
             .files(Collections.emptyList())
             .counts(Collections.emptyList());
+    }
+
+    private <T> void persistTaskSummaryItem(Long taskId, String itemName, RendererType rendererType, T data) {
+        try {
+            summaryRepository.create(ImmutableSummary.of(taskId, itemName, rendererType, objectMapper.writeValueAsBytes(data)));
+        }
+        catch (JsonProcessingException e) {
+            logger.error("Failed to persist {}'s summary data {} generated for task {}", itemName, data, taskId, e);
+        }
     }
 }

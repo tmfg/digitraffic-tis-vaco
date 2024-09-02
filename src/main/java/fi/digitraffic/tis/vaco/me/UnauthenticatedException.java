@@ -7,7 +7,4 @@ public class UnauthenticatedException extends VacoException {
         super(message);
     }
 
-    public UnauthenticatedException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }

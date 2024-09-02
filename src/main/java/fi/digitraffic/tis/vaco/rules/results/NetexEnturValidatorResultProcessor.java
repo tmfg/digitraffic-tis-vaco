@@ -80,7 +80,6 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
                         }
                         try {
                             return ImmutableFinding.of(
-                                    entry.publicId(),
                                     task.id(),
                                     rulesetService.findByName(ruleName)
                                         .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))

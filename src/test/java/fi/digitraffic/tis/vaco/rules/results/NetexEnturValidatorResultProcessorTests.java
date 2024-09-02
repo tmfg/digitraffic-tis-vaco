@@ -111,7 +111,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
 
     @Test
     void mapsNetexValidationReportsToFindings() {
-        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.NETEX_ENTUR)).willReturn(Optional.of(netexEnturRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
@@ -130,7 +130,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
     @Test
     void repetitiveFindingsGetSplit() {
 
-        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task.id(), "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.NETEX_ENTUR)).willReturn(Optional.of(netexEnturRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
