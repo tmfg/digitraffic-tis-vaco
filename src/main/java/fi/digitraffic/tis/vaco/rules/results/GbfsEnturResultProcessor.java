@@ -80,7 +80,6 @@ public class GbfsEnturResultProcessor extends RuleResultProcessor implements Res
                         trimmedMessage = trimmedMessage.substring(trimmedMessage.indexOf(":") + 1).trim();
                         try {
                             return (Finding) ImmutableFinding.of(
-                                    entry.publicId(),
                                     task.id(),
                                     rulesetId,
                                     fileValidationResult.file(),

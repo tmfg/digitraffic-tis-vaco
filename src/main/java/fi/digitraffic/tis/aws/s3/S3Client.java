@@ -148,9 +148,9 @@ public class S3Client {
     /**
      * Copies given file in specified bucket from given location to target directory. Both paths are treated as absolute.
      *
-     * @param bucket          Bucket in which the copy should occur.
-     * @param file            Source file.
-     * @param targetDirectory Target directory.
+     * @param bucket     Bucket in which the copy should occur.
+     * @param file       Source file.
+     * @param targetPath Target path.
      * @return
      */
     public CompletableFuture<CompletedCopy> copyFile(String bucket, S3Path file, S3Path targetPath) {
@@ -179,11 +179,11 @@ public class S3Client {
         }
         catch (S3Exception e) {
             if (e.statusCode() != 404) {
-                logger.error("Failed to retrieve S3 package metadata with status code {} at {}, throwing exception {}", e.statusCode(), key, e);
+                logger.error("Failed to retrieve S3 package metadata with status code {} at {}", e.statusCode(), key, e);
             }
         }
         catch (Exception e) {
-            logger.error("Failed to retrieve S3 package metadata at {}, throwing exception {}", key, e);
+            logger.error("Failed to retrieve S3 package metadata at {}", key, e);
         }
 
         return false;

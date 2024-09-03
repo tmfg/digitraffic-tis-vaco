@@ -22,9 +22,9 @@ import java.util.concurrent.CompletableFuture;
  */
 public class HttpClient {
 
-    private static final String BASE_USER_AGENT =  "DigiTraffic TIS/r2024-01";
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private static final String BASE_USER_AGENT =  "DigiTraffic TIS/r2024-01";
 
     private final HttpClientConfiguration configuration;
 
@@ -80,23 +80,40 @@ public class HttpClient {
             var builder = HttpRequest.newBuilder()
                 .GET()
                 .uri(toUri(uri));
-
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                builder = builder.header(entry.getKey(), entry.getValue());
-            }
-
-            return builder.build();
-        } catch (URISyntaxException e) {
-            throw new HttpClientException("Provided URI %s is invalid".formatted(uri), e);
+            return constructRequest(headers, builder);
         } catch (IllegalArgumentException e) {
             throw new HttpClientException("Could not construct HTTP GET request for URI %s".formatted(uri), e);
         }
     }
 
+    public HttpRequest post(String uri, Map<String, String> headers, byte[] body) {
+        try {
+            var builder = HttpRequest.newBuilder()
+                .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+                .uri(toUri(uri));
+            return constructRequest(headers, builder);
+        } catch (IllegalArgumentException e) {
+            throw new HttpClientException("Could not construct HTTP POST request for URI %s".formatted(uri), e);
+        }
+    }
+
+    private static HttpRequest constructRequest(Map<String, String> headers, HttpRequest.Builder builder) {
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            builder = builder.header(entry.getKey(), entry.getValue());
+        }
+
+        return builder.build();
+    }
+
     @VisibleForTesting
-    protected URI toUri(String uri) throws URISyntaxException {
+    protected URI toUri(String uri) {
         // XXX: It's 2024 and Java still doesn't have a native URI builder, and options are all frameworky
-        URI uriObj = new URI(uri);
+        URI uriObj = null;
+        try {
+            uriObj = new URI(uri);
+        } catch (URISyntaxException e) {
+            throw new HttpClientException("Provided URI %s is invalid".formatted(uri), e);
+        }
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(uri);
         if (uriObj.getScheme() == null) {
             builder.scheme(configuration.defaultScheme());

@@ -6,14 +6,15 @@ import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
+import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
+import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
-import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
-import fi.digitraffic.tis.vaco.ruleset.RulesetRepository;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.EntryStateService;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
@@ -21,6 +22,7 @@ import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,19 +34,26 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     EntryStateService entryStateService;
+
     @Autowired
     EntryRepository entryRepository;
+
     @Autowired
     private TaskRepository taskRepository;
+
     @Autowired
     private RulesetRepository rulesetRepository;
+
     @Autowired
     private FindingRepository findingRepository;
+
     @Autowired
     RecordMapper recordMapper;
 
     private Task task;
+
     private EntryRecord entry;
+
     private Ruleset rule;
 
     @BeforeEach
@@ -54,7 +63,7 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
         entry = entryRepository.create(Optional.empty(), entryToCreate).get();
         taskRepository.createTasks(entry, List.of(ImmutableTask.of(RuleName.GTFS_CANONICAL,1)));
         task = taskRepository.findTask(entry.id(), RuleName.GTFS_CANONICAL).get();
-        rule = rulesetRepository.findByName(RuleName.GTFS_CANONICAL).get();
+        rule = recordMapper.toRuleset(rulesetRepository.findByName(RuleName.GTFS_CANONICAL).get());
 
         createSystemErrorFinding("invalid_url");
         createSystemErrorFinding("i_o_error");
@@ -63,17 +72,15 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
         createSystemErrorFinding("thread_execution_error");
         createSystemErrorFinding("u_r_i_syntax_error");
         createSystemErrorFinding("trip_distance_exceeds_shape_distance");
-
-
     }
 
     private void createSystemErrorFinding(String error) {
-        Finding SystemErrorFinding = TestObjects.aFinding(entry.publicId(), rule.id(), task.id())
+        Finding systemErrorFinding = TestObjects.aFinding(rule.id(), task.id())
             .severity(FindingSeverity.ERROR)
             .message(error)
             .source(RuleName.GTFS_CANONICAL)
             .build();
-        findingRepository.create(SystemErrorFinding);
+        findingRepository.create(systemErrorFinding);
     }
 
     @Test

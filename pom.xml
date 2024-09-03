@@ -32,26 +32,26 @@
                    avoid conflicts -->
         <springframework.boot-version>3.3.1</springframework.boot-version>
         <junit5.version>5.9.2</junit5.version>
-        <testcontainers.version>1.19.8</testcontainers.version>
+        <testcontainers.version>1.20.1</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>3.1.1</awspringcloud.version>
-        <azurespring.version>5.10.0</azurespring.version>
-        <oauth2server.version>3.3.0</oauth2server.version>
+        <azurespring.version>5.15.0</azurespring.version>
+        <oauth2server.version>3.3.2</oauth2server.version>
         <immutables.version>2.10.1</immutables.version>
-        <jackson.version>2.17.1</jackson.version>
+        <jackson.version>2.17.2</jackson.version>
         <mockito.version>5.11.0</mockito.version>
         <caffeine.version>3.1.8</caffeine.version>
-        <guava.version>33.2.1-jre</guava.version>
+        <guava.version>33.3.0-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
         <msgraph.version>[6.0,)</msgraph.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.3.0</maven-surefire-plugin.version>
-        <maven-jar-plugin.version>3.4.1</maven-jar-plugin.version>
+        <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
         <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
-        <jib-maven-plugin.version>3.4.2</jib-maven-plugin.version>
+        <jib-maven-plugin.version>3.4.3</jib-maven-plugin.version>
         <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         <sonar.organization>fintraffic</sonar.organization>
@@ -145,6 +145,22 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+        <!-- add ability to produce XML from API endpoints -->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>4.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.entur</groupId>
+            <artifactId>netex-java-model</artifactId>
+            <version>2.0.15</version>
+        </dependency>
 
         <!-- Request validation -->
         <dependency>
@@ -183,7 +199,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.2.0</version>
+            <version>2.6.0</version>
         </dependency>
 
         <!-- AWS integration -->
@@ -329,7 +345,7 @@
             <artifactId>flyway-core</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Since version 10 Flyway has modularized necessary database drivers to their own dependencies. 
+        <!-- Since version 10 Flyway has modularized necessary database drivers to their own dependencies.
              See https://github.com/flyway/flyway/issues/3780
         -->
         <dependency>
@@ -427,14 +443,15 @@
                     <from>
                         <!-- base image is not set to specific artifact id to allow for rolling updates to be taken into
                              use automatically -->
-                        <image>cgr.dev/chainguard/jdk-lts:latest</image>
+                        <!-- <image>cgr.dev/chainguard/jdk-lts:latest</image> -->
+                        <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>io.github.git-commit-id</groupId>
                 <artifactId>git-commit-id-maven-plugin</artifactId>
-                <version>9.0.0</version>
+                <version>9.0.1</version>
                 <executions>
                     <execution>
                         <id>get-the-git-infos</id>

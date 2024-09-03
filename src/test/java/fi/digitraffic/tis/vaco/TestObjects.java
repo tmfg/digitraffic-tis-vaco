@@ -163,9 +163,8 @@ public class TestObjects {
         return new JwtAuthenticationToken(jwt);
     }
 
-    public static ImmutableFinding.Builder aFinding(String entryId, long rulesetId, long taskId) {
+    public static ImmutableFinding.Builder aFinding(long rulesetId, long taskId) {
         return ImmutableFinding.builder()
-            .entryId(entryId)
             .rulesetId(rulesetId)
             .taskId(taskId);
     }

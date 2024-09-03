@@ -14,7 +14,4 @@ public class UnrecoverableIOException extends DigitrafficRuntimeException {
         super(message, cause);
     }
 
-    public UnrecoverableIOException(IOException cause) {
-        super(cause);
-    }
 }

@@ -41,7 +41,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @RestController
-@RequestMapping("/queue")
+@RequestMapping({"/v1/queue", "/queue"})
 @PreAuthorize("hasAuthority('vaco.apiuser')")
 public class QueueController {
 
@@ -109,7 +109,7 @@ public class QueueController {
         if (entry.packages() != null) {
             ConcurrentMap<String, Map<String, Link>> packageLinks = new ConcurrentHashMap<>();
             entry.packages().forEach(p -> {
-                String taskName = tasks.get(p.taskId()).name();
+                String taskName = tasks.get(p.task()).name();
                 packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))));
             });
 

@@ -4,6 +4,8 @@ import fi.digitraffic.http.HttpClient;
 import fi.digitraffic.http.HttpClientException;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
+import fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse;
+import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,28 @@ public class VacoHttpClient {
         } catch (HttpClientException e) {
             logger.warn("HTTP execution failure for %s".formatted(uri), e);
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().build());
+        }
+    }
+
+    public CompletableFuture<NotificationResponse> sendWebhook(String uri, byte[] eventPayload) {
+        logger.info("Sending webhook to {}", uri);
+
+        try {
+            Map<String, String> requestHeaders = httpClient.headers();
+            HttpRequest request = httpClient.post(uri, requestHeaders, eventPayload);
+            HttpResponse.BodyHandler<byte[]> bodyHandler = HttpResponse.BodyHandlers.ofByteArray();
+
+            return httpClient.send(request, bodyHandler).thenApply(response -> {
+                ImmutableNotificationResponse.Builder resp = ImmutableNotificationResponse.builder();
+                resp.response(response.body());
+
+                logger.info("Response for {} resulted in HTTP status {}", uri, response.statusCode());
+
+                return resp.build();
+            });
+        } catch (HttpClientException e) {
+            logger.warn("HTTP execution failure for %s".formatted(uri), e);
+            return CompletableFuture.completedFuture(ImmutableNotificationResponse.builder().build());
         }
     }
 }

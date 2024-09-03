@@ -16,22 +16,26 @@ import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutablePackageRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableRulesetRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableSummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableTaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
+import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
+import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.model.Finding;
-import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
-import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
-import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -77,7 +81,24 @@ public final class RowMappers {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RowMappers.class);
 
+    /**
+     * @deprecated Replace with {@link #RULESET_RECORD}
+     */
+    @Deprecated(since = "2024-08-22")
     public static final RowMapper<Ruleset> RULESET = (rs, rowNum) -> ImmutableRuleset.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .ownerId(rs.getLong("owner_id"))
+        .identifyingName(rs.getString("identifying_name"))
+        .description(rs.getString("description"))
+        .category(Category.forField(rs.getString("category")))
+        .type(Type.forField(rs.getString("type")))
+        .format(TransitDataFormat.forField(rs.getString("format")))
+        .beforeDependencies(Set.of(ArraySqlValue.read(rs, "before_dependencies")))
+        .afterDependencies(Set.of(ArraySqlValue.read(rs, "after_dependencies")))
+        .build();
+
+    public static final RowMapper<RulesetRecord> RULESET_RECORD = (rs, rowNum) -> ImmutableRulesetRecord.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
         .ownerId(rs.getLong("owner_id"))
@@ -117,13 +138,17 @@ public final class RowMappers {
 
     public static final RowMapper<Status> STATUS = (rs, rowNum) -> Status.forField(rs.getString("status"));
 
-    public static final RowMapper<Package> PACKAGE = (rs, rowNum) -> (Package) ImmutablePackage.builder()
+    public static final RowMapper<PackageRecord> PACKAGE_RECORD = (rs, rowNum) -> ImmutablePackageRecord.builder()
         .id(rs.getLong("id"))
         .taskId(rs.getLong("task_id"))
         .name(rs.getString("name"))
         .path(rs.getString("path"))
         .build();
 
+    /**
+     * @deprecated Replace with {@link #COMPANY_RECORD}
+     */
+    @Deprecated(since = "2024-08-20")
     public static final Function<String, RowMapper<Company>> ALIASED_COMPANY = alias ->
         (rs, rowNum) -> ImmutableCompany.builder()
             .id(rs.getLong(alias + "id"))
@@ -134,8 +159,13 @@ public final class RowMappers {
             .adGroupId(rs.getString(alias + "ad_group_id"))
             .publish(rs.getBoolean(alias + "publish"))
             .codespaces(List.of(ArraySqlValue.read(rs, alias + "codespaces")))
+            .notificationWebhookUri(rs.getString(alias +  "notification_webhook_uri"))
             .build();
 
+    /**
+     * @deprecated Replace with {@link #COMPANY_RECORD}
+     */
+    @Deprecated(since = "2024-08-20")
     public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
     public static final RowMapper<CompanyRecord> COMPANY_RECORD = (rs, rowNum) -> ImmutableCompanyRecord.builder()
@@ -147,6 +177,7 @@ public final class RowMappers {
         .adGroupId(rs.getString("ad_group_id"))
         .publish(rs.getBoolean("publish"))
         .codespaces(List.of(ArraySqlValue.read(rs, "codespaces")))
+        .notificationWebhookUri(rs.getString("notification_webhook_uri"))
         .build();
 
     public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(
@@ -165,7 +196,7 @@ public final class RowMappers {
     public static final Function<ObjectMapper, RowMapper<ConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
     public static final Function<ObjectMapper, RowMapper<ConversionInputRecord>> CONVERSION_INPUT_RECORD = RowMappers::mapConversionInputRecord;
 
-    public static final RowMapper<Finding> FINDING = (rs, rowNum) -> ImmutableFinding.builder()
+    public static final RowMapper<FindingRecord> FINDING_RECORD = (rs, rowNum) -> ImmutableFindingRecord.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
         .taskId(rs.getLong("task_id"))
@@ -182,6 +213,15 @@ public final class RowMappers {
         .name(rs.getString("name"))
         .rendererType(RendererType.forField(rs.getString("renderer_type")))
         .raw(rs.getBytes("raw"))
+        .build();
+
+    public static final RowMapper<SummaryRecord> SUMMARY_RECORD = (rs, rowNum) -> ImmutableSummaryRecord.builder()
+        .id(rs.getLong("id"))
+        .taskId(rs.getLong("task_id"))
+        .name(rs.getString("name"))
+        .raw(rs.getBytes("raw"))
+        .created(readZonedDateTime(rs, "created"))
+        .rendererType(RendererType.forField(rs.getString("renderer_type")))
         .build();
 
     public static final Function<ObjectMapper, RowMapper<Summary>> SUMMARY_WITH_CONTENT =
@@ -258,16 +298,6 @@ public final class RowMappers {
             .build();
     }
 
-    public static final RowMapper<CompanyLatestEntry> COMPANY_LATEST_ENTRY = (rs, rowNum) -> ImmutableCompanyLatestEntry.builder()
-        .companyName(rs.getString("company_name"))
-        .businessId(rs.getString("business_id"))
-        .publicId(rs.getString("public_id"))
-        .format(rs.getString("format"))
-        .convertedFormat(rs.getString("converted_format"))
-        .created(readZonedDateTime(rs, "created"))
-        .status(rs.getString("status") != null ? Status.forField(rs.getString("status")) : null)
-        .build();
-
     public static final RowMapper<CompanyLatestEntry> DATA_DELIVERY = (rs, rowNum) -> ImmutableCompanyLatestEntry.builder()
         .companyName(rs.getString("company_name"))
         .businessId(rs.getString("business_id"))
@@ -295,7 +325,6 @@ public final class RowMappers {
             Class<?> cc = findSubtypeFromAnnotation(name);
 
             return ImmutableValidationInput.builder()
-                    .id(rs.getLong("id"))
                     .name(rs.getString("name"))
                     .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
                     .build();
@@ -363,7 +392,7 @@ public final class RowMappers {
             try {
                 return objectMapper.readValue(v, type);
             } catch (JsonProcessingException e) {
-                LOGGER.error("Failed to read JSONB as valid " + type, e);
+                LOGGER.error("Failed to read JSONB as valid {}", type, e);
             }
             // TODO: This is potentially fatal, we could re-throw instead
             return null;
@@ -382,8 +411,8 @@ public final class RowMappers {
         });
     }
 
-    private static ZonedDateTime readZonedDateTime(ResultSet rs, String created) throws SQLException {
-        return nullable(rs.getTimestamp(created), ts -> ts.toInstant().atZone(ZoneId.of("UTC").normalized()));
+    private static ZonedDateTime readZonedDateTime(ResultSet rs, String timestampFieldName) throws SQLException {
+        return nullable(rs.getTimestamp(timestampFieldName), ts -> ts.toInstant().atZone(ZoneId.of("UTC").normalized()));
     }
 
     private static <R> R fromJsonb(ResultSet rs, String field, Function<String, R> mapper) {

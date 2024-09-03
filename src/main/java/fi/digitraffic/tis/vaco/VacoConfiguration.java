@@ -5,15 +5,18 @@ import fi.digitraffic.http.HttpClientConfiguration;
 import fi.digitraffic.http.ImmutableHttpClientConfiguration;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.configuration.JaxbHttpMessageConverter;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
 import fi.digitraffic.tis.vaco.fintrafficid.MsGraphBackedFintrafficIdService;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
+import org.rutebanken.netex.model.PublicationDeliveryStructure;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.converter.HttpMessageConverter;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 /**
@@ -44,5 +47,10 @@ public class VacoConfiguration {
     @Bean
     public FintrafficIdService fintrafficIdService(VacoProperties vacoProperties, CachingService cachingService) {
         return new MsGraphBackedFintrafficIdService(vacoProperties, cachingService);
+    }
+
+    @Bean
+    public HttpMessageConverter<Object> netexHttpMessageConverter() {
+        return new JaxbHttpMessageConverter(PublicationDeliveryStructure.class);
     }
 }

@@ -52,4 +52,7 @@ public interface Company {
     default List<String> codespaces() {
         return List.of();
     }
+
+    @Nullable
+    String notificationWebhookUri();
 }

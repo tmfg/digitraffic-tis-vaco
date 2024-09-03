@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class NetexEnturValidatorResultProcessor extends RuleResultProcessor implements ResultProcessor {
@@ -34,6 +36,7 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
     private final RulesetService rulesetService;
+    private static final Pattern pattern = Pattern.compile("^(cvc-[a-zA-Z-]+(?:\\.[0-9a-zA-Z]+)+):.*");
 
     protected NetexEnturValidatorResultProcessor(PackagesService packagesService,
                                                  S3Client s3Client,
@@ -65,19 +68,24 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
     }
 
     private List<ImmutableFinding> scanReportsFile(Entry entry, Task task, String ruleName, Path reportsFile) {
+
         try {
             List<ValidationResult> validationReport = objectMapper.readValue(reportsFile.toFile(), objectMapper.getTypeFactory().constructCollectionType(List.class, ValidationResult.class));
             return Streams.flatten(validationReport, report -> report.validationReport().validationReportEntries())
                     .map(reportEntry -> {
+                        String message =  reportEntry.message();
+                        Matcher matcher = pattern.matcher(message);
+                        if (matcher.find()) {
+                            message = matcher.group(1);
+                        }
                         try {
                             return ImmutableFinding.of(
-                                    entry.publicId(),
                                     task.id(),
                                     rulesetService.findByName(ruleName)
                                         .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
                                         .id(),
                                     ruleName,
-                                    reportEntry.message(),
+                                    message,
                                     reportEntry.severity())
                                 .withRaw(objectMapper.writeValueAsBytes(reportEntry));
                         } catch (JsonProcessingException e) {

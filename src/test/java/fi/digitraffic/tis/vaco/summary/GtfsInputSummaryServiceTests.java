@@ -4,13 +4,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
-import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
 import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +56,7 @@ class GtfsInputSummaryServiceTests extends SpringBootIntegrationTestBase {
     @Test
     public void testGtfsSummariesGeneration() {
         assertDoesNotThrow(() -> gtfsInputSummaryService.generateGtfsInputSummaries(inputPath, task.id()));
-        List<Summary> summaries = summaryRepository.findTaskSummaryByTaskId(task.id());
+        List<SummaryRecord> summaries = summaryRepository.findSummaryByTaskId(task.id());
         summaries.forEach(summary -> {
             switch (summary.name()) {
                 case "agencies" -> {

@@ -14,11 +14,18 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.FindingRecord;
+import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
+import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
+import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
+import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -28,8 +35,11 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ui.model.Context;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
+import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -71,7 +81,6 @@ public class RecordMapper {
         Class<?> cc = findSubtypeFromAnnotation(validationInputRecord.name());
 
         return ImmutableValidationInput.builder()
-            .id(validationInputRecord.id())
             .name(validationInputRecord.name())
             .config(readValue(objectMapper, validationInputRecord.config(), (Class<RuleConfiguration>) cc))
             .build();
@@ -127,6 +136,7 @@ public class RecordMapper {
             .adGroupId(companyRecord.adGroupId())
             .publish(companyRecord.publish())
             .codespaces(companyRecord.codespaces())
+            .notificationWebhookUri(companyRecord.notificationWebhookUri())
             .build();
     }
 
@@ -167,6 +177,42 @@ public class RecordMapper {
             .enabled(featureFlagRecord.enabled())
             .modified(featureFlagRecord.modified())
             .modifiedBy(featureFlagRecord.modifiedBy())
+            .build();
+    }
+
+    public Ruleset toRuleset(RulesetRecord rulesetRecord) {
+        return ImmutableRuleset.builder()
+            .id(rulesetRecord.id())
+            .publicId(rulesetRecord.publicId())
+            .ownerId(rulesetRecord.ownerId())
+            .identifyingName(rulesetRecord.identifyingName())
+            .description(rulesetRecord.description())
+            .category(rulesetRecord.category())
+            .type(rulesetRecord.type())
+            .format(rulesetRecord.format())
+            .beforeDependencies(rulesetRecord.beforeDependencies())
+            .afterDependencies(rulesetRecord.afterDependencies())
+            .build();
+    }
+
+    public Package toPackage(@Nullable Task task, PackageRecord packageRecord) {
+        return ImmutablePackage.of(
+            task,
+            packageRecord.name(),
+            packageRecord.path()
+        );
+    }
+
+    public Finding toFinding(FindingRecord findingRecord) {
+        return ImmutableFinding.builder()
+            .id(findingRecord.id())
+            .publicId(findingRecord.publicId())
+            .taskId(findingRecord.taskId())
+            .rulesetId(findingRecord.rulesetId())
+            .source(findingRecord.source())
+            .message(findingRecord.message())
+            .severity(findingRecord.severity())
+            .raw(findingRecord.raw())
             .build();
     }
 }

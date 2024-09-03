@@ -4,13 +4,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.db.model.EntryRecord;
-import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.summary.Card;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,18 +44,19 @@ public class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    void setUp() throws URISyntaxException {
+    void setUp() {
         ImmutableEntry entryToCreate = TestObjects.anEntry("netex").build();
         EntryRecord entry = entryRepository.create(Optional.empty(), entryToCreate).get();
         taskRepository.createTasks(entry, List.of(ImmutableTask.of("FAKE_TASK", 1)));
         task = taskRepository.findTask(entry.id(), "FAKE_TASK").get();
-        inputPath = Path.of(ClassLoader.getSystemResource("summary/211_netex.zip").toURI());
     }
 
     @Test
-    void testNetexSummariesGeneration() {
+    void testNetexSummariesGeneration() throws URISyntaxException {
+
+        inputPath = Path.of(ClassLoader.getSystemResource("summary/211_netex.zip").toURI());
         assertDoesNotThrow(() -> netexInputSummaryService.generateNetexInputSummaries(inputPath, task.id()));
-        List<Summary> summaries = summaryRepository.findTaskSummaryByTaskId(task.id());
+        List<SummaryRecord> summaries = summaryRepository.findSummaryByTaskId(task.id());
 
         summaries.forEach(summary -> {
             switch (summary.name()) {
@@ -141,5 +143,34 @@ public class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase
                 }
             }
         });
+    }
+
+    @Test
+    void testOperatorCount() throws URISyntaxException {
+
+        inputPath = Path.of(ClassLoader.getSystemResource("summary/test_netex.zip").toURI());
+        assertDoesNotThrow(() -> netexInputSummaryService.generateNetexInputSummaries(inputPath, task.id()));
+        List<SummaryRecord> summaries = summaryRepository.findSummaryByTaskId(task.id());
+
+        summaries.forEach(summary -> {
+            if (summary.name().equals("operators")) {
+                List<Card> operators;
+                try {
+                    operators = objectMapper.readValue(summary.raw(), new TypeReference<>() {
+                    });
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                assertNotNull(operators);
+                assertEquals(4, operators.size());
+                assertEquals("VR", operators.get(0).title());
+                assertEquals("Sinisten vaunujen ystävät ry", operators.get(1).title());
+                assertEquals("Haapamäen museoveturiyhdistys ry", operators.get(2).title());
+                assertEquals("Pohjois-Suomen Rautatieharrastajat ry", operators.get(3).title());
+            }
+
+        });
+
     }
 }

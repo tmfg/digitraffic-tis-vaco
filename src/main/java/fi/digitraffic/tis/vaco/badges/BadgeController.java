@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/badge")
+@RequestMapping({"/v1/badge", "/badge"})
 public class BadgeController {
 
     private final BadgeService badgeService;

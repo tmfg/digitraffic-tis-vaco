@@ -14,10 +14,9 @@ import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.ConversionInputRepository;
-import fi.digitraffic.tis.vaco.db.repositories.ValidationInputRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.ValidationInputRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
-import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -43,8 +42,6 @@ public class QueueHandlerService {
 
     private final CachingService cachingService;
 
-    private final MeService meService;
-
     private final MessagingService messagingService;
 
     private final CompanyHierarchyService companyHierarchyService;
@@ -64,7 +61,6 @@ public class QueueHandlerService {
     private final ConversionInputRepository conversionInputRepository;
 
     public QueueHandlerService(CachingService cachingService,
-                               MeService meService,
                                EntryService entryService,
                                MessagingService messagingService,
                                CompanyHierarchyService companyHierarchyService,
@@ -76,7 +72,6 @@ public class QueueHandlerService {
                                ConversionInputRepository conversionInputRepository,
                                ContextRepository contextRepository) {
         this.cachingService = Objects.requireNonNull(cachingService);
-        this.meService = Objects.requireNonNull(meService);
         this.entryService = Objects.requireNonNull(entryService);
         this.messagingService = Objects.requireNonNull(messagingService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);

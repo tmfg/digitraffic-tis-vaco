@@ -56,7 +56,6 @@ public class ArraySqlValue implements SqlValue {
             StatementCreatorUtils.javaTypeToSqlParameterType(arr.getClass().getComponentType());
         final JDBCType jdbcTypeToUse = JDBCType.valueOf(sqlParameterType);
         // lowercasing typename for Postgres
-        final String typeNameToUse = jdbcTypeToUse.getName().toLowerCase(Locale.US);
-        return typeNameToUse;
+        return jdbcTypeToUse.getName().toLowerCase(Locale.US);
     }
 }

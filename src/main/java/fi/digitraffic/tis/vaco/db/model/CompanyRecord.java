@@ -37,4 +37,7 @@ public interface CompanyRecord {
     default List<String> codespaces() {
         return List.of();
     }
+
+    @Nullable
+    String notificationWebhookUri();
 }

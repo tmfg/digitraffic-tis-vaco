@@ -201,10 +201,10 @@ public class RulesetSubmissionService {
         completedTasks.forEach(task -> lookupDownloadedFile(entry, task.name())
             .ifPresent(s3Path -> {
                 // legacy logic: copy all results as is
-                S3Path targetPath = targetDirectory.resolve(s3Path.getLast());
+                S3Path targetPath = targetDirectory.resolve(s3Path.path().getLast());
                 s3Client.copyFile(vacoProperties.s3ProcessingBucket(), s3Path, targetPath).join();
                 // new logic: categorize outputs by task name (could be publicId?)
-                S3Path targetTaskPath = targetDirectory.resolve(task.name()).resolve(s3Path.getLast());
+                S3Path targetTaskPath = targetDirectory.resolve(task.name()).resolve(s3Path.path().getLast());
                 s3Client.copyFile(vacoProperties.s3ProcessingBucket(), s3Path, targetTaskPath).join();
             }));
     }

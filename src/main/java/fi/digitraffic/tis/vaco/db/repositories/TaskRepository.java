@@ -39,7 +39,7 @@ public class TaskRepository {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.jdbcTemplate = jdbcTemplate;
+        this.jdbcTemplate = Objects.requireNonNull(jdbcTemplate);
     }
 
     @Transactional
@@ -167,6 +167,10 @@ public class TaskRepository {
         }
     }
 
+    /**
+     * @deprecated Use {@link #findByPublicId(String)} instead and migrate to {@link TaskRecord} where applicable.
+     */
+    @Deprecated(since = "2024-08-29")
     public Optional<Task> findTask(String taskPublicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
@@ -265,4 +269,35 @@ public class TaskRepository {
             entry.id());
     }
 
+    public Optional<TaskRecord> findByPublicId(String publicId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                SELECT *
+                  FROM task
+                 WHERE public_id = ?
+                """,
+                RowMappers.TASK_RECORD,
+                publicId));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Status> findTaskStatus(EntryRecord entry, String taskName) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                """
+                SELECT t.status
+                  FROM task t
+                 WHERE t.entry_id = (SELECT id FROM entry e WHERE e.id = ?)
+                   AND t.name = ?
+                """,
+                RowMappers.STATUS,
+                entry.id(),
+                taskName));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to fetch status of entry {}'s task {}", entry.id(), taskName);
+            return Optional.empty();
+        }
+    }
 }

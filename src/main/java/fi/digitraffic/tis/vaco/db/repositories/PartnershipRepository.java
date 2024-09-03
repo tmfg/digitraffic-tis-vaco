@@ -6,7 +6,6 @@ import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.Objects;
@@ -16,11 +15,9 @@ import java.util.Optional;
 public class PartnershipRepository {
 
     private final JdbcTemplate jdbc;
-    private final NamedParameterJdbcTemplate namedJdbc;
 
-    public PartnershipRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
+    public PartnershipRepository(JdbcTemplate jdbc) {
         this.jdbc = Objects.requireNonNull(jdbc);
-        this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
 
     public Optional<PartnershipRecord> findByIds(PartnershipType type,
