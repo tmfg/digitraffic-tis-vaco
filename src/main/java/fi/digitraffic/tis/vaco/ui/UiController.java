@@ -1,8 +1,6 @@
 package fi.digitraffic.tis.vaco.ui;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.opencsv.CSVWriter;
-import com.opencsv.ICSVWriter;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.DataVisibility;
@@ -43,8 +41,8 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableProcessingResultsPage;
 import fi.digitraffic.tis.vaco.ui.model.MagicToken;
 import fi.digitraffic.tis.vaco.ui.model.MagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
-import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
+import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -71,9 +69,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -344,11 +339,7 @@ public class UiController {
     @PreAuthorize("hasAuthority('vaco.admin')")
     public ResponseEntity<StreamingResponseBody> exportDataDeliveryOverview(@RequestParam(name = "language") String language) {
         StreamingResponseBody stream = outputStream -> {
-            try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
-                CSVWriter csvWriter = new CSVWriter(writer, ICSVWriter.DEFAULT_SEPARATOR,
-                    ICSVWriter.DEFAULT_QUOTE_CHARACTER, ICSVWriter.DEFAULT_ESCAPE_CHARACTER, ICSVWriter.DEFAULT_LINE_END);
-                adminToolsService.exportDataDeliveryToCsv(csvWriter, language);
-            }
+            adminToolsService.exportDataDeliveryToCsv(outputStream, language);
         };
 
         String filename = "dataDelivery_"+ LocalDateTime.now() +".csv";

@@ -361,11 +361,11 @@
             <version>${caffeine.version}</version>
         </dependency>
 
-        <!-- OpenCSV for CSV operations -->
+        <!-- CSV support -->
         <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>5.9</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.11.0</version>
         </dependency>
 
         <!-- Java native HTTP client extensions such as automatic gzip support -->

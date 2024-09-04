@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
@@ -11,9 +12,8 @@ import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
-import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -44,48 +45,56 @@ class GtfsInputSummaryServiceTests extends SpringBootIntegrationTestBase {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private RecordMapper recordMapper;
+
+    private Entry entry;
+
     @BeforeEach
     void setUp() throws URISyntaxException {
         ImmutableEntry entryToCreate = TestObjects.anEntry("gtfs").build();
-        EntryRecord entry = entryRepository.create(Optional.empty(), entryToCreate).get();
-        taskRepository.createTasks(entry, List.of(ImmutableTask.of("FAKE_TASK", 1)));
-        task = taskRepository.findTask(entry.id(), "FAKE_TASK").get();
+        EntryRecord entryRecord = entryRepository.create(Optional.empty(), entryToCreate).get();
+        taskRepository.createTasks(entryRecord, List.of(ImmutableTask.of("FAKE_TASK", 1)));
+        task = taskRepository.findTask(entryRecord.id(), "FAKE_TASK").get();
         inputPath = Path.of(ClassLoader.getSystemResource("summary/211_gtfs.zip").toURI());
+        entry = recordMapper.toEntryBuilder(entryRecord, Optional.empty()).build();
     }
 
     @Test
     public void testGtfsSummariesGeneration() {
-        assertDoesNotThrow(() -> gtfsInputSummaryService.generateGtfsInputSummaries(inputPath, task.id()));
+        assertDoesNotThrow(() -> gtfsInputSummaryService.generateGtfsInputSummaries(entry, task, inputPath));
         List<SummaryRecord> summaries = summaryRepository.findSummaryByTaskId(task.id());
         summaries.forEach(summary -> {
             switch (summary.name()) {
                 case "agencies" -> {
-                    List<Agency> agencies;
+                    List<Map<String, String>> agencies;
                     try {
-                        agencies = objectMapper.readValue(summary.raw(), new TypeReference<>() {
-                        });
+                        agencies = objectMapper.readValue(summary.raw(), new TypeReference<>() {});
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                     assertNotNull(agencies);
                     assertEquals(6, agencies.size());
-                    assertEquals("Oulaisten Liikenne Oy", agencies.get(0).getAgencyName());
-                    assertEquals("info@oulaistenliikenne.fi", agencies.get(0).getAgencyEmail());
+                    assertEquals("Oulaisten Liikenne Oy", agencies.get(0).get("agency_name"));
+                    assertEquals("info@oulaistenliikenne.fi", agencies.get(0).get("agency_email"));
+                    // TODO: better asserts
                 }
                 case "feedInfo" -> {
-                    FeedInfo feedInfo;
+                    List<Map<String, String>> feedInfos;
                     try {
-                        feedInfo = objectMapper.readValue(summary.raw(), new TypeReference<>() {
+                        feedInfos = objectMapper.readValue(summary.raw(), new TypeReference<>() {
                         });
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    assertNotNull(feedInfo);
-                    assertEquals("Kajaani", feedInfo.getFeedPublisherName());
-                    assertEquals("http://kajaani.fi", feedInfo.getFeedPublisherUrl());
-                    assertEquals("fi", feedInfo.getFeedLang());
-                    assertEquals("20180808", feedInfo.getFeedStartDate());
-                    assertEquals("20261231", feedInfo.getFeedEndDate());
+                    assertNotNull(feedInfos);
+                    assertEquals(1, feedInfos.size());
+                    Map<String, String> feedInfo = feedInfos.get(0);
+                    assertEquals("Kajaani", feedInfo.get("feed_publisher_name"));
+                    assertEquals("http://kajaani.fi", feedInfo.get("feed_publisher_url"));
+                    assertEquals("fi", feedInfo.get("feed_lang"));
+                    assertEquals("20180808", feedInfo.get("feed_start_date"));
+                    assertEquals("20261231", feedInfo.get("feed_end_date"));
                 }
                 case "files" -> {
                     List<String> files;

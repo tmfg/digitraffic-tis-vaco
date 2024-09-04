@@ -51,8 +51,6 @@ import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
-import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
-import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.ui.EntryStateService;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
@@ -71,6 +69,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -233,11 +232,11 @@ public final class RowMappers {
                 Object content;
                 switch (rs.getString("name")) {
                     case "agencies" -> {
-                        List<Agency> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                        List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getAgencyCardUiContent(agencies);
                     }
                     case "feedInfo" -> {
-                        FeedInfo feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                        List<Map<String, String>> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getFeedInfoUiContent(feedInfo);
                     }
                     default -> content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});

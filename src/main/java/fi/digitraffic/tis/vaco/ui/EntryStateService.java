@@ -7,16 +7,14 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
+import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
-import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
-import fi.digitraffic.tis.vaco.summary.model.gtfs.Agency;
-import fi.digitraffic.tis.vaco.summary.model.gtfs.FeedInfo;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
@@ -24,8 +22,6 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableTaskReport;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableCard;
-import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableLabelValuePair;
-import fi.digitraffic.tis.vaco.ui.model.summary.LabelValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -125,54 +121,37 @@ public class EntryStateService {
         return summaryRepository.findTaskSummaryByEntry(entry);
     }
 
-    public static List<ImmutableCard> getAgencyCardUiContent(List<Agency> agencies) {
+    public static List<ImmutableCard> getAgencyCardUiContent(List<Map<String, String>> agencies) {
         return Streams.map(agencies,
             agency -> ImmutableCard.builder()
-                .title(agency.getAgencyName())
+                .title(agency.get("agency_name"))
                 .content(getAgencyCard(agency))
                 .build()).toList();
     }
 
-    private static List<LabelValuePair> getAgencyCard(Agency agency) {
-        List<LabelValuePair> agencyCardContent = new ArrayList<>();
-        agencyCardContent.add(ImmutableLabelValuePair.builder()
-            .label("website")
-            .value(agency.getAgencyUrl())
-            .build());
-        agencyCardContent.add(ImmutableLabelValuePair.builder()
-            .label("email")
-            .value(agency.getAgencyEmail())
-            .build());
-        agencyCardContent.add(ImmutableLabelValuePair.builder()
-            .label("phone")
-            .value(agency.getAgencyPhone())
-            .build());
-        return agencyCardContent;
+    private static Map<String, String> getAgencyCard(Map<String, String> agency) {
+        Map<String, String> infoCard = new HashMap<>();
+        infoCard.put("website", agency.get("agency_url"));
+        infoCard.put("email", agency.get("agency_email"));
+        infoCard.put("phone", agency.get("agency_phone"));
+        return infoCard;
     }
 
-    public static List<LabelValuePair> getFeedInfoUiContent(FeedInfo feedInfo) {
-        List<LabelValuePair> feedInfoContent = new ArrayList<>();
-        feedInfoContent.add(ImmutableLabelValuePair.builder()
-            .label("publisherName")
-            .value(feedInfo.getFeedPublisherName())
-            .build());
-        feedInfoContent.add(ImmutableLabelValuePair.builder()
-            .label("publisherUrl")
-            .value(feedInfo.getFeedPublisherUrl())
-            .build());
-        feedInfoContent.add(ImmutableLabelValuePair.builder()
-            .label("feedLanguage")
-            .value(feedInfo.getFeedLang())
-            .build());
-        feedInfoContent.add(ImmutableLabelValuePair.builder()
-            .label("feedStartsDate")
-            .value(feedInfo.getFeedStartDate())
-            .build());
-        feedInfoContent.add(ImmutableLabelValuePair.builder()
-            .label("feedEndDate")
-            .value(feedInfo.getFeedEndDate())
-            .build());
-        return feedInfoContent;
+    public static List<ImmutableCard> getFeedInfoUiContent(List<Map<String, String>> feedInfo) {
+        return Streams.map(feedInfo,
+            fe -> ImmutableCard.builder()
+                .title(fe.get("feed_publisher_name"))
+                .content(getFeedInfoCard(fe))
+                .build()).toList();
+    }
+
+    private static Map<String, String> getFeedInfoCard(Map<String, String> feedInfo) {
+        Map<String, String> infoCard = new HashMap<>();
+        infoCard.put("publisherUrl", feedInfo.get("feed_publisher_url"));
+        infoCard.put("feedLanguage", feedInfo.get("feed_lang"));
+        infoCard.put("feedStartsDate", feedInfo.get("feed_start_date"));
+        infoCard.put("feedEndDate", feedInfo.get("feed_end_date"));
+        return infoCard;
     }
 
     private static int severityToInt(String severity) {
