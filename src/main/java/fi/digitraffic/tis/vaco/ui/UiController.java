@@ -23,7 +23,6 @@ import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
-import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.QueueController;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
@@ -569,12 +568,10 @@ public class UiController {
         Map<String, Map<String, Link>> links = new HashMap<>();
         links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())))));
 
-        Map<Long, Task> tasks = Streams.collect(entry.tasks(), Task::id, Function.identity());
-
         if (entry.packages() != null) {
             ConcurrentMap<String, Map<String, Link>> packageLinks = new ConcurrentHashMap<>();
             entry.packages().forEach(p -> {
-                String taskName = tasks.get(p.task()).name();
+                String taskName = p.task().name();
                 packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))));
             });
 
