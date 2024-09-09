@@ -28,6 +28,7 @@ public class SummaryRepository {
         this.objectMapper = objectMapper;
     }
 
+    // TODO: move taskId from Summary and add TaskRecord as parameter
     public SummaryRecord create(Summary summary) {
         return jdbc.queryForObject("""
             INSERT INTO summary (task_id, name, renderer_type, raw)

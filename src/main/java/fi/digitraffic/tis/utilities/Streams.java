@@ -91,6 +91,20 @@ public final class Streams {
     }
 
     /**
+     * Support for generic {@link Iterable Iterables} through {@link Iterable#spliterator()}. Behavior matches with
+     * any other matching overload, e.g. {@link #map(Collection, Function)}.
+     * @param objects Objects to process.
+     * @param mapper Mapper function with <code>java.util.Stream</code> compatible signature.
+     * @return Chain of mapped objects.
+     * @param <I> Type for input objects.
+     * @param <O> Type for output objects.
+     * @see #asStream(Iterable)
+     */
+    public static <I, O> Chain<O> map(Iterable<I> objects, Function<? super I, ? extends O> mapper) {
+        return new Chain<>(asStream(objects)).map(mapper);
+    }
+
+    /**
      * Functionally equivalent to {@link Stream#flatMap(Function)}. Shorthand for
      *
      * <pre>
@@ -183,6 +197,11 @@ public final class Streams {
         return map(objects, mapper).toList();
     }
 
+
+    public static <I, O> List<O> collect(Iterable<I> objects, Function<? super I, O> mapper) {
+        return map(objects, mapper).toList();
+    }
+
     /**
      * {@link Set} overload of {@link #collect(Collection, Function)} to keep the type as close to original as possible.
 
@@ -245,6 +264,20 @@ public final class Streams {
     private static <I> Stream<I> asStream(Enumeration<I> objects) {
         return StreamSupport.stream(
             Spliterators.spliteratorUnknownSize(objects.asIterator(), Spliterator.ORDERED),
+            false
+        );
+    }
+
+    /**
+     * Convert any {@link Iterable} into a stream. Useful for library compatability.
+     * {@link Stream} with {@link StreamSupport}.
+     * @param objects Objects to process.
+     * @return <code>java.util.Enumeration</code> wrapped as <code>java.util.Stream</code>
+     * @param <I> Type for input objects.
+     */
+    private static <I> Stream<I> asStream(Iterable<I> objects) {
+        return StreamSupport.stream(
+            objects.spliterator(),
             false
         );
     }

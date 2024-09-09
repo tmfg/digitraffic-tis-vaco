@@ -48,7 +48,7 @@ public class SummaryService {
 
         if (TransitDataFormat.GTFS.fieldName().equals(entry.format())) {
             try {
-                gtfsInputSummaryService.generateGtfsInputSummaries(downloadedPackagePath.get(), task.id());
+                gtfsInputSummaryService.generateGtfsInputSummaries(entry, task, downloadedPackagePath.get());
             } catch (IOException e) {
                 logger.error("Failed to generate GTFS input data summaries for entry {}", entry.publicId(), e);
             }

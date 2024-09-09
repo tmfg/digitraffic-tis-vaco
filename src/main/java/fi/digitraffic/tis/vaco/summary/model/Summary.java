@@ -31,5 +31,5 @@ public interface Summary {
     byte[] raw();
 
     @Nullable
-    Object content();
+    Object content(); // TODO: polymorphize with #rendererType()
 }
