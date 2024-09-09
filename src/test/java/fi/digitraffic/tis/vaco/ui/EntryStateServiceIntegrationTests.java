@@ -23,6 +23,7 @@ import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.summary.Card;
+import fi.digitraffic.tis.vaco.ui.model.summary.LabelValuePair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -202,12 +203,12 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
         Summary feedInfosSummary = summaries.get(1);
         assertThat(feedInfosSummary.name(), equalTo("feedInfo"));
-        assertThat(feedInfosSummary.rendererType(), equalTo(RendererType.CARD));
+        assertThat(feedInfosSummary.rendererType(), equalTo(RendererType.TABULAR));
 
-        List<Card> feedInfos = (List<Card>) feedInfosSummary.content();
-        assertThat(feedInfos.size(), equalTo(1));
+        List<LabelValuePair> feedInfos = (List<LabelValuePair>) feedInfosSummary.content();
+        assertThat(feedInfos.size(), equalTo(5));
 
-        assertFeedInfoCard(feedInfos.get(0), "Kajaani", "http://kajaani.fi", "fi", "20180808", "20261231");
+        assertFeedInfoCard(feedInfos, "Kajaani", "http://kajaani.fi", "fi", "20180808", "20261231");
 
         Summary files = summaries.get(2);
         assertThat(files.name(), equalTo("files"));
@@ -227,19 +228,22 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     private static void assertAgencyCard(Card card, String title, String website, String phone, String email) {
         assertThat(card.title(), equalTo(title));
-        Map<String, String> content = (Map<String, String>) card.content();
-        assertThat(content.get("website"), equalTo(website));
-        assertThat(content.get("phone"), equalTo(phone));
-        assertThat(content.get("email"), equalTo(email));
+        List<LabelValuePair> content = (List<LabelValuePair>) card.content();
+        assertLabelValuePair(content.get(0), "website", website);
+        assertLabelValuePair(content.get(1), "email", email);
+        assertLabelValuePair(content.get(2), "phone", phone);
     }
 
-    private static void assertFeedInfoCard(Card card, String publisherName, String publisherUrl, String language, String startDate, String endDate) {
-        assertThat(card.title(), equalTo(publisherName));
-        Map<String, String> content = (Map<String, String>) card.content();
-        assertThat(content.get("publisherUrl"), equalTo(publisherUrl));
-        assertThat(content.get("feedLanguage"), equalTo(language));
-        assertThat(content.get("feedStartsDate"), equalTo(startDate));
-        assertThat(content.get("feedEndDate"), equalTo(endDate));
+    private static void assertFeedInfoCard(List<LabelValuePair> feedInfos, String publisherName, String publisherUrl, String language, String startDate, String endDate) {
+        assertLabelValuePair(feedInfos.get(0), "publisherName", publisherName);
+        assertLabelValuePair(feedInfos.get(1), "publisherUrl", publisherUrl);
+        assertLabelValuePair(feedInfos.get(2), "feedLanguage", language);
+        assertLabelValuePair(feedInfos.get(3), "feedStartsDate", startDate);
+        assertLabelValuePair(feedInfos.get(4), "feedEndDate", endDate);
+    }
 
+    private static void assertLabelValuePair(LabelValuePair pair, String expectedLabel, String expectedValue) {
+        assertThat("Unexpected label for " + pair, pair.label(), equalTo(expectedLabel));
+        assertThat("Unexpected value for " + pair, pair.value(), equalTo(expectedValue));
     }
 }

@@ -270,7 +270,7 @@ public class UiController {
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry, entry.publicId()))
                         .reports(reports)
-                        .summaries(summaries)
+                        .addAllSummaries(summaries)
                         .company(company.map(c -> c.name() + " (" +c.businessId() + ")").orElse(entry.businessId()))
                         .build()));
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));

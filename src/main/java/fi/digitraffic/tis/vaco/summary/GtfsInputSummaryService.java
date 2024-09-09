@@ -160,8 +160,14 @@ public class GtfsInputSummaryService {
 
     private ImmutableGtfsInputSummary.Builder processFeedInfo(Entry entry, Task task, InputStream inputStream, ImmutableGtfsInputSummary.Builder summaryBuilder) {
         List<Map<String, String>> list = processCsv(entry, task, inputStream, feedInfo);
-        persistTaskSummaryItem(task, "feedInfo", RendererType.CARD, list);
-        return summaryBuilder.feedInfo(list).addComponents("Feed information");
+        // XXX: Only first feed info entry is persisted; this counts as a bug, but fronend is too hardcoded to the
+        //      produced data structure that refactoring it away would be too much of a chore
+        if (!list.isEmpty()) {
+            persistTaskSummaryItem(task, "feedInfo", RendererType.TABULAR, list.getFirst());
+            return summaryBuilder.feedInfo(list).addComponents("Feed information");
+        } else {
+            return summaryBuilder;
+        }
     }
 
     private ImmutableGtfsInputSummary.Builder processRoutes(Entry entry, Task task, InputStream inputStream, ImmutableGtfsInputSummary.Builder summaryBuilder) {

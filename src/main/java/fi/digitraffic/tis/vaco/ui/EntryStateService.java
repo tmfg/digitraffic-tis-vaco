@@ -22,6 +22,7 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableTaskReport;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableCard;
+import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableLabelValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -129,29 +130,19 @@ public class EntryStateService {
                 .build()).toList();
     }
 
-    private static Map<String, String> getAgencyCard(Map<String, String> agency) {
-        Map<String, String> infoCard = new HashMap<>();
-        infoCard.put("website", agency.get("agency_url"));
-        infoCard.put("email", agency.get("agency_email"));
-        infoCard.put("phone", agency.get("agency_phone"));
-        return infoCard;
+    private static List<ImmutableLabelValuePair> getAgencyCard(Map<String, String> agency) {
+        return List.of(
+            ImmutableLabelValuePair.of("website", agency.get("agency_url")),
+            ImmutableLabelValuePair.of("email", agency.get("agency_email")),
+            ImmutableLabelValuePair.of("phone", agency.get("agency_phone")));
     }
 
-    public static List<ImmutableCard> getFeedInfoUiContent(List<Map<String, String>> feedInfo) {
-        return Streams.map(feedInfo,
-            fe -> ImmutableCard.builder()
-                .title(fe.get("feed_publisher_name"))
-                .content(getFeedInfoCard(fe))
-                .build()).toList();
-    }
-
-    private static Map<String, String> getFeedInfoCard(Map<String, String> feedInfo) {
-        Map<String, String> infoCard = new HashMap<>();
-        infoCard.put("publisherUrl", feedInfo.get("feed_publisher_url"));
-        infoCard.put("feedLanguage", feedInfo.get("feed_lang"));
-        infoCard.put("feedStartsDate", feedInfo.get("feed_start_date"));
-        infoCard.put("feedEndDate", feedInfo.get("feed_end_date"));
-        return infoCard;
+    public static List<ImmutableLabelValuePair> getFeedInfoUiContent(Map<String, String> feedInfo) {
+        return List.of(ImmutableLabelValuePair.of("publisherName", feedInfo.get("feed_publisher_name")),
+            ImmutableLabelValuePair.of("publisherUrl", feedInfo.get("feed_publisher_url")),
+            ImmutableLabelValuePair.of("feedLanguage", feedInfo.get("feed_lang")),
+            ImmutableLabelValuePair.of("feedStartsDate", feedInfo.get("feed_start_date")),  // TODO: Unmatching plural in label name
+            ImmutableLabelValuePair.of("feedEndDate", feedInfo.get("feed_end_date")));
     }
 
     private static int severityToInt(String severity) {

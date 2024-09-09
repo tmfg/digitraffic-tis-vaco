@@ -235,8 +235,10 @@ public final class RowMappers {
                         List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getAgencyCardUiContent(agencies);
                     }
+                    // XXX: Only the first line of feedinfo is persisted, if any. This is a bug in UI which is hardcoded
+                    //      too deeply to rely on this and would be too much effort to refactor at the moment.
                     case "feedInfo" -> {
-                        List<Map<String, String>> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                        Map<String, String> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getFeedInfoUiContent(feedInfo);
                     }
                     default -> content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
