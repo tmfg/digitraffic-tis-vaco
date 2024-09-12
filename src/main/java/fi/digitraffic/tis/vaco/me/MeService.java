@@ -33,16 +33,20 @@ public class MeService {
         this.fintrafficIdService = Objects.requireNonNull(fintrafficIdService);
     }
 
+    public Set<Company> findCompanies() {
+        return currentToken().map(token -> token.getToken().getClaimAsString("oid"))
+            .map(this::findCompanies)
+            .orElse(Set.of());
+    }
+
     /**
      * Resolve user's {@link Company Companies} access from MS Graph.
      *
      * @return set of company metadata the current user has access to
      */
-    public Set<Company> findCompanies() {
+    public Set<Company> findCompanies(String userId) {
         return currentToken().map(token -> {
             Set<Company> companies = new HashSet<>();
-
-            String userId = token.getToken().getClaimAsString("oid");
             List<FintrafficIdGroup> groups = fintrafficIdService.getGroups(userId);
 
             groups.forEach(g -> g.organizationData().ifPresent(od -> {
