@@ -51,7 +51,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class RuleResultsListenerTests {
@@ -77,7 +77,7 @@ class RuleResultsListenerTests {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        objectMapper.registerModules(new GuavaModule());
+        objectMapper.registerModule(new GuavaModule());
         vacoProperties = TestObjects.vacoProperties();
         ruleResultsListener = new RuleResultsListener(
             messagingService,

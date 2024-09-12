@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.DomainValue;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -14,6 +15,7 @@ import org.immutables.value.Value;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+@DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableEntry.class)
 @JsonDeserialize(as = ImmutableEntry.class)
@@ -62,7 +64,6 @@ public interface Entry {
      * List of email addresses to send notifications on events related to this entry, e.g. the matching job is complete.
      * @return List of emails as strings.
      */
-    @Value.Default
     @JsonView(DataVisibility.AdminRestricted.class)
     default List<String> notifications() {
         return List.of();
@@ -80,7 +81,6 @@ public interface Entry {
     @Nullable
     ZonedDateTime completed();
 
-    @Value.Default
     default Status status() {
         return Status.RECEIVED;
     }

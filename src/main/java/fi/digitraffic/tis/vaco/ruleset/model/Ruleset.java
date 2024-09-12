@@ -4,13 +4,14 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.DomainValue;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import org.immutables.value.Value;
 
 import java.util.Set;
 
-// TODO: probably in wrong subsystem package
+@DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableRuleset.class)
 @JsonDeserialize(as = ImmutableRuleset.class)
@@ -47,12 +48,10 @@ public interface Ruleset {
     @Value.Parameter
     TransitDataFormat format();
 
-    @Value.Default
     default Set<String> beforeDependencies() {
         return Set.of();
     }
 
-    @Value.Default
     default Set<String> afterDependencies() {
         return Set.of();
     }

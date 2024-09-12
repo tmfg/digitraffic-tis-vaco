@@ -75,9 +75,9 @@ class DownloadRuleTests {
     private ArgumentCaptor<Path> sourcePath;
 
     @BeforeEach
-    void setUp() throws URISyntaxException {
+    void setUp() {
         objectMapper = new ObjectMapper();
-        objectMapper.registerModules(new GuavaModule());
+        objectMapper.registerModule(new GuavaModule());
         vacoProperties = TestObjects.vacoProperties();
         rule = new DownloadRule(objectMapper, taskService, vacoProperties, httpClient, s3Client, findingService, entryService);
     }

@@ -2,12 +2,14 @@ package fi.digitraffic.tis.vaco.rules.model.netex;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.vaco.DomainValue;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.util.Set;
 
+@DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableEnturNetexValidatorConfiguration.class)
 @JsonDeserialize(as = ImmutableEnturNetexValidatorConfiguration.class)

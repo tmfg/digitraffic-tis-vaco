@@ -83,7 +83,7 @@ class WebhookNotifierTests {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        objectMapper.registerModules(new GuavaModule());
+        objectMapper.registerModule(new GuavaModule());
         webhookNotifier = new WebhookNotifier(
             companyRepository,
             httpClient,

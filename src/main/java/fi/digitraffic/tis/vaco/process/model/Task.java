@@ -4,16 +4,17 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.DomainValue;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.time.ZonedDateTime;
 
+@DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableTask.class)
 @JsonDeserialize(as = ImmutableTask.class)
-@Value.Style(defaultAsDefault = true)
 public interface Task {
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)
@@ -40,7 +41,6 @@ public interface Task {
     @Nullable
     ZonedDateTime completed();
 
-    @Value.Default
     default Status status() {
         return Status.RECEIVED;
     }
