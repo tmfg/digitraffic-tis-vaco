@@ -2,11 +2,13 @@ package fi.digitraffic.tis.vaco.featureflags.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import fi.digitraffic.tis.vaco.DomainValue;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.time.ZonedDateTime;
 
+@DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableFeatureFlag.class)
 @JsonDeserialize(as = ImmutableFeatureFlag.class)
@@ -15,7 +17,6 @@ public interface FeatureFlag {
     @Value.Parameter
     String name();
 
-    @Value.Default
     default boolean enabled() {
         return false;
     }

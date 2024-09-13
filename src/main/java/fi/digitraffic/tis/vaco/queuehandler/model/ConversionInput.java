@@ -5,10 +5,12 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.DomainValue;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
+@DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableConversionInput.class)
 @JsonDeserialize(as = ImmutableConversionInput.class)

@@ -66,7 +66,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
     void setUp() {
         vacoProperties = TestObjects.vacoProperties();
         objectMapper = new ObjectMapper();
-        objectMapper.registerModules(new GuavaModule());
+        objectMapper.registerModule(new GuavaModule());
         resultProcessor = new GtfsCanonicalResultProcessor(vacoProperties,
             packagesService,
             s3Client,

@@ -21,7 +21,7 @@ Authorization: Bearer {{tis_token}}
   "format": "gtfs",
   "businessId": "2942108-7",
   "etag": "etagg",
-  "name": "splörörröö - GTFS",
+  "name": "Canonical GTFS 5.0.1 / rollback",
   "validations": [
     {
       "name": "gtfs.canonical",

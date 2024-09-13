@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.DomainValue;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.util.List;
 
+@DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableCompany.class)
 @JsonDeserialize(as = ImmutableCompany.class)
@@ -30,13 +32,11 @@ public interface Company {
     @Value.Parameter
     String name();
 
-    @Value.Default
     @JsonView(DataVisibility.AdminRestricted.class)
     default List<String> contactEmails() {
         return List.of();
     }
 
-    @Value.Default
     default String language() {
         return "fi";
     }
@@ -48,7 +48,6 @@ public interface Company {
     @Value.Parameter
     boolean publish();
 
-    @Value.Default
     default List<String> codespaces() {
         return List.of();
     }

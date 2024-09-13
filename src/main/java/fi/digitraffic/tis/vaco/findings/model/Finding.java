@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.DomainValue;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
+@DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableFinding.class)
 @JsonDeserialize(as = ImmutableFinding.class)
@@ -35,7 +37,6 @@ public interface Finding {
     String message();
 
     @Value.Parameter
-    @Value.Default
     default String severity() {
         return "UNKNOWN";
     }

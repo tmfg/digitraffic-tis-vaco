@@ -12,6 +12,6 @@ client_id={{clientId}}&grant_type=client_credentials&scope={{scope}}&client_secr
 
 ###
 
-GET {{serviceRootUri}}/api/queue/g_y7Mue8q6UTnZjmr50os
+GET {{serviceRootUri}}/api/queue/UtEnU2EkZJQYf8cf5vEfl
 Content-Type: application/json
 Authorization: Bearer {{tis_token}}
