@@ -21,10 +21,10 @@ public abstract class SqsListenerBase<M extends Retryable> {
         this.retrier = retrier;
     }
 
-    protected void handle(M message,
-                          String messageIdentifier,
-                          Acknowledgement acknowledgement,
-                          Consumer<M> outOfRetriesHandler) {
+    public void handle(M message,
+                       String messageIdentifier,
+                       Acknowledgement acknowledgement,
+                       Consumer<M> outOfRetriesHandler) {
         try {
             if (shouldTry(messageIdentifier, message.retryStatistics())) {
                 runGuarded(message);

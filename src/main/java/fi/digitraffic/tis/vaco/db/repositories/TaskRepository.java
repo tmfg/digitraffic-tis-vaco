@@ -142,6 +142,26 @@ public class TaskRepository {
         }
     }
 
+    public Optional<Task> findFirstTask(Optional<EntryRecord> entryRecord) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                """
+
+                SELECT *
+                FROM task
+                JOIN ruleset ON task.name = ruleset.identifying_name
+                WHERE entry_id = ?
+                  AND (ruleset.type LIKE 'validation_%' OR ruleset.type LIKE 'conversion_%')
+                ORDER BY completed ASC
+                LIMIT 1
+                       """,
+                RowMappers.TASK,
+                entryRecord.map(EntryRecord::id).orElse(null)));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
     public Optional<Task> findTask(String publicId, String taskName) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""

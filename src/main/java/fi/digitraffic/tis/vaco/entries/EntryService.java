@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -36,19 +37,22 @@ public class EntryService {
     private final RecordMapper recordMapper;
 
     private final ContextRepository contextRepository;
+    private final TaskRepository taskRepository;
 
     public EntryService(EntryRepository entryRepository,
                         CachingService cachingService,
                         TaskService taskService,
                         PackagesService packagesService,
                         RecordMapper recordMapper,
-                        ContextRepository contextRepository) {
+                        ContextRepository contextRepository,
+                        TaskRepository taskRepository) {
         this.taskService = Objects.requireNonNull(taskService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.cachingService = Objects.requireNonNull(cachingService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.recordMapper = Objects.requireNonNull(recordMapper);
         this.contextRepository = Objects.requireNonNull(contextRepository);
+        this.taskRepository = Objects.requireNonNull(taskRepository);
     }
 
     public void markComplete(Entry entry) {
@@ -77,40 +81,58 @@ public class EntryService {
      * @param entry Entry to update
      */
     public void updateStatus(Entry entry) {
-        Status status = resolveStatus(entry);
+        Optional<EntryRecord> entryRecord = entryRepository.findByPublicId(entry.publicId());
+        Status status = resolveStatus(entryRecord);
         entryRepository.markStatus(entry, status);
         cachingService.invalidateEntry(entry.publicId());
     }
 
-    private Status resolveStatus(Entry entry) {
-        List<Task> tasks = taskService.findTasks(entry);
-        if (tasks.isEmpty()) {
+    private Status resolveStatus(Optional<EntryRecord> entryRecord) {
+
+        Optional<Task> firstTask = taskRepository.findFirstTask(entryRecord);
+
+        if (firstTask.isPresent()) {
+
+            Task task = firstTask.get();
+
+            if (Status.FAILED.equals(task.status())) {
+                return resolvedStatus(entryRecord, task, Status.FAILED);
+            }
+
+            if (Status.CANCELLED.equals(task.status())) {
+                return resolvedStatus(entryRecord, task, Status.CANCELLED);
+            }
+
+            if (Status.ERRORS.equals(task.status())) {
+                return resolvedStatus(entryRecord, task, Status.ERRORS);
+            }
+
+            if (Status.WARNINGS.equals(task.status())) {
+                return resolvedStatus(entryRecord, task, Status.WARNINGS);
+            }
+
+        } else {
+
             if (logger.isInfoEnabled()) {
-                logger.info("Entry {} has no tasks, resolving entry as cancelled", entry.publicId());
+                logger.info("Entry {} has no tasks, resolving entry as cancelled", entryRecord.get().publicId());
             }
+
             return Status.CANCELLED;
+
         }
-        for (Task t : tasks) {
-            if (Status.FAILED.equals(t.status())
-                || Status.CANCELLED.equals(t.status())) {
-                return resolvedStatus(entry, t, Status.FAILED);
-            }
-            if (Status.ERRORS.equals(t.status())) {
-                return resolvedStatus(entry, t, Status.ERRORS);
-            }
-            if (Status.WARNINGS.equals(t.status())) {
-                return resolvedStatus(entry, t, Status.WARNINGS);
-            }
-        }
+
         if (logger.isInfoEnabled()) {
-            logger.info("All of entry {}'s tasks are successful, resolving entry as success", entry.publicId());
+
+            logger.info("All of entry {}'s tasks are successful, resolving entry as success", entryRecord.get().publicId());
         }
+
         return Status.SUCCESS;
+
     }
 
-    private Status resolvedStatus(Entry entry, Task t, Status status) {
+    private Status resolvedStatus(Optional<EntryRecord> entryRecord, Task t, Status status) {
         if (logger.isInfoEnabled()) {
-            logger.info("Entry {} has a task with status {}, resolving entry as {}}", entry.publicId(), t.status(), status);
+            logger.info("Entry {} has a task with status {}, resolving entry as {}}", entryRecord.get().publicId(), t.status(), status);
         }
         return status;
     }

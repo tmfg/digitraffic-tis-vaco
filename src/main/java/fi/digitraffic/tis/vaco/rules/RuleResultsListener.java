@@ -1,9 +1,9 @@
 package fi.digitraffic.tis.vaco.rules;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import fi.digitraffic.tis.aws.sqs.SqsListener;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
@@ -32,24 +32,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.services.sqs.model.SqsException;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 /**
  * SQS listener handles for rules which are implemented as part of VACO.
  */
 @Component
-public class RuleResultsListener {
+public class RuleResultsListener extends SqsListener {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
     private final FindingService findingService;
-    private final ObjectMapper objectMapper;
     private final TaskService taskService;
     private final QueueHandlerService queueHandlerService;
     private final EntryService entryService;
@@ -74,9 +70,9 @@ public class RuleResultsListener {
                                InternalRuleResultProcessor internalRuleResultProcessor,
                                SummaryService summaryService,
                                GtfsToNetexResultProcessor gtfsToNetexResultProcessor) {
+        super(messagingService, objectMapper);
         this.messagingService = Objects.requireNonNull(messagingService);
         this.findingService = Objects.requireNonNull(findingService);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.taskService = Objects.requireNonNull(taskService);
         this.entryService = Objects.requireNonNull(entryService);
@@ -132,7 +128,7 @@ public class RuleResultsListener {
 
     }
 
-    private CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {
+    protected CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {
         return CompletableFuture.supplyAsync(() -> {
             logger.debug("Got ResultMessage {}", resultMessage);
             return switch (resultMessage.ruleName()) {
@@ -142,7 +138,7 @@ public class RuleResultsListener {
                 case RuleName.GTFS_CANONICAL -> processResultFromGtfsCanonical(resultMessage);
                 case RuleName.NETEX2GTFS_ENTUR -> processNetex2GtfsEntur206(resultMessage);
                 case RuleName.GTFS2NETEX_FINTRAFFIC -> processGtfs2NetexFintraffic100(resultMessage);
-                case RuleName.GBFS_ENTUR ->  processGbfsEntur(resultMessage);
+                case RuleName.GBFS_ENTUR -> processGbfsEntur(resultMessage);
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -219,47 +215,4 @@ public class RuleResultsListener {
         }
     }
 
-    private <M, R> void listenTree(String queueName, Function<JsonNode, CompletableFuture<R>> process) {
-
-        Function<String, JsonNode> x = message -> {
-            try {
-                return objectMapper.readTree(message);
-            } catch (JsonProcessingException e) {
-                throw new RuleExecutionException("Failed to deserialize message in queue " + queueName, e);
-            }
-        };
-        listen(queueName, x, process);
-    }
-
-    private <M, R> void listenValue(String queueName, Class<M> cls, Function<M, CompletableFuture<R>> process) {
-
-        Function<String, M> x = message -> {
-            try {
-                return objectMapper.readValue(message, cls);
-            } catch (JsonProcessingException e) {
-                throw new RuleExecutionException("Failed to deserialize message in queue " + queueName, e);
-            }
-        };
-        listen(queueName, x, process);
-    }
-
-    private <M, R> void listen(String queueName, Function<String, M> read, Function<M, CompletableFuture<R>> process) {
-        try {
-            List<R> ignored = messagingService.readMessages(queueName)
-                .map(m -> {
-                    try {
-                        logger.trace("Processing message {}", m);
-                        M message = read.apply(m.body());
-                        return process.apply(message);
-                    } finally {
-                        logger.trace("Deleting message {}", m);
-                        messagingService.deleteMessage(queueName, m);
-                    }
-                })
-                .map(CompletableFuture::join)
-                .toList();
-        } catch (SqsException e) {
-            logger.warn("Failed to process messages from queue {}", queueName, e);
-        }
-    }
 }

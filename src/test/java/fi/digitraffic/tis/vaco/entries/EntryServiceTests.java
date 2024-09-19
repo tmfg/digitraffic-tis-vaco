@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -25,6 +28,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -34,6 +38,9 @@ class EntryServiceTests {
     private EntryService entryService;
     @Mock
     private EntryRepository entryRepository;
+
+    @Mock
+    private TaskRepository taskRepository;
     @Mock
     private TaskService taskService;
     @Mock
@@ -53,6 +60,7 @@ class EntryServiceTests {
     private InOrder inOrderRepository;
     private InOrder inOrderCaching;
     private RecordMapper recordMapper;
+    private EntryRecord entryRecord;
 
     @BeforeEach
     void setUp() {
@@ -63,8 +71,10 @@ class EntryServiceTests {
             taskService,
             packagesService,
             recordMapper,
-            contextRepository);
+            contextRepository,
+            taskRepository);
         entry = ImmutableEntry.copyOf(TestObjects.anEntry().build());
+        entryRecord = ImmutableEntryRecord.of(100000L, entry.publicId(), entry.name(), entry.format(), entry.url(), entry.businessId());
         inOrderRepository = Mockito.inOrder(entryRepository);
         inOrderCaching = Mockito.inOrder(cachingService);
     }
@@ -105,7 +115,7 @@ class EntryServiceTests {
         thenCacheIsInvalidated();
 
         givenTaskInStatus(Status.CANCELLED);
-        thenEntryIsMarkedAs(Status.FAILED);
+        thenEntryIsMarkedAs(Status.CANCELLED);
         thenCacheIsInvalidated();
     }
 
@@ -117,16 +127,18 @@ class EntryServiceTests {
     }
 
     private void givenNoTasks() {
-        BDDMockito.given(taskService.findTasks(entry)).willReturn(List.of());
+        BDDMockito.given(taskRepository.findFirstTask(Optional.of(entryRecord))).willReturn(Optional.empty());
     }
 
     private void givenTaskInStatus(Status status) {
         Task failed = ImmutableTask.of("failed", 100).withStatus(status);
-        BDDMockito.given(taskService.findTasks(entry)).willReturn(List.of(failed));
+        BDDMockito.given(taskRepository.findFirstTask(Optional.of(entryRecord))).willReturn(Optional.of(failed));
     }
 
     private void thenEntryIsMarkedAs(Status status) {
+        BDDMockito.given(entryRepository.findByPublicId(entry.publicId())).willReturn(Optional.of(entryRecord));
         entryService.updateStatus(entry);
+        inOrderRepository.verify(entryRepository).findByPublicId(entry.publicId());
         inOrderRepository.verify(entryRepository).markStatus(entry, status);
     }
 

@@ -164,7 +164,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         Task gtfsTask = completedEntry.tasks().get(1);
         assertThat(dlTask.status(), equalTo(Status.CANCELLED));
         assertThat(gtfsTask.status(), equalTo(Status.CANCELLED));
-        assertThat(completedEntry.status(), equalTo(Status.FAILED));
+        assertThat(completedEntry.status(), equalTo(Status.CANCELLED));
     }
 
     @NotNull
