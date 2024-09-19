@@ -103,14 +103,23 @@ public class MeService {
         Set<Company> directMemberCompanies = findCompanies();
 
         return isAdmin()
+            || isApiUser()
             || hasDirectAccess(directMemberCompanies, businessId)
             || companyHierarchyService.isChildOfAny(directMemberCompanies, businessId);
     }
 
     public boolean isAdmin() {
+        return hasRole("vaco.admin");
+    }
+
+    public boolean isApiUser() {
+        return hasRole("vaco.apiuser");
+    }
+
+    private boolean hasRole(String role) {
         return currentToken().map(t -> {
             List<String> roles = t.getToken().getClaimAsStringList("roles");
-            return roles != null && Set.copyOf(roles).contains("vaco.admin");
+            return roles != null && Set.copyOf(roles).contains(role);
         }).orElse(false);
     }
 
