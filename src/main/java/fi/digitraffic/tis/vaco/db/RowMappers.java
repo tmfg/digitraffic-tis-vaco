@@ -228,33 +228,41 @@ public final class RowMappers {
 
     private static RowMapper<Summary> mapSummaryWithContent(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
-            try {
-                Object content;
-                switch (rs.getString("name")) {
-                    case "agencies" -> {
+            Object content = null;
+            switch (rs.getString("name")) {
+                case "agencies" -> {
+                    try {
                         List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getAgencyCardUiContent(agencies);
+                    } catch (IOException e) {
+                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
                     }
-                    // XXX: Only the first line of feedinfo is persisted, if any. This is a bug in UI which is hardcoded
-                    //      too deeply to rely on this and would be too much effort to refactor at the moment.
-                    case "feedInfo" -> {
+                }
+                // XXX: Only the first line of feedinfo is persisted, if any. This is a bug in UI which is hardcoded
+                //      too deeply to rely on this and would be too much effort to refactor at the moment.
+                case "feedInfo" -> {
+                    try {
                         Map<String, String> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getFeedInfoUiContent(feedInfo);
+                    } catch (IOException e) {
+                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
                     }
-                    default -> content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                 }
-                return ImmutableSummary.builder()
-                    .id(rs.getLong("id"))
-                    .taskId(rs.getLong("task_id"))
-                    .name(rs.getString("name"))
-                    .rendererType(RendererType.forField(rs.getString("renderer_type")))
-                    .content(content)
-                    .build();
-            } catch (IOException e) {
-                LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("name"), e);
+                default -> {
+                    try {
+                        content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                    } catch (IOException e) {
+                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
+                    }
+                }
             }
-
-            return null;
+            return ImmutableSummary.builder()
+                .id(rs.getLong("id"))
+                .taskId(rs.getLong("task_id"))
+                .name(rs.getString("name"))
+                .rendererType(RendererType.forField(rs.getString("renderer_type")))
+                .content(content)
+                .build();
         };
     }
 
