@@ -3,13 +3,18 @@ package fi.digitraffic.tis.vaco.ui;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.me.MeService;
+import fi.digitraffic.tis.vaco.ui.mapper.UiModelMapper;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
+import fi.digitraffic.tis.vaco.ui.model.pages.CompanyEntriesPage;
+import fi.digitraffic.tis.vaco.ui.model.pages.EntrySummary;
+import fi.digitraffic.tis.vaco.ui.model.pages.ImmutableCompanyEntriesPage;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,21 +29,32 @@ import java.util.Set;
 public class UiService {
 
     private final MeService meService;
+
     private final CompanyHierarchyService companyHierarchyService;
+
     private final CachingService cachingService;
+
     private final EntryRepository entryRepository;
+
     private final ContextRepository contextRepository;
+
+    private final RecordMapper recordMapper;
+
+    private final UiModelMapper uiModelMapper;
 
     public UiService(MeService meService,
                      CompanyHierarchyService companyHierarchyService,
                      CachingService cachingService,
                      EntryRepository entryRepository,
-                     ContextRepository contextRepository) {
+                     ContextRepository contextRepository,
+                     RecordMapper recordMapper, UiModelMapper uiModelMapper) {
         this.meService = Objects.requireNonNull(meService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.cachingService = Objects.requireNonNull(cachingService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.contextRepository = Objects.requireNonNull(contextRepository);
+        this.recordMapper = Objects.requireNonNull(recordMapper);
+        this.uiModelMapper = Objects.requireNonNull(uiModelMapper);
     }
 
     public List<MyDataEntrySummary> getAllEntriesVisibleForCurrentUser() {
@@ -66,5 +82,15 @@ public class UiService {
             .withStarted(pe.started())
             .withUpdated(pe.updated())
             .withCompleted(pe.completed());
+    }
+
+    public CompanyEntriesPage companyEntriesPage(String businessId) {
+        List<EntrySummary> entries = Streams.collect(
+            entryRepository.findAllByBusinessId(businessId),
+            r -> uiModelMapper.toEntrySummary(r, contextRepository.find(r)));
+
+        return ImmutableCompanyEntriesPage.builder()
+            .addAllEntries(entries)
+            .build();
     }
 }

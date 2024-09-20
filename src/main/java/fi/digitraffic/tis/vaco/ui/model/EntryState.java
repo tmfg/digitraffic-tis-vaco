@@ -15,7 +15,16 @@ import java.util.List;
 public interface EntryState {
 
     Resource<Entry> entry();
-    List<Summary> summaries();
-    List<TaskReport> reports();
+
+    @Value.Default
+    default List<Summary> summaries() {
+        return List.of();
+    }
+
+    @Value.Default
+    default List<TaskReport> reports() {
+        return List.of();
+    }
+
     String company();
 }

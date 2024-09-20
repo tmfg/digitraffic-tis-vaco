@@ -28,6 +28,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
+import fi.digitraffic.tis.vaco.ui.mapper.UiModelMapper;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.Context;
@@ -42,6 +43,8 @@ import fi.digitraffic.tis.vaco.ui.model.MagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
+import fi.digitraffic.tis.vaco.ui.model.pages.CompanyEntriesPage;
+import fi.digitraffic.tis.vaco.ui.model.pages.ImmutableCompanyEntriesPage;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -105,6 +108,7 @@ public class UiController {
     private final EntryRequestMapper entryRequestMapper;
     private final EncryptionService encryptionService;
     private final ContextService contextService;
+    private final UiModelMapper uiModelMapper;
 
     public UiController(VacoProperties vacoProperties,
                         EntryService entryService,
@@ -118,7 +122,9 @@ public class UiController {
                         AdminToolsService adminToolsService,
                         EntryRequestMapper entryRequestMapper,
                         EncryptionService encryptionService,
-                        UiService uiService, ContextService contextService) {
+                        UiService uiService,
+                        ContextService contextService,
+                        UiModelMapper uiModelMapper) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -133,6 +139,7 @@ public class UiController {
         this.encryptionService = Objects.requireNonNull(encryptionService);
         this.uiService = Objects.requireNonNull(uiService);
         this.contextService = Objects.requireNonNull(contextService);
+        this.uiModelMapper = Objects.requireNonNull(uiModelMapper);
     }
 
     @GetMapping(path = "/bootstrap")
@@ -349,14 +356,29 @@ public class UiController {
             .body(stream);
     }
 
+    /**
+     * @deprecated This endpoint is used by multiple pages which is against our general UI API design. It is not
+     *             outright removed as refactoring everything would be too costly, however please don't reuse UI
+     *             endpoints in the future.
+     */
+    @Deprecated(since = "2024-09-24")
     @GetMapping(path = "/admin/entries")
     @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
-            // TODO: should this also fetch latest 10 instances like in MyData case?
             List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId);
             return ResponseEntity.ok(Streams.collect(entries, e -> asEntryStateResource(e, e.publicId())));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @GetMapping(path = "/pages/admin-company-entries/{businessId}")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<CompanyEntriesPage>> companyEntriesPage(@PathVariable(name = "businessId") String businessId) {
+        if (meService.isAllowedToAccess(businessId)) {
+            return ResponseEntity.ok(Resource.resource(uiService.companyEntriesPage(businessId)));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }

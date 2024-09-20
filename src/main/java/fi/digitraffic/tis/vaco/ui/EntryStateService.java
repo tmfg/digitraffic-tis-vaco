@@ -124,10 +124,13 @@ public class EntryStateService {
 
     public static List<ImmutableCard> getAgencyCardUiContent(List<Map<String, String>> agencies) {
         return Streams.map(agencies,
-            agency -> ImmutableCard.builder()
-                .title(agency.get("agency_name"))
-                .content(getAgencyCard(agency))
-                .build()).toList();
+            agency -> {
+                String agencyName = agency.get("agency_name");
+                return ImmutableCard.builder()
+                    .title(agencyName != null ? agencyName : "")
+                    .content(getAgencyCard(agency))
+                    .build();
+            }).toList();
     }
 
     private static List<ImmutableLabelValuePair> getAgencyCard(Map<String, String> agency) {
