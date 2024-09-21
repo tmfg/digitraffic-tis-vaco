@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static fi.digitraffic.tis.utilities.Functional.firstNonNull;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
@@ -125,27 +126,29 @@ public class EntryStateService {
     public static List<ImmutableCard> getAgencyCardUiContent(List<Map<String, String>> agencies) {
         return Streams.map(agencies,
             agency -> {
-                String agencyName = agency.get("agency_name");
+                String agencyName = firstNonNull(agency::get, "agency_name", "agencyName");
                 return ImmutableCard.builder()
                     .title(agencyName != null ? agencyName : "")
                     .content(getAgencyCard(agency))
                     .build();
             }).toList();
+
+
     }
 
     private static List<ImmutableLabelValuePair> getAgencyCard(Map<String, String> agency) {
         return List.of(
-            ImmutableLabelValuePair.of("website", agency.get("agency_url")),
-            ImmutableLabelValuePair.of("email", agency.get("agency_email")),
-            ImmutableLabelValuePair.of("phone", agency.get("agency_phone")));
+            ImmutableLabelValuePair.of("website", firstNonNull(agency::get, "agency_url", "agencyUrl")),
+            ImmutableLabelValuePair.of("email", firstNonNull(agency::get, "agency_email", "agencyEmail")),
+            ImmutableLabelValuePair.of("phone", firstNonNull(agency::get, "agency_phone", "agencyPhone")));
     }
 
     public static List<ImmutableLabelValuePair> getFeedInfoUiContent(Map<String, String> feedInfo) {
-        return List.of(ImmutableLabelValuePair.of("publisherName", feedInfo.get("feed_publisher_name")),
-            ImmutableLabelValuePair.of("publisherUrl", feedInfo.get("feed_publisher_url")),
-            ImmutableLabelValuePair.of("feedLanguage", feedInfo.get("feed_lang")),
-            ImmutableLabelValuePair.of("feedStartsDate", feedInfo.get("feed_start_date")),  // TODO: Unmatching plural in label name
-            ImmutableLabelValuePair.of("feedEndDate", feedInfo.get("feed_end_date")));
+        return List.of(ImmutableLabelValuePair.of("publisherName", firstNonNull(feedInfo::get, "feed_publisher_name", "feedPublisherName")),
+            ImmutableLabelValuePair.of("publisherUrl", firstNonNull(feedInfo::get, "feed_publisher_url", "feedPublisherUrl")),
+            ImmutableLabelValuePair.of("feedLanguage", firstNonNull(feedInfo::get, "feed_lang", "feedLang")),
+            ImmutableLabelValuePair.of("feedStartDate", firstNonNull(feedInfo::get, "feed_start_date", "feedStartDate")),
+            ImmutableLabelValuePair.of("feedEndDate", firstNonNull(feedInfo::get, "feed_end_date", "feedEndDate")));
     }
 
     private static int severityToInt(String severity) {
