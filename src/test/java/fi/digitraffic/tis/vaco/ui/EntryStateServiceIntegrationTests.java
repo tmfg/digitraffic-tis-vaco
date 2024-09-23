@@ -238,7 +238,7 @@ class EntryStateServiceIntegrationTests extends SpringBootIntegrationTestBase {
         assertLabelValuePair(feedInfos.get(0), "publisherName", publisherName);
         assertLabelValuePair(feedInfos.get(1), "publisherUrl", publisherUrl);
         assertLabelValuePair(feedInfos.get(2), "feedLanguage", language);
-        assertLabelValuePair(feedInfos.get(3), "feedStartsDate", startDate);
+        assertLabelValuePair(feedInfos.get(3), "feedStartDate", startDate);
         assertLabelValuePair(feedInfos.get(4), "feedEndDate", endDate);
     }
 
