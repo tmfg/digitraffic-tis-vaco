@@ -1,0 +1,41 @@
+{
+  "notices": [
+    {
+      "code": "missing_recommended_field",
+      "severity": "ERROR",
+      "totalNotices": 5,
+      "sampleNotices": [
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        },
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        },
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        },
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        },
+        {
+          "filename": "feed_info.txt",
+          "csvRowNumber": 2.0
+        }
+      ]
+    },
+    {
+      "code": "unknown_file",
+      "severity": "INFO",
+      "totalNotices": 1,
+      "sampleNotices": [
+        {
+          "filename": "contracts.txt"
+        }
+      ]
+    }
+  ]
+}

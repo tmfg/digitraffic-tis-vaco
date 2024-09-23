@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.badges;
 
+import com.google.common.annotations.VisibleForTesting;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ContentDisposition;
@@ -41,7 +42,8 @@ public class BadgeController {
                 String.format("No status available for entry '%s' task '%s'", publicId, taskName)));
     }
 
-    private Optional<ClassPathResource> getResource(HttpServletResponse response, Optional<ClassPathResource> statusOpt) {
+    @VisibleForTesting
+    static Optional<ClassPathResource> getResource(HttpServletResponse response, Optional<ClassPathResource> statusOpt) {
         return statusOpt.map(status -> {
                 ContentDisposition contentDisposition = ContentDisposition.builder("inline")
                     .filename(status.getFilename())

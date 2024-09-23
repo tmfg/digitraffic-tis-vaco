@@ -110,7 +110,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         }
     }
 
-    private void submitExternalRule(Task task, String name, Entry entry) {
+    public void submitExternalRule(Task task, String name, Entry entry) {
         ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
             .entry(entry)
             .configuration(ImmutableRulesetSubmissionConfiguration

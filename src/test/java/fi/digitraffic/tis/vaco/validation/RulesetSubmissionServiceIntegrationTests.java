@@ -10,7 +10,6 @@ import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
-import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -165,7 +164,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         Task gtfsTask = completedEntry.tasks().get(1);
         assertThat(dlTask.status(), equalTo(Status.CANCELLED));
         assertThat(gtfsTask.status(), equalTo(Status.CANCELLED));
-        assertThat(completedEntry.status(), equalTo(Status.FAILED));
+        assertThat(completedEntry.status(), equalTo(Status.CANCELLED));
     }
 
     @NotNull
