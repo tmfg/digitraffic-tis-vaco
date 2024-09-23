@@ -43,7 +43,7 @@ public class BadgeController {
     }
 
     @VisibleForTesting
-    private Optional<ClassPathResource> getResource(HttpServletResponse response, Optional<ClassPathResource> statusOpt) {
+    static Optional<ClassPathResource> getResource(HttpServletResponse response, Optional<ClassPathResource> statusOpt) {
         return statusOpt.map(status -> {
                 ContentDisposition contentDisposition = ContentDisposition.builder("inline")
                     .filename(status.getFilename())
