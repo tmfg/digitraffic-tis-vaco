@@ -134,10 +134,10 @@ public class RuleResultsListener extends SqsListener {
             return switch (resultMessage.ruleName()) {
                 case DownloadRule.PREPARE_DOWNLOAD_TASK -> processDownloadRuleResults(resultMessage);
                 case StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK -> processStopsAndQuaysResults(resultMessage);
-                case RuleName.NETEX_ENTUR -> processResultFromNetexEntur101(resultMessage);
+                case RuleName.NETEX_ENTUR -> processResultFromNetexEntur(resultMessage);
                 case RuleName.GTFS_CANONICAL -> processResultFromGtfsCanonical(resultMessage);
-                case RuleName.NETEX2GTFS_ENTUR -> processNetex2GtfsEntur206(resultMessage);
-                case RuleName.GTFS2NETEX_FINTRAFFIC -> processGtfs2NetexFintraffic100(resultMessage);
+                case RuleName.NETEX2GTFS_ENTUR -> processNetex2GtfsEntur(resultMessage);
+                case RuleName.GTFS2NETEX_FINTRAFFIC -> processGtfs2NetexFintraffic(resultMessage);
                 case RuleName.GBFS_ENTUR -> processGbfsEntur(resultMessage);
                 default -> {
                     logger.error(
@@ -168,7 +168,7 @@ public class RuleResultsListener extends SqsListener {
         return processRule(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, resultMessage, internalRuleResultProcessor);
     }
 
-    private boolean processResultFromNetexEntur101(ResultMessage resultMessage) {
+    private boolean processResultFromNetexEntur(ResultMessage resultMessage) {
         return processRule(RuleName.NETEX_ENTUR, resultMessage, netexEnturValidator);
     }
 
@@ -176,11 +176,11 @@ public class RuleResultsListener extends SqsListener {
         return processRule(RuleName.GTFS_CANONICAL, resultMessage, gtfsResultProcessor);
     }
 
-    private boolean processNetex2GtfsEntur206(ResultMessage resultMessage) {
+    private boolean processNetex2GtfsEntur(ResultMessage resultMessage) {
         return processRule(RuleName.NETEX2GTFS_ENTUR, resultMessage, simpleResultProcessor);
     }
 
-    private boolean processGtfs2NetexFintraffic100(ResultMessage resultMessage) {
+    private boolean processGtfs2NetexFintraffic(ResultMessage resultMessage) {
         return processRule(RuleName.GTFS2NETEX_FINTRAFFIC, resultMessage, gtfsToNetexResultProcessor);
     }
 

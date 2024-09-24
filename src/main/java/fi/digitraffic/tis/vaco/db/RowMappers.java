@@ -159,6 +159,7 @@ public final class RowMappers {
             .publish(rs.getBoolean(alias + "publish"))
             .codespaces(List.of(ArraySqlValue.read(rs, alias + "codespaces")))
             .notificationWebhookUri(rs.getString(alias +  "notification_webhook_uri"))
+            .website(rs.getString(alias + "website"))
             .build();
 
     /**
@@ -177,6 +178,7 @@ public final class RowMappers {
         .publish(rs.getBoolean("publish"))
         .codespaces(List.of(ArraySqlValue.read(rs, "codespaces")))
         .notificationWebhookUri(rs.getString("notification_webhook_uri"))
+        .website(rs.getString("website"))
         .build();
 
     public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(
