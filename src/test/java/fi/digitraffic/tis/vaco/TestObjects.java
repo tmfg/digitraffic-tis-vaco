@@ -129,6 +129,7 @@ public class TestObjects {
             null,
             "unittests-" + randomSeed + "-processing-bucket",
             "http://localhost:5173",
+            "http://localhost:8080/api",
             "biz",
             aws != null ? aws : new Aws("eu-north-1", null, null, null, new S3(null)),
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),

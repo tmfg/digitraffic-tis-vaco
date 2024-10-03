@@ -44,7 +44,6 @@ import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.pages.CompanyEntriesPage;
-import fi.digitraffic.tis.vaco.ui.model.pages.ImmutableCompanyEntriesPage;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -555,37 +554,50 @@ public class UiController {
         Map<String, Map<String, Link>> links = new HashMap<>();
         Map<String, Link> refs = new HashMap<>();
         if (companyLatestEntry.publicId() != null) {
-            refs.put("badge", Link.to(vacoProperties.baseUrl(),
+            refs.put("badge", Link.to(
+                vacoProperties.baseUrl(),
                 RequestMethod.GET,
-                fromMethodCall(on(BadgeController.class).entryBadge(companyLatestEntry.publicId(), null))));
+                ignored -> fromMethodCall(on(BadgeController.class).entryBadge(companyLatestEntry.publicId(), null))));
         }
         links.put("refs", refs);
         return new Resource<>(companyLatestEntry, null, links);
     }
 
     private <T> Resource<T> asEntryStateResource(T data, String publicId) {
-        Map<String, Map<String, Link>> links = new HashMap<>();
-        Map<String, Link> linkInstances = new HashMap<>();
-        linkInstances.put("self", Link.to(vacoProperties.baseUrl(),
-            RequestMethod.GET,
-            fromMethodCall(on(UiController.class).fetchEntryState(publicId, null))));
-        linkInstances.put("badge", Link.to(vacoProperties.baseUrl(),
-            RequestMethod.GET,
-            fromMethodCall(on(BadgeController.class).entryBadge(publicId, null))));
-
-        links.put("refs", linkInstances);
+        Map<String, Map<String, Link>> links = Map.of(
+            "refs",
+            Map.of(
+                "self",
+                Link.to(
+                    vacoProperties.baseUrl(),
+                    RequestMethod.GET,
+                    ignored -> fromMethodCall(on(UiController.class).fetchEntryState(publicId, null))),
+                "badge",
+                Link.to(
+                    vacoProperties.baseUrl(),
+                    RequestMethod.GET,
+                    ignored -> fromMethodCall(on(BadgeController.class).entryBadge(publicId, null))))
+        );
         return new Resource<>(data, null, links);
     }
 
     private Resource<Entry> asQueueHandlerResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
-        links.put("refs", Map.of("self", Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())))));
+        links.put("refs", Map.of("self", Link.to(
+            vacoProperties.baseUrl(),
+            RequestMethod.GET,
+            ignored -> fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())))));
 
         if (entry.packages() != null) {
             ConcurrentMap<String, Map<String, Link>> packageLinks = new ConcurrentHashMap<>();
             entry.packages().forEach(p -> {
                 String taskName = p.task().name();
-                packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))));
+                packageLinks.computeIfAbsent(taskName, t -> new HashMap<>())
+                    .put(p.name(),
+                        Link.to(
+                            vacoProperties.baseUrl(),
+                            RequestMethod.GET,
+                            ignored -> fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))));
             });
 
             links.putAll(packageLinks);
