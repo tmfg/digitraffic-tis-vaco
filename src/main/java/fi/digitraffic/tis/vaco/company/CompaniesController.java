@@ -2,9 +2,9 @@ package fi.digitraffic.tis.vaco.company;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.Responses;
+import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
-import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -88,7 +88,7 @@ public class CompaniesController {
     private Resource<Company> asCompanyResource(Company company) {
         return new Resource<>(company, null, Map.of("refs", Map.of("self", Link.to(vacoProperties.baseUrl(),
             RequestMethod.GET,
-            fromMethodCall(on(CompaniesController.class).getCompanyByBusinessId(company.businessId()))))));
+            ignored -> fromMethodCall(on(CompaniesController.class).getCompanyByBusinessId(company.businessId()))))));
     }
 
 }

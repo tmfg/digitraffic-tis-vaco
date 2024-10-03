@@ -140,6 +140,6 @@ class WebhookNotifierTests {
         assertThat(sentNotification.payload(), instanceOf(EntryCompletePayload.class));
         EntryCompletePayload payload = (EntryCompletePayload) sentNotification.payload();
         assertThat("Do not expose admin restricted notifications in webhook", payload.entry().notifications(), empty());
-        assertThat(payload.packages(), equalTo(Map.of("foo", Map.of("testpackage", new Link("http://localhost:5173/v1/packages/" + entry.publicId() + "/foo/testpackage", RequestMethod.GET)))));
+        assertThat(payload.packages(), equalTo(Map.of("foo", Map.of("testpackage", new Link("http://localhost:8080/api/v1/packages/" + entry.publicId() + "/foo/testpackage", RequestMethod.GET)))));
     }
 }
