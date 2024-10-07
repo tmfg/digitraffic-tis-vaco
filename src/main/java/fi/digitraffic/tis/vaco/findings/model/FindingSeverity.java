@@ -13,4 +13,6 @@ public final class FindingSeverity {
     public static final String INFO = "INFO";
 
     public static final String NONE = "NONE";
+
+    public static final String FAILURE = "FAILURE";
 }
