@@ -112,6 +112,8 @@ public abstract class RuleResultProcessor implements ResultProcessor {
                 taskService.markStatus(entry, task, Status.ERRORS);
             } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
                 taskService.markStatus(entry, task, Status.WARNINGS);
+            } else if (severities.getOrDefault(FindingSeverity.FAILURE, 0L) > 0) {
+                taskService.markStatus(entry, task, Status.FAILED);
             } else {
                 taskService.markStatus(entry, task, Status.SUCCESS);
             }
