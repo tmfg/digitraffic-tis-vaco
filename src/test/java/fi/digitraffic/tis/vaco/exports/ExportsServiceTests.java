@@ -3,7 +3,9 @@ package fi.digitraffic.tis.vaco.exports;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+
 import org.junit.jupiter.api.Test;
+import org.rutebanken.netex.model.ContactStructure;
 import org.rutebanken.netex.model.GeneralOrganisation;
 import org.rutebanken.netex.model.PublicationDeliveryStructure;
 import org.rutebanken.netex.model.ResourceFrame;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 class ExportsServiceTests extends SpringBootIntegrationTestBase {
 
@@ -30,13 +33,32 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
         });
 
         assertThat(organisations.size(), equalTo(2));
-        assertGeneralOrganisation(organisations.getFirst(), "public-validation-test-id", "public-validation-test", "FSR:GeneralOrganisation:public-validation-test-id");
-        assertGeneralOrganisation(organisations.get(1), "2942108-7", "Fintraffic Oy", "FSR:GeneralOrganisation:2942108-7");
+        assertGeneralOrganisation(organisations.getFirst(),
+            "public-validation-test-id",
+            "public-validation-test",
+            "FSR:GeneralOrganisation:public-validation-test-id",
+            assertContactStructure("https://www.fintraffic.fi"));
+        assertGeneralOrganisation(organisations.get(1),
+            "2942108-7",
+            "Fintraffic Oy",
+            "FSR:GeneralOrganisation:2942108-7",
+            assertContactStructure("https://www.fintraffic.fi"));
     }
 
-    private void assertGeneralOrganisation(GeneralOrganisation generalOrganisation, String companyNumber, String name, String id) {
+    private static Consumer<ContactStructure> assertContactStructure(String url) {
+        return contactStructure -> {
+            assertThat(contactStructure.getUrl(), equalTo(url));
+        };
+    }
+
+    private void assertGeneralOrganisation(GeneralOrganisation generalOrganisation,
+                                           String companyNumber,
+                                           String name,
+                                           String id,
+                                           Consumer<ContactStructure> consumer) {
         assertThat(generalOrganisation.getCompanyNumber(), equalTo(companyNumber));
         assertThat(generalOrganisation.getName().getValue(), equalTo(name));
         assertThat(generalOrganisation.getId(), equalTo(id));
+        consumer.accept(generalOrganisation.getContactDetails());
     }
 }
