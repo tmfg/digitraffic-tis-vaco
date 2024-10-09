@@ -34,6 +34,7 @@ import java.util.Objects;
 @Component
 public class GtfsToNetexResultProcessor extends RuleResultProcessor implements ResultProcessor {
 
+    public static final String STATS_JSON = "_stats.json";
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final RulesetService rulesetService;
     private final ObjectMapper objectMapper;
@@ -59,10 +60,8 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
 
         Map<String, String> fileNames = collectOutputFileNames(resultMessage);
 
-        String stats = "_stats.json";
-
         boolean statsProcessed = fileNames.keySet().stream()
-            .filter(key -> key.endsWith(stats))
+            .filter(key -> key.endsWith(STATS_JSON))
             .findFirst()
             .map(key -> processFile(resultMessage, entry, task, fileNames, key, path -> {
                 try {
