@@ -34,7 +34,7 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
 
         assertThat(organisations.size(), equalTo(2));
         assertGeneralOrganisation(organisations.getFirst(),
-            "public-validation-test-id",
+            Constants.PUBLIC_VALIDATION_TEST_ID,
             "public-validation-test",
             "FSR:GeneralOrganisation:public-validation-test-id",
             assertContactStructure("https://www.fintraffic.fi"));
