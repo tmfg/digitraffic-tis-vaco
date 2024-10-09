@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.exports;
 
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
