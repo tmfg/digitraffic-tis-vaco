@@ -121,14 +121,14 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
     private ArrayList<String> scanStatsFileToArray(Path reportsFile) throws JSONException, IOException {
         Map<String, Integer> statsListFile = objectMapper.readValue(reportsFile.toFile(), new TypeReference<>() {});
 
-        JSONObject jsonObject = new JSONObject(statsListFile);
+        JSONObject statsObject = new JSONObject(statsListFile);
 
         ArrayList<String> statsList = new ArrayList<>();
 
-        Iterator<String> keys = jsonObject.keys();
+        Iterator<String> keys = statsObject.keys();
         while (keys.hasNext()) {
             String key = keys.next();
-            String value = key + ": " + jsonObject.get(key);
+            String value = key + ": " + statsObject.get(key);
             statsList.add(value);
         }
 
