@@ -69,7 +69,7 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
             try {
                 findings = new ArrayList<>(scanErrorLog(entry, task, resultMessage.ruleName(), path));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuleExecutionException(e);
             }
             return storeFindings(findings);
         });
