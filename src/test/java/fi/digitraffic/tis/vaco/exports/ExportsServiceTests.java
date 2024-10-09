@@ -41,7 +41,7 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
         assertGeneralOrganisation(organisations.get(1),
             Constants.FINTRAFFIC_BUSINESS_ID,
             "Fintraffic Oy",
-            "FSR:GeneralOrganisation:2942108-7",
+            "FSR:GeneralOrganisation:" + Constants.FINTRAFFIC_BUSINESS_ID,
             assertContactStructure("https://www.fintraffic.fi"));
     }
 
