@@ -68,13 +68,15 @@ public class ExportsService {
             .withId(NETEX_ROOT_ID + ":GeneralOrganisation:" + companyRecord.businessId())
             .withName(multilingualString(companyRecord.name(), companyRecord.language()))
             .withCompanyNumber(companyRecord.businessId());
+        ContactStructure contactStructure = new ContactStructure()
+            .withUrl(companyRecord.website());
         Optional.ofNullable(companyRecord.adGroupId())
             .flatMap(fintrafficIdService::getGroup)
             .flatMap(FintrafficIdGroup::organizationData)
             .ifPresent(organizationData ->
-                organisation.withContactDetails(new ContactStructure()
-                    .withPhone(organizationData.phoneNumber())
-                    .withContactPerson(multilingualString(organizationData.contactName(), companyRecord.language()))));
+                contactStructure.withPhone(organizationData.phoneNumber())
+                .withContactPerson(multilingualString(organizationData.contactName(), companyRecord.language())));
+        organisation.withContactDetails(contactStructure);
         return organisation;
     }
 
