@@ -14,6 +14,7 @@ import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
@@ -69,7 +70,7 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
             try {
                 findings = new ArrayList<>(scanErrorLog(entry, task, resultMessage.ruleName(), path));
             } catch (IOException e) {
-                throw new RuleExecutionException(e);
+                throw new RuleExecutionException("Stderr.log file could not be read into findings in entry " + entry.publicId());
             }
             return storeFindings(findings);
         });
