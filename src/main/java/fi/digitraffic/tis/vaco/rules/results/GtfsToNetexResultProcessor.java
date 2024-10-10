@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.findings.FindingService;
@@ -20,16 +21,15 @@ import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Component
 public class GtfsToNetexResultProcessor extends RuleResultProcessor implements ResultProcessor {
@@ -46,7 +46,8 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
                                       TaskService taskService,
                                       RulesetService rulesetService,
                                       FindingService findingService,
-                                      ObjectMapper objectMapper, GtfsInputSummaryService gtfsInputSummaryService) {
+                                      ObjectMapper objectMapper,
+                                      GtfsInputSummaryService gtfsInputSummaryService) {
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -60,12 +61,13 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
 
         Map<String, String> fileNames = collectOutputFileNames(resultMessage);
 
-        boolean statsProcessed = fileNames.keySet().stream()
+        boolean statsProcessed = fileNames.keySet()
+            .stream()
             .filter(key -> key.endsWith(STATS_JSON))
             .findFirst()
             .map(key -> processFile(resultMessage, entry, task, fileNames, key, path -> {
                 try {
-                    ArrayList<String> gtfs2netexStats = scanStatsFileToArray(path);
+                    Set<String> gtfs2netexStats = scanStatsFileToArray(path);
                     return saveGtfs2NetexSummary(task, gtfs2netexStats);
                 } catch (JSONException | IOException e) {
                     throw new RuntimeException(e);
@@ -118,24 +120,12 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
         }
     }
 
-    private ArrayList<String> scanStatsFileToArray(Path reportsFile) throws JSONException, IOException {
+    private Set<String> scanStatsFileToArray(Path reportsFile) throws JSONException, IOException {
         Map<String, Integer> statsListFile = objectMapper.readValue(reportsFile.toFile(), new TypeReference<>() {});
-
-        JSONObject statsObject = new JSONObject(statsListFile);
-
-        ArrayList<String> statsList = new ArrayList<>();
-
-        Iterator<String> keys = statsObject.keys();
-        while (keys.hasNext()) {
-            String key = keys.next();
-            String value = key + ": " + statsObject.get(key);
-            statsList.add(value);
-        }
-
-        return statsList;
+        return Streams.collect(statsListFile.entrySet(), e -> e.getKey() + ": " + e.getValue());
     }
 
-    private boolean saveGtfs2NetexSummary(Task task, ArrayList<String> gtfs2netexStats) {
+    private boolean saveGtfs2NetexSummary(Task task, Set<String> gtfs2netexStats) {
         gtfsInputSummaryService.persistTaskSummaryItem(task, "counts", RendererType.LIST, gtfs2netexStats);
         return true;
     }
