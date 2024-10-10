@@ -137,6 +137,7 @@ public class RecordMapper {
             .publish(companyRecord.publish())
             .codespaces(companyRecord.codespaces())
             .notificationWebhookUri(companyRecord.notificationWebhookUri())
+            .website(companyRecord.website())
             .build();
     }
 

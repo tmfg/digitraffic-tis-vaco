@@ -36,7 +36,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @Component
@@ -124,8 +123,8 @@ public class WebhookNotifier implements Notifier {
 
     private Link packageToLink(EntryRecord entry, Task task, Package aPackage) {
         return Link.to(
-            vacoProperties.baseUrl(),
+            vacoProperties.contextUrl(),
             RequestMethod.GET,
-            fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), task.name(), aPackage.name(), null)));
+            builder -> builder.withMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), task.name(), aPackage.name(), null)));
     }
 }

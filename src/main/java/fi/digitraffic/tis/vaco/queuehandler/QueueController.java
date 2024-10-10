@@ -98,15 +98,27 @@ public class QueueController {
 
         String magicToken = encryptionService.encrypt(ImmutableMagicToken.of(entry.publicId()));
 
+        /**
+         * NOTE: Magic link points to the UI side, which is why #baseUrl(), not #contextUrl() is used.
+         */
         Link magicLink = new Link(vacoProperties.baseUrl() + "/ui/data/" + entry.publicId() + "?magic=" + magicToken, RequestMethod.GET);
-        Link selfLink = Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())));
+        Link selfLink = Link.to(
+            vacoProperties.baseUrl(),
+            RequestMethod.GET,
+            ignored -> fromMethodCall(on(QueueController.class).fetchEntry(entry.publicId())));
         links.put( "refs", Map.of("self", selfLink, "magic", magicLink));
 
         if (entry.packages() != null) {
             ConcurrentMap<String, Map<String, Link>> packageLinks = new ConcurrentHashMap<>();
             entry.packages().forEach(p -> {
                 String taskName = p.task().name();
-                packageLinks.computeIfAbsent(taskName, t -> new HashMap<>()).put(p.name(), Link.to(vacoProperties.baseUrl(), RequestMethod.GET, fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))));
+                packageLinks.computeIfAbsent(taskName, t -> new HashMap<>())
+                    .put(
+                        p.name(),
+                        Link.to(
+                            vacoProperties.baseUrl(),
+                            RequestMethod.GET,
+                            ignored -> fromMethodCall(on(PackagesController.class).fetchPackage(entry.publicId(), taskName, p.name(), null))));
             });
 
             links.putAll(packageLinks);

@@ -40,4 +40,7 @@ public interface CompanyRecord {
 
     @Nullable
     String notificationWebhookUri();
+
+    @Nullable
+    String website();
 }

@@ -38,7 +38,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static fi.digitraffic.tis.utilities.Functional.firstNonNull;
-import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
 @Service
@@ -113,9 +112,9 @@ public class EntryStateService {
     private Resource<Package> asPackageResource(Package taskPackage, Task task, Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
         links.put("refs", Map.of("self", Link.to(
-            vacoProperties.baseUrl(),
+            vacoProperties.contextUrl(),
             RequestMethod.GET,
-            fromMethodCall(on(UiController.class).fetchPackage(entry.publicId(), task.name(), taskPackage.name(), null)))));
+            builder -> builder.withMethodCall(on(UiController.class).fetchPackage(entry.publicId(), task.name(), taskPackage.name(), null)))));
         return new Resource<>(taskPackage, null, links);
     }
 

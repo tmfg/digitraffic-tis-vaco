@@ -9,11 +9,13 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.summary.GtfsInputSummaryService;
@@ -24,20 +26,25 @@ import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 import java.util.Set;
 
 @Component
 public class GtfsToNetexResultProcessor extends RuleResultProcessor implements ResultProcessor {
 
+    public static final String FATAL_ERROR_MARKER = "FATAL ERROR";
     public static final String STATS_JSON = "_stats.json";
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final RulesetService rulesetService;
     private final ObjectMapper objectMapper;
+    private final FindingService findingService;
     private final GtfsInputSummaryService gtfsInputSummaryService;
 
     public GtfsToNetexResultProcessor(VacoProperties vacoProperties,
@@ -52,6 +59,7 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.gtfsInputSummaryService = Objects.requireNonNull(gtfsInputSummaryService);
+        this.findingService = Objects.requireNonNull(findingService);
     }
 
     @Override
@@ -80,9 +88,20 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
             return storeFindings(findings);
         });
 
+        boolean errorLogProcessed = processFile(resultMessage, entry, task, fileNames, "stderr.log", path -> {
+            List<Finding> findings = null;
+            try {
+                findings = new ArrayList<>(scanErrorLog(entry, task, resultMessage.ruleName(), path));
+            } catch (IOException e) {
+                throw new RuleExecutionException("Stderr.log file could not be read into findings in entry " + entry.publicId());
+            }
+            return storeFindings(findings);
+        });
+
         resolveTaskStatus(entry, task);
 
-        return errorsProcessed && statsProcessed;
+        return errorsProcessed && statsProcessed  && errorLogProcessed;
+
     }
 
     private List<ImmutableFinding> scanErrorFile(Entry entry, Task task, String ruleName, Path reportsFile) {
@@ -114,6 +133,48 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
                 })
                 .filter(Objects::nonNull)
                 .toList();
+        } catch (IOException e) {
+            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
+            return List.of();
+        }
+    }
+
+    private List<ImmutableFinding> scanErrorLog(Entry entry, Task task, String ruleName, Path reportsFile) throws IOException {
+
+        try {
+            Long rulesetId = rulesetService.findByName(ruleName)
+                .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
+                .id();
+            try (Stream<String> reportLines = Files.lines(reportsFile)) {
+
+                return reportLines.map(errorLine -> {
+                        if (errorLine.startsWith(FATAL_ERROR_MARKER)) {
+                            String errorDetail = errorLine.substring(errorLine.indexOf(":") + 1).trim();
+                            Map<String, String> errorMap = new HashMap<>();
+                            errorMap.put(FATAL_ERROR_MARKER, errorDetail);
+                            try {
+                                return ImmutableFinding.of(
+                                        task.id(),
+                                        rulesetId,
+                                        ruleName,
+                                        FATAL_ERROR_MARKER,
+                                        FindingSeverity.FAILURE
+                                    )
+                                    .withRaw(objectMapper.writeValueAsBytes(errorMap));
+                            } catch (JsonProcessingException e) {
+                                logger.warn("Failed to convert tree to bytes", e);
+                                return null;
+                            }
+
+                        } else {
+                            return null;
+                        }
+
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+            }
+
         } catch (IOException e) {
             logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
             return List.of();

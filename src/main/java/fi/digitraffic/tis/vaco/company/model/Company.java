@@ -54,4 +54,7 @@ public interface Company {
 
     @Nullable
     String notificationWebhookUri();
+
+    @Nullable
+    String website();
 }

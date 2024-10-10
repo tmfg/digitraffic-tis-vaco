@@ -63,7 +63,8 @@ public class CompanyRepository {
                       contact_emails = ?,
                       publish = ?,
                       codespaces = ?,
-                      notification_webhook_uri = ?
+                      notification_webhook_uri = ?,
+                      website = ?
                 WHERE business_id = ?
             RETURNING *
             """,
@@ -75,6 +76,7 @@ public class CompanyRepository {
             company.publish(),
             ArraySqlValue.create(company.codespaces().toArray(new String[0])),
             company.notificationWebhookUri(),
+            company.website(),
             businessId);
     }
 

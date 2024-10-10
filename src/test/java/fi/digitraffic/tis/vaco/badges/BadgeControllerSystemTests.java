@@ -38,6 +38,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
@@ -70,6 +72,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @ExtendWith(MockitoExtension.class)
 class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private HttpServer server;
+
     @Autowired
     private BadgeController badgeController;
 
@@ -85,11 +91,6 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     @Autowired
     private TaskRepository taskRepository;
 
-    @Mock
-    private HttpServletResponse response;
-
-    private HttpServer server;
-
     @Autowired
     private TestListener testListener;
 
@@ -99,6 +100,8 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     @Autowired
     private VacoProperties vacoProperties;
 
+    @Mock
+    private HttpServletResponse response;
 
     @BeforeAll
     static void beforeAll() {
@@ -119,17 +122,18 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     }
 
     public void startServer() throws IOException {
-        server = HttpServer.create(new InetSocketAddress(18181), 0);
+        InetSocketAddress address = new InetSocketAddress(0);
+        server = HttpServer.create(address, 0);
         server.createContext("/testfile", new FileHandler());
         server.setExecutor(null);
         server.start();
-        System.out.println("Server started");
+        logger.debug("Server started");
     }
 
     public void stopServer() {
         if (server != null) {
             server.stop(0);
-            System.out.println("Server stopped");
+            logger.debug("Server stopped");
         }
     }
 
@@ -220,7 +224,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         Task downloadTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100);
         Task validationTask = ImmutableTask.of(RuleName.GTFS_CANONICAL, 200);
         Entry entry = entryBuilder.addTasks(downloadTask, validationTask)
-            .url("http://localhost:18181/testfile")
+            .url("http://localhost:" + server.getAddress().getPort() + "/testfile")
             .build();
         assertThat(entry.tasks(), not(empty()));
         Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
@@ -255,7 +259,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         Task downloadTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100);
         Task validationTask = ImmutableTask.of(RuleName.GTFS_CANONICAL, 200);
         Entry entry = entryBuilder.addTasks(downloadTask, validationTask)
-            .url("http://localhost:18181/testfile")
+            .url("http://localhost:" + server.getAddress().getPort() + "/testfile")
             .build();
         assertThat(entry.tasks(), not(empty()));
         Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
@@ -291,7 +295,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         Task downloadTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100);
         Task validationTask = ImmutableTask.of(RuleName.GTFS_CANONICAL, 200);
         Entry entry = entryBuilder.addTasks(downloadTask, validationTask)
-            .url("http://localhost:18181/testfile")
+            .url("http://localhost:" + server.getAddress().getPort() + "/testfile")
             .build();
         assertThat(entry.tasks(), not(empty()));
         Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);

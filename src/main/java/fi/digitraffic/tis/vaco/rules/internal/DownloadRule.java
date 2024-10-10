@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -259,10 +260,11 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     while (entries.hasMoreElements()) {
                         ZipEntry ze = entries.nextElement();
                         // if it throws an exception fetching any of the following then we know the file is corrupted.
-                        zipfile.getInputStream(ze);
-                        ze.getCrc();
-                        ze.getCompressedSize();
-                        ze.getName();
+                        try (InputStream fileContent = zipfile.getInputStream(ze)) {
+                             ze.getCrc();
+                             ze.getCompressedSize();
+                             ze.getName();
+                        }
                     }
                     return CompletableFuture.completedFuture(path);
                 } catch (IOException e) {
