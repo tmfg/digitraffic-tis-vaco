@@ -305,7 +305,7 @@ public class GtfsInputSummaryService {
         }
     }
 
-    private <T> void persistTaskSummaryItem(Task task, String itemName, RendererType rendererType, T data) {
+    public  <T> void persistTaskSummaryItem(Task task, String itemName, RendererType rendererType, T data) {
         try {
             summaryRepository.create(ImmutableSummary.of(task.id(), itemName, rendererType, objectMapper.writeValueAsBytes(data)));
         }
