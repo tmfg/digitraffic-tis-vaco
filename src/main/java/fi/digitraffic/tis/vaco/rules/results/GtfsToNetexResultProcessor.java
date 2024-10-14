@@ -44,7 +44,6 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final RulesetService rulesetService;
     private final ObjectMapper objectMapper;
-    private final FindingService findingService;
     private final GtfsInputSummaryService gtfsInputSummaryService;
 
     public GtfsToNetexResultProcessor(VacoProperties vacoProperties,
@@ -59,7 +58,6 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.gtfsInputSummaryService = Objects.requireNonNull(gtfsInputSummaryService);
-        this.findingService = Objects.requireNonNull(findingService);
     }
 
     @Override
