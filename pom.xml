@@ -436,6 +436,10 @@
                     <container>
                         <mainClass>fi.digitraffic.tis.vaco.VacoApplication</mainClass>
                         <user>nobody:nobody</user> <!-- "homeless" Linux default user -->
+                        <jvmFlags>
+                            <!-- force JVM to exit on OOME, needed due to Spring Scheduler's internals catching Errors -->
+                            <jvmFlag>-XX:+ExitOnOutOfMemoryError</jvmFlag>
+                        </jvmFlags>
                     </container>
                     <to>
                         <image>${jib-maven-plugin.image-name}</image>
