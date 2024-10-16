@@ -140,7 +140,6 @@ public class S3Client {
         FileDownload downloadFile = s3TransferManager.downloadFile(downloadFileRequest);
 
         CompletedFileDownload downloadResult = downloadFile.completionFuture().join();
-        logger.info("Content length [{}]", downloadResult.response().contentLength());
 
         return downloadResult.response().contentLength();
     }
