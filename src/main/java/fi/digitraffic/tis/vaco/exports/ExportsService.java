@@ -1,24 +1,29 @@
 package fi.digitraffic.tis.vaco.exports;
 
-import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.exports.utils.NetexObjectFactory;
 import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
 import fi.digitraffic.tis.vaco.fintrafficid.model.FintrafficIdGroup;
 import jakarta.xml.bind.JAXBElement;
+import org.rutebanken.netex.model.Authority;
+import org.rutebanken.netex.model.AvailabilityCondition;
 import org.rutebanken.netex.model.ContactStructure;
-import org.rutebanken.netex.model.GeneralOrganisation;
 import org.rutebanken.netex.model.MultilingualString;
+import org.rutebanken.netex.model.Operator;
 import org.rutebanken.netex.model.Organisation_VersionStructure;
 import org.rutebanken.netex.model.PublicationDeliveryStructure;
 import org.rutebanken.netex.model.ResourceFrame;
+import org.rutebanken.netex.model.ValidityConditions_RelStructure;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 @Service
 public class ExportsService {
@@ -43,9 +48,13 @@ public class ExportsService {
     }
 
     public JAXBElement<PublicationDeliveryStructure> netexOrganisations() {
-        Collection<Organisation_VersionStructure> organisations = Streams.collect(
-            companyRepository.listAll(),
-            this::asNetexOrganisation);
+        // XXX: This is a quick hack for now, we have better reimplementation in backlog as TIS-878
+        AtomicInteger availabilityConditionCounter = new AtomicInteger(1);
+        List<Organisation_VersionStructure> organisations = new ArrayList<>();
+        companyRepository.listAll().forEach(companyRecord -> {
+            asAuthority(availabilityConditionCounter, companyRecord).ifPresent(organisations::add);
+            asOperator(availabilityConditionCounter, companyRecord).ifPresent(organisations::add);
+        });
 
         ResourceFrame compositeFrame = netexObjectFactory.createResourceFrame(
             NETEX_ROOT_ID + ":ResourceFrame:1",
@@ -58,16 +67,45 @@ public class ExportsService {
             LocalDateTime.now());
     }
 
-    /**
-     * @see <a href="https://enturas.atlassian.net/wiki/spaces/PUBLIC/pages/728727624/framework#Organisation">NeTEx Nordic: Organisation</a>
-     * @param companyRecord Company details to be converted
-     * @return converted {@link GeneralOrganisation}
-     */
-    private GeneralOrganisation asNetexOrganisation(CompanyRecord companyRecord) {
-        GeneralOrganisation organisation = new GeneralOrganisation()
-            .withId(NETEX_ROOT_ID + ":GeneralOrganisation:" + companyRecord.businessId())
+    private <O extends Organisation_VersionStructure> O createOrganisation(
+        Supplier<O> organisation,
+        CompanyRecord companyRecord) {
+        O org = organisation.get();
+        org.withId(NETEX_ROOT_ID + ":" + org.getClass().getSimpleName() + ":" + companyRecord.businessId())
             .withName(multilingualString(companyRecord.name(), companyRecord.language()))
             .withCompanyNumber(companyRecord.businessId());
+        return org;
+    }
+
+    private Optional<Organisation_VersionStructure> asAuthority(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
+        return createContactStructure(companyRecord)
+            .map(contactStructure -> {
+                Authority authority = createOrganisation(Authority::new, companyRecord);
+                return authority.withValidityConditions(createValidityConditions(availabilityConditionCounter, companyRecord))
+                    .withContactDetails(contactStructure);
+            });
+    }
+
+    private Optional<Organisation_VersionStructure> asOperator(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
+        return createContactStructure(companyRecord)
+            .map(contactStructure -> {
+                Operator operator = createOrganisation(Operator::new, companyRecord);
+                return operator.withValidityConditions(createValidityConditions(availabilityConditionCounter, companyRecord))
+                    .withContactDetails(contactStructure);
+            });
+    }
+
+    private ValidityConditions_RelStructure createValidityConditions(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
+        return new ValidityConditions_RelStructure().withValidityConditionRefOrValidBetweenOrValidityCondition_(
+            new AvailabilityCondition()
+                .withId(NETEX_ROOT_ID + ":AvailabilityCondition:" + availabilityConditionCounter.getAndIncrement())
+                .withFromDate(LocalDateTime.of(2020, 1, 1, 0, 0)));
+    }
+
+    private Optional<ContactStructure> createContactStructure(CompanyRecord companyRecord) {
+        if (companyRecord.website() == null || companyRecord.website().isBlank()) {
+            return Optional.empty();
+        }
         ContactStructure contactStructure = new ContactStructure()
             .withUrl(companyRecord.website());
         Optional.ofNullable(companyRecord.adGroupId())
@@ -75,9 +113,8 @@ public class ExportsService {
             .flatMap(FintrafficIdGroup::organizationData)
             .ifPresent(organizationData ->
                 contactStructure.withPhone(organizationData.phoneNumber())
-                .withContactPerson(multilingualString(organizationData.contactName(), companyRecord.language())));
-        organisation.withContactDetails(contactStructure);
-        return organisation;
+                    .withContactPerson(multilingualString(organizationData.contactName(), companyRecord.language())));
+        return Optional.of(contactStructure);
     }
 
     private static MultilingualString multilingualString(String organizationData, String language) {
