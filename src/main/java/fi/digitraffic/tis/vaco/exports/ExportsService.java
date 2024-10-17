@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.exports;
 
-import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.exports.utils.NetexObjectFactory;
@@ -24,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 @Service
 public class ExportsService {
@@ -49,10 +49,12 @@ public class ExportsService {
 
     public JAXBElement<PublicationDeliveryStructure> netexOrganisations() {
         // XXX: This is a quick hack for now, we have better reimplementation in backlog as TIS-878
-        List<Organisation_VersionStructure> organisations = new ArrayList<>();
         AtomicInteger availabilityConditionCounter = new AtomicInteger(1);
-        organisations.addAll(Streams.collect(companyRepository.listAll(), companyRecord -> asAuthority(availabilityConditionCounter, companyRecord)));
-        organisations.addAll(Streams.collect(companyRepository.listAll(), companyRecord -> asOperator(availabilityConditionCounter, companyRecord)));
+        List<Organisation_VersionStructure> organisations = new ArrayList<>();
+        companyRepository.listAll().forEach(companyRecord -> {
+            asAuthority(availabilityConditionCounter, companyRecord).ifPresent(organisations::add);
+            asOperator(availabilityConditionCounter, companyRecord).ifPresent(organisations::add);
+        });
 
         ResourceFrame compositeFrame = netexObjectFactory.createResourceFrame(
             NETEX_ROOT_ID + ":ResourceFrame:1",
@@ -65,24 +67,32 @@ public class ExportsService {
             LocalDateTime.now());
     }
 
-    private Authority asAuthority(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
-        Authority authority = new Authority()
-            .withId(NETEX_ROOT_ID + ":Authority:" + companyRecord.businessId())
+    private <O extends Organisation_VersionStructure> O createOrganisation(
+        Supplier<O> organisation,
+        CompanyRecord companyRecord) {
+        O org = organisation.get();
+        org.withId(NETEX_ROOT_ID + ":" + org.getClass().getSimpleName() + ":" + companyRecord.businessId())
             .withName(multilingualString(companyRecord.name(), companyRecord.language()))
             .withCompanyNumber(companyRecord.businessId());
-        ContactStructure contactStructure = createContactStructure(companyRecord);
-        return authority.withValidityConditions(createValidityConditions(availabilityConditionCounter, companyRecord))
-            .withContactDetails(contactStructure);
+        return org;
     }
 
-    private Operator asOperator(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
-        Operator operator = new Operator()
-            .withId(NETEX_ROOT_ID + ":Operator:" + companyRecord.businessId())
-            .withName(multilingualString(companyRecord.name(), companyRecord.language()))
-            .withCompanyNumber(companyRecord.businessId());
-        ContactStructure contactStructure = createContactStructure(companyRecord);
-        return operator.withValidityConditions(createValidityConditions(availabilityConditionCounter, companyRecord))
-            .withContactDetails(contactStructure);
+    private Optional<Organisation_VersionStructure> asAuthority(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
+        return createContactStructure(companyRecord)
+            .map(contactStructure -> {
+                Authority authority = createOrganisation(Authority::new, companyRecord);
+                return authority.withValidityConditions(createValidityConditions(availabilityConditionCounter, companyRecord))
+                    .withContactDetails(contactStructure);
+            });
+    }
+
+    private Optional<Organisation_VersionStructure> asOperator(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
+        return createContactStructure(companyRecord)
+            .map(contactStructure -> {
+                Operator operator = createOrganisation(Operator::new, companyRecord);
+                return operator.withValidityConditions(createValidityConditions(availabilityConditionCounter, companyRecord))
+                    .withContactDetails(contactStructure);
+            });
     }
 
     private ValidityConditions_RelStructure createValidityConditions(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
@@ -92,7 +102,10 @@ public class ExportsService {
                 .withFromDate(LocalDateTime.of(2020, 1, 1, 0, 0)));
     }
 
-    private ContactStructure createContactStructure(CompanyRecord companyRecord) {
+    private Optional<ContactStructure> createContactStructure(CompanyRecord companyRecord) {
+        if (companyRecord.website() == null || companyRecord.website().isBlank()) {
+            return Optional.empty();
+        }
         ContactStructure contactStructure = new ContactStructure()
             .withUrl(companyRecord.website());
         Optional.ofNullable(companyRecord.adGroupId())
@@ -101,7 +114,7 @@ public class ExportsService {
             .ifPresent(organizationData ->
                 contactStructure.withPhone(organizationData.phoneNumber())
                     .withContactPerson(multilingualString(organizationData.contactName(), companyRecord.language())));
-        return contactStructure;
+        return Optional.of(contactStructure);
     }
 
     private static MultilingualString multilingualString(String organizationData, String language) {
