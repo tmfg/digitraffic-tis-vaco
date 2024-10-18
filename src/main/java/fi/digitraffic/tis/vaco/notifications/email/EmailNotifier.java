@@ -28,8 +28,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.SesException;
-
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.temporal.WeekFields;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -38,13 +41,13 @@ import java.util.Set;
 public class EmailNotifier implements Notifier {
     private final AdminToolsRepository adminToolsRepository;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private final VacoProperties vacoProperties;
     private final MessageMapper messageMapper;
     private final SesClient sesClient;
     private final CompanyHierarchyService companyHierarchyService;
     private final FeatureFlagsService featureFlagsService;
     private final EncryptionService encryptionService;
+    private final Clock clock;
 
     public EmailNotifier(VacoProperties vacoProperties,
                          MessageMapper messageMapper,
@@ -52,7 +55,8 @@ public class EmailNotifier implements Notifier {
                          CompanyHierarchyService companyHierarchyService,
                          FeatureFlagsService featureFlagsService,
                          EncryptionService encryptionService,
-                         AdminToolsRepository adminToolsRepository) {
+                         AdminToolsRepository adminToolsRepository,
+                         Clock clock) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.messageMapper = Objects.requireNonNull(messageMapper);
         this.sesClient = Objects.requireNonNull(sesClient);
@@ -60,6 +64,7 @@ public class EmailNotifier implements Notifier {
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
         this.encryptionService = Objects.requireNonNull(encryptionService);
         this.adminToolsRepository = Objects.requireNonNull(adminToolsRepository);
+        this.clock = Objects.requireNonNull(clock);
     }
 
     @VisibleForTesting
@@ -78,11 +83,13 @@ public class EmailNotifier implements Notifier {
 
     @Scheduled(cron = "${vaco.scheduling.weekly-feed-status.cron}")
     public void weeklyFeedStatus() {
-        try {
-            List<Company> companies = companyHierarchyService.listAllWithEntries();
-            companies.forEach(this::sendFeedStatusEmail);
-        } catch (Exception e) {
-            logger.error("Failed to send weekly feed status emails", e);
+        if (isEvenWeek()) {
+            try {
+                List<Company> companies = companyHierarchyService.listAllWithEntries();
+                companies.forEach(this::sendFeedStatusEmail);
+            } catch (Exception e) {
+                logger.error("Failed to send weekly feed status emails", e);
+            }
         }
     }
 
@@ -249,5 +256,10 @@ public class EmailNotifier implements Notifier {
 
     private static Translations resolveTranslations(Company company, String bundleName) {
         return new Translations(company.language(), bundleName);
+    }
+
+    private boolean isEvenWeek() {
+        int weekNumber = LocalDate.now(clock).get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
+        return weekNumber % 2 == 0;
     }
 }
