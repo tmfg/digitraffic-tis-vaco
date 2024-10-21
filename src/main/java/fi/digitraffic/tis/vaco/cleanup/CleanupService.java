@@ -56,13 +56,17 @@ public class CleanupService {
             cleanupOlderThan(olderThan),
             cleanupKeepAtLeast(keepAtLeast),
             cleanupRemoveAtMostInTotal(atMostInTotal));
+        // 3. remove entries without context id
+        List<String> removedByWithoutContextCleanUp = entryRepository.cleanEntriesWithoutContext(
+            cleanupOlderThan(olderThan));
         if (logger.isInfoEnabled()) {
-            int count = removedByCompression.size() + removedByCleanup.size();
-            logger.info("Cleanup removed {} entries (compressed: {}, cleaned up: {})", count, removedByCompression, removedByCleanup);
+            int count = removedByCompression.size() + removedByCleanup.size() + removedByWithoutContextCleanUp.size();
+            logger.info("Cleanup removed {} entries (compressed: {}, cleaned up: {}, cleaned up without context: {})", count, removedByCompression, removedByCleanup, removedByWithoutContextCleanUp);
         }
         Set<String> allRemoved = new HashSet<>();
         allRemoved.addAll(removedByCompression);
         allRemoved.addAll(removedByCleanup);
+        allRemoved.addAll(removedByWithoutContextCleanUp);
         return allRemoved;
     }
 
