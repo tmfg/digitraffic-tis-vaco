@@ -64,6 +64,7 @@ public class AdminToolsRepository {
                       LEFT JOIN conversion_input ci ON ci.entry_id = latest_entry.id
             WHERE (:businessIds)::TEXT IS NULL
                OR c.business_id IN (:businessIds)
+            AND created >= NOW() - INTERVAL '3 months'
             GROUP BY company_name, c.business_id, public_id, latest_entry.name, latest_entry.context_id, source_url, input_format, status, created
             ORDER BY company_name, latest_entry.
                created DESC
