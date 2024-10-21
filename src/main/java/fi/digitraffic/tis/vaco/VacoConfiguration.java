@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.converter.HttpMessageConverter;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import java.time.Clock;
 
 /**
  * Generic didn't-fit-anywhere-else configuration container
@@ -52,5 +53,10 @@ public class VacoConfiguration {
     @Bean
     public HttpMessageConverter<Object> netexHttpMessageConverter() {
         return new JaxbHttpMessageConverter(PublicationDeliveryStructure.class);
+    }
+
+    @Bean
+    public Clock clock() {
+        return Clock.systemDefaultZone();
     }
 }

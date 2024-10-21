@@ -13,10 +13,10 @@ import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
 import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableMessage;
 import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableRecipients;
-import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
@@ -35,6 +35,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -64,21 +67,27 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
     private EncryptionService encryptionService;
     @Mock
     private AdminToolsRepository adminToolsRepository;
+    private Clock clock;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
         jmesPath = new JacksonRuntime();
         vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null), null, null, null);
+        clock = Clock.systemDefaultZone();
+        emailNotifier = createEmailNotifier(clock);
+    }
 
-        emailNotifier = new EmailNotifier(
+    private EmailNotifier createEmailNotifier(Clock clock) {
+        return new EmailNotifier(
             vacoProperties,
             new MessageMapper(vacoProperties),
             sesClient,
             companyHierarchyService,
             featureFlagsService,
             encryptionService,
-            adminToolsRepository);
+            adminToolsRepository,
+            clock);
     }
 
     @AfterEach
@@ -239,6 +248,46 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
         emailNotifier.notifyEntryComplete(record);
 
         assertAll(messagesSent(readReceivedMessages(), 0));
+    }
+
+    @Test
+    void willNotSendStatusEmailIfOddWeek() throws IOException, InterruptedException {
+
+        LocalDateTime time = LocalDateTime.of(2024,10,9, 12,32);
+        clock = Clock.fixed(time.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+        emailNotifier = createEmailNotifier(clock);
+
+        emailNotifier.weeklyFeedStatus();
+        assertAll(messagesSent(readReceivedMessages(), 0));
+    }
+
+    @Test
+    void willSendStatusEmailIfEvenWeek() throws IOException, InterruptedException {
+
+        LocalDateTime time = LocalDateTime.of(2024,10,18, 12,32);
+        clock = Clock.fixed(time.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+        emailNotifier = createEmailNotifier(clock);
+
+        Company company = TestObjects.aCompany()
+            .addContactEmails("companytest@oddweek.fi")
+            .build();
+
+        ImmutableCompanyLatestEntry entry = ImmutableCompanyLatestEntry.builder()
+            .companyName("some company")
+            .feedName("testName")
+            .format("gtfs")
+            .url("https://testfile")
+            .publicId(NanoIdUtils.randomNanoId())
+            .businessId(Constants.FINTRAFFIC_BUSINESS_ID)
+            .build();
+
+        BDDMockito.given(companyHierarchyService.listAllWithEntries()).willReturn(List.of(company));
+        BDDMockito.given(adminToolsRepository.getDataDeliveryOverview(Set.of(company.businessId()))).willReturn(List.of(entry));
+        BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(true);
+        BDDMockito.given(encryptionService.encrypt(any(MagicToken.class))).willAnswer(a -> "magic/link/for/" + ((ImmutableMagicToken) a.getArgument(0)).token());
+
+        emailNotifier.weeklyFeedStatus();
+        assertAll(messagesSent(readReceivedMessages(), 1));
     }
 
     @NotNull
