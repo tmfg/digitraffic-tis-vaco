@@ -323,4 +323,24 @@ public class EntryRepository {
             return List.of();
         }
     }
+
+    public List<String> cleanEntriesWithoutContext(Duration olderThan) {
+        try {
+            return jdbc.queryForList(
+                """
+                  DELETE
+                  FROM entry
+                  WHERE created < NOW() - ?
+                    AND context_id IS NULL
+                  RETURNING public_id
+                """,
+                String.class,
+                RowMappers.writeInterval(olderThan)
+            );
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to cleanup entry history, returning empty list", dae);
+            return List.of();
+        }
+
+    }
 }
