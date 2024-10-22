@@ -104,7 +104,7 @@ public class ExportsService {
 
     private ValidityConditions_RelStructure createValidityConditions(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
         return new ValidityConditions_RelStructure().withValidityConditionRefOrValidBetweenOrValidityCondition_(
-            new AvailabilityCondition()
+            new ValidBetween()
                 .withId(NETEX_ROOT_ID + ":AvailabilityCondition:" + availabilityConditionCounter.getAndIncrement())
                 .withFromDate(LocalDateTime.of(2020, 1, 1, 0, 0)));
     }
