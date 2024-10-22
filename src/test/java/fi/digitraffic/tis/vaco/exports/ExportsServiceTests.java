@@ -95,6 +95,7 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
         assertThat(organisation.getCompanyNumber(), equalTo(companyNumber));
         assertThat(organisation.getName().getValue(), equalTo(name));
         assertThat(organisation.getId(), equalTo(id));
+        assertThat("Version attribute for organisations must be set to hardcoded '1'", organisation.getVersion(), equalTo("1"));
         validityConditionsAsserter.accept(organisation.getValidityConditions());
         contactStructureAsserter.accept(organisation.getContactDetails());
     }

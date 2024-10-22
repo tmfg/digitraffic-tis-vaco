@@ -45,7 +45,12 @@ public class JaxbHttpMessageConverter extends AbstractXmlHttpMessageConverter<Ob
 
     @Override
     protected void writeToResult(Object o, HttpHeaders headers, Result result) throws Exception {
-        createMarshaller().marshal(o, result);
+        try {
+            createMarshaller().marshal(o, result);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override

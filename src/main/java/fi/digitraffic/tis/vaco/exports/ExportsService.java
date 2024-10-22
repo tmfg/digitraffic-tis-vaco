@@ -7,13 +7,13 @@ import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
 import fi.digitraffic.tis.vaco.fintrafficid.model.FintrafficIdGroup;
 import jakarta.xml.bind.JAXBElement;
 import org.rutebanken.netex.model.Authority;
-import org.rutebanken.netex.model.AvailabilityCondition;
 import org.rutebanken.netex.model.ContactStructure;
 import org.rutebanken.netex.model.MultilingualString;
 import org.rutebanken.netex.model.Operator;
 import org.rutebanken.netex.model.Organisation_VersionStructure;
 import org.rutebanken.netex.model.PublicationDeliveryStructure;
 import org.rutebanken.netex.model.ResourceFrame;
+import org.rutebanken.netex.model.ValidBetween;
 import org.rutebanken.netex.model.ValidityConditions_RelStructure;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +32,12 @@ public class ExportsService {
      * This is hardcoded until we can figure out a better strategy for its management.
      */
     private static final String NETEX_ROOT_ID = "FSR";
+
+    /**
+     * NeTEx supports versioning all elements, but we don't have version history available so this value will be
+     * hardcoded to be simply <code>"1"</code>.
+     */
+    private static final String ORGANISATION_VERSION = "1";
 
     private final CompanyRepository companyRepository;
 
@@ -72,6 +78,7 @@ public class ExportsService {
         CompanyRecord companyRecord) {
         O org = organisation.get();
         org.withId(NETEX_ROOT_ID + ":" + org.getClass().getSimpleName() + ":" + companyRecord.businessId())
+            .withVersion(ORGANISATION_VERSION)
             .withName(multilingualString(companyRecord.name(), companyRecord.language()))
             .withCompanyNumber(companyRecord.businessId());
         return org;
