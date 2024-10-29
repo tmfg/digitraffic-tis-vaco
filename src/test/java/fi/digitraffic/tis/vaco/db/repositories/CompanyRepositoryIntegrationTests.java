@@ -2,9 +2,9 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.company.model.ImmutableLegacyHierarchy;
+import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import org.junit.jupiter.api.Test;
@@ -35,15 +35,15 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childB);
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, childB, grandchildC);
 
-        Map<Company, Hierarchy> h = companyRepository.findRootHierarchies();
+        Map<Company, LegacyHierarchy> h = companyRepository.findRootHierarchies();
 
-        Hierarchy expected = ImmutableHierarchy.builder()
+        LegacyHierarchy expected = ImmutableLegacyHierarchy.builder()
             .company(root)
             .addChildren(
-                ImmutableHierarchy.builder().company(childA).build(),
-                ImmutableHierarchy.builder()
+                ImmutableLegacyHierarchy.builder().company(childA).build(),
+                ImmutableLegacyHierarchy.builder()
                     .company(childB)
-                    .addChildren(ImmutableHierarchy.builder().company(grandchildC).build())
+                    .addChildren(ImmutableLegacyHierarchy.builder().company(grandchildC).build())
                     .build())
             .build();
 

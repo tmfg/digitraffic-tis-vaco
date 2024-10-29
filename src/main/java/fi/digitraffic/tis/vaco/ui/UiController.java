@@ -10,7 +10,7 @@ import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
 import fi.digitraffic.tis.vaco.company.dto.PartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
@@ -401,7 +401,7 @@ public class UiController {
     @GetMapping(path = "/admin/companies/hierarchy")
     @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
-    public ResponseEntity<Resource<List<Hierarchy>>> getHierarchies(@RequestParam("businessId") String businessId) {
+    public ResponseEntity<Resource<List<LegacyHierarchy>>> getHierarchies(@RequestParam("businessId") String businessId) {
         return ResponseEntity.ok(new Resource<>(companyHierarchyService.getHierarchies(businessId), null, null));
     }
 
@@ -430,7 +430,7 @@ public class UiController {
     @PostMapping(path = "/admin/partnership")
     @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
-    public ResponseEntity<Resource<List<Hierarchy>>> createPartnership(
+    public ResponseEntity<Resource<List<LegacyHierarchy>>> createPartnership(
         @RequestBody @Valid PartnershipRequest partnershipRequest) {
         String partnerABusinessId = partnershipRequest.partnerABusinessId();
         String partnerBBusinessId = partnershipRequest.partnerBBusinessId();
@@ -470,7 +470,7 @@ public class UiController {
     @DeleteMapping(path = "/admin/partnership")
     @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
-    public ResponseEntity<Resource<List<Hierarchy>>> deletePartnership(
+    public ResponseEntity<Resource<List<LegacyHierarchy>>> deletePartnership(
         @RequestParam("partnerABusinessId") String partnerABusinessId,
         @RequestParam("partnerBBusinessId") String partnerBBusinessId) {
         Optional<Company> partnerA = companyHierarchyService.findByBusinessId(partnerABusinessId);
@@ -500,7 +500,7 @@ public class UiController {
     @PostMapping(path = "/admin/partnership/swap")
     @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
-    public ResponseEntity<Resource<List<Hierarchy>>> swapPartnership(
+    public ResponseEntity<Resource<List<LegacyHierarchy>>> swapPartnership(
         @Valid @RequestBody SwapPartnershipRequest swapPartnershipRequest) {
         String oldPartnerABusinessId = swapPartnershipRequest.oldPartnerABusinessId();
         String newPartnerABusinessId = swapPartnershipRequest.newPartnerABusinessId();

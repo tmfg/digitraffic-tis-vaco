@@ -2,8 +2,8 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.Hierarchy;
-import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
+import fi.digitraffic.tis.vaco.company.model.ImmutableLegacyHierarchy;
+import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
@@ -164,25 +164,25 @@ public class CompanyRepository {
             company.id());
     }
 
-    public Map<Company, Hierarchy> findRootHierarchies() {
+    public Map<Company, LegacyHierarchy> findRootHierarchies() {
         // 1. find roots
         Set<Long> roots = findHierarchyRoots();
 
-        Map<Company, Hierarchy> hierarchies = new HashMap<>();
+        Map<Company, LegacyHierarchy> hierarchies = new HashMap<>();
 
         // 2. build hierarchies
         roots.forEach(root -> {
-            Hierarchy hierarchy = loadHierarchy(root);
-            hierarchies.put(hierarchy.company(), hierarchy);
+            LegacyHierarchy legacyHierarchy = loadHierarchy(root);
+            hierarchies.put(legacyHierarchy.company(), legacyHierarchy);
         });
         return hierarchies;
     }
 
-    private Hierarchy loadHierarchy(Long rootId) {
-        // 2a. find hierarchy links for root
+    private LegacyHierarchy loadHierarchy(Long rootId) {
+        // 2a. find legacyHierarchy links for root
         List<IntermediateHierarchyLink> hierarchyLinks = findHierarchyLinks(rootId);
 
-        // 2b. load all distinct companies in hierarchy
+        // 2b. load all distinct companies in legacyHierarchy
         Set<Long> companyIds = Streams.concat(
                 Streams.map(hierarchyLinks, IntermediateHierarchyLink::parentId).stream(),
                 Streams.map(hierarchyLinks, IntermediateHierarchyLink::childId).stream())
@@ -202,7 +202,7 @@ public class CompanyRepository {
             .filter(l -> l.parentId() != null)
             .collect(Collectors.groupingBy(IntermediateHierarchyLink::parentId));
 
-        // 2e. construct the hierarchy
+        // 2e. construct the legacyHierarchy
         return buildHierarchy(companiesbyId.get(rootId), companiesbyId, parentsAndChildren);
     }
 
@@ -218,10 +218,10 @@ public class CompanyRepository {
             RowMappers.COMPANY_RECORD);
     }
 
-    private Hierarchy buildHierarchy(CompanyRecord company,
-                                     Map<Long, CompanyRecord> companiesbyId,
-                                     Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
-        ImmutableHierarchy.Builder builder = ImmutableHierarchy.builder();
+    private LegacyHierarchy buildHierarchy(CompanyRecord company,
+                                           Map<Long, CompanyRecord> companiesbyId,
+                                           Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
+        ImmutableLegacyHierarchy.Builder builder = ImmutableLegacyHierarchy.builder();
         resolveHierarchy(company, builder, companiesbyId, parentsAndChildren);
         return builder.build();
     }
@@ -230,17 +230,17 @@ public class CompanyRepository {
         return jdbc.query(
             """
               WITH RECURSIVE
-                  hierarchy AS (SELECT id AS child_id, NULL::BIGINT AS parent_id
+                  legacyHierarchy AS (SELECT id AS child_id, NULL::BIGINT AS parent_id
                                   FROM root
                                  UNION ALL
                                 SELECT ps.partner_b_id, ps.partner_a_id
-                                  FROM hierarchy
+                                  FROM legacyHierarchy
                                            JOIN
                                        partnership ps
-                                       ON ps.partner_a_id = hierarchy.child_id),
+                                       ON ps.partner_a_id = legacyHierarchy.child_id),
                   root AS (SELECT ? AS id)
             SELECT DISTINCT *
-              FROM hierarchy h
+              FROM legacyHierarchy h
             """,
             RowMappers.INTERMEDIATE_HIERARCHY_LINK,
             root);
@@ -257,13 +257,13 @@ public class CompanyRepository {
     }
 
     private void resolveHierarchy(CompanyRecord parent,
-                                  ImmutableHierarchy.Builder builder,
+                                  ImmutableLegacyHierarchy.Builder builder,
                                   Map<Long, CompanyRecord> companiesbyBusinessId,
                                   Map<Long, List<IntermediateHierarchyLink>> parentsAndChildren) {
         builder.company(recordMapper.toCompany(parent));
         List<IntermediateHierarchyLink> children = parentsAndChildren.getOrDefault(parent.id(), List.of());
         builder.addAllChildren(Streams.collect(children, child -> {
-                ImmutableHierarchy.Builder b = ImmutableHierarchy.builder();
+                ImmutableLegacyHierarchy.Builder b = ImmutableLegacyHierarchy.builder();
                 b.company(recordMapper.toCompany(companiesbyBusinessId.get(child.parentId())));
                 if (child.childId() != null) {
                     resolveHierarchy(companiesbyBusinessId.get(child.childId()), b, companiesbyBusinessId, parentsAndChildren);

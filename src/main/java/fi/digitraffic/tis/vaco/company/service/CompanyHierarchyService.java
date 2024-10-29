@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.company.service;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.model.LightweightHierarchy;
@@ -53,7 +53,7 @@ public class CompanyHierarchyService {
      * Reloads all root hierarchies from database and updates in-memory lookups.
      */
     private void reloadRootHierarchies() {
-        Map<Company, Hierarchy> rootHierarchies = companyRepository.findRootHierarchies();
+        Map<Company, LegacyHierarchy> rootHierarchies = companyRepository.findRootHierarchies();
         Map<String, LightweightHierarchy> lightweightHierarchies = new HashMap<>();
         rootHierarchies.forEach((company, hierarchy) ->
             lightweightHierarchies.put(company.businessId(), LightweightHierarchy.from(hierarchy)));
@@ -113,34 +113,34 @@ public class CompanyHierarchyService {
         return false;
     }
 
-    public List<Hierarchy> getHierarchiesContainingCompany(String selectedBusinessId) {
-        List<Hierarchy> fullHierarchies = new ArrayList<>();
+    public List<LegacyHierarchy> getHierarchiesContainingCompany(String selectedBusinessId) {
+        List<LegacyHierarchy> fullHierarchies = new ArrayList<>();
         Map<String, Company> companiesByBusinessId = companyRepository.findAlLByIds();
 
         hierarchies.keySet().forEach(businessId -> {
             LightweightHierarchy lightweightHierarchy = hierarchies.get(businessId);
             if (lightweightHierarchy.isMember(selectedBusinessId)) {
-                Hierarchy hierarchy = lightweightHierarchy.toTruncatedHierarchy(companiesByBusinessId, selectedBusinessId, false);
-                fullHierarchies.add(hierarchy);
+                LegacyHierarchy legacyHierarchy = lightweightHierarchy.toTruncatedHierarchy(companiesByBusinessId, selectedBusinessId, false);
+                fullHierarchies.add(legacyHierarchy);
             }
         });
 
         return fullHierarchies;
     }
 
-    public List<Hierarchy> getAllHierarchies() {
-        List<Hierarchy> fullHierarchies = new ArrayList<>();
+    public List<LegacyHierarchy> getAllHierarchies() {
+        List<LegacyHierarchy> fullHierarchies = new ArrayList<>();
         Map<String, Company> companiesByBusinessId = companyRepository.findAlLByIds();
 
         hierarchies.keySet().forEach(businessId -> {
-            Hierarchy hierarchy = hierarchies.get(businessId).toHierarchy(companiesByBusinessId);
-            fullHierarchies.add(hierarchy);
+            LegacyHierarchy legacyHierarchy = hierarchies.get(businessId).toHierarchy(companiesByBusinessId);
+            fullHierarchies.add(legacyHierarchy);
         });
 
         return fullHierarchies;
     }
 
-    public List<Hierarchy> getHierarchies(String businessId) {
+    public List<LegacyHierarchy> getHierarchies(String businessId) {
         return businessId != null && !businessId.isBlank()
             ? getHierarchiesContainingCompany(businessId)
             : getAllHierarchies();
@@ -172,7 +172,7 @@ public class CompanyHierarchyService {
         }
     }
 
-    public List<Hierarchy> createPartnershipAndReturnUpdatedHierarchy(PartnershipType partnershipType, Company partnerA, Company partnerB) {
+    public List<LegacyHierarchy> createPartnershipAndReturnUpdatedHierarchy(PartnershipType partnershipType, Company partnerA, Company partnerB) {
         return createPartnership(partnershipType, partnerA, partnerB)
             .map(p -> getHierarchiesContainingCompany(partnerB.businessId()))
             .orElse(List.of());  // TODO: This feels a bit weird, but probably works
@@ -192,15 +192,15 @@ public class CompanyHierarchyService {
     }
 
     @Transactional
-    public List<Hierarchy> swapPartnership(Company newPartnerA, Company partnerB,
-                                           Partnership partnershipToDelete) {
+    public List<LegacyHierarchy> swapPartnership(Company newPartnerA, Company partnerB,
+                                                 Partnership partnershipToDelete) {
         deletePartnership(partnershipToDelete);
         createPartnership(PartnershipType.AUTHORITY_PROVIDER, newPartnerA, partnerB);
         reloadRootHierarchies();
         return getHierarchiesContainingCompany(partnerB.businessId());
     }
 
-    public List<Hierarchy> deletePartnership(Partnership partnership) {
+    public List<LegacyHierarchy> deletePartnership(Partnership partnership) {
         partnershipRepository.deletePartnership(partnership);
         reloadRootHierarchies();
         return getHierarchiesContainingCompany(partnership.partnerB().businessId());

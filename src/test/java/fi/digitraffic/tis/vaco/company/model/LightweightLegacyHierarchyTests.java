@@ -10,7 +10,7 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-class LightweightHierarchyTests {
+class LightweightLegacyHierarchyTests {
 
     @Test
     void canLookupChildren() {
@@ -46,16 +46,16 @@ class LightweightHierarchyTests {
         Company child = ImmutableCompany.of("101010-1", "Kainuun Keksi ja Kalarehu Oy", true);
         Company grandhild = ImmutableCompany.of("1717171-7", "Arvat ja ja Luulot Oy", true);
 
-        Hierarchy fullHierarchy = ImmutableHierarchy.builder()
+        LegacyHierarchy fullLegacyHierarchy = ImmutableLegacyHierarchy.builder()
             .company(root)
-            .addChildren(ImmutableHierarchy.builder()
+            .addChildren(ImmutableLegacyHierarchy.builder()
                 .company(child)
-                .addChildren(ImmutableHierarchy.builder()
+                .addChildren(ImmutableLegacyHierarchy.builder()
                     .company(grandhild)
                     .build())
                 .build())
             .build();
-        LightweightHierarchy lightweightHierarchy = LightweightHierarchy.from(fullHierarchy);
+        LightweightHierarchy lightweightHierarchy = LightweightHierarchy.from(fullLegacyHierarchy);
 
         assertThat(lightweightHierarchy, equalTo(ImmutableLightweightHierarchy.builder()
             .businessId(root.businessId())
@@ -95,12 +95,12 @@ class LightweightHierarchyTests {
         Set<String> businessIds = lightweightHierarchy.collectContainedBusinessIds();
         assertThat(businessIds, equalTo(companies.keySet()));
 
-        Hierarchy fullHierarchy = lightweightHierarchy.toHierarchy(companies);
-        assertThat(fullHierarchy, equalTo(ImmutableHierarchy.builder()
+        LegacyHierarchy fullLegacyHierarchy = lightweightHierarchy.toHierarchy(companies);
+        assertThat(fullLegacyHierarchy, equalTo(ImmutableLegacyHierarchy.builder()
             .company(root)
-            .addChildren(ImmutableHierarchy.builder()
+            .addChildren(ImmutableLegacyHierarchy.builder()
                 .company(child)
-                .addChildren(ImmutableHierarchy.builder()
+                .addChildren(ImmutableLegacyHierarchy.builder()
                     .company(grandchild)
                     .build())
                 .build())

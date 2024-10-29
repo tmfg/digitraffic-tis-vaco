@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.ui.model;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import org.immutables.value.Value;
 
@@ -17,7 +17,7 @@ public interface CompanyInfo {
 
     List<Context> contexts();
 
-    List<Hierarchy> hierarchies();
+    List<LegacyHierarchy> hierarchies();
 
     List<Ruleset> rulesets();
 }

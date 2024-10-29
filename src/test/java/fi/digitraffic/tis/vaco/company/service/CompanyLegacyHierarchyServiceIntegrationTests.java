@@ -2,9 +2,9 @@ package fi.digitraffic.tis.vaco.company.service;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.Hierarchy;
+import fi.digitraffic.tis.vaco.company.model.ImmutableLegacyHierarchy;
+import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-class CompanyHierarchyServiceIntegrationTests extends SpringBootIntegrationTestBase {
+class CompanyLegacyHierarchyServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Autowired
     private CompanyHierarchyService companyHierarchyService;
 
@@ -33,14 +33,14 @@ class CompanyHierarchyServiceIntegrationTests extends SpringBootIntegrationTestB
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, childB, grandchildD);
         companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, grandchildC, grandGrandchild);
 
-        List<Hierarchy> h = companyHierarchyService.getHierarchies(childB.businessId());
+        List<LegacyHierarchy> h = companyHierarchyService.getHierarchies(childB.businessId());
 
-        Hierarchy expected = ImmutableHierarchy.builder()
+        LegacyHierarchy expected = ImmutableLegacyHierarchy.builder()
             .company(root)
             .addChildren(
-                ImmutableHierarchy.builder()
+                ImmutableLegacyHierarchy.builder()
                     .company(childB)
-                    .addChildren(ImmutableHierarchy.builder().company(grandchildC).build(), ImmutableHierarchy.builder().company(grandchildD).build())
+                    .addChildren(ImmutableLegacyHierarchy.builder().company(grandchildC).build(), ImmutableLegacyHierarchy.builder().company(grandchildD).build())
                     .build())
             .build();
 

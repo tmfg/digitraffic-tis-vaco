@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.Hierarchy;
-import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
+import fi.digitraffic.tis.vaco.company.model.ImmutableLegacyHierarchy;
+import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import org.immutables.value.Value;
 
 import java.util.HashSet;
@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Special variant of {@link Hierarchy} which contains only business id references.
+ * Special variant of {@link LegacyHierarchy} which contains only business id references.
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableLightweightHierarchy.class)
@@ -87,7 +87,7 @@ public interface LightweightHierarchy {
         return false;
     }
 
-    static LightweightHierarchy from(Hierarchy h) {
+    static LightweightHierarchy from(LegacyHierarchy h) {
         return ImmutableLightweightHierarchy.of(
             h.company().businessId(),
             Streams.collect(h.children(), LightweightHierarchy::from));
@@ -113,25 +113,25 @@ public interface LightweightHierarchy {
      * @return converted Hierarchy
      * @see #collectContainedBusinessIds()
      */
-    default Hierarchy toHierarchy(Map<String, Company> companies) {
-        return ImmutableHierarchy.builder()
+    default LegacyHierarchy toHierarchy(Map<String, Company> companies) {
+        return ImmutableLegacyHierarchy.builder()
             .company((companies.get(businessId())))
             .children(Streams.collect(children(), c -> c.toHierarchy(companies)))
             .build();
     }
 
-    default Hierarchy toTruncatedHierarchy(Map<String, Company> companies,
-                                           String businessIdToTruncateAfter,
-                                           boolean exitRecursion) {
+    default LegacyHierarchy toTruncatedHierarchy(Map<String, Company> companies,
+                                                 String businessIdToTruncateAfter,
+                                                 boolean exitRecursion) {
         if (exitRecursion) {
-            return ImmutableHierarchy.builder()
+            return ImmutableLegacyHierarchy.builder()
                 .company((companies.get(businessId())))
                 .children(Set.of())
                 .build();
         }
         return businessId().equals(businessIdToTruncateAfter) ?
             // Getting all children of the found node:
-            ImmutableHierarchy.builder()
+            ImmutableLegacyHierarchy.builder()
                 .company((companies.get(businessId())))
                 .children(Streams.collect(
                     children(),
@@ -142,7 +142,7 @@ public interface LightweightHierarchy {
                 .build()
             :
             // Continuing further traversal only for those hierarchies that might still contain businessIdToTruncateAfter:
-            ImmutableHierarchy.builder()
+            ImmutableLegacyHierarchy.builder()
                 .company((companies.get(businessId())))
                 .children(Streams.collect(
                     children().stream().filter(c -> c.isMember(businessIdToTruncateAfter)).collect(Collectors.toSet()),
