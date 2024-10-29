@@ -13,7 +13,6 @@ import fi.digitraffic.tis.vaco.me.model.ImmutableMe;
 import fi.digitraffic.tis.vaco.me.model.Me;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.Objects;
@@ -59,8 +57,7 @@ public class CompaniesController {
         Optional<Company> createdCompany = companyHierarchyService.createCompany(company);
         return createdCompany
             .map(o -> ResponseEntity.ok(asCompanyResource(o)))
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
-                String.format("An company with business ID %s already exists", company.businessId())));
+            .orElseGet(() -> Responses.conflict(String.format("An company with business ID %s already exists", company.businessId())));
     }
 
     @PreAuthorize("hasAuthority('vaco.apiuser')")

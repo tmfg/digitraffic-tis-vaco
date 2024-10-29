@@ -2,10 +2,10 @@ package fi.digitraffic.tis.vaco.company.service;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.company.model.ImmutableLegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,11 +27,11 @@ class CompanyLegacyHierarchyServiceIntegrationTests extends SpringBootIntegratio
         Company grandchildD = companyHierarchyService.createCompany(ImmutableCompany.of("112233-8", "Limited Ltd.", true)).get();
         Company grandGrandchild = companyHierarchyService.createCompany(ImmutableCompany.of("112235-9", "Hmm Ltd.", true)).get();
 
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childA);
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childB);
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, childB, grandchildC);
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, childB, grandchildD);
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, grandchildC, grandGrandchild);
+        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, root, childA);
+        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, root, childB);
+        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, childB, grandchildC);
+        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, childB, grandchildD);
+        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, grandchildC, grandGrandchild);
 
         List<LegacyHierarchy> h = companyHierarchyService.getHierarchies(childB.businessId());
 

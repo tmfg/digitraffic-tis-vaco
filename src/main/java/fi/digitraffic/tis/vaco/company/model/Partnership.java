@@ -12,7 +12,7 @@ import org.immutables.value.Value;
 public interface Partnership {
 
     @Value.Parameter
-    PartnershipType type();
+    HierarchyType type();
 
     @Value.Parameter
     Company partnerA();

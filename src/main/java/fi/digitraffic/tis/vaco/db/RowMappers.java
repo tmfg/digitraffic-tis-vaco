@@ -7,22 +7,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.FindingRecord;
+import fi.digitraffic.tis.vaco.db.model.HierarchyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableHierarchyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePackageRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableRulesetRecord;
@@ -182,7 +184,7 @@ public final class RowMappers {
         .build();
 
     public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(
-        PartnershipType.forField(rs.getString("type")),
+        HierarchyType.forField(rs.getString("type")),
         rs.getLong("partner_a_id"),
         rs.getLong("partner_b_id"));
 
@@ -326,6 +328,13 @@ public final class RowMappers {
         .businessId(rs.getString("business_id"))
         .name(rs.getString("name"))
         .formatSummary(rs.getString("format_summary"))
+        .build();
+
+    public static final RowMapper<HierarchyRecord> HIERARCHY_RECORD = (rs, rowNum) -> ImmutableHierarchyRecord.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .rootCompanyId(rs.getLong("root_company_id"))
+        .type(HierarchyType.forField(rs.getString("type")))
         .build();
 
     @SuppressWarnings("unchecked")

@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.FindingRecord;
+import fi.digitraffic.tis.vaco.db.model.HierarchyRecord;
 import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
@@ -24,6 +25,8 @@ import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
+import fi.digitraffic.tis.vaco.hierarchy.model.Hierarchy;
+import fi.digitraffic.tis.vaco.hierarchy.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -214,6 +217,14 @@ public class RecordMapper {
             .message(findingRecord.message())
             .severity(findingRecord.severity())
             .raw(findingRecord.raw())
+            .build();
+    }
+
+    public Hierarchy toHierarchy(HierarchyRecord hierarchyRecord, CompanyRecord companyRecord) {
+        // TODO: field mapping
+        return ImmutableHierarchy.builder()
+            .type(hierarchyRecord.type())
+            .root(toCompany(companyRecord))
             .build();
     }
 }

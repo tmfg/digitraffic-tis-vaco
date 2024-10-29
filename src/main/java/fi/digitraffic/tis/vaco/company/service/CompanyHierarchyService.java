@@ -2,9 +2,9 @@ package fi.digitraffic.tis.vaco.company.service;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.model.LightweightHierarchy;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
@@ -155,14 +155,14 @@ public class CompanyHierarchyService {
         return allChildren;
     }
 
-    public Optional<Partnership> createPartnership(PartnershipType partnershipType, Company partnerA, Company partnerB) {
-        if (findPartnership(partnershipType, partnerA, partnerB).isPresent()) {
+    public Optional<Partnership> createPartnership(HierarchyType hierarchyType, Company partnerA, Company partnerB) {
+        if (findPartnership(hierarchyType, partnerA, partnerB).isPresent()) {
             return Optional.empty();
         }
         Optional<CompanyRecord> pA = companyRepository.findByBusinessId(partnerA.businessId());
         Optional<CompanyRecord> pB = companyRepository.findByBusinessId(partnerB.businessId());
         if (pA.isPresent() && pB.isPresent()) {
-            PartnershipRecord partnership = partnershipRepository.create(partnershipType, pA.get(), pB.get());
+            PartnershipRecord partnership = partnershipRepository.create(hierarchyType, pA.get(), pB.get());
             reloadRootHierarchies();
             return Optional.of(recordMapper.toPartnership(partnership,
                                                           id -> recordMapper.toCompany(pA.get()),
@@ -172,17 +172,17 @@ public class CompanyHierarchyService {
         }
     }
 
-    public List<LegacyHierarchy> createPartnershipAndReturnUpdatedHierarchy(PartnershipType partnershipType, Company partnerA, Company partnerB) {
-        return createPartnership(partnershipType, partnerA, partnerB)
+    public List<LegacyHierarchy> createPartnershipAndReturnUpdatedHierarchy(HierarchyType hierarchyType, Company partnerA, Company partnerB) {
+        return createPartnership(hierarchyType, partnerA, partnerB)
             .map(p -> getHierarchiesContainingCompany(partnerB.businessId()))
             .orElse(List.of());  // TODO: This feels a bit weird, but probably works
     }
 
-    public Optional<Partnership> findPartnership(PartnershipType partnershipType, Company partnerA, Company partnerB) {
+    public Optional<Partnership> findPartnership(HierarchyType hierarchyType, Company partnerA, Company partnerB) {
         Optional<CompanyRecord> a = companyRepository.findByBusinessId(partnerA.businessId());
         Optional<CompanyRecord> b = companyRepository.findByBusinessId(partnerB.businessId());
         if (a.isPresent() && b.isPresent()) {
-            return partnershipRepository.findByIds(partnershipType, a.get(), b.get())
+            return partnershipRepository.findByIds(hierarchyType, a.get(), b.get())
                 .map(p -> recordMapper.toPartnership(p,
                                                      id -> recordMapper.toCompany(a.get()),
                                                      id -> recordMapper.toCompany(b.get())));
@@ -195,7 +195,7 @@ public class CompanyHierarchyService {
     public List<LegacyHierarchy> swapPartnership(Company newPartnerA, Company partnerB,
                                                  Partnership partnershipToDelete) {
         deletePartnership(partnershipToDelete);
-        createPartnership(PartnershipType.AUTHORITY_PROVIDER, newPartnerA, partnerB);
+        createPartnership(HierarchyType.AUTHORITY_PROVIDER, newPartnerA, partnerB);
         reloadRootHierarchies();
         return getHierarchiesContainingCompany(partnerB.businessId());
     }

@@ -4,9 +4,9 @@ import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
@@ -88,7 +88,7 @@ public class TestObjects {
 
     public static ImmutablePartnership.Builder aPartnership() {
         return ImmutablePartnership.builder()
-            .type(PartnershipType.AUTHORITY_PROVIDER);
+            .type(HierarchyType.AUTHORITY_PROVIDER);
     }
 
     public static ImmutablePartnershipRequest.Builder aPartnershipRequest() {

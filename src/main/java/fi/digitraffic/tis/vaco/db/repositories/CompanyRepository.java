@@ -301,4 +301,19 @@ public class CompanyRepository {
             businessId) == 1;
     }
 
+    public Optional<CompanyRecord> findById(long id) {
+        try {
+            return Optional.ofNullable(
+                jdbc.queryForObject(
+                    """
+                    SELECT *
+                      FROM company
+                     WHERE id = ?
+                    """,
+                    RowMappers.COMPANY_RECORD,
+                    id));
+        } catch (EmptyResultDataAccessException erdae) {
+            return Optional.empty();
+        }
+    }
 }

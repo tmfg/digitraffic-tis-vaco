@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.company.model.Partnership;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
@@ -20,14 +20,14 @@ public class PartnershipRepository {
         this.jdbc = Objects.requireNonNull(jdbc);
     }
 
-    public Optional<PartnershipRecord> findByIds(PartnershipType type,
+    public Optional<PartnershipRecord> findByIds(HierarchyType type,
                                                  CompanyRecord partnerA,
                                                  CompanyRecord partnerB) {
         return jdbc.query(
             """
             SELECT p.*
               FROM partnership p
-             WHERE p.type = ?::partnership_type
+             WHERE p.type = ?::hierarchy_type
                AND p.partner_a_id = ?
                AND p.partner_b_id = ?
             """,
@@ -37,11 +37,11 @@ public class PartnershipRepository {
             partnerB.id()).stream().findFirst();
     }
 
-    public PartnershipRecord create(PartnershipType type, CompanyRecord partnerA, CompanyRecord partnerB) {
+    public PartnershipRecord create(HierarchyType type, CompanyRecord partnerA, CompanyRecord partnerB) {
         return jdbc.queryForObject(
             """
             INSERT INTO partnership(type, partner_a_id, partner_b_id)
-                 VALUES (?::partnership_type, ?, ?)
+                 VALUES (?::hierarchy_type, ?, ?)
               RETURNING *
             """,
             RowMappers.PARTNERSHIP_RECORD,
@@ -54,7 +54,7 @@ public class PartnershipRepository {
         jdbc.update(
             """
             DELETE FROM partnership
-             WHERE type = ?::partnership_type
+             WHERE type = ?::hierarchy_type
                AND partner_a_id = (SELECT id FROM company WHERE business_id = ?)
                AND partner_b_id = (SELECT id FROM company WHERE business_id = ?)
             """,

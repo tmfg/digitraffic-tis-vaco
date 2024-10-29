@@ -10,9 +10,9 @@ import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
 import fi.digitraffic.tis.vaco.company.dto.PartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
@@ -451,20 +451,20 @@ public class UiController {
                     partnerB.get().name(), partnerB.get().businessId()));
         }
 
-        if (companyHierarchyService.findPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get()).isPresent()) {
+        if (companyHierarchyService.findPartnership(HierarchyType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 String.format("Cannot create partnership between companies %s and %s because it already exists",
                     partnerA.get().businessId(), partnerB.get().businessId()));
         }
 
-        if (companyHierarchyService.findPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerB.get(), partnerA.get()).isPresent()) {
+        if (companyHierarchyService.findPartnership(HierarchyType.AUTHORITY_PROVIDER, partnerB.get(), partnerA.get()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 String.format("Cannot create partnership between companies %s and %s because that would result in a circular relation",
                     partnerA.get().businessId(), partnerB.get().businessId()));
         }
 
         return ResponseEntity.ok(new Resource<>(companyHierarchyService.createPartnershipAndReturnUpdatedHierarchy(
-            PartnershipType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get()), null, null));
+            HierarchyType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get()), null, null));
     }
 
     @DeleteMapping(path = "/admin/partnership")
@@ -489,7 +489,7 @@ public class UiController {
                     partnerB.get().name(), partnerB.get().businessId()));
         }
 
-        return companyHierarchyService.findPartnership(PartnershipType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get())
+        return companyHierarchyService.findPartnership(HierarchyType.AUTHORITY_PROVIDER, partnerA.get(), partnerB.get())
             .map(partnership ->
                 ResponseEntity.ok(new Resource<>(companyHierarchyService.deletePartnership(partnership), null, null))
             ).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -524,7 +524,7 @@ public class UiController {
         }
 
         Optional<Partnership> existingPartnership = companyHierarchyService
-            .findPartnership(PartnershipType.AUTHORITY_PROVIDER, oldPartnerA.get(), partnerB.get());
+            .findPartnership(HierarchyType.AUTHORITY_PROVIDER, oldPartnerA.get(), partnerB.get());
         if (existingPartnership.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 String.format("Partnership between %s and %s does not exist, hence swapping is not possible",
@@ -532,7 +532,7 @@ public class UiController {
         }
 
         Optional<Partnership> potentialDuplicatePartnership = companyHierarchyService
-            .findPartnership(PartnershipType.AUTHORITY_PROVIDER, newPartnerA.get(), partnerB.get());
+            .findPartnership(HierarchyType.AUTHORITY_PROVIDER, newPartnerA.get(), partnerB.get());
         if (potentialDuplicatePartnership.isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 String.format("Partnership between %s and %s already exists, hence swapping is not possible",

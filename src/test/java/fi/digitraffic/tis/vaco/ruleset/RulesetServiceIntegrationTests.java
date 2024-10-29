@@ -4,7 +4,7 @@ import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.db.repositories.PartnershipRepository;
@@ -57,8 +57,8 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         parentOrg = companyRepository.create(TestObjects.aCompany().build());
         currentOrg = companyRepository.create(TestObjects.aCompany().build());
         otherOrg = companyRepository.create(TestObjects.aCompany().build());
-        partnershipRepository.create(PartnershipType.AUTHORITY_PROVIDER, parentOrg, currentOrg);
-        partnershipRepository.create(PartnershipType.AUTHORITY_PROVIDER, parentOrg, otherOrg);
+        partnershipRepository.create(HierarchyType.AUTHORITY_PROVIDER, parentOrg, currentOrg);
+        partnershipRepository.create(HierarchyType.AUTHORITY_PROVIDER, parentOrg, otherOrg);
 
         parentRuleA = rulesetService.createRuleset(
             ImmutableRuleset.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC, Type.VALIDATION_SYNTAX, testFormat));

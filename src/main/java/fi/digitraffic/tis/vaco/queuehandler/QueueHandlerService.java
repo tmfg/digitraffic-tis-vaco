@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
@@ -152,7 +152,7 @@ public class QueueHandlerService {
                     Optional<Company> fintrafficOrg = companyHierarchyService.findByBusinessId(FINTRAFFIC_BUSINESS_ID);
                     fintrafficOrg.ifPresent(fintraffic -> {
                         logger.debug("Registering partnership between Fintraffic ({}) and FINAP originated operator {} / {}", fintraffic.businessId(), businessId, finapOperator);
-                        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, fintraffic, newOperator);
+                        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, fintraffic, newOperator);
                     });
                 } else {
                     companyHierarchyService.findByBusinessId(businessId).ifPresent(existingOperator -> {

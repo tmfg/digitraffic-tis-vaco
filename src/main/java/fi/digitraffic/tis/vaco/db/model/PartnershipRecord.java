@@ -1,12 +1,12 @@
 package fi.digitraffic.tis.vaco.db.model;
 
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import org.immutables.value.Value;
 
 @Value.Immutable
 public interface PartnershipRecord {
     @Value.Parameter
-    PartnershipType type();
+    HierarchyType type();
 
     @Value.Parameter
     Long partnerA();

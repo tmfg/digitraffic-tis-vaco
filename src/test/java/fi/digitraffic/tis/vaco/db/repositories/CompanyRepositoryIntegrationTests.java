@@ -2,10 +2,10 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.company.model.HierarchyType;
 import fi.digitraffic.tis.vaco.company.model.ImmutableLegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.LegacyHierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
-import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +31,9 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         Company childB = companyHierarchyService.createCompany(ImmutableCompany.of("112233-6", "Puulaaki Oyj", true)).get();
         Company grandchildC = companyHierarchyService.createCompany(ImmutableCompany.of("112233-7", "Limited Ltd.", true)).get();
 
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childA);
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, root, childB);
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, childB, grandchildC);
+        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, root, childA);
+        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, root, childB);
+        companyHierarchyService.createPartnership(HierarchyType.AUTHORITY_PROVIDER, childB, grandchildC);
 
         Map<Company, LegacyHierarchy> h = companyRepository.findRootHierarchies();
 
