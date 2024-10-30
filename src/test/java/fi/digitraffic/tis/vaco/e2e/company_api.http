@@ -12,31 +12,47 @@ client_id={{clientId}}&grant_type=client_credentials&scope={{scope}}&client_secr
 
 ###
 
-POST localhost:8080/api/company
+POST {{serviceRootUri}}/api/company
 Content-Type: application/json
+Authorization: Bearer {{tis_token}}
 
 {
     "businessId": "1111111-1",
-    "name": "Firsty Firstings Ltd"
+    "name": "Firsty Firstings Ltd",
+    "publish": false
 }
 
 ###
 
-POST localhost:8080/api/company
+POST {{serviceRootUri}}/api/company
 Content-Type: application/json
+Authorization: Bearer {{tis_token}}
 
 {
     "businessId": "2222222-2",
-    "name": "Seccu Secundings Ltd"
+    "name": "Seccu Secundings Ltd",
+    "publish": false
 }
 
 ###
 
-POST localhost:8080/api/partnership
+POST {{serviceRootUri}}/api/partnership
 Content-Type: application/json
+Authorization: Bearer {{tis_token}}
 
 {
   "type": "AUTHORITY_PROVIDER",
   "partnerABusinessId": "1111111-1",
   "partnerBBusinessId": "2222222-2"
+}
+###
+
+POST {{serviceRootUri}}/api/partnership
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+{
+  "type": "AUTHORITY_PROVIDER",
+  "partnerABusinessId": "2942108-7",
+  "partnerBBusinessId": "1111111-1"
 }
