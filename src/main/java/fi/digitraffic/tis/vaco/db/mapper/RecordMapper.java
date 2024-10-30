@@ -20,10 +20,13 @@ import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.model.notifications.SubscriptionRecord;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
+import fi.digitraffic.tis.vaco.notifications.model.ImmutableSubscription;
+import fi.digitraffic.tis.vaco.notifications.model.Subscription;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -214,6 +217,17 @@ public class RecordMapper {
             .message(findingRecord.message())
             .severity(findingRecord.severity())
             .raw(findingRecord.raw())
+            .build();
+    }
+
+    public Subscription toSubscription(SubscriptionRecord subscriptionRecord,
+                                       CompanyRecord subscriber,
+                                       CompanyRecord resource) {
+        return ImmutableSubscription.builder()
+            .publicId(subscriptionRecord.publicId())
+            .type(subscriptionRecord.type())
+            .subscriber(toCompany(subscriber))
+            .resource(toCompany(resource))
             .build();
     }
 }
