@@ -43,9 +43,9 @@ public class SubscriptionsController {
                     createSubscriptionRequest.subscriber(),
                     createSubscriptionRequest.resource())
                 .map(Responses::created)
-                .orElseGet(() -> Responses.conflict(
+                .orElseGet(() -> Responses.badRequest(
                     String.format(
-                        "%s already has WebHook subscription to %s",
+                        "%s failed to subscribe to %s",
                         createSubscriptionRequest.subscriber(),
                         createSubscriptionRequest.resource()
                     )));
