@@ -35,7 +35,10 @@ import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.model.notifications.ImmutableSubscriptionRecord;
+import fi.digitraffic.tis.vaco.db.model.notifications.SubscriptionRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.notifications.model.SubscriptionType;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -326,6 +329,14 @@ public final class RowMappers {
         .businessId(rs.getString("business_id"))
         .name(rs.getString("name"))
         .formatSummary(rs.getString("format_summary"))
+        .build();
+
+    public static final RowMapper<SubscriptionRecord> SUBSCRIPTION_RECORD = (rs, rowNum) -> ImmutableSubscriptionRecord.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .type(SubscriptionType.forField(rs.getString("type")))
+        .subscriberId(rs.getLong("subscriber_id"))
+        .resourceId(rs.getLong("resource_id"))
         .build();
 
     @SuppressWarnings("unchecked")
