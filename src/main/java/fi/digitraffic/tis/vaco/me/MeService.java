@@ -47,7 +47,9 @@ public class MeService {
     public Set<Company> findCompanies(String userId) {
         return currentToken().map(token -> {
             Set<Company> companies = new HashSet<>();
+            logger.info("Getting MsGraph groups for user {}", userId);
             List<FintrafficIdGroup> groups = fintrafficIdService.getGroups(userId);
+            logger.info("MsGraph groups for user {} got received. Total number: {}", userId, groups.size());
 
             groups.forEach(g -> g.organizationData().ifPresent(od -> {
                 String groupId = g.id();
@@ -58,6 +60,7 @@ public class MeService {
                     .ifPresent(companies::add);
             }));
 
+            logger.info("Companies records for user {} got produced. Total number: {}", userId, companies.size());
             if (companies.isEmpty()) {
                 return Set.of(companyHierarchyService.getPublicTestCompany());
             }
