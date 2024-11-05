@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.db.repositories;
 
+import fi.digitraffic.tis.exceptions.PersistenceException;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
@@ -9,6 +10,9 @@ import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -26,6 +30,8 @@ import java.util.stream.Collectors;
 
 @Repository
 public class CompanyRepository {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbc;
 
@@ -301,4 +307,14 @@ public class CompanyRepository {
             businessId) == 1;
     }
 
+    public CompanyRecord findById(long id) {
+        try {
+            return jdbc.queryForObject(
+                "SELECT * FROM company WHERE id = ?",
+                RowMappers.COMPANY_RECORD,
+                id);
+        } catch (DataAccessException dae) {
+            throw new PersistenceException(String.format("Failed to load Company with id %s from database, possible data corruption!", id), dae);
+        }
+    }
 }

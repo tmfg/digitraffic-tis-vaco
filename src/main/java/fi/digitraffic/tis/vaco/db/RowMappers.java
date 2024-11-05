@@ -37,7 +37,10 @@ import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.model.notifications.ImmutableSubscriptionRecord;
+import fi.digitraffic.tis.vaco.db.model.notifications.SubscriptionRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.notifications.model.SubscriptionType;
 import fi.digitraffic.tis.vaco.feeds.model.FeedUri;
 import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeedUri;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -80,8 +83,7 @@ import java.util.function.Function;
 
 public final class RowMappers {
 
-    private RowMappers() {
-    }
+    private RowMappers() {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RowMappers.class);
 
@@ -163,7 +165,7 @@ public final class RowMappers {
             .adGroupId(rs.getString(alias + "ad_group_id"))
             .publish(rs.getBoolean(alias + "publish"))
             .codespaces(List.of(ArraySqlValue.read(rs, alias + "codespaces")))
-            .notificationWebhookUri(rs.getString(alias + "notification_webhook_uri"))
+            .notificationWebhookUri(rs.getString(alias +  "notification_webhook_uri"))
             .website(rs.getString(alias + "website"))
             .build();
 
@@ -240,8 +242,7 @@ public final class RowMappers {
             switch (rs.getString("name")) {
                 case "agencies" -> {
                     try {
-                        List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {
-                        });
+                        List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getAgencyCardUiContent(agencies);
                     } catch (IOException e) {
                         LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
@@ -251,8 +252,7 @@ public final class RowMappers {
                 //      too deeply to rely on this and would be too much effort to refactor at the moment.
                 case "feedInfo" -> {
                     try {
-                        Map<String, String> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {
-                        });
+                        Map<String, String> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getFeedInfoUiContent(feedInfo);
                     } catch (IOException e) {
                         LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
@@ -260,8 +260,7 @@ public final class RowMappers {
                 }
                 default -> {
                     try {
-                        content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {
-                        });
+                        content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                     } catch (IOException e) {
                         LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
                     }
@@ -337,6 +336,14 @@ public final class RowMappers {
         .formatSummary(rs.getString("format_summary"))
         .build();
 
+    public static final RowMapper<SubscriptionRecord> SUBSCRIPTION_RECORD = (rs, rowNum) -> ImmutableSubscriptionRecord.builder()
+        .id(rs.getLong("id"))
+        .publicId(rs.getString("public_id"))
+        .type(SubscriptionType.forField(rs.getString("type")))
+        .subscriberId(rs.getLong("subscriber_id"))
+        .resourceId(rs.getLong("resource_id"))
+        .build();
+
     @SuppressWarnings("unchecked")
     private static RowMapper<ValidationInput> mapValidationInput(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
@@ -409,15 +416,14 @@ public final class RowMappers {
     }
 
     /**
-
- * Tries to find matching configuration class reference from Jackson's annotations defined in the class based on
- * name of the rule.
- * <p>
- * This method exists to avoid duplicating the type mapping code.
- *
- * @param name Name of the rule
- * @return Matching configuration class reference or null if one couldn't be found.
- */
+     * Tries to find matching configuration class reference from Jackson's annotations defined in the class based on
+     * name of the rule.
+     * <p>
+     * This method exists to avoid duplicating the type mapping code.
+     *
+     * @param name Name of the rule
+     * @return Matching configuration class reference or null if one couldn't be found.
+     */
     private static Class<?> findSubtypeFromAnnotation(String name) {
         JsonSubTypes definedSubTypes = RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class);
 
