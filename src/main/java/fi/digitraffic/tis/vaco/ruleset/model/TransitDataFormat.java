@@ -4,16 +4,18 @@ import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
 public enum TransitDataFormat implements PersistableEnum {
-    GBFS("gbfs"),
-    GTFS("gtfs"),
-    GTFS_RT("gtfs-rt"),
-    NETEX("netex"),
-    SIRI("siri"),;
+    GBFS("gbfs", false),
+    GTFS("gtfs", false),
+    GTFS_RT("gtfs-rt", true),
+    NETEX("netex", false),
+    SIRI("siri", true);
 
     private final String fieldName;
+    private final boolean realtime;
 
-    TransitDataFormat(String fieldName) {
+    TransitDataFormat(String fieldName, boolean realtime) {
         this.fieldName = fieldName;
+        this.realtime = realtime;
     }
 
     public static TransitDataFormat forField(String field) {
@@ -28,5 +30,14 @@ public enum TransitDataFormat implements PersistableEnum {
     @Override
     public String fieldName() {
         return fieldName;
+    }
+
+    public boolean isRealtime(String format) {
+        for (TransitDataFormat dataformat : values()){
+            if (dataformat.fieldName.equals(format)) {
+                return dataformat.realtime;
+            }
+        }
+        return realtime;
     }
 }

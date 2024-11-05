@@ -14,6 +14,8 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.FeedRecord;
+import fi.digitraffic.tis.vaco.db.model.FeedUriRecord;
 import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
@@ -22,6 +24,9 @@ import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.featureflags.model.FeatureFlag;
 import fi.digitraffic.tis.vaco.featureflags.model.ImmutableFeatureFlag;
+import fi.digitraffic.tis.vaco.feeds.model.Feed;
+import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeed;
+import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeedUri;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
@@ -216,4 +221,18 @@ public class RecordMapper {
             .raw(findingRecord.raw())
             .build();
     }
+
+    public Feed toFeed(FeedRecord feedRecord) {
+        return ImmutableFeed.builder()
+            .publicId(feedRecord.publicId())
+            .owner(feedRecord.owner())
+            .format(feedRecord.format())
+            .uri(feedRecord.uri())
+            .processingEnabled(feedRecord.processingEnabled())
+            .build();
+
+    }
+
 }
+
+
