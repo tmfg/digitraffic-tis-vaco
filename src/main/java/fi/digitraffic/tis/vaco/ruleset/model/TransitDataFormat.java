@@ -32,12 +32,7 @@ public enum TransitDataFormat implements PersistableEnum {
         return fieldName;
     }
 
-    public boolean isRealtime(String format) {
-        for (TransitDataFormat dataformat : values()){
-            if (dataformat.fieldName.equals(format)) {
-                return dataformat.realtime;
-            }
-        }
+    public boolean isRealtime() {
         return realtime;
     }
 }

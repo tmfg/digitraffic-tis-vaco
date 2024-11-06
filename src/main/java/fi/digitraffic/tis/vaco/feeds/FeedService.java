@@ -26,8 +26,7 @@ public class FeedService {
     }
 
     public List<Feed> getAllFeeds() {
-        List<FeedRecord> feeds = feedRepository.findAllFeeds();
-
+        List<FeedRecord> feeds = feedRepository.getAllFeeds();
         return feeds.stream()
             .map(recordMapper::toFeed)
             .toList();

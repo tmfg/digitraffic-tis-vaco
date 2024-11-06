@@ -29,7 +29,7 @@ public class FeedRepository {
     }
 
     @Transactional
-    public List<FeedRecord> findAllFeeds() {
+    public List<FeedRecord> getAllFeeds() {
         try {
             return jdbc.query("""
                     SELECT *

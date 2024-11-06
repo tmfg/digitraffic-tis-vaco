@@ -33,7 +33,7 @@ public final class Responses {
         return new ResponseEntity<>(new Resource<>(data, null, null), HttpStatus.CREATED);
     }
 
-    public static ResponseEntity<String> badFeedRequest(String error) {
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    public static <D> ResponseEntity<Resource<D>> ok(D data) {
+        return ResponseEntity.ok(Resource.resource(data));
     }
 }

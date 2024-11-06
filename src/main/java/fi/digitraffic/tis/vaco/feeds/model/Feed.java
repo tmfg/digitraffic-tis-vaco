@@ -2,13 +2,14 @@ package fi.digitraffic.tis.vaco.feeds.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableFeed.class)
 @JsonDeserialize(as = ImmutableFeed.class)
 public interface Feed {
-    @Value.Parameter
+    @Nullable
     String publicId();
     @Value.Parameter
     String owner();
