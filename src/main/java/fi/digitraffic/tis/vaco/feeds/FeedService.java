@@ -21,7 +21,7 @@ public class FeedService {
     }
 
     public Optional<Feed> createFeed(Feed feed) {
-        return feedRepository.create(feed)
+        return feedRepository.createFeed(feed)
             .map(recordMapper::toFeed);
     }
 

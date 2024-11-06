@@ -6,6 +6,7 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.feeds.model.Feed;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +28,7 @@ public class FeedController {
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.Public.class)
-    public ResponseEntity<Resource<Feed>> createFeed(@RequestBody Feed feed) {
+    public ResponseEntity<Resource<Feed>> createFeed(@Valid @RequestBody Feed feed) {
 
         if (TransitDataFormat.forField(feed.format()).isRealtime()) {
             return feedService.createFeed(feed)

@@ -44,7 +44,7 @@ public class FeedRepository {
     }
 
     @Transactional
-    public Optional<FeedRecord> create(Feed feed) {
+    public Optional<FeedRecord> createFeed(Feed feed) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
                 INSERT INTO feed(owner, format, processing_enabled, uri, query_params, http_method, request_body)
@@ -70,7 +70,7 @@ public class FeedRepository {
                 feed.uri().requestBody()
                 ));
         } catch (DataAccessException dae) {
-            logger.warn("Failed to create feed", dae);
+            logger.warn("Failed to create feed {}", feed, dae);
             return Optional.empty();
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
