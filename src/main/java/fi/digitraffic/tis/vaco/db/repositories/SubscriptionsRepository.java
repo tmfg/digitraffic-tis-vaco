@@ -56,4 +56,29 @@ public class SubscriptionsRepository {
     public boolean deleteByPublicId(String publicId) {
         return jdbc.update("DELETE FROM subscription WHERE public_id = ?", publicId) > 0;
     }
+
+    /**
+     * Find all subscriptions for specified resource. In terms of subscription, resource means the subscription target.
+     *
+     * @param subscriptionType Subscription type filter.
+     * @param resource Reference of the company resource we want to list the subscriptions for.
+     * @return
+     */
+    public List<SubscriptionRecord> findSubscriptionsForResource(SubscriptionType subscriptionType, CompanyRecord resource) {
+        try {
+            return jdbc.query(
+                """
+                SELECT *
+                  FROM subscription
+                  WHERE type = ?
+                    AND resource_id = ?
+                """,
+                RowMappers.SUBSCRIPTION_RECORD,
+                subscriptionType.fieldName(),
+                resource.id()
+            );
+        } catch (DataAccessException dae) {
+            return List.of();
+        }
+    }
 }

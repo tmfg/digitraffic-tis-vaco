@@ -4,13 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.model.notifications.SubscriptionRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
+import fi.digitraffic.tis.vaco.db.repositories.SubscriptionsRepository;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import fi.digitraffic.tis.vaco.notifications.Notifier;
@@ -18,6 +20,7 @@ import fi.digitraffic.tis.vaco.notifications.model.ImmutableEntryCompletePayload
 import fi.digitraffic.tis.vaco.notifications.model.ImmutableNotification;
 import fi.digitraffic.tis.vaco.notifications.model.Notification;
 import fi.digitraffic.tis.vaco.notifications.model.NotificationType;
+import fi.digitraffic.tis.vaco.notifications.model.SubscriptionType;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.Package;
@@ -53,6 +56,7 @@ public class WebhookNotifier implements Notifier {
 
     private final PackagesService packagesService;
     private final RecordMapper recordMapper;
+    private final SubscriptionsRepository subscriptionsRepository;
 
     private final TaskService taskService;
 
@@ -65,7 +69,8 @@ public class WebhookNotifier implements Notifier {
                            TaskService taskService,
                            PackagesService packagesService,
                            RecordMapper recordMapper,
-                           ContextRepository contextRepository) {
+                           ContextRepository contextRepository,
+                           SubscriptionsRepository subscriptionsRepository) {
         this.companyRepository = Objects.requireNonNull(companyRepository);
         this.httpClient = Objects.requireNonNull(httpClient);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -74,37 +79,61 @@ public class WebhookNotifier implements Notifier {
         this.packagesService = Objects.requireNonNull(packagesService);
         this.recordMapper = Objects.requireNonNull(recordMapper);
         this.contextRepository = Objects.requireNonNull(contextRepository);
+        this.subscriptionsRepository = Objects.requireNonNull(subscriptionsRepository);
     }
 
     @Override
     public void notifyEntryComplete(EntryRecord entry) {
-        Optional<NotificationResponse> notification = companyRepository.findByBusinessId(entry.businessId())
-            .flatMap(company -> {
-                if (company.notificationWebhookUri() != null) {
-                    String webhookUri = company.notificationWebhookUri();
-                    Notification entryCompleteNotification = ImmutableNotification.builder()
-                        .name(NotificationType.ENTRY_COMPLETE_V1.getTypeName())
-                        .payload(ImmutableEntryCompletePayload.builder()
-                            .entry(asEntry(entry))
-                            .packages(packagesAsTaskGroupedLinks(entry))
-                            .build())
-                        .build();
+        Optional<CompanyRecord> optResource = companyRepository.findByBusinessId(entry.businessId());
+
+        if (optResource.isPresent()) {
+            CompanyRecord resource = optResource.get();
+
+            List<SubscriptionRecord> subscriptions = subscriptionsRepository.findSubscriptionsForResource(SubscriptionType.WEBHOOK, resource);
+
+            subscriptions.forEach(subscription -> {
+                CompanyRecord subscriber = companyRepository.findById(subscription.subscriberId());
+
+                Notification entryCompleteNotification = ImmutableNotification.builder()
+                    .name(NotificationType.ENTRY_COMPLETE_V1.getTypeName())
+                    .payload(ImmutableEntryCompletePayload.builder()
+                        .entry(asEntry(entry))
+                        .packages(packagesAsTaskGroupedLinks(entry))
+                        .build())
+                    .build();
+                if (subscriber.notificationWebhookUri() != null) {
+                    String webhookUri = subscriber.notificationWebhookUri();
                     try {
-                        return Optional.of(httpClient.sendWebhook(webhookUri, objectMapper
+                        CompletableFuture<NotificationResponse> value = httpClient.sendWebhook(webhookUri, objectMapper
                             .writerWithView(DataVisibility.Webhook.class)
-                            .writeValueAsBytes(entryCompleteNotification)));
+                            .writeValueAsBytes(entryCompleteNotification));
+                        value.join();
+                        logger.info(
+                            "Webhook {} notification sent for entry {} to subscriber {} of resource {}",
+                            entryCompleteNotification.name(),
+                            entry.publicId(),
+                            subscriber.businessId(),
+                            resource.businessId());
                     } catch (JsonProcessingException e) {
-                        throw new InvalidMappingException("Failed to map webhook payload to JSON", e);
+                        logger.warn(
+                            "Failed to map WebHook payload to JSON when trying to send {} for entry {} to subscriber {} of resource {}",
+                            entryCompleteNotification.name(),
+                            entry.publicId(),
+                            subscriber.businessId(),
+                            resource.businessId(),
+                            e);
                     }
                 } else {
-                    logger.debug("No Webhook notification URI set for {}", company.businessId());
-                    return Optional.empty();
+                    logger.warn(
+                        "No WebHook notification URI set for {}, cannot send {} for entry {} to subscriber {} of resource {}",
+                        subscriber.businessId(),
+                        entryCompleteNotification.name(),
+                        entry.publicId(),
+                        subscriber.businessId(),
+                        resource.businessId()
+                        );
                 }
-            })
-            .map(CompletableFuture::join);
-
-        if (notification.isPresent()) {
-            logger.info("Webhook {} notification sent for entry {}/ company {}", NotificationType.ENTRY_COMPLETE_V1, entry.publicId(), entry.businessId());
+            });
         }
     }
 

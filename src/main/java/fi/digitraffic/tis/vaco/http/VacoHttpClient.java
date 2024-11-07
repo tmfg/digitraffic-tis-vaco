@@ -75,7 +75,7 @@ public class VacoHttpClient {
                 return resp.build();
             });
         } catch (HttpClientException e) {
-            logger.warn("HTTP execution failure for %s".formatted(uri), e);
+            logger.warn("HTTP execution failure for {}", uri, e);
             return CompletableFuture.completedFuture(ImmutableNotificationResponse.builder().build());
         }
     }
