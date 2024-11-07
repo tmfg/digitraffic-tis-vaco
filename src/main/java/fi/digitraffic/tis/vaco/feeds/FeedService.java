@@ -38,7 +38,6 @@ public class FeedService {
                 .map(feedRecord -> recordMapper.toFeed(feedRecord, companyRecord)));
     }
 
-
     public List<Feed> getAllFeeds() {
         List<FeedRecord> feedRecords = feedRepository.getAllFeeds();
 
@@ -64,4 +63,7 @@ public class FeedService {
                 .build();
     }
 
+    public boolean deleteFeedByPublicId(String publicId) {
+        return feedRepository.deleteByPublicId(publicId);
+    }
 }

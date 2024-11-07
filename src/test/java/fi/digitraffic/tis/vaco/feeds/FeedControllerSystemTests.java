@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,6 +59,17 @@ public class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
         assertEquals(fetchResult.size(), 1);
         assertEquals(feed.owner(), fetchResult.get(0).get("owner").get("businessId").asText());
 
+        apiCall(delete("/v1/feeds/" + fetchResult.get(0).get("publicId").asText()))
+                .andExpect(status().isNoContent());
+
+        MvcResult fetchAfterDeleteResponse = apiCall(get("/v1/feeds")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode fetchAfterDeleteResult = apiResponse(fetchAfterDeleteResponse);
+        assertEquals(0, fetchAfterDeleteResult.size());
     }
+
 
 }

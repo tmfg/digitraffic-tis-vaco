@@ -81,5 +81,9 @@ public class FeedRepository {
 
     }
 
+    public boolean deleteByPublicId(String publicId) {
+        return jdbc.update("DELETE FROM feed WHERE public_id = ?", publicId) > 0;
+    }
+
 }
 

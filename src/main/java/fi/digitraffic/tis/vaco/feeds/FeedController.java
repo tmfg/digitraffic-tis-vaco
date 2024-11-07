@@ -9,8 +9,10 @@ import fi.digitraffic.tis.vaco.feeds.model.Feed;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Objects;
+
+import static org.springframework.http.ResponseEntity.noContent;
 
 @RestController
 @RequestMapping({"/v1/feeds", "/feeds"})
@@ -50,5 +54,17 @@ public class FeedController {
         return ResponseEntity.ok(
             feedService.getAllFeeds());
     }
+
+    @DeleteMapping("/{publicId}")
+    @JsonView(DataVisibility.Public.class)
+    public ResponseEntity<Resource<Boolean>> deleteFeed(@PathVariable("publicId") String publicId) {
+
+        if (feedService.deleteFeedByPublicId(publicId)) {
+            return noContent().build();
+        } else {
+            return Responses.badRequest(String.format("Feed '%s' could not be deleted, check logs", publicId));
+        }
+    }
+
 
 }
