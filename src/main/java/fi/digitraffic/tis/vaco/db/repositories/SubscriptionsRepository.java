@@ -70,7 +70,7 @@ public class SubscriptionsRepository {
                 """
                 SELECT *
                   FROM subscription
-                  WHERE type = ?
+                  WHERE type = ?::subscription_type
                     AND resource_id = ?
                 """,
                 RowMappers.SUBSCRIPTION_RECORD,

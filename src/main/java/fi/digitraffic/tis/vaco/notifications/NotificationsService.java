@@ -33,7 +33,9 @@ public class NotificationsService {
 
     public NotificationsService(List<Notifier> notifiers,
                                 EntryRepository entryRepository,
-                                SubscriptionsRepository subscriptionsRepository, RecordMapper recordMapper, CompanyRepository companyRepository) {
+                                SubscriptionsRepository subscriptionsRepository,
+                                RecordMapper recordMapper,
+                                CompanyRepository companyRepository) {
         this.notifiers = Objects.requireNonNull(notifiers);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.subscriptionsRepository = Objects.requireNonNull(subscriptionsRepository);
