@@ -91,49 +91,55 @@ public class WebhookNotifier implements Notifier {
 
             List<SubscriptionRecord> subscriptions = subscriptionsRepository.findSubscriptionsForResource(SubscriptionType.WEBHOOK, resource);
 
-            subscriptions.forEach(subscription -> {
-                CompanyRecord subscriber = companyRepository.findById(subscription.subscriberId());
+            if (subscriptions.isEmpty()) {
+                logger.debug("No WebHook listeners configured for entry {}'s organization {}", entry.publicId(), entry.businessId());
+            } else {
+                subscriptions.forEach(subscription -> {
+                    CompanyRecord subscriber = companyRepository.findById(subscription.subscriberId());
 
-                Notification entryCompleteNotification = ImmutableNotification.builder()
-                    .name(NotificationType.ENTRY_COMPLETE_V1.getTypeName())
-                    .payload(ImmutableEntryCompletePayload.builder()
-                        .entry(asEntry(entry))
-                        .packages(packagesAsTaskGroupedLinks(entry))
-                        .build())
-                    .build();
-                if (subscriber.notificationWebhookUri() != null) {
-                    String webhookUri = subscriber.notificationWebhookUri();
-                    try {
-                        CompletableFuture<NotificationResponse> value = httpClient.sendWebhook(webhookUri, objectMapper
-                            .writerWithView(DataVisibility.Webhook.class)
-                            .writeValueAsBytes(entryCompleteNotification));
-                        value.join();
-                        logger.info(
-                            "Webhook {} notification sent for entry {} to subscriber {} of resource {}",
-                            entryCompleteNotification.name(),
-                            entry.publicId(),
-                            subscriber.businessId(),
-                            resource.businessId());
-                    } catch (JsonProcessingException e) {
+                    Notification entryCompleteNotification = ImmutableNotification.builder()
+                        .name(NotificationType.ENTRY_COMPLETE_V1.getTypeName())
+                        .payload(ImmutableEntryCompletePayload.builder()
+                            .entry(asEntry(entry))
+                            .packages(packagesAsTaskGroupedLinks(entry))
+                            .build())
+                        .build();
+                    if (subscriber.notificationWebhookUri() != null) {
+                        String webhookUri = subscriber.notificationWebhookUri();
+                        try {
+                            CompletableFuture<NotificationResponse> value = httpClient.sendWebhook(webhookUri, objectMapper
+                                .writerWithView(DataVisibility.Webhook.class)
+                                .writeValueAsBytes(entryCompleteNotification));
+                            value.join();
+                            logger.info(
+                                "Webhook {} notification sent for entry {} to subscriber {} of resource {}",
+                                entryCompleteNotification.name(),
+                                entry.publicId(),
+                                subscriber.businessId(),
+                                resource.businessId());
+                        } catch (JsonProcessingException e) {
+                            logger.warn(
+                                "Failed to map WebHook payload to JSON when trying to send {} for entry {} to subscriber {} of resource {}",
+                                entryCompleteNotification.name(),
+                                entry.publicId(),
+                                subscriber.businessId(),
+                                resource.businessId(),
+                                e);
+                        }
+                    } else {
                         logger.warn(
-                            "Failed to map WebHook payload to JSON when trying to send {} for entry {} to subscriber {} of resource {}",
+                            "No WebHook notification URI set for {}, cannot send {} for entry {} to subscriber {} of resource {}",
+                            subscriber.businessId(),
                             entryCompleteNotification.name(),
                             entry.publicId(),
                             subscriber.businessId(),
-                            resource.businessId(),
-                            e);
-                    }
-                } else {
-                    logger.warn(
-                        "No WebHook notification URI set for {}, cannot send {} for entry {} to subscriber {} of resource {}",
-                        subscriber.businessId(),
-                        entryCompleteNotification.name(),
-                        entry.publicId(),
-                        subscriber.businessId(),
-                        resource.businessId()
+                            resource.businessId()
                         );
-                }
-            });
+                    }
+                });
+            }
+        } else {
+            logger.warn("Couldn't find company by business id {} for entry {}", entry.businessId(), entry.publicId());
         }
     }
 
