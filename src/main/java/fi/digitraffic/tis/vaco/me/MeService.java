@@ -1,9 +1,11 @@
 package fi.digitraffic.tis.vaco.me;
 
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
 import fi.digitraffic.tis.vaco.fintrafficid.model.FintrafficIdGroup;
+import fi.digitraffic.tis.vaco.fintrafficid.model.OrganizationData;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -47,9 +49,16 @@ public class MeService {
     public Set<Company> findCompanies(String userId) {
         return currentToken().map(token -> {
             Set<Company> companies = new HashSet<>();
-            logger.info("Getting MsGraph groups for user {}", userId);
             List<FintrafficIdGroup> groups = fintrafficIdService.getGroups(userId);
-            logger.info("MsGraph groups for user {} got received. Total number: {}", userId, groups.size());
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "User {} is member of {} Fintraffic ID groups ({})",
+                    userId,
+                    groups.size(),
+                    Streams.collect(groups, fidGroup -> fidGroup.organizationData()
+                        .map(OrganizationData::name)
+                        .orElse(fidGroup.displayName())));
+            }
 
             groups.forEach(g -> g.organizationData().ifPresent(od -> {
                 String groupId = g.id();
@@ -60,8 +69,16 @@ public class MeService {
                     .ifPresent(companies::add);
             }));
 
-            logger.info("Companies records for user {} got produced. Total number: {}", userId, companies.size());
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "User {} is a member of {} VACO companies ({})",
+                    userId,
+                    companies.size(),
+                    Streams.collect(companies, Company::name)
+                );
+            }
             if (companies.isEmpty()) {
+                logger.info("User {} is not a member of any VACO company, treating the user as a member of public-validation-test", userId);
                 return Set.of(companyHierarchyService.getPublicTestCompany());
             }
             return companies;
