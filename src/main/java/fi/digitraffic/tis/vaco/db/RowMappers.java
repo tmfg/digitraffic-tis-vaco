@@ -395,8 +395,8 @@ public final class RowMappers {
                 return ImmutableFeedRecord.builder()
                     .id(rs.getLong("id"))
                     .publicId(rs.getString("public_id"))
-                    .owner(rs.getString("owner"))
-                    .format(rs.getString("format"))
+                    .ownerId(rs.getLong("owner_id"))
+                    .format(TransitDataFormat.forField(rs.getString("format")))
                     .uri(mapFeedUrl(rs, objectMapper))
                     .processingEnabled(rs.getBoolean("processing_enabled"))
                     .build();

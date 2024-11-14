@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.db.model;
 
 import fi.digitraffic.tis.vaco.feeds.model.FeedUri;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -10,11 +11,11 @@ public interface FeedRecord {
     @Value.Parameter
     String publicId();
     @Value.Parameter
-    String owner();
+    Long ownerId();
     @Value.Parameter
     FeedUri uri();
     @Value.Parameter
-    String format();
+    TransitDataFormat format();
     @Value.Parameter
     boolean processingEnabled();
 }

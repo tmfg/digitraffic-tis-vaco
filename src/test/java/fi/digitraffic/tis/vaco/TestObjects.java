@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.vaco.api.model.feed.ImmutableCreateFeedRequest;
 import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
@@ -15,7 +16,6 @@ import fi.digitraffic.tis.vaco.configuration.MagicLink;
 import fi.digitraffic.tis.vaco.configuration.MsGraph;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeed;
 import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeedUri;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -23,12 +23,12 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -39,16 +39,15 @@ import java.util.UUID;
 
 public class TestObjects {
 
-    public static ImmutableFeed.Builder aFeed() {
-        return ImmutableFeed.builder()
-            .owner("testName")
-            .format("siri")
-            .uri(aFeedUrl())
-            .publicId(NanoIdUtils.randomNanoId())
-            .processingEnabled(true);
+    public static ImmutableCreateFeedRequest.Builder aCreateFeedRequest() {
+        return ImmutableCreateFeedRequest.builder()
+            .format(TransitDataFormat.SIRI_ET)
+            .owner("public-validation-test-id")
+            .processingEnabled(true)
+            .uri(aFeedUri());
     }
 
-    public static ImmutableFeedUri aFeedUrl() {
+    public static ImmutableFeedUri aFeedUri() {
         return ImmutableFeedUri.builder()
             .uri("www.example.fi/v1/feeds")
             .httpMethod("POST")

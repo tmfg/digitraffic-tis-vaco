@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.Resource;
+import fi.digitraffic.tis.vaco.api.model.feed.CreateFeedRequest;
 import fi.digitraffic.tis.vaco.feeds.model.Feed;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import jakarta.validation.Valid;
@@ -28,7 +29,7 @@ public class FeedController {
 
     @PostMapping(path = "")
     @JsonView(DataVisibility.Public.class)
-    public ResponseEntity<Resource<Feed>> createFeed(@Valid @RequestBody Feed feed) {
+    public ResponseEntity<Resource<Feed>> createFeed(@Valid @RequestBody CreateFeedRequest feed) {
 
         if (TransitDataFormat.forField(feed.format()).isRealtime()) {
             return feedService.createFeed(feed)

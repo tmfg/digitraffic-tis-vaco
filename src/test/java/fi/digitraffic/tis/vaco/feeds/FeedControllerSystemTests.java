@@ -3,15 +3,14 @@ package fi.digitraffic.tis.vaco.feeds;
 import com.fasterxml.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.api.model.feed.ImmutableCreateFeedRequest;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeed;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
-
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -37,7 +36,7 @@ public class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
     @Test
     void canCreateFeedAndFetchFeeds() throws Exception {
 
-        ImmutableFeed feed = TestObjects.aFeed().build();
+        ImmutableCreateFeedRequest feed = TestObjects.aCreateFeedRequest().build();
 
         MvcResult response = apiCall(post("/v1/feeds").content(toJson(feed)))
             .andExpect(status().isOk())
@@ -54,8 +53,10 @@ public class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
 
         JsonNode fetchResult = apiResponse(fetchResponse);
 
+        System.out.println(fetchResult);
+
         assertEquals(fetchResult.size(), 1);
-        assertEquals(feed.owner(), fetchResult.get(0).get("owner").asText());
+        assertEquals(feed.owner(), fetchResult.get(0).get("owner").get("businessId").asText());
 
     }
 

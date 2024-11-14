@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.FeedRecord;
 import fi.digitraffic.tis.vaco.feeds.model.Feed;
@@ -19,10 +20,11 @@ import java.util.Optional;
 @Repository
 public class FeedRepository {
 
-    private  final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final JdbcTemplate jdbc;
 
     private final ObjectMapper objectMapper;
+
     public FeedRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
         this.jdbc = jdbc;
         this.objectMapper = objectMapper;
@@ -31,7 +33,8 @@ public class FeedRepository {
     @Transactional
     public List<FeedRecord> getAllFeeds() {
         try {
-            return jdbc.query("""
+            return jdbc.query(
+                """
                     SELECT *
                       FROM feed
                     """,
@@ -46,34 +49,34 @@ public class FeedRepository {
     @Transactional
     public Optional<FeedRecord> createFeed(Feed feed) {
         try {
-            return Optional.ofNullable(jdbc.queryForObject("""
-                INSERT INTO feed(owner, format, processing_enabled, uri, query_params, http_method, request_body)
-                VALUES (?, ?, ?, ?, ?::jsonb, ?, ?)
-                RETURNING
-                id,
-                public_id,
-                owner,
-                format,
-                processing_enabled,
-                uri,
-                query_params,
-                http_method,
-                request_body
+            return Optional.ofNullable(jdbc.queryForObject(
+            """
+                INSERT INTO feed(owner_id, format, processing_enabled, uri, query_params, http_method, request_body)
+                     VALUES (?, ?, ?, ?, ?::jsonb, ?, ?)
+                  RETURNING id,
+                            public_id,
+                            owner_id,
+                            format,
+                            processing_enabled,
+                            uri,
+                            query_params,
+                            http_method,
+                            request_body
                 """,
                 RowMappers.FEED.apply(objectMapper),
-                feed.owner(),
-                feed.format(),
+                feed.owner().id(),
+                feed.format().fieldName(),
                 feed.processingEnabled(),
                 feed.uri().uri(),
                 objectMapper.writeValueAsString(feed.uri().queryParams()),
                 feed.uri().httpMethod(),
                 feed.uri().requestBody()
-                ));
+            ));
         } catch (DataAccessException dae) {
             logger.warn("Failed to create feed {}", feed, dae);
             return Optional.empty();
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new InvalidMappingException("Failed to deserialize from database for feed " + feed, e);
         }
 
     }

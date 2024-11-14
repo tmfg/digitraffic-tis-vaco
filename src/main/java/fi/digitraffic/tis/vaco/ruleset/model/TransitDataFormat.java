@@ -8,7 +8,10 @@ public enum TransitDataFormat implements PersistableEnum {
     GTFS("gtfs", false),
     GTFS_RT("gtfs-rt", true),
     NETEX("netex", false),
-    SIRI("siri", true);
+    SIRI_ET("siri-et", true),
+    SIRI_SX("siri-sx", true),
+    SIRI_VM("siri-vm",true);
+
 
     private final String fieldName;
     private final boolean realtime;
@@ -26,6 +29,16 @@ public enum TransitDataFormat implements PersistableEnum {
         }
         throw new InvalidMappingException("Could not map field value '" + field + "' to TransitDataFormat! Implementation missing?");
     }
+
+    public static TransitDataFormat forField(TransitDataFormat field) {
+        for (TransitDataFormat format : values()) {
+            if (format.equals(field)) {
+                return format;
+            }
+        }
+        throw new InvalidMappingException("Could not map field value '" + field + "' to TransitDataFormat! Implementation missing?");
+    }
+
 
     @Override
     public String fieldName() {
