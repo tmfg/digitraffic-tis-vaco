@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,7 +36,7 @@ public class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
-    void canCreateFeedAndFetchFeeds() throws Exception {
+    void canCreateFeedModifyAndFetchFeeds() throws Exception {
 
         ImmutableCreateFeedRequest feed = TestObjects.aCreateFeedRequest().build();
 
@@ -54,10 +55,16 @@ public class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
 
         JsonNode fetchResult = apiResponse(fetchResponse);
 
-        System.out.println(fetchResult);
-
         assertEquals(fetchResult.size(), 1);
         assertEquals(feed.owner(), fetchResult.get(0).get("owner").get("businessId").asText());
+        assertTrue(feed.processingEnabled());
+
+        MvcResult modifyEnableProcessing  = apiCall(post("/v1/feeds/"+ fetchResult.get(0).get("publicId").asText() +"/" + false))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        JsonNode modifyEnableProcessingResponse = apiResponse(modifyEnableProcessing);
+        assertEquals(modifyEnableProcessingResponse.get("data").get("processingEnabled").asText(), "false");
 
         apiCall(delete("/v1/feeds/" + fetchResult.get(0).get("publicId").asText()))
                 .andExpect(status().isNoContent());
@@ -70,6 +77,4 @@ public class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
         JsonNode fetchAfterDeleteResult = apiResponse(fetchAfterDeleteResponse);
         assertEquals(0, fetchAfterDeleteResult.size());
     }
-
-
 }

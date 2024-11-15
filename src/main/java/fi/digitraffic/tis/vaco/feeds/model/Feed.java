@@ -13,7 +13,7 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableFeed.class)
 public interface Feed {
 
-    String FEEDREQUEST_PUBLIC_ID = "<< !!! FEEDREQUEST !!! >>";
+    String FEEDREQUEST_PUBLIC_ID = "!!! FEEDREQUEST !!!";
     @Nullable
     String publicId();
     @Value.Parameter

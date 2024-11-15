@@ -22,7 +22,6 @@ public class FeedRepository {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final JdbcTemplate jdbc;
-
     private final ObjectMapper objectMapper;
 
     public FeedRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
@@ -31,7 +30,7 @@ public class FeedRepository {
     }
 
     @Transactional
-    public List<FeedRecord> getAllFeeds() {
+    public List<FeedRecord> listAllFeeds() {
         try {
             return jdbc.query(
                 """
@@ -85,5 +84,22 @@ public class FeedRepository {
         return jdbc.update("DELETE FROM feed WHERE public_id = ?", publicId) > 0;
     }
 
+    public Optional<FeedRecord> modifyFeedProcessing(boolean processingEnabled, String publicId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                       UPDATE feed
+                          SET processing_enabled = ?
+                       WHERE public_id = ?
+                    RETURNING *
+                    """,
+                RowMappers.FEED.apply(objectMapper),
+                processingEnabled,
+                publicId
+            ));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to modify feed {}", publicId, dae);
+            return Optional.empty();
+        }
+    }
 }
 

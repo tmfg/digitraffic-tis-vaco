@@ -41,7 +41,6 @@ public class FeedController {
             return feedService.createFeed(feed)
                 .map(Responses::ok)
                 .orElse(Responses.notFound("Error creating the feed"));
-
         } else {
             return Responses.badRequest("Format not realtime");
         }
@@ -50,21 +49,31 @@ public class FeedController {
 
     @GetMapping(path = "")
     @JsonView(DataVisibility.Public.class)
-    public ResponseEntity<List<Feed>> getFeeds() {
+    public ResponseEntity<List<Feed>> listFeeds() {
         return ResponseEntity.ok(
-            feedService.getAllFeeds());
+            feedService.listAllFeeds());
     }
 
-    @DeleteMapping("/{publicId}")
+    @PostMapping(path = "/{publicId}/{action}")
+    @JsonView(DataVisibility.Public.class)
+    public ResponseEntity<Resource<Feed>> modifyFeed(@PathVariable("publicId") String publicId,
+                                                     @PathVariable("action") boolean processingEnabled) {
+
+        return feedService.modifyFeedProcessing(processingEnabled, publicId)
+            .map(Responses::ok)
+            .orElse(Responses.badRequest("error modifying processing enabling"));
+
+    }
+
+    @DeleteMapping(path = "/{publicId}")
     @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Boolean>> deleteFeed(@PathVariable("publicId") String publicId) {
 
         if (feedService.deleteFeedByPublicId(publicId)) {
             return noContent().build();
         } else {
-            return Responses.badRequest(String.format("Feed '%s' could not be deleted, check logs", publicId));
+            return Responses.badRequest("Error when deleting feed");
         }
     }
-
 
 }
