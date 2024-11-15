@@ -36,3 +36,45 @@ Authorization: Bearer {{tis_token}}
 
 GET {{entry_details_link}}
 Content-Type: application/json
+
+
+###
+
+POST {{serviceRootUri}}/api/feeds/iA3ieKn8MU5rw9a5O9LWv/true
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+###
+
+POST {{serviceRootUri}}/api/feeds
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+{
+  "owner": "2942108-7",
+  "uri": {
+    "uri": "http://example.com",
+    "queryParams": {"param1": "value1"},
+    "httpMethod": "POST",
+    "requestBody": ""
+  },
+  "processingEnabled": false,
+  "format" : "SIRI_SX"
+}
+
+###
+
+GET {{serviceRootUri}}/api/feeds
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+###
+
+DELETE {{serviceRootUri}}/api/feeds/iA3ieKn8MU5rw9a5O9LWv
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+
+
+
+

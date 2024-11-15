@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeed;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static fi.digitraffic.tis.vaco.feeds.model.Feed.FEEDREQUEST_PUBLIC_ID;
@@ -24,9 +25,9 @@ public class FeedService {
 
     public FeedService(FeedRepository feedRepository, RecordMapper recordMapper, CompanyRepository companyRepository) {
 
-        this.feedRepository = feedRepository;
-        this.recordMapper = recordMapper;
-        this.companyRepository = companyRepository;
+        this.feedRepository = Objects.requireNonNull(feedRepository);
+        this.recordMapper = Objects.requireNonNull(recordMapper);
+        this.companyRepository = Objects.requireNonNull(companyRepository);
 
     }
 
