@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.feeds.model.Feed;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping({"/v1/feeds", "/feeds"})
+@PreAuthorize("hasAuthority('vaco.apiuser')")
 public class FeedController {
 
     private final FeedService feedService;
