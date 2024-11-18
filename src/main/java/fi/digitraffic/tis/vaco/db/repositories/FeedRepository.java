@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -25,8 +26,8 @@ public class FeedRepository {
     private final ObjectMapper objectMapper;
 
     public FeedRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
-        this.jdbc = jdbc;
-        this.objectMapper = objectMapper;
+        this.jdbc = Objects.requireNonNull(jdbc);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     @Transactional

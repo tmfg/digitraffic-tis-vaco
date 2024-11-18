@@ -59,7 +59,7 @@ public class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
         assertEquals(feed.owner(), fetchResult.get(0).get("owner").get("businessId").asText());
         assertTrue(feed.processingEnabled());
 
-        MvcResult modifyEnableProcessing  = apiCall(post("/v1/feeds/"+ fetchResult.get(0).get("publicId").asText() +"/" + false))
+        MvcResult modifyEnableProcessing  = apiCall(post("/v1/feeds/"+ fetchResult.get(0).get("publicId").asText()).param("enableProcessing", "false"))
             .andExpect(status().isOk())
             .andReturn();
 
