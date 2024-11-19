@@ -13,9 +13,9 @@ each VACO task is processed asynchronously and the results are fetched using the
 > See [Development Environment Setup](https://finrail.atlassian.net/wiki/spaces/VACO1/pages/2720825453/Development+Environment+Setup)
 > on Confluence for initial common setup instructions.
 
-1. Java 21 LTS+
-2. Maven 3+
-3. Docker with Docker Compose
+ - Java 21 LTS+
+ - Maven 3+
+ - Docker with Docker Compose
 
 ### Local Development / Quick Start
 
