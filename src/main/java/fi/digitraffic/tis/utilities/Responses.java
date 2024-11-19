@@ -1,6 +1,9 @@
 package fi.digitraffic.tis.utilities;
 
 import fi.digitraffic.tis.vaco.api.model.Resource;
+import fi.digitraffic.tis.vaco.company.model.Partnership;
+import fi.digitraffic.tis.vaco.feeds.model.Feed;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -28,5 +31,9 @@ public final class Responses {
 
     public static <D> ResponseEntity<Resource<D>> created(D data) {
         return new ResponseEntity<>(new Resource<>(data, null, null), HttpStatus.CREATED);
+    }
+
+    public static <D> ResponseEntity<Resource<D>> ok(D data) {
+        return ResponseEntity.ok(Resource.resource(data));
     }
 }

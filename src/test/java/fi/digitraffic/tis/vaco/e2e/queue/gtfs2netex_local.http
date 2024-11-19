@@ -36,3 +36,8 @@ Authorization: Bearer {{tis_token}}
 
 GET {{entry_details_link}}
 Content-Type: application/json
+
+
+
+
+

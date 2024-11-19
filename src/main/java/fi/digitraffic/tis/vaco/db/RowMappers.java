@@ -16,12 +16,14 @@ import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.FeedRecord;
 import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFeatureFlagRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableFeedRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePackageRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
@@ -39,6 +41,8 @@ import fi.digitraffic.tis.vaco.db.model.notifications.ImmutableSubscriptionRecor
 import fi.digitraffic.tis.vaco.db.model.notifications.SubscriptionRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.notifications.model.SubscriptionType;
+import fi.digitraffic.tis.vaco.feeds.model.FeedUri;
+import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeedUri;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -199,6 +203,7 @@ public final class RowMappers {
     public static final Function<ObjectMapper, RowMapper<ValidationInputRecord>> VALIDATION_INPUT_RECORD = RowMappers::mapValidationInputRecord;
     public static final Function<ObjectMapper, RowMapper<ConversionInput>> CONVERSION_INPUT = RowMappers::mapConversionInput;
     public static final Function<ObjectMapper, RowMapper<ConversionInputRecord>> CONVERSION_INPUT_RECORD = RowMappers::mapConversionInputRecord;
+    public static final Function<ObjectMapper, RowMapper<FeedRecord>> FEED = RowMappers::mapFeedRecord;
 
     public static final RowMapper<FindingRecord> FINDING_RECORD = (rs, rowNum) -> ImmutableFindingRecord.builder()
         .id(rs.getLong("id"))
@@ -381,6 +386,32 @@ public final class RowMappers {
                 .id(rs.getLong("id"))
                 .name(rs.getString("name"))
                 .config(readJson(objectMapper, rs, "config"))
+                .build();
+    }
+
+    public static RowMapper<FeedRecord> mapFeedRecord(ObjectMapper objectMapper) {
+        return (rs, rowNum) -> {
+            try {
+                return ImmutableFeedRecord.builder()
+                    .id(rs.getLong("id"))
+                    .publicId(rs.getString("public_id"))
+                    .ownerId(rs.getLong("owner_id"))
+                    .format(TransitDataFormat.forField(rs.getString("format")))
+                    .uri(mapFeedUrl(rs, objectMapper))
+                    .processingEnabled(rs.getBoolean("processing_enabled"))
+                    .build();
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    private static FeedUri mapFeedUrl(ResultSet rs, ObjectMapper objectMapper) throws SQLException, JsonProcessingException {
+            return ImmutableFeedUri.builder()
+                .uri(rs.getString("uri"))
+                .queryParams(objectMapper.readValue(rs.getString("query_params"), new TypeReference<Map<String, String>>() {}))
+                .httpMethod(rs.getString("http_method"))
+                .requestBody(rs.getString("request_body"))
                 .build();
     }
 
