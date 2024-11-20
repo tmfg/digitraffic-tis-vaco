@@ -39,8 +39,8 @@ public class FeedService {
     }
 
 
-    public List<Feed> getAllFeeds() {
-        List<FeedRecord> feedRecords = feedRepository.getAllFeeds();
+    public List<Feed> listAllFeeds() {
+        List<FeedRecord> feedRecords = feedRepository.listAllFeeds();
 
         return feedRecords.stream()
             .map(feedRecord -> {
@@ -49,6 +49,19 @@ public class FeedService {
 
             })
             .toList();
+    }
+
+    public boolean deleteFeedByPublicId(String publicId) {
+        return feedRepository.deleteByPublicId(publicId);
+    }
+
+    public Optional<Feed> modifyFeedProcessing(boolean processingEnabled, String publicId) {
+
+        Optional<FeedRecord> feedRecord = feedRepository.modifyFeedProcessing(processingEnabled, publicId);
+        CompanyRecord companyRecord = companyRepository.findById(feedRecord.get().ownerId());
+
+        return Optional.of(recordMapper.toFeed(feedRecord.get(), companyRecord));
+
     }
 
     private Feed toFeed(CreateFeedRequest request) {

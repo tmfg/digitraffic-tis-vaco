@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -22,16 +23,15 @@ public class FeedRepository {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final JdbcTemplate jdbc;
-
     private final ObjectMapper objectMapper;
 
     public FeedRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
-        this.jdbc = jdbc;
-        this.objectMapper = objectMapper;
+        this.jdbc = Objects.requireNonNull(jdbc);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     @Transactional
-    public List<FeedRecord> getAllFeeds() {
+    public List<FeedRecord> listAllFeeds() {
         try {
             return jdbc.query(
                 """
@@ -81,5 +81,26 @@ public class FeedRepository {
 
     }
 
+    public boolean deleteByPublicId(String publicId) {
+        return jdbc.update("DELETE FROM feed WHERE public_id = ?", publicId) > 0;
+    }
+
+    public Optional<FeedRecord> modifyFeedProcessing(boolean processingEnabled, String publicId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForObject("""
+                       UPDATE feed
+                          SET processing_enabled = ?
+                       WHERE public_id = ?
+                    RETURNING *
+                    """,
+                RowMappers.FEED.apply(objectMapper),
+                processingEnabled,
+                publicId
+            ));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to modify feed {}", publicId, dae);
+            return Optional.empty();
+        }
+    }
 }
 
