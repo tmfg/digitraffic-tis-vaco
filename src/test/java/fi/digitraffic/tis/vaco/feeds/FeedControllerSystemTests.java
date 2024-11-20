@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.servlet.MvcResult;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 
@@ -66,15 +68,30 @@ public class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
         JsonNode modifyEnableProcessingResponse = apiResponse(modifyEnableProcessing);
         assertEquals(modifyEnableProcessingResponse.get("data").get("processingEnabled").asText(), "false");
 
-        apiCall(delete("/v1/feeds/" + fetchResult.get(0).get("publicId").asText()))
-                .andExpect(status().isNoContent());
+        canDeleteFeed(fetchResult);
+
+
+    }
+
+    private void canDeleteFeed(JsonNode fetchResult) throws Exception {
+
+        String oid = "admin";
+        String publicId = fetchResult.get(0).get("publicId").asText();
+
+        JwtAuthenticationToken token = TestObjects.jwtAdminAuthenticationToken(oid);
+        SecurityContextHolder.getContext().setAuthentication(token);
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId("2942108-7").get()));
+
+        apiCall(delete("/v1/feeds/" + publicId))
+            .andExpect(status().isNoContent());
 
         MvcResult fetchAfterDeleteResponse = apiCall(get("/v1/feeds")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andReturn();
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andReturn();
 
         JsonNode fetchAfterDeleteResult = apiResponse(fetchAfterDeleteResponse);
         assertEquals(0, fetchAfterDeleteResult.size());
+
     }
 }
