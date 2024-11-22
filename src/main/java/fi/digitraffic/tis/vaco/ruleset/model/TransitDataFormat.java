@@ -30,16 +30,6 @@ public enum TransitDataFormat implements PersistableEnum {
         throw new InvalidMappingException("Could not map field value '" + field + "' to TransitDataFormat! Implementation missing?");
     }
 
-    public static TransitDataFormat forField(TransitDataFormat field) {
-        for (TransitDataFormat format : values()) {
-            if (format.equals(field)) {
-                return format;
-            }
-        }
-        throw new InvalidMappingException("Could not map field value '" + field + "' to TransitDataFormat! Implementation missing?");
-    }
-
-
     @Override
     @JsonValue
     public String fieldName() {
