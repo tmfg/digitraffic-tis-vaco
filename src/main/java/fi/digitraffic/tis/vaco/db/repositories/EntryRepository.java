@@ -221,7 +221,8 @@ public class EntryRepository {
                                                                 FROM company co
                                                                WHERE co.business_id = e.business_id)
                                           AND c.context = ?)
-                 ORDER BY created DESC
+                 AND e.status NOT IN ('received', 'processing')
+                 ORDER BY completed DESC
                  LIMIT 1
                 """,
                 RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
