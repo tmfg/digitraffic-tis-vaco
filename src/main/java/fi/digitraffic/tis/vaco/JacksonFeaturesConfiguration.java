@@ -32,6 +32,10 @@ public class JacksonFeaturesConfiguration {
                 // Normally "fail fast" would be better, but as this relies on API users writing their types correctly,
                 // this is safer. User is expected to inspect the result of their entry submission anyways.
                 objectMapper.configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false);
+                // JsonView may hide polymorphic data; disabling this will prevent exception to be thrown when trying
+                // to deserialize such
+                objectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_EXTERNAL_TYPE_ID_PROPERTY, false);
+
                 // prevent coercion of anything to strings to allow Jakarta Validation to work as intended
                 objectMapper.coercionConfigDefaults()
                     .setCoercion(CoercionInputShape.Boolean, CoercionAction.Fail)

@@ -10,9 +10,13 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
+import fi.digitraffic.tis.vaco.credentials.model.AuthenticationDetails;
+import fi.digitraffic.tis.vaco.credentials.model.Credentials;
+import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.FeedRecord;
 import fi.digitraffic.tis.vaco.db.model.FindingRecord;
@@ -48,6 +52,7 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -84,7 +89,7 @@ public class RecordMapper {
 
     @SuppressWarnings("unchecked")
     public ValidationInput toValidationInput(ValidationInputRecord validationInputRecord) {
-        Class<?> cc = findSubtypeFromAnnotation(validationInputRecord.name());
+        Class<?> cc = findSubtypeFromAnnotation(validationInputRecord.name(), RuleConfiguration.class);
 
         return ImmutableValidationInput.builder()
             .name(validationInputRecord.name())
@@ -94,7 +99,7 @@ public class RecordMapper {
 
     @SuppressWarnings("unchecked")
     public ConversionInput toConversionInput(ConversionInputRecord conversionInputRecord) {
-        Class<?> cc = findSubtypeFromAnnotation(conversionInputRecord.name());
+        Class<?> cc = findSubtypeFromAnnotation(conversionInputRecord.name(), RuleConfiguration.class);
 
         return ImmutableConversionInput.builder()
             .id(conversionInputRecord.id())
@@ -114,6 +119,17 @@ public class RecordMapper {
         }
     }
 
+    private static <O> O readValue(ObjectMapper objectMapper, byte[] bytes, Class<O> type) {
+        if (type == null) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(bytes, type);
+        } catch (IOException e) {
+            throw new InvalidMappingException("Failed to read JSONB as valid " + type, e);
+        }
+    }
+
     /**
      * Tries to find matching configuration class reference from Jackson's annotations defined in the class based on
      * name of the rule.
@@ -121,12 +137,13 @@ public class RecordMapper {
      * This method exists to avoid duplicating the type mapping code.
      *
      * @param name Name of the rule
+     * @param aClass
      * @return Matching configuration class reference or null if one couldn't be found.
      */
-    private static Class<?> findSubtypeFromAnnotation(String name) {
-        JsonSubTypes definedSubTypes = RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class);
+    private static <T> Class<T> findSubtypeFromAnnotation(String name, Class<T> aClass) {
+        JsonSubTypes definedSubTypes = aClass.getDeclaredAnnotation(JsonSubTypes.class);
 
-        return Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
+        return (Class<T>) Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
             .map(JsonSubTypes.Type::value)
             .findFirst()
             .orElse(null);
@@ -242,7 +259,18 @@ public class RecordMapper {
             .uri(feedRecord.uri())
             .processingEnabled(feedRecord.processingEnabled())
             .build();
-
     }
 
+    public Credentials toCredentials(CredentialsRecord credentialsRecord, CompanyRecord companyRecord) {
+        Class<AuthenticationDetails> cc = findSubtypeFromAnnotation(credentialsRecord.type().fieldName(), AuthenticationDetails.class);
+
+        return ImmutableCredentials.builder()
+            .publicId(credentialsRecord.publicId())
+            .type(credentialsRecord.type())
+            .name(credentialsRecord.name())
+            .description(credentialsRecord.description())
+            .owner(toCompany(companyRecord))
+            .details(readValue(objectMapper, credentialsRecord.details(), cc))
+            .build();
+    }
 }

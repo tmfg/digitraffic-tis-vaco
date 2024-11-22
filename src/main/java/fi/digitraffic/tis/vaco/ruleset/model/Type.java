@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.ruleset.model;
 import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
+// TODO: rename this enum to be more descriptive
 public enum Type implements PersistableEnum {
     VALIDATION_SYNTAX("validation_syntax"),
     VALIDATION_LOGIC("validation_logic"),

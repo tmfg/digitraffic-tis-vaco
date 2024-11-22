@@ -39,6 +39,8 @@ public class CompanyRepository {
 
     private final RecordMapper recordMapper;
 
+    // TODO: caching here, getByBusinessId gets called a lot
+
     public CompanyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc, RecordMapper recordMapper) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);

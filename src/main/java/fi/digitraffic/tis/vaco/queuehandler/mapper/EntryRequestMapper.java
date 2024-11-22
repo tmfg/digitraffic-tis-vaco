@@ -6,7 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
+import fi.digitraffic.tis.vaco.api.model.credentials.CreateCredentialsRequest;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
+import fi.digitraffic.tis.vaco.company.model.Company;
+import fi.digitraffic.tis.vaco.credentials.model.Credentials;
+import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -15,9 +19,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 
 @Component
 public class EntryRequestMapper {
+// TODO: We need only one mapper class for all API request objects, refactor
 
     private final ObjectMapper objectMapper;
 
@@ -101,5 +108,16 @@ public class EntryRequestMapper {
         } catch (JsonProcessingException e) {
             throw new InvalidMappingException("Could not map JsonNode to " + type, e);
         }
+    }
+
+    public Credentials toCredentials(CreateCredentialsRequest credentials, Function<String, Optional<Company>> companyLoader) {
+        return ImmutableCredentials.builder()
+            .publicId(Credentials.NON_PERSISTED_PUBLIC_ID)
+            .type(credentials.type())
+            .name(credentials.name())
+            .description(credentials.description())
+            .owner(companyLoader.apply(credentials.owner()).orElseThrow(() -> new InvalidMappingException("Could not load owner '" + credentials.owner() + "' details for CreateCredentialsRequest")))
+            .details(credentials.details())
+            .build();
     }
 }
