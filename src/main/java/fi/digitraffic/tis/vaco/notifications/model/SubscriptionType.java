@@ -5,7 +5,7 @@ import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
 public enum SubscriptionType implements PersistableEnum {
-    WEBHOOK("webhook");
+    WEBHOOK(Name.WEBHOOK);
 
     private final String fieldName;
 
@@ -21,8 +21,16 @@ public enum SubscriptionType implements PersistableEnum {
 
     public static SubscriptionType forField(String field) {
         return switch (field) {
-            case "webhook" -> WEBHOOK;
+            case Name.WEBHOOK -> WEBHOOK;
             default -> throw new InvalidMappingException("Could not map field value '" + field + "' to SubscriptionType! Implementation missing?");
         };
+    }
+
+    public static final class Name {
+
+        public static final String WEBHOOK = "webhook";
+
+        private Name() {}
+
     }
 }

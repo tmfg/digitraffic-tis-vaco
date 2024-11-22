@@ -26,11 +26,10 @@ public enum CredentialsType implements PersistableEnum {
         };
     }
 
-    // TODO: refactor other PersistableEnums to look like this as well
     public static final class Name {
 
-        private Name() {}
-
         public static final String HTTP_BASIC = "HTTP Basic";
+
+        private Name() {}
     }
 }
