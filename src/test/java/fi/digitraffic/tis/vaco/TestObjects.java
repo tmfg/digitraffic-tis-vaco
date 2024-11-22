@@ -23,8 +23,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -131,7 +131,7 @@ public class TestObjects {
             .identifyingName("rule:identifyingName:" + UUID.randomUUID())
             .description("running hello rule from tests")
             .category(Category.GENERIC)
-            .type(Type.VALIDATION_SYNTAX);
+            .type(RulesetType.VALIDATION_SYNTAX);
     }
 
     public static VacoProperties vacoProperties() {

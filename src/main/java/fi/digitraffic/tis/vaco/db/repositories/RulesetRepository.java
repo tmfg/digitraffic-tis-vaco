@@ -6,7 +6,7 @@ import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -62,7 +62,7 @@ public class RulesetRepository {
         return Set.copyOf(rulesets);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, TransitDataFormat format, Type type) {
+    public Set<Ruleset> findRulesets(String businessId, TransitDataFormat format, RulesetType type) {
         List<Ruleset> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
@@ -96,7 +96,7 @@ public class RulesetRepository {
         return Set.copyOf(rulesets);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, Type type, TransitDataFormat format, Set<String> rulesetNames) {
+    public Set<Ruleset> findRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> rulesetNames) {
         if (rulesetNames.isEmpty()) {
             return findRulesets(businessId, format, type);
         }

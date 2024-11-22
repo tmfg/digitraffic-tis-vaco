@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.packages.model.Package;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -19,7 +19,7 @@ public interface TaskReport {
     @Nullable
     String description();
 
-    Type type();
+    RulesetType type();
 
     List<ItemCounter> findingCounters();
 

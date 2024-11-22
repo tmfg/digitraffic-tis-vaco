@@ -19,8 +19,8 @@ import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,7 +84,7 @@ class TaskServiceTests {
                 RuleName.GTFS_CANONICAL,
                 "GTFS Canonical",
                 Category.GENERIC,
-                Type.VALIDATION_SYNTAX,
+                RulesetType.VALIDATION_SYNTAX,
                 TransitDataFormat.GTFS)
             .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
         gtfs2NetexRuleset = ImmutableRuleset.of(
@@ -92,7 +92,7 @@ class TaskServiceTests {
                 RuleName.GTFS2NETEX_FINTRAFFIC,
                 "GTFS2NETEX Fintraffic",
                 Category.GENERIC,
-                Type.CONVERSION_SYNTAX,
+                RulesetType.CONVERSION_SYNTAX,
                 TransitDataFormat.GTFS)
             .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK, RuleName.GTFS_CANONICAL))
             .withAfterDependencies(List.of(RuleName.NETEX_ENTUR));
@@ -101,7 +101,7 @@ class TaskServiceTests {
                 RuleName.NETEX_ENTUR,
                 "NeTEx Entur",
                 Category.GENERIC,
-                Type.VALIDATION_SYNTAX,
+                RulesetType.VALIDATION_SYNTAX,
                 TransitDataFormat.NETEX)
             .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
     }

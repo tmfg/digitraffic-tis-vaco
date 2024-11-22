@@ -9,7 +9,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,7 @@ public class RulesetService {
             : businessId);
     }
 
-    public Set<Ruleset> selectRulesets(String businessId, Type type, TransitDataFormat format, Set<String> names) {
+    public Set<Ruleset> selectRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> names) {
         Set<Ruleset> rulesets;
         if (names.isEmpty()) {
             rulesets = rulesetRepository.findRulesets(businessId, format, type);

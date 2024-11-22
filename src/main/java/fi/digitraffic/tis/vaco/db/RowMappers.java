@@ -57,7 +57,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
@@ -101,7 +101,7 @@ public final class RowMappers {
         .identifyingName(rs.getString("identifying_name"))
         .description(rs.getString("description"))
         .category(Category.forField(rs.getString("category")))
-        .type(Type.forField(rs.getString("type")))
+        .type(RulesetType.forField(rs.getString("type")))
         .format(TransitDataFormat.forField(rs.getString("format")))
         .beforeDependencies(Set.of(ArraySqlValue.read(rs, "before_dependencies")))
         .afterDependencies(Set.of(ArraySqlValue.read(rs, "after_dependencies")))
@@ -114,7 +114,7 @@ public final class RowMappers {
         .identifyingName(rs.getString("identifying_name"))
         .description(rs.getString("description"))
         .category(Category.forField(rs.getString("category")))
-        .type(Type.forField(rs.getString("type")))
+        .type(RulesetType.forField(rs.getString("type")))
         .format(TransitDataFormat.forField(rs.getString("format")))
         .beforeDependencies(Set.of(ArraySqlValue.read(rs, "before_dependencies")))
         .afterDependencies(Set.of(ArraySqlValue.read(rs, "after_dependencies")))

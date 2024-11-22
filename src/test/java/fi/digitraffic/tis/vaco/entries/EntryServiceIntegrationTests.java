@@ -23,8 +23,8 @@ import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,7 +107,7 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
                     conversion.name(),
                     "This test data is bananas!",
                     Category.GENERIC,
-                    Type.CONVERSION_SYNTAX,
+                    RulesetType.CONVERSION_SYNTAX,
                     TransitDataFormat.forField(entry.format()))
                 .withBeforeDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK));
 

@@ -9,7 +9,7 @@ import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.RetryStatistics;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableRulesetSubmissionConfiguration;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
@@ -61,7 +61,7 @@ class ValidationQueueSqsListenerTests {
         message = ImmutableValidationJobMessage.builder()
             .entry(entry)
             .retryStatistics(retryStatistics)
-            .configuration(ImmutableRulesetSubmissionConfiguration.of(Type.VALIDATION_SYNTAX, "nullish"))
+            .configuration(ImmutableRulesetSubmissionConfiguration.of(RulesetType.VALIDATION_SYNTAX, "nullish"))
             .build();
     }
 

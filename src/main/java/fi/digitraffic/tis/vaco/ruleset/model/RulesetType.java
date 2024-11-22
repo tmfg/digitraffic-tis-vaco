@@ -3,8 +3,7 @@ package fi.digitraffic.tis.vaco.ruleset.model;
 import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
-// TODO: rename this enum to be more descriptive
-public enum Type implements PersistableEnum {
+public enum RulesetType implements PersistableEnum {
     VALIDATION_SYNTAX(Name.VALIDATION_SYNTAX),
     VALIDATION_LOGIC(Name.VALIDATION_LOGIC),
     CONVERSION_SYNTAX(Name.CONVERSION_SYNTAX),
@@ -13,7 +12,7 @@ public enum Type implements PersistableEnum {
 
     private final String fieldName;
 
-    Type(String fieldName) {
+    RulesetType(String fieldName) {
         this.fieldName = fieldName;
     }
 
@@ -22,7 +21,7 @@ public enum Type implements PersistableEnum {
         return fieldName;
     }
 
-    public static Type forField(String field) {
+    public static RulesetType forField(String field) {
         return switch (field) {
             case Name.VALIDATION_SYNTAX -> VALIDATION_SYNTAX;
             case Name.VALIDATION_LOGIC -> VALIDATION_LOGIC;

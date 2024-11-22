@@ -20,8 +20,8 @@ import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,7 +94,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
                 RuleName.GTFS_CANONICAL,
                 "bleh",
                 Category.GENERIC,
-                Type.VALIDATION_SYNTAX,
+                RulesetType.VALIDATION_SYNTAX,
                 TransitDataFormat.GTFS)
             .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
     }
