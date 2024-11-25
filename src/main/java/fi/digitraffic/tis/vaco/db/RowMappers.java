@@ -317,6 +317,7 @@ public final class RowMappers {
             .notifications(List.of(ArraySqlValue.read(rs, "notifications")))
             .status(Status.forField(rs.getString("status")))
             .context(nullableLong(rs, "context_id"))
+            .credentials(nullableLong(rs, "credentials_id"))
             .build();
     }
 

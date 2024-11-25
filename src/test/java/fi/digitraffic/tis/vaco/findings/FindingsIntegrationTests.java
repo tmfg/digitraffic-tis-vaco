@@ -4,6 +4,7 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
+import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
@@ -60,7 +61,7 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
     void setUp() {
 
         ImmutableEntry entryToCreate = TestObjects.anEntry("gtfs").build();
-        entry = entryRepository.create(Optional.empty(), entryToCreate).get();
+        entry = entryRepository.create(entryToCreate, Optional.empty(), Optional.empty()).get();
         taskRepository.createTasks(entry, List.of(ImmutableTask.of(RuleName.GTFS_CANONICAL,1)));
         task = taskRepository.findTask(entry.id(), RuleName.GTFS_CANONICAL).get();
         rule = recordMapper.toRuleset(rulesetRepository.findByName(RuleName.GTFS_CANONICAL).get());
@@ -88,7 +89,8 @@ public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
 
         Map<String, Ruleset> rulesetMap = Map.of(task.name(), rule);
         Optional<ContextRecord> context = Optional.empty();
-        TaskReport ruleReport = entryStateService.getTaskReport(task, recordMapper.toEntryBuilder(entry, context).build(), rulesetMap);
+        Optional<CredentialsRecord> credentials = Optional.empty();
+        TaskReport ruleReport = entryStateService.getTaskReport(task, recordMapper.toEntryBuilder(entry, context, credentials).build(), rulesetMap);
 
         AggregatedFinding invalidUrlError = ruleReport.findings().get(0);
         assertThatSeverityIsError(invalidUrlError, "invalid_url");

@@ -7,10 +7,12 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.credentials.CredentialsRepository;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.ConversionInputRepository;
@@ -37,8 +39,11 @@ import static fi.digitraffic.tis.Constants.FINTRAFFIC_BUSINESS_ID;
 @Service
 public class QueueHandlerService {
 
-    private final ContextRepository contextRepository;
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final ContextRepository contextRepository;
+
+    private final CredentialsRepository credentialsRepository;
 
     private final CachingService cachingService;
 
@@ -70,7 +75,8 @@ public class QueueHandlerService {
                                EntryRepository entryRepository,
                                ValidationInputRepository validationInputRepository,
                                ConversionInputRepository conversionInputRepository,
-                               ContextRepository contextRepository) {
+                               ContextRepository contextRepository,
+                               CredentialsRepository credentialsRepository) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.entryService = Objects.requireNonNull(entryService);
         this.messagingService = Objects.requireNonNull(messagingService);
@@ -82,6 +88,7 @@ public class QueueHandlerService {
         this.validationInputRepository = Objects.requireNonNull(validationInputRepository);
         this.conversionInputRepository = Objects.requireNonNull(conversionInputRepository);
         this.contextRepository = Objects.requireNonNull(contextRepository);
+        this.credentialsRepository = Objects.requireNonNull(credentialsRepository);
     }
 
     public Optional<Entry> processQueueEntry(Entry entry) {
@@ -91,9 +98,12 @@ public class QueueHandlerService {
             Optional<ContextRecord> context = Optional.ofNullable(entry.context())
                 .flatMap(ctx -> contextRepository.upsert(entry));
 
-            return entryRepository.create(context, entry)
+            Optional<CredentialsRecord> credentials = Optional.ofNullable(entry.credentials())
+                .flatMap(credentialsRepository::findByPublicId);
+
+            return entryRepository.create(entry, context, credentials)
                 .map(persisted -> {
-                    ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted, context);
+                    ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted, context, credentials);
 
                     List<ValidationInputRecord> validationInputs = validationInputRepository.create(persisted, entry.validations());
                     List<ConversionInputRecord> conversionInputs = conversionInputRepository.create(persisted, entry.conversions());

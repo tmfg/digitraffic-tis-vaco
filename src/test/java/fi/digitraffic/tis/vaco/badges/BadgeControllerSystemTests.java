@@ -162,9 +162,9 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     @Test
     void newEntry_statusIsReceived() throws InterruptedException {
         Entry entry = TestObjects.anEntry("gtfs").build();
-        Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
+        Optional<EntryRecord> entryRecord = entryRepository.create(entry, Optional.empty(), Optional.empty());
         assertThat(entryRecord.isPresent(), equalTo(true));
-        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(), Optional.empty())
+        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(), Optional.empty(), Optional.empty())
             .tasks(List.of())
             .build();
 
@@ -176,7 +176,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     @Test
     void newEntry_statusIsProcessing() throws InterruptedException {
         Entry entry = TestObjects.anEntry("gtfs").build();
-        Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
+        Optional<EntryRecord> entryRecord = entryRepository.create(entry, Optional.empty(), Optional.empty());
         assertThat(entryRecord.isPresent(), equalTo(true));
 
         long until = System.currentTimeMillis() + 200;
@@ -195,14 +195,14 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         Task validationTask = ImmutableTask.of(RuleName.GTFS_CANONICAL, 200);
         Entry entry = entryBuilder.addTasks(downloadTask, validationTask).build();
         assertThat(entry.tasks(), not(empty()));
-        Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
+        Optional<EntryRecord> entryRecord = entryRepository.create(entry, Optional.empty(), Optional.empty());
         assertThat(entryRecord.isPresent(), equalTo(true));
         List<Task> tasks1 = entry.tasks();
         assertThat(tasks1, not(empty()));
         List<TaskRecord> tasks = taskRepository.createTasks(entryRecord.get(), tasks1);
         assertThat(tasks, not(empty()));
 
-        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty())
+        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty(), Optional.empty())
             .tasks(Streams.collect(tasks, recordMapper::toTask))
             .build();
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
@@ -227,14 +227,14 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .url("http://localhost:" + server.getAddress().getPort() + "/testfile")
             .build();
         assertThat(entry.tasks(), not(empty()));
-        Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
+        Optional<EntryRecord> entryRecord = entryRepository.create(entry, Optional.empty(), Optional.empty());
         assertThat(entryRecord.isPresent(), equalTo(true));
         List<Task> tasks1 = entry.tasks();
         assertThat(tasks1, not(empty()));
         List<TaskRecord> tasks = taskRepository.createTasks(entryRecord.get(), tasks1);
         assertThat(tasks, not(empty()));
 
-        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty())
+        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty(), Optional.empty())
             .tasks(Streams.collect(tasks, recordMapper::toTask))
             .build();
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
@@ -262,14 +262,14 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .url("http://localhost:" + server.getAddress().getPort() + "/testfile")
             .build();
         assertThat(entry.tasks(), not(empty()));
-        Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
+        Optional<EntryRecord> entryRecord = entryRepository.create(entry, Optional.empty(), Optional.empty());
         assertThat(entryRecord.isPresent(), equalTo(true));
         List<Task> tasks1 = entry.tasks();
         assertThat(tasks1, not(empty()));
         List<TaskRecord> tasks = taskRepository.createTasks(entryRecord.get(), tasks1);
         assertThat(tasks, not(empty()));
 
-        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty())
+        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty(), Optional.empty())
             .tasks(Streams.collect(tasks, recordMapper::toTask))
             .build();
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()
@@ -298,14 +298,14 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .url("http://localhost:" + server.getAddress().getPort() + "/testfile")
             .build();
         assertThat(entry.tasks(), not(empty()));
-        Optional<EntryRecord> entryRecord = entryRepository.create(Optional.empty(), entry);
+        Optional<EntryRecord> entryRecord = entryRepository.create(entry, Optional.empty(), Optional.empty());
         assertThat(entryRecord.isPresent(), equalTo(true));
         List<Task> tasks1 = entry.tasks();
         assertThat(tasks1, not(empty()));
         List<TaskRecord> tasks = taskRepository.createTasks(entryRecord.get(), tasks1);
         assertThat(tasks, not(empty()));
 
-        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty())
+        Entry createdEntry = recordMapper.toEntryBuilder(entryRecord.get(),Optional.empty(), Optional.empty())
             .tasks(Streams.collect(tasks, recordMapper::toTask))
             .build();
         ImmutableDelegationJobMessage job = ImmutableDelegationJobMessage.builder()

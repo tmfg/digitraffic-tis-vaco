@@ -9,6 +9,7 @@ import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -117,6 +118,25 @@ public class CredentialsRepository {
             return Optional.of(jdbc.update("DELETE FROM credentials WHERE public_id = ?", publicId) > 0);
         } catch (DataAccessException dae) {
             logger.warn("Someone tried to delete non-existent credentials by publicId {}", publicId, dae);
+            return Optional.empty();
+        }
+    }
+
+    public Optional<CredentialsRecord> findForEntry(EntryRecord entry) {
+        if (entry.credentials() == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(jdbc.queryForObject(
+                """
+                SELECT c.*
+                  FROM credentials c
+                 WHERE c.id = ?
+                """,
+                RowMappers.CREDENTIALS_RECORD(this::decryptBlob),
+                entry.credentials()));
+        } catch (DataAccessException dae) {
+            logger.warn("Failed to find credentials record for credentials %s/%s".formatted(entry.publicId(), entry.credentials()), dae);
             return Optional.empty();
         }
     }

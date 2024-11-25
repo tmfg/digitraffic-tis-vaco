@@ -49,6 +49,7 @@ public class EntryRequestMapper {
             .conversions(mapConversions(createEntryRequest.conversions()))
             .notifications(createEntryRequest.notifications())
             .context(createEntryRequest.context())
+            .credentials(createEntryRequest.credentials())
             .build();
     }
 

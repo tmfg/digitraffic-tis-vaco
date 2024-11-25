@@ -5,6 +5,7 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
+import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -43,27 +44,29 @@ public class EntryRepository {
     }
 
     @Transactional
-    public Optional<EntryRecord> create(Optional<ContextRecord> context, Entry entry) {
+    public Optional<EntryRecord> create(Entry entry, Optional<ContextRecord> context, Optional<CredentialsRecord> credentials) {
         try {
-            return Optional.ofNullable(jdbc.queryForObject("""
-                    INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications, context_id)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                      RETURNING id,
-                                public_id,
-                                business_id,
-                                format,
-                                url,
-                                etag,
-                                metadata,
-                                created,
-                                started,
-                                updated,
-                                completed,
-                                name,
-                                notifications,
-                                status,
-                                context_id
-                    """,
+            return Optional.ofNullable(jdbc.queryForObject(
+                """
+                INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications, context_id, credentials_id)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  RETURNING id,
+                            public_id,
+                            business_id,
+                            format,
+                            url,
+                            etag,
+                            metadata,
+                            created,
+                            started,
+                            updated,
+                            completed,
+                            name,
+                            notifications,
+                            status,
+                            context_id,
+                            credentials_id
+                """,
                 RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
                 entry.businessId(),
                 entry.format(),
@@ -72,7 +75,8 @@ public class EntryRepository {
                 RowMappers.writeJson(objectMapper, entry.metadata()),
                 entry.name(),
                 ArraySqlValue.create(entry.notifications().toArray(new String[0])),
-                context.map(ContextRecord::id).orElse(null)));
+                context.map(ContextRecord::id).orElse(null),
+                credentials.map(CredentialsRecord::id).orElse(null)));
         } catch (DataAccessException dae) {
             logger.warn("Failed to create Entry", dae);
             return Optional.empty();
@@ -116,7 +120,22 @@ public class EntryRepository {
     private Optional<EntryRecord> findEntry(String publicId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject("""
-                        SELECT id, public_id, business_id, format, url, etag, metadata, created, started, updated, completed, name, notifications, status, context_id
+                        SELECT id,
+                               public_id,
+                               business_id,
+                               format,
+                               url,
+                               etag,
+                               metadata,
+                               created,
+                               started,
+                               updated,
+                               completed,
+                               name,
+                               notifications,
+                               status,
+                               context_id,
+                               credentials_id
                           FROM entry qe
                          WHERE qe.public_id = ?
                         """,

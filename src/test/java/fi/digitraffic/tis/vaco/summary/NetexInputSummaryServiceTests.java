@@ -46,7 +46,7 @@ public class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase
     @BeforeEach
     void setUp() {
         ImmutableEntry entryToCreate = TestObjects.anEntry("netex").build();
-        EntryRecord entry = entryRepository.create(Optional.empty(), entryToCreate).get();
+        EntryRecord entry = entryRepository.create(entryToCreate, Optional.empty(), Optional.empty()).get();
         taskRepository.createTasks(entry, List.of(ImmutableTask.of("FAKE_TASK", 1)));
         task = taskRepository.findTask(entry.id(), "FAKE_TASK").get();
     }

@@ -51,4 +51,9 @@ public interface CreateEntryRequest {
     @Nullable
     @Schema(description = "Some context to group entries with.", example = "Some special testing")
     String context();
+
+    @Nullable
+    @Schema(description = "Select one of the predefined credentials to apply for the data source of this entry.")
+    String credentials();
+
 }

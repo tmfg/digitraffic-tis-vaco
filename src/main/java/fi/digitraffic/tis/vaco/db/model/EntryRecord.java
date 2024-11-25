@@ -62,4 +62,7 @@ public interface EntryRecord {
 
     @Nullable
     Long context();
+
+    @Nullable
+    Long credentials();
 }

@@ -69,7 +69,7 @@ public class RecordMapper {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public ImmutableEntry.Builder toEntryBuilder(EntryRecord entryRecord, Optional<ContextRecord> context) {
+    public ImmutableEntry.Builder toEntryBuilder(EntryRecord entryRecord, Optional<ContextRecord> context, Optional<CredentialsRecord> credentials) {
         return ImmutableEntry.builder()
             .publicId(entryRecord.publicId())
             .name(entryRecord.name())
@@ -84,7 +84,8 @@ public class RecordMapper {
             .updated(entryRecord.updated())
             .completed(entryRecord.completed())
             .status(entryRecord.status())
-            .context(context.map(ContextRecord::context).orElse(null));
+            .context(context.map(ContextRecord::context).orElse(null))
+            .credentials(credentials.map(CredentialsRecord::publicId).orElse(null));
     }
 
     @SuppressWarnings("unchecked")
