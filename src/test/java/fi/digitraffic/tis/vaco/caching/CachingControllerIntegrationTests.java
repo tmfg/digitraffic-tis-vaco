@@ -33,7 +33,8 @@ class CachingControllerIntegrationTests extends SpringBootIntegrationTestBase {
                 "statuses",
                 "classpath resources",
                 "UI/MyData summaries",
-                "DB/context records")));
+                "DB/context records",
+                "DB/company records")));
     }
 
 }

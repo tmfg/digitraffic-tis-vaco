@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.exceptions.PersistenceException;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
@@ -39,26 +40,32 @@ public class CompanyRepository {
 
     private final RecordMapper recordMapper;
 
-    // TODO: caching here, getByBusinessId gets called a lot
+    private final CachingService cachingService;
 
-    public CompanyRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc, RecordMapper recordMapper) {
+    public CompanyRepository(JdbcTemplate jdbc,
+                             NamedParameterJdbcTemplate namedJdbc,
+                             RecordMapper recordMapper,
+                             CachingService cachingService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
         this.recordMapper = Objects.requireNonNull(recordMapper);
+        this.cachingService = Objects.requireNonNull(cachingService);
     }
 
-    public CompanyRecord create(Company company) {
-        return jdbc.queryForObject(
-            """
-            INSERT INTO company(business_id, name, contact_emails, publish)
-                 VALUES (?, ?, ?, ?)
-              RETURNING *
-            """,
-            RowMappers.COMPANY_RECORD,
-            company.businessId(),
-            company.name(),
-            ArraySqlValue.create(company.contactEmails().toArray(new String[0])),
-            company.publish());
+    public Optional<CompanyRecord> create(Company company) {
+        return cachingService.cacheCompanyRecord(company.businessId(), key -> {
+            return jdbc.queryForObject(
+                """
+                INSERT INTO company(business_id, name, contact_emails, publish)
+                     VALUES (?, ?, ?, ?)
+                  RETURNING *
+                """,
+                RowMappers.COMPANY_RECORD,
+                company.businessId(),
+                company.name(),
+                ArraySqlValue.create(company.contactEmails().toArray(new String[0])),
+                company.publish());
+        });
     }
 
     public Company update(String businessId, Company company) {
@@ -89,22 +96,20 @@ public class CompanyRepository {
     }
 
     public Optional<CompanyRecord> findByBusinessId(String businessId) {
-        try {
-            return Optional.ofNullable(jdbc.queryForObject(
-                """
-                SELECT *
-                  FROM company
-                 WHERE business_id = ?
-                """,
-                RowMappers.COMPANY_RECORD,
-                businessId));
-        } catch (EmptyResultDataAccessException erdae) {
-            return Optional.empty();
-        }
-    }
-
-    public void delete(String businessId) {
-        jdbc.update("DELETE FROM company WHERE business_id = ?", businessId);
+        return cachingService.cacheCompanyRecord(businessId, key -> {
+            try {
+                return jdbc.queryForObject(
+                    """
+                    SELECT *
+                      FROM company
+                     WHERE business_id = ?
+                    """,
+                    RowMappers.COMPANY_RECORD,
+                    businessId);
+            } catch (EmptyResultDataAccessException erdae) {
+                return null;
+            }
+        });
     }
 
     public List<Company> listAllWithEntries() {
@@ -147,20 +152,21 @@ public class CompanyRepository {
     }
 
     public CompanyRecord updateAdGroupId(CompanyRecord company, String adGroupId) {
-        return jdbc.queryForObject(
+        CompanyRecord updated = jdbc.queryForObject(
             """
-                UPDATE company
-                   SET ad_group_id = ?
-                 WHERE id = ?
-             RETURNING *
-            """,
+                    UPDATE company
+                       SET ad_group_id = ?
+                     WHERE id = ?
+                 RETURNING *
+                """,
             RowMappers.COMPANY_RECORD,
             adGroupId,
             company.id());
+        return cachingService.updateCompanyRecord(updated);
     }
 
     public CompanyRecord updateContactEmails(CompanyRecord company, List<String> replacementEmails) {
-        return jdbc.queryForObject(
+        CompanyRecord updated = jdbc.queryForObject(
             """
                 UPDATE company
                    SET contact_emails = ?
@@ -170,6 +176,7 @@ public class CompanyRepository {
             RowMappers.COMPANY_RECORD,
             ArraySqlValue.create(replacementEmails.toArray(new String[0])),
             company.id());
+        return cachingService.updateCompanyRecord(updated);
     }
 
     public Map<Company, Hierarchy> findRootHierarchies() {
@@ -302,11 +309,13 @@ public class CompanyRepository {
     }
 
     public boolean deleteByBusinessId(String businessId) {
-        return jdbc.update("""
-            DELETE FROM company
-             WHERE business_id = ?
-            """,
-            businessId) == 1;
+        if (jdbc.update("DELETE FROM company WHERE business_id = ?", businessId) > 0) {
+            cachingService.invalidateCompanyRecord(businessId);
+            return true;
+        } else {
+            logger.warn("Failed to delete company by businessId {}", businessId);
+            return false;
+        }
     }
 
     public CompanyRecord findById(long id) {

@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import fi.digitraffic.tis.vaco.caching.mapper.CacheStatsMapper;
 import fi.digitraffic.tis.vaco.caching.model.CacheSummaryStatistics;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -47,6 +48,7 @@ public class CachingService {
 
     // *Record caches are database specific and should only be accesssed from *Repositories
     private final Cache<String, ContextRecord> contextRecordCache;
+    private final Cache<String, CompanyRecord> companyRecordCache;
 
     public CachingService(CacheStatsMapper cacheStatsMapper) {
         this.cacheStatsMapper = Objects.requireNonNull(cacheStatsMapper);
@@ -57,6 +59,7 @@ public class CachingService {
         this.statusCache = genericCache(3000);
         this.classPathResourceCache = genericCache(Status.values().length);
         this.contextRecordCache = genericCache(300);
+        this.companyRecordCache = genericCache(300);
         this.myDataSummariesCache = genericCache(500);
         this.msGraphCache = genericCache(500, Duration.ofMinutes(5));
     }
@@ -177,6 +180,7 @@ public class CachingService {
             "statuses", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
             "classpath resources", cacheStatsMapper.toCacheSummaryStatistics(classPathResourceCache),
             "DB/context records", cacheStatsMapper.toCacheSummaryStatistics(contextRecordCache),
+            "DB/company records", cacheStatsMapper.toCacheSummaryStatistics(companyRecordCache),
             "UI/MyData summaries", cacheStatsMapper.toCacheSummaryStatistics(myDataSummariesCache));
     }
 
@@ -184,4 +188,16 @@ public class CachingService {
         return Optional.ofNullable(contextRecordCache.get(key, loader));
     }
 
+    public Optional<CompanyRecord> cacheCompanyRecord(String key, Function<String, CompanyRecord> loader) {
+        return Optional.ofNullable(companyRecordCache.get(key, loader));
+    }
+
+    public void invalidateCompanyRecord(String key) {
+        companyRecordCache.invalidate(key);
+    }
+
+    public CompanyRecord updateCompanyRecord(CompanyRecord companyRecord) {
+        companyRecordCache.put(companyRecord.businessId(), companyRecord);
+        return companyRecord;
+    }
 }

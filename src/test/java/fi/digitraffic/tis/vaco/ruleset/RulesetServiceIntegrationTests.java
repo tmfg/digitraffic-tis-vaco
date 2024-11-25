@@ -54,9 +54,9 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @BeforeEach
     void setUp() {
         fintraffic = companyRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).get();
-        parentOrg = companyRepository.create(TestObjects.aCompany().build());
-        currentOrg = companyRepository.create(TestObjects.aCompany().build());
-        otherOrg = companyRepository.create(TestObjects.aCompany().build());
+        parentOrg = companyRepository.create(TestObjects.aCompany().build()).get();
+        currentOrg = companyRepository.create(TestObjects.aCompany().build()).get();
+        otherOrg = companyRepository.create(TestObjects.aCompany().build()).get();
         partnershipRepository.create(PartnershipType.AUTHORITY_PROVIDER, parentOrg, currentOrg);
         partnershipRepository.create(PartnershipType.AUTHORITY_PROVIDER, parentOrg, otherOrg);
 
@@ -74,9 +74,9 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        companyRepository.delete(parentOrg.businessId());
-        companyRepository.delete(currentOrg.businessId());
-        companyRepository.delete(otherOrg.businessId());
+        companyRepository.deleteByBusinessId(parentOrg.businessId());
+        companyRepository.deleteByBusinessId(currentOrg.businessId());
+        companyRepository.deleteByBusinessId(otherOrg.businessId());
         rulesetService.deleteRuleset(parentRuleA);
         rulesetService.deleteRuleset(parentRuleB);
         rulesetService.deleteRuleset(currentRuleC);

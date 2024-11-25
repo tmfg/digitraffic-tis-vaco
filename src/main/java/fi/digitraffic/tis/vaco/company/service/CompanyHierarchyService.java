@@ -67,7 +67,7 @@ public class CompanyHierarchyService {
         if (existing.isPresent()) {
             return Optional.empty();
         }
-        return Optional.of(companyRepository.create(company)).map(recordMapper::toCompany);
+        return companyRepository.create(company).map(recordMapper::toCompany);
     }
 
     public Company editCompany(String businessId, Company company) {
