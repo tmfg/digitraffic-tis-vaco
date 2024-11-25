@@ -2,6 +2,8 @@ package fi.digitraffic.tis.vaco;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.vaco.api.model.credentials.CreateCredentialsRequest;
+import fi.digitraffic.tis.vaco.api.model.credentials.ImmutableCreateCredentialsRequest;
 import fi.digitraffic.tis.vaco.api.model.feed.ImmutableCreateFeedRequest;
 import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;
 import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
@@ -16,6 +18,7 @@ import fi.digitraffic.tis.vaco.configuration.MagicLink;
 import fi.digitraffic.tis.vaco.configuration.MsGraph;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeedUri;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -188,5 +191,9 @@ public class TestObjects {
         return ImmutableFinding.builder()
             .rulesetId(rulesetId)
             .taskId(taskId);
+    }
+
+    public static CreateCredentialsRequest aCredentials(String ownerBusinessId) {
+        return ImmutableCreateCredentialsRequest.of(CredentialsType.HTTP_BASIC, "test credentials", "testing credentials", ownerBusinessId);
     }
 }

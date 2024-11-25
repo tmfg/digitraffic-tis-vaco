@@ -10,10 +10,12 @@ import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.credentials.CredentialsRepository;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
+import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.ConversionInputRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
@@ -39,6 +41,7 @@ import static fi.digitraffic.tis.Constants.FINTRAFFIC_BUSINESS_ID;
 @Service
 public class QueueHandlerService {
 
+    private final CompanyRepository companyRepository;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final ContextRepository contextRepository;
@@ -76,7 +79,7 @@ public class QueueHandlerService {
                                ValidationInputRepository validationInputRepository,
                                ConversionInputRepository conversionInputRepository,
                                ContextRepository contextRepository,
-                               CredentialsRepository credentialsRepository) {
+                               CredentialsRepository credentialsRepository, CompanyRepository companyRepository) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.entryService = Objects.requireNonNull(entryService);
         this.messagingService = Objects.requireNonNull(messagingService);
@@ -89,6 +92,7 @@ public class QueueHandlerService {
         this.conversionInputRepository = Objects.requireNonNull(conversionInputRepository);
         this.contextRepository = Objects.requireNonNull(contextRepository);
         this.credentialsRepository = Objects.requireNonNull(credentialsRepository);
+        this.companyRepository = companyRepository;
     }
 
     public Optional<Entry> processQueueEntry(Entry entry) {
@@ -99,7 +103,20 @@ public class QueueHandlerService {
                 .flatMap(ctx -> contextRepository.upsert(entry));
 
             Optional<CredentialsRecord> credentials = Optional.ofNullable(entry.credentials())
-                .flatMap(credentialsRepository::findByPublicId);
+                .flatMap(credentialsRepository::findByPublicId)
+                .filter(c -> {
+                    // ensure credentials owner is the same as the entry-to-created would be
+                    CompanyRecord companyRecord = companyRepository.findById(c.ownerId());
+                    boolean hasSameOwner = companyRecord.businessId().equals(entry.businessId());
+                    if (!hasSameOwner) {
+                        logger.warn("Tried to link entry {} to credentials {} with mismatching owner businessId ({} vs {})! Link will not be added.",
+                            entry.publicId(),
+                            c.publicId(),
+                            entry.businessId(),
+                            companyRecord.businessId());
+                    }
+                    return hasSameOwner;
+                });
 
             return entryRepository.create(entry, context, credentials)
                 .map(persisted -> {
