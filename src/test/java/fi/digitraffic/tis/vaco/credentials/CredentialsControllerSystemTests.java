@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.credentials;
 import com.fasterxml.jackson.core.type.TypeReference;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.api.model.credentials.CreateCredentialsRequest;
 import fi.digitraffic.tis.vaco.api.model.credentials.ImmutableCreateCredentialsRequest;
@@ -15,8 +16,11 @@ import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableHttpBasicAuthenticationDetails;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.servlet.MvcResult;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 
@@ -32,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
+class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
 
     private final TypeReference<Resource<Credentials>> credentialsResourceType = new TypeReference<>() {};
 
@@ -51,6 +55,14 @@ public class CredentialsControllerSystemTests extends SpringBootIntegrationTestB
     @BeforeAll
     static void createRequiredBuckets(@Autowired VacoProperties vacoProperties) {
         CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
+    }
+
+    @BeforeEach
+    void setUpAdminAccess() {
+        String oid = "test-admin-oid";
+        JwtAuthenticationToken token = TestObjects.jwtAdminAuthenticationToken(oid);
+        SecurityContextHolder.getContext().setAuthentication(token);
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId("2942108-7").get()));
     }
 
     @Test
