@@ -6,7 +6,6 @@ import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.api.model.feed.CreateFeedRequest;
 import fi.digitraffic.tis.vaco.feeds.model.Feed;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,7 +37,7 @@ public class FeedController {
     @PreAuthorize("hasAuthority('vaco.admin')")
     public ResponseEntity<Resource<Feed>> createFeed(@Valid @RequestBody CreateFeedRequest feed) {
 
-        if (TransitDataFormat.forField(feed.format()).isRealtime()) {
+        if (feed.format().isRealtime()) {
             return feedService.createFeed(feed)
                 .map(Responses::ok)
                 .orElse(Responses.notFound("Error creating the feed"));

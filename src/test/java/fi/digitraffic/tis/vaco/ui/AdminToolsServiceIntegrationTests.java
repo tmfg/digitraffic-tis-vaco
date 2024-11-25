@@ -72,7 +72,7 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     private void createEntries(Entry... entries) {
         for (Entry entry : entries) {
-            entryRepository.create(Optional.empty(), entry);
+            entryRepository.create(entry, Optional.empty(), Optional.empty());
         }
     }
 

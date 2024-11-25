@@ -2,8 +2,10 @@ package fi.digitraffic.tis.vaco.entries;
 
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.credentials.CredentialsRepository;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
+import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
@@ -28,6 +30,7 @@ import java.util.Optional;
 @Service
 public class EntryService {
 
+    private final CredentialsRepository credentialsRepository;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final EntryRepository entryRepository;
@@ -45,7 +48,7 @@ public class EntryService {
                         PackagesService packagesService,
                         RecordMapper recordMapper,
                         ContextRepository contextRepository,
-                        TaskRepository taskRepository) {
+                        TaskRepository taskRepository, CredentialsRepository credentialsRepository) {
         this.taskService = Objects.requireNonNull(taskService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.cachingService = Objects.requireNonNull(cachingService);
@@ -53,6 +56,7 @@ public class EntryService {
         this.recordMapper = Objects.requireNonNull(recordMapper);
         this.contextRepository = Objects.requireNonNull(contextRepository);
         this.taskRepository = Objects.requireNonNull(taskRepository);
+        this.credentialsRepository = credentialsRepository;
     }
 
     public void markComplete(Entry entry) {
@@ -146,8 +150,9 @@ public class EntryService {
     @Deprecated(forRemoval = true)
     public Optional<Entry> create(Entry entry) {
         Optional<ContextRecord> context = Optional.empty();
-        return entryRepository.create(context, entry).map(persisted -> {
-            ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted, context);
+        Optional<CredentialsRecord> credentials = Optional.empty();
+        return entryRepository.create(entry, context, Optional.empty()).map(persisted -> {
+            ImmutableEntry.Builder resultBuilder = recordMapper.toEntryBuilder(persisted, context, credentials);
 
             List<ValidationInput> validationInputs = entryRepository.createValidationInputs(persisted, entry.validations());
             List<ConversionInput> conversionInputs = entryRepository.createConversionInputs(persisted, entry.conversions());
@@ -175,7 +180,8 @@ public class EntryService {
         List<Task> tasks = taskService.findTasks(entry);
         List<Package> packages = Streams.flatten(tasks, packagesService::findAvailablePackages).toList();
         Optional<ContextRecord> context = contextRepository.find(entry);
-        return recordMapper.toEntryBuilder(entry, context)
+        Optional<CredentialsRecord> credentials = credentialsRepository.findForEntry(entry);
+        return recordMapper.toEntryBuilder(entry, context, credentials)
             .tasks(tasks)
             .validations(taskService.findValidationInputs(entry))
             .conversions(taskService.findConversionInputs(entry))
@@ -198,7 +204,7 @@ public class EntryService {
 
     public Optional<Entry> findLatestEntryForContext(String businessId, String context) {
         return entryRepository.findLatestForBusinessIdAndContext(businessId, context)
-            .map(er -> recordMapper.toEntryBuilder(er, contextRepository.find(er)).build());
+            .map(er -> recordMapper.toEntryBuilder(er, contextRepository.find(er), credentialsRepository.findForEntry(er)).build());
     }
 
     /**

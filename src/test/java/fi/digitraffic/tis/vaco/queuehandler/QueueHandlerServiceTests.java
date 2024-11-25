@@ -6,8 +6,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.credentials.CredentialsService;
+import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -21,7 +24,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
 
@@ -30,6 +35,9 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private CompanyRepository companyRepository;
+
+    @Autowired
+    private CredentialsService credentialsService;
 
     private ObjectMapper objectMapper;
 
@@ -136,5 +144,33 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
         Company company = updatedCompany.get();
 
         assertThat(Set.copyOf(company.contactEmails()).contains(email), equalTo(true));
+    }
+
+    @Test
+    void linksCredentialsToEntryIfEntryAndCredentialsOwnerMatches() {
+        // use built-in Fintraffic company for this test
+        entryRequest = entryRequest.withBusinessId(fintrafficCompany.businessId());
+        Credentials credentials = credentialsService.createCredentials(TestObjects.aCredentials(entryRequest.businessId())).get();
+        // inject credentials reference
+        entryRequest = entryRequest.withCredentials(credentials.publicId());
+
+        Entry result = queueHandlerService.processQueueEntry(entryRequest).get();
+
+        assertThat(result.credentials(), equalTo(credentials.publicId()));
+    }
+
+    @Test
+    void wontLinkCredentialsIfOwnerDoesntMatch() {
+        // use built-in Fintraffic company for this test
+        entryRequest = entryRequest.withBusinessId(fintrafficCompany.businessId());
+        // use some other company for credentials to generate a mismatch
+        Company randomCompany = companyHierarchyService.createCompany(TestObjects.aCompany().build()).get();
+        Credentials credentials = credentialsService.createCredentials(TestObjects.aCredentials(randomCompany.businessId())).get();
+        // inject credentials reference
+        entryRequest = entryRequest.withCredentials(credentials.publicId());
+
+        Entry result = queueHandlerService.processQueueEntry(entryRequest).get();
+
+        assertThat(result.credentials(), is(nullValue()));
     }
 }

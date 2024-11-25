@@ -144,7 +144,7 @@ public class WebhookNotifier implements Notifier {
     }
 
     private @NotNull ImmutableEntry asEntry(EntryRecord entry) {
-        return recordMapper.toEntryBuilder(entry, contextRepository.find(entry))
+        return recordMapper.toEntryBuilder(entry, contextRepository.find(entry), Optional.empty())
             .tasks(taskService.findTasks(entry))
             .build();
     }

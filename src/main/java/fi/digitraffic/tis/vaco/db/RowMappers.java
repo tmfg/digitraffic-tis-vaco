@@ -11,9 +11,11 @@ import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.FeedRecord;
@@ -21,6 +23,7 @@ import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableConversionInputRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableCredentialsRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableFeedRecord;
@@ -40,9 +43,9 @@ import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.model.notifications.ImmutableSubscriptionRecord;
 import fi.digitraffic.tis.vaco.db.model.notifications.SubscriptionRecord;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.notifications.model.SubscriptionType;
 import fi.digitraffic.tis.vaco.feeds.model.FeedUri;
 import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeedUri;
+import fi.digitraffic.tis.vaco.notifications.model.SubscriptionType;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
@@ -54,7 +57,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
@@ -98,7 +101,7 @@ public final class RowMappers {
         .identifyingName(rs.getString("identifying_name"))
         .description(rs.getString("description"))
         .category(Category.forField(rs.getString("category")))
-        .type(Type.forField(rs.getString("type")))
+        .type(RulesetType.forField(rs.getString("type")))
         .format(TransitDataFormat.forField(rs.getString("format")))
         .beforeDependencies(Set.of(ArraySqlValue.read(rs, "before_dependencies")))
         .afterDependencies(Set.of(ArraySqlValue.read(rs, "after_dependencies")))
@@ -111,7 +114,7 @@ public final class RowMappers {
         .identifyingName(rs.getString("identifying_name"))
         .description(rs.getString("description"))
         .category(Category.forField(rs.getString("category")))
-        .type(Type.forField(rs.getString("type")))
+        .type(RulesetType.forField(rs.getString("type")))
         .format(TransitDataFormat.forField(rs.getString("format")))
         .beforeDependencies(Set.of(ArraySqlValue.read(rs, "before_dependencies")))
         .afterDependencies(Set.of(ArraySqlValue.read(rs, "after_dependencies")))
@@ -314,6 +317,7 @@ public final class RowMappers {
             .notifications(List.of(ArraySqlValue.read(rs, "notifications")))
             .status(Status.forField(rs.getString("status")))
             .context(nullableLong(rs, "context_id"))
+            .credentials(nullableLong(rs, "credentials_id"))
             .build();
     }
 
@@ -505,5 +509,17 @@ public final class RowMappers {
         pgi.setMinutes(duration.toMinutesPart());
         pgi.setSeconds(duration.toSecondsPart());
         return pgi;
+    }
+
+    public static RowMapper<CredentialsRecord> CREDENTIALS_RECORD(Function<byte[], byte[]> converter) {
+        return (rs, rowNum) -> ImmutableCredentialsRecord.builder()
+            .id(rs.getLong("id"))
+            .publicId(rs.getString("public_id"))
+            .ownerId(rs.getLong("owner_id"))
+            .name(rs.getString("name"))
+            .description(rs.getString("description"))
+            .type(CredentialsType.forField(rs.getString("type")))
+            .details(converter.apply(rs.getBytes("details")))
+            .build();
     }
 }

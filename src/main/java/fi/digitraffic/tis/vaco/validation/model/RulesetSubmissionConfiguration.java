@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.validation.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -10,7 +10,7 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableRulesetSubmissionConfiguration.class)
 public interface RulesetSubmissionConfiguration {
     @Value.Parameter
-    Type type();
+    RulesetType type();
 
     @Value.Parameter
     String taskPublicId();

@@ -42,7 +42,7 @@ public interface Ruleset {
 
     @NotBlank
     @Value.Parameter
-    Type type();
+    RulesetType type();
 
     @NotBlank
     @Value.Parameter

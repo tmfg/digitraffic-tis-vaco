@@ -5,7 +5,7 @@ import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
 public enum PartnershipType implements PersistableEnum {
-    AUTHORITY_PROVIDER("authority-provider");
+    AUTHORITY_PROVIDER(Name.AUTHORITY_PROVIDER);
 
     private final String fieldName;
 
@@ -20,8 +20,15 @@ public enum PartnershipType implements PersistableEnum {
 
     public static PartnershipType forField(String field) {
         return switch (field) {
-            case "authority-provider" -> AUTHORITY_PROVIDER;
+            case Name.AUTHORITY_PROVIDER -> AUTHORITY_PROVIDER;
             default -> throw new InvalidMappingException("Could not map field value '" + field + "' to PartnershipType! Implementation missing?");
         };
+    }
+
+    public static final class Name {
+
+        public static final String AUTHORITY_PROVIDER = "authority-provider";
+
+        private Name() {}
     }
 }

@@ -27,7 +27,7 @@ public class ContextServiceIntegrationTests extends SpringBootIntegrationTestBas
     @BeforeEach
     void setUp() {
         company = TestObjects.aCompany().name(UUID.randomUUID().toString()).build();
-        companyRepository.create(company);
+        companyRepository.create(company).get();
     }
 
     @Test

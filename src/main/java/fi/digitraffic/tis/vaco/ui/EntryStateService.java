@@ -13,7 +13,7 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
@@ -103,7 +103,7 @@ public class EntryStateService {
         return ImmutableTaskReport.builder()
             .name(task.name())
             .description(rule.map(Ruleset::description).orElse(null))
-            .type(rule.map(Ruleset::type).orElse(Type.INTERNAL))
+            .type(rule.map(Ruleset::type).orElse(RulesetType.INTERNAL))
             .findingCounters(counters)
             .packages(Streams.map(taskPackages, p -> asPackageResource(p, task, entry)).toList())
             .findings(aggregatedWithFindings).build();

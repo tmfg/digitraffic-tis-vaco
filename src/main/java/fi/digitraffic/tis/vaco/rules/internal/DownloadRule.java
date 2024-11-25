@@ -191,7 +191,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         if (entry.context() != null && entry.etag() != null) {
             Optional<Entry> previousEntry = entryService.findLatestEntryForContext(entry.businessId(), entry.context());
             if (previousEntry.isPresent() && previousEntry.get().etag().equals(entry.etag())) {
-                logger.info("Entry {} with context '{}' has same ETag '{}' as its predecessor, skipping download", entry.businessId(), entry.context(), entry.etag());
+                logger.info("Entry {} with context '{}' has same ETag '{}' as its predecessor, skipping download", entry.publicId(), entry.context(), entry.etag());
                 return false;
             }
         }

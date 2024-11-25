@@ -2,7 +2,7 @@ package fi.digitraffic.tis.vaco.db.model;
 
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import org.immutables.value.Value;
 
 import java.util.Set;
@@ -22,7 +22,7 @@ public interface RulesetRecord {
 
     Category category();
 
-    Type type();
+    RulesetType type();
 
     TransitDataFormat format();
 

@@ -64,6 +64,7 @@ public class FeedService {
 
     }
 
+    // TODO: Move to mapper
     private Feed toFeed(CreateFeedRequest request) {
 
         Optional<CompanyRecord> company = companyRepository.findByBusinessId(request.owner());

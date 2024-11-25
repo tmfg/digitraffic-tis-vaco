@@ -54,11 +54,11 @@ class GtfsInputSummaryServiceTests extends SpringBootIntegrationTestBase {
     @BeforeEach
     void setUp() throws URISyntaxException {
         ImmutableEntry entryToCreate = TestObjects.anEntry("gtfs").build();
-        EntryRecord entryRecord = entryRepository.create(Optional.empty(), entryToCreate).get();
+        EntryRecord entryRecord = entryRepository.create(entryToCreate, Optional.empty(), Optional.empty()).get();
         taskRepository.createTasks(entryRecord, List.of(ImmutableTask.of("FAKE_TASK", 1)));
         task = taskRepository.findTask(entryRecord.id(), "FAKE_TASK").get();
         inputPath = Path.of(ClassLoader.getSystemResource("summary/211_gtfs.zip").toURI());
-        entry = recordMapper.toEntryBuilder(entryRecord, Optional.empty()).build();
+        entry = recordMapper.toEntryBuilder(entryRecord, Optional.empty(), Optional.empty()).build();
     }
 
     @Test

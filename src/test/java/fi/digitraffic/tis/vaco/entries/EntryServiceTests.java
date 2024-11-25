@@ -3,14 +3,15 @@ package fi.digitraffic.tis.vaco.entries;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.credentials.CredentialsRepository;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -27,7 +28,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -53,6 +53,8 @@ class EntryServiceTests {
     private QueueHandlerService queueHandlerService;
     @Mock
     private ContextRepository contextRepository;
+    @Mock
+    private CredentialsRepository credentialsRepository;
 
     private ImmutableEntry entry;
 
@@ -72,7 +74,8 @@ class EntryServiceTests {
             packagesService,
             recordMapper,
             contextRepository,
-            taskRepository);
+            taskRepository,
+            credentialsRepository);
         entry = ImmutableEntry.copyOf(TestObjects.anEntry().build());
         entryRecord = ImmutableEntryRecord.of(100000L, entry.publicId(), entry.name(), entry.format(), entry.url(), entry.businessId());
         inOrderRepository = Mockito.inOrder(entryRepository);
@@ -87,7 +90,9 @@ class EntryServiceTests {
             findingRepository,
             cachingService,
             queueHandlerService,
-            contextRepository);
+            contextRepository,
+            taskRepository,
+            credentialsRepository);
     }
 
     @Test

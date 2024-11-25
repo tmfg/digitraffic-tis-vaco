@@ -7,13 +7,13 @@ import fi.digitraffic.tis.vaco.InvalidMappingException;
 import java.util.Set;
 
 public enum Status implements PersistableEnum {
-    CANCELLED("cancelled"),
-    ERRORS("errors"),
-    FAILED("failed"),
-    PROCESSING("processing"),
-    RECEIVED("received"),
-    SUCCESS("success"),
-    WARNINGS("warnings");
+    CANCELLED(Name.CANCELLED),
+    ERRORS(Name.ERRORS),
+    FAILED(Name.FAILED),
+    PROCESSING(Name.PROCESSING),
+    RECEIVED(Name.RECEIVED),
+    SUCCESS(Name.SUCCESS),
+    WARNINGS(Name.WARNINGS);
 
     private final String fieldName;
 
@@ -23,13 +23,13 @@ public enum Status implements PersistableEnum {
 
     public static Status forField(String field) {
         return switch (field) {
-            case "cancelled" -> CANCELLED;
-            case "errors" -> ERRORS;
-            case "failed" -> FAILED;
-            case "processing" -> PROCESSING;
-            case "received" -> RECEIVED;
-            case "success" -> SUCCESS;
-            case "warnings" -> WARNINGS;
+            case Name.CANCELLED -> CANCELLED;
+            case Name.ERRORS -> ERRORS;
+            case Name.FAILED -> FAILED;
+            case Name.PROCESSING -> PROCESSING;
+            case Name.RECEIVED -> RECEIVED;
+            case Name.SUCCESS -> SUCCESS;
+            case Name.WARNINGS -> WARNINGS;
             default -> throw new InvalidMappingException("Could not map field value '" + field + "' to Status! Implementation missing?");
         };
     }
@@ -42,5 +42,25 @@ public enum Status implements PersistableEnum {
 
     public static boolean isNotCompleted(Status status) {
         return Set.of(Status.RECEIVED, Status.PROCESSING).contains(status);
+    }
+
+
+    public static final class Name {
+
+        public static final String CANCELLED = "cancelled";
+
+        public static final String ERRORS = "errors";
+
+        public static final String FAILED = "failed";
+
+        public static final String PROCESSING = "processing";
+
+        public static final String RECEIVED = "received";
+
+        public static final String SUCCESS = "success";
+
+        public static final String WARNINGS = "warnings";
+
+        private Name() {}
     }
 }

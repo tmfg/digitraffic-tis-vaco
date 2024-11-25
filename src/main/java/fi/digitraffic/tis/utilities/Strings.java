@@ -1,5 +1,9 @@
 package fi.digitraffic.tis.utilities;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.IntPredicate;
+
 public final class Strings {
     private Strings() {}
 
@@ -38,4 +42,26 @@ public final class Strings {
         return s;
     }
 
+    /**
+     * Tests that given String <code>s</code> matches (=contains only) characters in given <code>alphabet</code>.
+     * <p>
+     * Tests only exactly given alphabet, so no automatic case insensitivy or anything like that.
+     *
+     * @param alphabet Alphabet of allowed characters.
+     * @param s String to test
+     * @return true if all charactes in string match, false otherwise
+     */
+    public static boolean matches(char[] alphabet, String s) {
+        return s.chars().allMatch(asIntPredicate(alphabet));
+    }
+
+    private static IntPredicate asIntPredicate(char[] alphabet) {
+        Set<Integer> alphabetSet = new HashSet<>();
+
+        for (char c : alphabet) {
+            alphabetSet.add((int) c);
+        }
+
+        return alphabetSet::contains;
+    }
 }

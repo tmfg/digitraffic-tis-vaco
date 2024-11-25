@@ -87,4 +87,7 @@ public interface Entry {
 
     @Nullable
     String context();
+
+    @Nullable
+    String credentials();
 }

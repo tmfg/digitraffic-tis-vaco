@@ -4,8 +4,8 @@ import fi.digitraffic.tis.utilities.model.PersistableEnum;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 
 public enum Category implements PersistableEnum {
-    GENERIC("generic"),
-    SPECIFIC("specific");
+    GENERIC(Name.GENERIC),
+    SPECIFIC(Name.SPECIFIC);
 
     private final String fieldName;
 
@@ -20,9 +20,18 @@ public enum Category implements PersistableEnum {
 
     public static Category forField(String field) {
         return switch (field) {
-            case "generic" -> GENERIC;
-            case "specific" -> SPECIFIC;
+            case Name.GENERIC ->  GENERIC;
+            case Name.SPECIFIC -> SPECIFIC;
             default -> throw new InvalidMappingException("Could not map field value '" + field + "' to Category! Implementation missing?");
         };
+    }
+
+    public static final class Name {
+
+        public static final String GENERIC = "generic";
+
+        public static final String SPECIFIC = "specific";
+
+        private Name() {}
     }
 }

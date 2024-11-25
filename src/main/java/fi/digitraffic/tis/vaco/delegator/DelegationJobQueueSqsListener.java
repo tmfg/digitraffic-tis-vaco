@@ -15,7 +15,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
-import fi.digitraffic.tis.vaco.ruleset.model.Type;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.validation.RulesetSubmissionService;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableRulesetSubmissionConfiguration;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
@@ -114,7 +114,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
             .entry(entry)
             .configuration(ImmutableRulesetSubmissionConfiguration
-                .of(Type.VALIDATION_SYNTAX, task.publicId()))
+                .of(RulesetType.VALIDATION_SYNTAX, task.publicId()))
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         rulesetSubmissionService.submit(validationJob);
