@@ -85,7 +85,7 @@ public class RuleResultsListener extends SqsListener {
         this.gtfsToNetexResultProcessor = Objects.requireNonNull(gtfsToNetexResultProcessor);
     }
 
-    @Scheduled(fixedRateString = "${vaco.scheduling.findings.poll-rate}")
+    @Scheduled(initialDelayString = "${vaco.scheduling.findings.poll-rate}", fixedRateString = "${vaco.scheduling.findings.poll-rate}")
     public void handleErrorsQueue() {
         listenValue(MessageQueue.ERRORS.getQueueName(), ErrorMessage.class, this::handleErrors);
     }
@@ -98,12 +98,12 @@ public class RuleResultsListener extends SqsListener {
         });
     }
 
-    @Scheduled(fixedRateString = "${vaco.scheduling.dlq.poll-rate}")
+    @Scheduled(initialDelayString = "${vaco.scheduling.dlq.poll-rate}", fixedRateString = "${vaco.scheduling.dlq.poll-rate}")
     public void handleDeadLetterQueue() {
         listenTree(MessageQueue.DLQ.getQueueName(), this::handleDeadLetter);
     }
 
-    @Scheduled(fixedRateString = "${vaco.scheduling.rules-results.poll-rate}")
+    @Scheduled(initialDelayString = "${vaco.scheduling.rules-results.poll-rate}", fixedRateString = "${vaco.scheduling.rules-results.poll-rate}")
     public void handleRuleResultsIngestQueue() {
         listenValue(MessageQueue.RULE_RESULTS_INGEST.getQueueName(), ResultMessage.class, this::handleResult);
     }

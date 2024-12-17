@@ -49,7 +49,7 @@ public class TestListener extends SqsListener {
         this.queueHandlerService = queueHandlerService;
     }
 
-    @Scheduled(fixedRateString = "${vaco.scheduling.findings.poll-rate}")
+    @Scheduled(initialDelayString = "${vaco.scheduling.findings.poll-rate}", fixedRateString = "${vaco.scheduling.findings.poll-rate}")
     public void handleGtfsCanonical() {
         listenValue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL), ValidationRuleJobMessage.class, this::handleGtfs);
     }

@@ -84,6 +84,10 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
 
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
+        createQueue(MessageQueue.ERRORS.getQueueName());
+        createQueue(MessageQueue.RULE_RESULTS_INGEST.getQueueName());
+        createQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
+
         CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
     }
 
