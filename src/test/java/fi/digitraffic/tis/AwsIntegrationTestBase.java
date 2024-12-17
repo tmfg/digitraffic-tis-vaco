@@ -31,7 +31,7 @@ public abstract class AwsIntegrationTestBase {
     protected static VacoProperties vacoProperties;
 
     @Container
-    protected static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.0.2"))
+    protected static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:4.0"))
         .withServices(
             LocalStackContainer.Service.SQS,
             LocalStackContainer.Service.S3,
