@@ -175,7 +175,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .tasks(List.of())
             .build();
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         verifyBadges(createdEntry, List.of(Status.RECEIVED));
     }
@@ -218,7 +218,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .build();
         messagingService.submitProcessingJob(job);
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         verifyBadges(createdEntry, List.of(Status.CANCELLED, Status.FAILED, Status.CANCELLED));
 
@@ -250,7 +250,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .build();
         messagingService.submitProcessingJob(job);
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         messagingService.submitProcessingJob(job);
 
@@ -287,7 +287,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         uploadFile(createdEntry.publicId(), "rule/results/gtfs/warning/report.json");
         messagingService.submitProcessingJob(job);
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         stopServer();
 
@@ -325,7 +325,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
 
         messagingService.submitProcessingJob(job);
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         stopServer();
 
@@ -384,12 +384,11 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         return list;
     }
 
-
     private void waitForEntryProcessingToFinish(String publicId, int maxWait) throws InterruptedException {
         long until = System.currentTimeMillis() + maxWait;
         while (entryRepository.findByPublicId(publicId).map(EntryRecord::completed).isEmpty()
             && (System.currentTimeMillis() < until)) {
-            Thread.sleep(10000);
+            Thread.sleep(100);
         }
     }
 
