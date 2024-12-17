@@ -19,6 +19,7 @@ import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
+import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -32,6 +33,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -116,6 +118,11 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
     }
 
+    @BeforeEach
+    void setUp() {
+        testListener.enableQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
+    }
+
     @AfterEach
     void tearDown() {
         verifyNoMoreInteractions(response);
@@ -168,7 +175,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .tasks(List.of())
             .build();
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         verifyBadges(createdEntry, List.of(Status.RECEIVED));
     }
@@ -211,7 +218,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .build();
         messagingService.submitProcessingJob(job);
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         verifyBadges(createdEntry, List.of(Status.CANCELLED, Status.FAILED, Status.CANCELLED));
 
@@ -243,7 +250,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .build();
         messagingService.submitProcessingJob(job);
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         messagingService.submitProcessingJob(job);
 
@@ -280,7 +287,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         uploadFile(createdEntry.publicId(), "rule/results/gtfs/warning/report.json");
         messagingService.submitProcessingJob(job);
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         stopServer();
 
@@ -318,7 +325,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
 
         messagingService.submitProcessingJob(job);
 
-        waitForEntryProcessingToFinish(createdEntry.publicId(), 5_000);
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         stopServer();
 
@@ -377,12 +384,11 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         return list;
     }
 
-
     private void waitForEntryProcessingToFinish(String publicId, int maxWait) throws InterruptedException {
         long until = System.currentTimeMillis() + maxWait;
         while (entryRepository.findByPublicId(publicId).map(EntryRecord::completed).isEmpty()
             && (System.currentTimeMillis() < until)) {
-            Thread.sleep(10000);
+            Thread.sleep(100);
         }
     }
 
