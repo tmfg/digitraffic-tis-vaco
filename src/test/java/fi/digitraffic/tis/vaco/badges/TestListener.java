@@ -9,23 +9,23 @@ import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.JobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
-import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
-import fi.digitraffic.tis.vaco.summary.SummaryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -40,10 +40,12 @@ public class TestListener extends SqsListener {
     private final QueueHandlerService queueHandlerService;
     private final ConcurrentMap<String, List<JobMessage>> processingMessages = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Function<ValidationRuleJobMessage, ResultMessage>> resultConverters = new ConcurrentHashMap<>();
+    private final Set<String> enabledQueues = new HashSet<>();
 
-    public TestListener(MessagingService messagingService, ObjectMapper objectMapper,
-                        EntryService entryService, QueueHandlerService queueHandlerService,
-                        TaskService taskService, SummaryService summaryService) {
+    public TestListener(MessagingService messagingService,
+                        ObjectMapper objectMapper,
+                        EntryService entryService,
+                        QueueHandlerService queueHandlerService) {
         super(messagingService, objectMapper);
         this.entryService = entryService;
         this.queueHandlerService = queueHandlerService;
@@ -51,7 +53,10 @@ public class TestListener extends SqsListener {
 
     @Scheduled(initialDelayString = "${vaco.scheduling.findings.poll-rate}", fixedRateString = "${vaco.scheduling.findings.poll-rate}")
     public void handleGtfsCanonical() {
-        listenValue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL), ValidationRuleJobMessage.class, this::handleGtfs);
+        String queueName = MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL);
+        if (enabledQueues.contains(queueName)) {
+            listenValue(queueName, ValidationRuleJobMessage.class, this::handleGtfs);
+        }
     }
 
     private CompletableFuture<Boolean> handleGtfs(ValidationRuleJobMessage message) {
@@ -93,5 +98,9 @@ public class TestListener extends SqsListener {
 
     public ConcurrentMap<String, List<JobMessage>> getProcessingMessages() {
         return processingMessages;
+    }
+
+    public void enableQueue(String queueName) {
+        enabledQueues.add(queueName);
     }
 }

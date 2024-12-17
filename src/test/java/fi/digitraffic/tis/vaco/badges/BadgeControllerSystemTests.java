@@ -19,6 +19,7 @@ import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
+import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -32,6 +33,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -114,6 +116,11 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
         CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
+    }
+
+    @BeforeEach
+    void setUp() {
+        testListener.enableQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
     }
 
     @AfterEach
