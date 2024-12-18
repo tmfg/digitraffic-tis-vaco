@@ -97,7 +97,7 @@ class DownloadRuleTests {
 
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
-        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()))).willAnswer(a -> CompletableFuture.completedFuture(response));
+        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry.etag()), eq(entry.credentials()))).willAnswer(a -> CompletableFuture.completedFuture(response));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
@@ -128,7 +128,7 @@ class DownloadRuleTests {
 
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
-        given(httpClient.downloadFile(feedFiles.capture(), any(String.class), eq(entry.etag())))
+        given(httpClient.downloadFile(feedFiles.capture(), any(String.class), eq(entry.etag()), eq(entry.credentials())))
             // 1) rule downloads the discovery file
             .willAnswer(a -> CompletableFuture.completedFuture(response))
             // 2) rule downloads all the other files as well

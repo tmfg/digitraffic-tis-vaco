@@ -43,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTestBase {
@@ -102,10 +103,11 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
 
     @Test
     void delegatesRuleProcessingToRuleSpecificQueueBasedOnRuleName() {
-        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
+        Entry entry = createEntryForTesting();
+        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture(), eq(entry.credentials())))
             .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.ofNullable(response)).build()));
 
-        Entry entry = createEntryForTesting();
+
         String testQueueName = createSqsQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
@@ -142,10 +144,10 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
 
     @Test
     void sendsMessageToJobQueueForTaskWithFailedDependencies() throws InterruptedException {
-        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture()))
+        Entry entry = createEntryForTesting();
+        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), entryEtag.capture(), eq(entry.credentials())))
             .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.empty()).build()));
 
-        Entry entry = createEntryForTesting();
         String testQueueName = createSqsQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
 
