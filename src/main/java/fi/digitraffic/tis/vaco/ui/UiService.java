@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.ui;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
-import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.ContextRepository;
@@ -38,8 +37,6 @@ public class UiService {
 
     private final ContextRepository contextRepository;
 
-    private final RecordMapper recordMapper;
-
     private final UiModelMapper uiModelMapper;
 
     public UiService(MeService meService,
@@ -47,13 +44,12 @@ public class UiService {
                      CachingService cachingService,
                      EntryRepository entryRepository,
                      ContextRepository contextRepository,
-                     RecordMapper recordMapper, UiModelMapper uiModelMapper) {
+                     UiModelMapper uiModelMapper) {
         this.meService = Objects.requireNonNull(meService);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.cachingService = Objects.requireNonNull(cachingService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.contextRepository = Objects.requireNonNull(contextRepository);
-        this.recordMapper = Objects.requireNonNull(recordMapper);
         this.uiModelMapper = Objects.requireNonNull(uiModelMapper);
     }
 

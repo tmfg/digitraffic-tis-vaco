@@ -2,7 +2,10 @@ package fi.digitraffic.tis.utilities;
 
 import java.util.function.Function;
 
-public class Functional {
+public final class Functional {
+
+    private Functional() {}
+
     @SafeVarargs
     public static <K, V> V firstNonNull(Function<K, V> lookup, K... keys) {
         for (K key : keys) {

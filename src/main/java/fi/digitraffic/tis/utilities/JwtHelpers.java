@@ -4,7 +4,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 import java.util.Optional;
 
-public class JwtHelpers {
+public final class JwtHelpers {
+
+    private JwtHelpers() {}
 
     public static Optional<String> safeGet(JwtAuthenticationToken token, String claim) {
         if (token != null && token.getTokenAttributes().containsKey(claim)) {

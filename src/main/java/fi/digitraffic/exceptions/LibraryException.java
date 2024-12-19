@@ -7,15 +7,15 @@ import fi.digitraffic.DigitrafficRuntimeException;
  */
 public abstract class LibraryException extends DigitrafficRuntimeException {
 
-    public LibraryException(String message) {
+    protected LibraryException(String message) {
         super(message);
     }
 
-    public LibraryException(String message, Throwable cause) {
+    protected LibraryException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public LibraryException(Throwable cause) {
+    protected LibraryException(Throwable cause) {
         super(cause);
     }
 }

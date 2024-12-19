@@ -28,7 +28,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
-import fi.digitraffic.tis.vaco.ui.mapper.UiModelMapper;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.Context;
@@ -107,7 +106,6 @@ public class UiController {
     private final EntryRequestMapper entryRequestMapper;
     private final EncryptionService encryptionService;
     private final ContextService contextService;
-    private final UiModelMapper uiModelMapper;
 
     public UiController(VacoProperties vacoProperties,
                         EntryService entryService,
@@ -122,8 +120,7 @@ public class UiController {
                         EntryRequestMapper entryRequestMapper,
                         EncryptionService encryptionService,
                         UiService uiService,
-                        ContextService contextService,
-                        UiModelMapper uiModelMapper) {
+                        ContextService contextService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -138,7 +135,6 @@ public class UiController {
         this.encryptionService = Objects.requireNonNull(encryptionService);
         this.uiService = Objects.requireNonNull(uiService);
         this.contextService = Objects.requireNonNull(contextService);
-        this.uiModelMapper = Objects.requireNonNull(uiModelMapper);
     }
 
     @GetMapping(path = "/bootstrap")

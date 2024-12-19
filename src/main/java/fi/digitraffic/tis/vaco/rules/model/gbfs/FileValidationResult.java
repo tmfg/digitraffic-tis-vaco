@@ -14,9 +14,11 @@ public interface FileValidationResult {
     boolean required();
     boolean exists();
     int errorsCount();
-    // these properties exist but we do not use them
-    // Json schema();
-    // Json fileContents();
+    /*
+     these properties exist but we do not use them
+     Json schema();
+     Json fileContents();
+    */
     String version();
     List<GbfsError> errors();
 }
