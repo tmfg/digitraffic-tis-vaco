@@ -77,6 +77,7 @@ public class NetexInputSummaryService {
                     }
                     try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
                         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+                        xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
                         XMLEventReader reader = xmlInputFactory.createXMLEventReader(inputStream);
                         List<Line> lines = new ArrayList<>();
                         List<Route> routes = new ArrayList<>();
