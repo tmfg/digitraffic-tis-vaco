@@ -38,7 +38,7 @@ public class AadOAuth2LoginSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                           CorsConfigurationSource corsConfigurationSource) throws Exception {
         // session management is set to stateless as JWT tokens themselves are stateless
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -84,7 +84,6 @@ public class AadOAuth2LoginSecurityConfig {
     }
 
     @Bean
-    @Qualifier("appCorsConfiguration")
     public CorsConfigurationSource corsConfigurationSource(VacoProperties vacoProperties) {
         String uiBaseUrl = "local".equals(vacoProperties.environment())
             ? "http://localhost:5173"
