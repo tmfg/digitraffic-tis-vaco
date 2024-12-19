@@ -11,15 +11,15 @@ package fi.digitraffic;
  * </pre>
  */
 public abstract class DigitrafficRuntimeException extends RuntimeException {
-    public DigitrafficRuntimeException(String message) {
+    protected DigitrafficRuntimeException(String message) {
         super(message);
     }
 
-    public DigitrafficRuntimeException(String message, Throwable cause) {
+    protected DigitrafficRuntimeException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public DigitrafficRuntimeException(Throwable cause) {
+    protected DigitrafficRuntimeException(Throwable cause) {
         super(cause);
     }
 }
