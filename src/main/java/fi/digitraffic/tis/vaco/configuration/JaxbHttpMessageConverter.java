@@ -26,7 +26,7 @@ import static jakarta.xml.bind.JAXBContext.newInstance;
  */
 public class JaxbHttpMessageConverter extends AbstractXmlHttpMessageConverter<Object> {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(JaxbHttpMessageConverter.class);
 
     private final JAXBContext publicationDeliveryContext;
     private final Set<Class<?>> supportedClasses;
@@ -48,7 +48,7 @@ public class JaxbHttpMessageConverter extends AbstractXmlHttpMessageConverter<Ob
         try {
             createMarshaller().marshal(o, result);
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -73,7 +73,7 @@ public class JaxbHttpMessageConverter extends AbstractXmlHttpMessageConverter<Ob
     private JAXBContext createContext(Class<?>... clazz) {
         try {
             JAXBContext jaxbContext = newInstance(clazz);
-            logger.info("Created context {}", jaxbContext.getClass());
+            LOGGER.info("Created context {}", jaxbContext.getClass());
             return jaxbContext;
         } catch (JAXBException e) {
             throw new VacoException("Failed to create instance of JAXB context from classes " + Arrays.toString(clazz), e);

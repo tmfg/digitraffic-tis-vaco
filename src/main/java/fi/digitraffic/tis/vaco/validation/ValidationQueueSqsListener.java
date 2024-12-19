@@ -9,14 +9,10 @@ import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
 import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import io.awspring.cloud.sqs.listener.acknowledgement.Acknowledgement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidationJobMessage> {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final MessagingService messagingService;
     private final RulesetSubmissionService rulesetSubmissionService;

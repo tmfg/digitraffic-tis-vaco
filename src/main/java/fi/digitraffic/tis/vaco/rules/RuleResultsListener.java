@@ -44,7 +44,6 @@ import java.util.concurrent.CompletableFuture;
 public class RuleResultsListener extends SqsListener {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final MessagingService messagingService;
     private final FindingService findingService;
     private final TaskService taskService;
     private final QueueHandlerService queueHandlerService;
@@ -71,7 +70,6 @@ public class RuleResultsListener extends SqsListener {
                                SummaryService summaryService,
                                GtfsToNetexResultProcessor gtfsToNetexResultProcessor) {
         super(messagingService, objectMapper);
-        this.messagingService = Objects.requireNonNull(messagingService);
         this.findingService = Objects.requireNonNull(findingService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.taskService = Objects.requireNonNull(taskService);
