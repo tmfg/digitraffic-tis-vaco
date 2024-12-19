@@ -44,11 +44,11 @@ public class NotificationsService {
     }
 
     public void notifyEntryComplete(Entry entry) {
-        Optional<EntryRecord> record = entryRepository.findByPublicId(entry.publicId());
-        if (record.isPresent()) {
+        Optional<EntryRecord> entryRecord = entryRepository.findByPublicId(entry.publicId());
+        if (entryRecord.isPresent()) {
             for (Notifier notifier : notifiers) {
                 try {
-                    notifier.notifyEntryComplete(record.get());
+                    notifier.notifyEntryComplete(entryRecord.get());
                 } catch (Exception e) {
                     logger.warn("Failed to send EntryComplete notification of {} with {}", entry.publicId(), notifier, e);
                 }
