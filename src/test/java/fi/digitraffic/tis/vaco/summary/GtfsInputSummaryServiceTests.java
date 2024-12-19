@@ -62,7 +62,7 @@ class GtfsInputSummaryServiceTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
-    public void testGtfsSummariesGeneration() throws Exception {
+    void testGtfsSummariesGeneration() throws Exception {
         assertDoesNotThrow(() -> gtfsInputSummaryService.generateGtfsInputSummaries(entry, task, inputPath));
         List<SummaryRecord> summaries = summaryRepository.findSummaryByTaskId(task.id());
 

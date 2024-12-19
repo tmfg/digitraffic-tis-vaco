@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public class ContextServiceIntegrationTests extends SpringBootIntegrationTestBase {
+class ContextServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private ContextService contextService;

@@ -31,7 +31,7 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
+class FindingsIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     EntryStateService entryStateService;

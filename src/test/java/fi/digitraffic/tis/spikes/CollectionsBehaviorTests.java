@@ -9,7 +9,7 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public class CollectionsBehaviorTests {
+class CollectionsBehaviorTests {
     @Test
     void removingSetEntriesFromLists() {
         Set<Integer> nums = Set.of(3, 1, 2);
