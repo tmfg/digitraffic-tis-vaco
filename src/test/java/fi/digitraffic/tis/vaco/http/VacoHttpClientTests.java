@@ -2,12 +2,17 @@ package fi.digitraffic.tis.vaco.http;
 
 import fi.digitraffic.http.HttpClient;
 import fi.digitraffic.http.HttpClientException;
+import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.credentials.CredentialsService;
+import fi.digitraffic.tis.vaco.credentials.model.HttpBasicAuthenticationDetails;
+import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.BDDMockito.given;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -17,12 +22,17 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -32,19 +42,24 @@ import static org.mockito.Mockito.when;
 class VacoHttpClientTests {
 
     private VacoHttpClient vacoClient;
-
+    @Mock
+    private CredentialsService credentialsService;
     @Mock
     private HttpClient httpClient;
-
     @Mock
     private HttpRequest mockRequest;
 
     @Mock
     private HttpResponse mockResponse;
 
+    private Map<String, String> requestHeaders = new HashMap<>();
+
+
     @BeforeEach
     void setUp() {
-        this.vacoClient = new VacoHttpClient(httpClient);
+
+        this.vacoClient = new VacoHttpClient(httpClient, credentialsService);
+
     }
 
     @AfterEach
@@ -54,11 +69,11 @@ class VacoHttpClientTests {
 
     @Test
     void handlesHttpClientExceptionsGracefully() throws IOException, ExecutionException, InterruptedException {
-        when(httpClient.headers(any(String[].class))).thenThrow(new HttpClientException("simulated http client error"));
+        when(httpClient.get(any(String.class),any(Map.class))).thenThrow(new HttpClientException("simulated http client error"));
 
         Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
 
-        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org", null);
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org", null, null);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().body().isEmpty(), equalTo(true));
@@ -78,6 +93,36 @@ class VacoHttpClientTests {
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().response().get(), equalTo(stubResponseBody));
+    }
+
+    @Test
+    void testAuthorizationHeadersWithCredentials() {
+
+        ImmutableCredentials credentials = ImmutableCredentials.copyOf(TestObjects.aCredentials().build());
+
+        given(credentialsService.findByPublicId(credentials.publicId())).willReturn(Optional.of(credentials));
+
+        vacoClient.addAuthorizationHeader(credentials.publicId(), requestHeaders);
+
+        HttpBasicAuthenticationDetails details = (HttpBasicAuthenticationDetails) credentials.details();
+        String userId = details.userId();
+        String password = details.password();
+
+        assertTrue(requestHeaders.containsKey("Authorization"));
+        String authHeader = requestHeaders.get("Authorization");
+        String expectedAuthValue = "Basic " + Base64.getEncoder().encodeToString((userId + ":" + password).getBytes());
+        assertEquals(expectedAuthValue, authHeader);
+
+    }
+
+    @Test
+    void testAuthorizationHeadersWithoutCredentials() {
+
+        given(credentialsService.findByPublicId(null)).willReturn(Optional.empty());
+
+        vacoClient.addAuthorizationHeader(null, requestHeaders);
+        assertTrue(requestHeaders.isEmpty());
+
     }
 
     private void stubResponse(int stubStatusCode, byte[] stubResponseBody) {

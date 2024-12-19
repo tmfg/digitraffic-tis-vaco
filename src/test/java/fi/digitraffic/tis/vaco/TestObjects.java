@@ -19,6 +19,8 @@ import fi.digitraffic.tis.vaco.configuration.MsGraph;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
+import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
+import fi.digitraffic.tis.vaco.credentials.model.ImmutableHttpBasicAuthenticationDetails;
 import fi.digitraffic.tis.vaco.feeds.model.ImmutableFeedUri;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -41,6 +43,23 @@ import java.util.Random;
 import java.util.UUID;
 
 public class TestObjects {
+
+    public static ImmutableCredentials.Builder aCredentials() {
+        return ImmutableCredentials.builder()
+            .owner(aCompany().build())
+            .details(aDetails())
+            .name("test credentials")
+            .description("test")
+            .type(CredentialsType.HTTP_BASIC)
+            .publicId(NanoIdUtils.randomNanoId());
+    }
+
+    public static ImmutableHttpBasicAuthenticationDetails aDetails() {
+        return ImmutableHttpBasicAuthenticationDetails.builder()
+            .password("password")
+            .userId("userId")
+            .build();
+    }
 
     public static ImmutableCreateFeedRequest.Builder aCreateFeedRequest() {
         return ImmutableCreateFeedRequest.builder()

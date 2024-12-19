@@ -1,7 +1,11 @@
 package fi.digitraffic.tis.vaco.http;
 
+import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.http.HttpClient;
 import fi.digitraffic.http.HttpClientException;
+import fi.digitraffic.tis.vaco.credentials.CredentialsService;
+import fi.digitraffic.tis.vaco.credentials.model.Credentials;
+import fi.digitraffic.tis.vaco.credentials.model.HttpBasicAuthenticationDetails;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse;
@@ -12,7 +16,11 @@ import org.slf4j.LoggerFactory;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -21,22 +29,34 @@ import java.util.concurrent.CompletableFuture;
 public class VacoHttpClient {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private final HttpClient httpClient;
+    private final CredentialsService credentialsService;
 
-    public VacoHttpClient(HttpClient httpClient) {
-        this.httpClient = httpClient;
+    public VacoHttpClient(HttpClient httpClient, CredentialsService credentialsService) {
+        this.httpClient = Objects.requireNonNull(httpClient);
+        this.credentialsService = Objects.requireNonNull(credentialsService);
     }
 
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
-                                                                      String uri,
-                                                                      String etag) {
+                                                            String uri,
+                                                            String etag,
+                                                            String credentials) {
         logger.info("Downloading file from {} to {} (eTag {})", uri, targetFilePath, etag);
 
         try {
-            Map<String, String> requestHeaders = httpClient.headers(
-                "If-None-Match", etag,
-                "Accept", "*/*");
+
+            Map<String, String> requestHeaders = new HashMap<>();
+
+            requestHeaders.put("Accept", "*/*");
+
+            if (etag != null) {
+                requestHeaders.put("If-None-Match", etag);
+            }
+
+            if (credentials != null) {
+                addAuthorizationHeader(credentials, requestHeaders);
+            }
+
             HttpRequest request = httpClient.get(uri, requestHeaders);
             HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
 
@@ -56,6 +76,23 @@ public class VacoHttpClient {
             logger.warn("HTTP execution failure for %s".formatted(uri), e);
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().build());
         }
+    }
+
+    @VisibleForTesting
+    protected void addAuthorizationHeader(String credentials, Map<String, String> requestHeaders) {
+
+        Optional<Credentials> entryCredentials = credentialsService.findByPublicId(credentials);
+
+        entryCredentials.ifPresent( c -> {
+            switch (c.details()) {
+                case HttpBasicAuthenticationDetails httpBasic -> {
+                    String auth = httpBasic.userId() + ":" + httpBasic.password();
+                    requestHeaders.put("Authorization", "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
+                }
+                case null -> logger.warn("Credentials {} don't contain authentication details ", c.publicId());
+                default -> logger.warn("Unhandled credentials sub type {}", c.details().getClass());
+            }
+        });
     }
 
     public CompletableFuture<NotificationResponse> sendWebhook(String uri, byte[] eventPayload) {
