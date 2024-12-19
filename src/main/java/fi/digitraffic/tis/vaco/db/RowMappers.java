@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
+import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
@@ -405,7 +406,7 @@ public final class RowMappers {
                     .processingEnabled(rs.getBoolean("processing_enabled"))
                     .build();
             } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                throw new InvalidMappingException("Cannot deserialize data contained in database for record", e);
             }
         };
     }

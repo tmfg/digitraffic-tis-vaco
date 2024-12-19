@@ -76,7 +76,7 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
                     Set<String> gtfs2netexStats = scanStatsFileToArray(path);
                     return saveGtfs2NetexSummary(task, gtfs2netexStats);
                 } catch (JSONException | IOException e) {
-                    throw new RuntimeException(e);
+                    throw new RuleExecutionException("Error processing stats file", e);
                 }
             }))
             .orElse(false);
