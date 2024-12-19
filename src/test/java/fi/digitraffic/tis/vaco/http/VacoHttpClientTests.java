@@ -52,7 +52,7 @@ class VacoHttpClientTests {
     @Mock
     private HttpResponse mockResponse;
 
-    Map<String, String> requestHeaders = new HashMap<>();
+    private Map<String, String> requestHeaders = new HashMap<>();
 
 
     @BeforeEach

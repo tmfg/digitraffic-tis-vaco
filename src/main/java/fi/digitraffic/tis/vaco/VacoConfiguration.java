@@ -28,15 +28,11 @@ import java.time.Clock;
 @PropertySource(value = "classpath:git.properties", ignoreResourceNotFound = true)
 public class VacoConfiguration {
 
-    private final CredentialsService credentialsService;
-
-    public VacoConfiguration(CredentialsService credentialsService) {
-        this.credentialsService = credentialsService;
-    }
-
     @Bean
     public VacoHttpClient httpClient(VacoProperties vacoProperties,
-                                     @Value("${git.commit.id.abbrev:#{null}}") String gitCommitIdAbbreviation) {
+                                     @Value("${git.commit.id.abbrev:#{null}}")
+                                     String gitCommitIdAbbreviation,
+                                     CredentialsService credentialsService) {
         HttpClientConfiguration configuration = ImmutableHttpClientConfiguration.builder()
             .baseUri(vacoProperties.baseUrl())
             .userAgentExtension("VACO/" + ((gitCommitIdAbbreviation != null) ? gitCommitIdAbbreviation : vacoProperties.environment()))
