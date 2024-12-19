@@ -32,8 +32,8 @@ public class VacoHttpClient {
     private final CredentialsService credentialsService;
 
     public VacoHttpClient(HttpClient httpClient, CredentialsService credentialsService) {
-        this.httpClient = httpClient;
-        this.credentialsService = credentialsService;
+        this.httpClient = Objects.requireNonNull(httpClient);
+        this.credentialsService = Objects.requireNonNull(credentialsService);
     }
 
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
