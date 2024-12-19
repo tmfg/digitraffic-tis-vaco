@@ -88,7 +88,7 @@ public class ExportsService {
         return createContactStructure(companyRecord)
             .map(contactStructure -> {
                 Authority authority = createOrganisation(Authority::new, companyRecord);
-                return authority.withValidityConditions(createValidityConditions(availabilityConditionCounter, companyRecord))
+                return authority.withValidityConditions(createValidityConditions(availabilityConditionCounter))
                     .withContactDetails(contactStructure);
             });
     }
@@ -97,12 +97,12 @@ public class ExportsService {
         return createContactStructure(companyRecord)
             .map(contactStructure -> {
                 Operator operator = createOrganisation(Operator::new, companyRecord);
-                return operator.withValidityConditions(createValidityConditions(availabilityConditionCounter, companyRecord))
+                return operator.withValidityConditions(createValidityConditions(availabilityConditionCounter))
                     .withContactDetails(contactStructure);
             });
     }
 
-    private ValidityConditions_RelStructure createValidityConditions(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
+    private ValidityConditions_RelStructure createValidityConditions(AtomicInteger availabilityConditionCounter) {
         return new ValidityConditions_RelStructure().withValidityConditionRefOrValidBetweenOrValidityCondition_(
             new ValidBetween()
                 .withId(NETEX_ROOT_ID + ":AvailabilityCondition:" + availabilityConditionCounter.getAndIncrement())
