@@ -133,6 +133,8 @@ public class QueueHandlerService {
                 });
         });
 
+        // NOTE! result _may_ be null here, even though it is Optional AND the method which returns it claims it
+        //       shouldn't be. This is caused by intrinsic behavior in spring-tx which we cannot affect.
         if (result == null) {
             logger.error("Insert transaction failed for entry {}! Check logs for more information.", entry);
             return Optional.empty();
