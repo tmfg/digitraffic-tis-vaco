@@ -88,7 +88,7 @@ public class MeService {
     private @NotNull Optional<Company> updateKnownCompany(String businessId, String groupId) {
         return companyHierarchyService
             .findByBusinessId(businessId)
-            .map(mc -> companyHierarchyService.updateAdGroupId(mc, groupId));
+            .flatMap(mc -> companyHierarchyService.updateAdGroupId(mc, groupId));
     }
 
     /**
