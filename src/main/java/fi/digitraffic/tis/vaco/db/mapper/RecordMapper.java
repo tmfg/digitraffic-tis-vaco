@@ -17,6 +17,7 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
 import fi.digitraffic.tis.vaco.db.model.ConversionInputRecord;
 import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.model.FeatureFlagRecord;
 import fi.digitraffic.tis.vaco.db.model.FeedRecord;
 import fi.digitraffic.tis.vaco.db.model.FindingRecord;
@@ -39,7 +40,6 @@ import fi.digitraffic.tis.vaco.packages.model.Package;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
-import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
@@ -55,7 +55,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.LongFunction;
 
 /**
  * Map various repository <code>Record</code> types into datamodel equivalents.
@@ -166,8 +166,8 @@ public class RecordMapper {
     }
 
     public Partnership toPartnership(PartnershipRecord partnership,
-                                     Function<Long, Company> partnerALoader,
-                                     Function<Long, Company> partnerBLoader) {
+                                     LongFunction<Company> partnerALoader,
+                                     LongFunction<Company> partnerBLoader) {
         return ImmutablePartnership.of(
             partnership.type(),
             partnerALoader.apply(partnership.partnerA()),
