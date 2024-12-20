@@ -103,7 +103,7 @@ public class NetexInputSummaryService {
                                         case "Quay" -> quayTotalCount++;
                                         case "JourneyPattern" -> journeyPatternTotalCount++;
                                         case "ServiceJourney" -> serviceJourneysTotalCount++;
-                                        default -> logger.debug("Unhandled element {}", startElement.getName().getLocalPart());
+                                        default -> {}
                                     }
                                 }
                         }
