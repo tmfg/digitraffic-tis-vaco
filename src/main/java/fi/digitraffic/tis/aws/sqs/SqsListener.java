@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class SqsListener {
-    private final Logger logger = LoggerFactory.getLogger(getClass());;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected final MessagingService messagingService;
     private final ObjectMapper objectMapper;

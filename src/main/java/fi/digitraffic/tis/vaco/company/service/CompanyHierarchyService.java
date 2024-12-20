@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.company.service;
 
 import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.exceptions.PersistenceException;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
@@ -11,8 +12,6 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.db.repositories.PartnershipRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +25,11 @@ import java.util.Set;
 
 @Service
 public class CompanyHierarchyService {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final CompanyRepository companyRepository;
+
     private final PartnershipRepository partnershipRepository;
+
     private final RecordMapper recordMapper;
 
     /**
@@ -79,7 +79,8 @@ public class CompanyHierarchyService {
     }
 
     public Company getPublicTestCompany() {
-        return findByBusinessId(Constants.PUBLIC_VALIDATION_TEST_ID).get();
+        return findByBusinessId(Constants.PUBLIC_VALIDATION_TEST_ID)
+            .orElseThrow(() -> new PersistenceException("Failed to load public test company from database, possible data corruption!"));
     }
 
     public List<Company> listAllWithEntries() {
@@ -90,11 +91,10 @@ public class CompanyHierarchyService {
         return companyRepository.findByAdGroupId(groupId);
     }
 
-    public Company updateAdGroupId(Company company, String groupId) {
+    public Optional<Company> updateAdGroupId(Company company, String groupId) {
         return companyRepository.findByBusinessId(company.businessId())
             .map(c -> companyRepository.updateAdGroupId(c, groupId))
-            .map(recordMapper::toCompany)
-            .get();  // TODO: feels slightly wrong but works
+            .map(recordMapper::toCompany);
     }
 
     public boolean isChildOfAny(Set<Company> possibleParents, String childBusinessId) {

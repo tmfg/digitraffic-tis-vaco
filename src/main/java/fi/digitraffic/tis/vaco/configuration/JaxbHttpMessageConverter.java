@@ -48,7 +48,6 @@ public class JaxbHttpMessageConverter extends AbstractXmlHttpMessageConverter<Ob
         try {
             createMarshaller().marshal(o, result);
         } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
             throw e;
         }
     }

@@ -163,7 +163,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     .thenApply(DownloadResponse::body);
             }
 
-            return feedArchive.thenCompose(validateZip(entry, tracked))
+            return feedArchive.thenCompose(validateZip(tracked))
                 .thenApply(track(entry, tracked, ProcessingState.UPDATE))
                 .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
                 .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
@@ -252,7 +252,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
      *
      * @return Composable function which returns the input as is if it represents a valid ZIP file, empty otherwise
      */
-    private Function<Optional<Path>, CompletableFuture<Optional<Path>>> validateZip(Entry entry, Task task) {
+    private Function<Optional<Path>, CompletableFuture<Optional<Path>>> validateZip(Task task) {
         return path -> {
             if (path.isPresent()) {
                 File file = path.get().toFile();

@@ -23,23 +23,29 @@ import java.util.Map;
 
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.entryWithTask;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 @ExtendWith(MockitoExtension.class)
 class SimpleResultProcessorTests extends ResultProcessorTestBase {
 
     private Entry entry;
+
     private Task conversionTask;
 
     private ResultMessage gtfs2netexMessage;
 
     private SimpleResultProcessor simpleResultProcessor;
-    private VacoProperties vacoProperties;
-    @Mock private S3Client s3Client;
-    @Mock private FindingService findingService;
+
+    @Mock
+    private S3Client s3Client;
+
+    @Mock
+    private FindingService findingService;
 
     @BeforeEach
     void setUp() {
-        vacoProperties = TestObjects.vacoProperties();
+        VacoProperties vacoProperties = TestObjects.vacoProperties();
         simpleResultProcessor = new SimpleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService);
 
         entry = entryWithTask(e -> ImmutableTask.of(RuleName.GTFS2NETEX_FINTRAFFIC, 100).withId(9_000_000L));
@@ -57,7 +63,7 @@ class SimpleResultProcessorTests extends ResultProcessorTestBase {
         givenTaskStatusIsMarkedAs(entry, Status.SUCCESS);
         givenTaskProcessingStateIsMarkedAs(entry, entry.tasks().get(0), ProcessingState.COMPLETE);
 
-        simpleResultProcessor.processResults(gtfs2netexMessage, entry, conversionTask);
+        assertThat(simpleResultProcessor.processResults(gtfs2netexMessage, entry, conversionTask), equalTo(true));
     }
 
 

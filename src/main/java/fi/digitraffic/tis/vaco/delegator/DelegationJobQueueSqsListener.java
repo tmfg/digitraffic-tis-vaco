@@ -90,7 +90,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, stopsAndQuaysRule.execute(entry).join());
                 } else if (knownExternalRules.contains(name)) {
                     logger.debug("External rule {} detected, submitting to processing queue...", name);
-                    submitExternalRule(task, name, entry);
+                    submitExternalRule(task, entry);
                 } else {
                     logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
                     taskService.trackTask(entry, task, ProcessingState.START);
@@ -110,7 +110,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         }
     }
 
-    public void submitExternalRule(Task task, String name, Entry entry) {
+    public void submitExternalRule(Task task, Entry entry) {
         ImmutableValidationJobMessage validationJob = ImmutableValidationJobMessage.builder()
             .entry(entry)
             .configuration(ImmutableRulesetSubmissionConfiguration

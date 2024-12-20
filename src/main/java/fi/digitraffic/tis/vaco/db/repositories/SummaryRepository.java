@@ -5,8 +5,6 @@ import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -16,8 +14,6 @@ import java.util.Objects;
 
 @Repository
 public class SummaryRepository {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbc;
 

@@ -48,7 +48,8 @@ public class EntryService {
                         PackagesService packagesService,
                         RecordMapper recordMapper,
                         ContextRepository contextRepository,
-                        TaskRepository taskRepository, CredentialsRepository credentialsRepository) {
+                        TaskRepository taskRepository,
+                        CredentialsRepository credentialsRepository) {
         this.taskService = Objects.requireNonNull(taskService);
         this.entryRepository = Objects.requireNonNull(entryRepository);
         this.cachingService = Objects.requireNonNull(cachingService);
@@ -56,7 +57,7 @@ public class EntryService {
         this.recordMapper = Objects.requireNonNull(recordMapper);
         this.contextRepository = Objects.requireNonNull(contextRepository);
         this.taskRepository = Objects.requireNonNull(taskRepository);
-        this.credentialsRepository = credentialsRepository;
+        this.credentialsRepository = Objects.requireNonNull(credentialsRepository);
     }
 
     public void markComplete(Entry entry) {
@@ -92,51 +93,46 @@ public class EntryService {
     }
 
     private Status resolveStatus(Optional<EntryRecord> entryRecord) {
+        if (entryRecord.isPresent()) {
+            EntryRecord entry = entryRecord.get();
 
-        Optional<Task> firstTask = taskRepository.findFirstTask(entryRecord);
+            Optional<Task> firstTask = taskRepository.findFirstTask(entry);
 
-        if (firstTask.isPresent()) {
+            if (firstTask.isPresent()) {
+                Task task = firstTask.get();
+                if (Status.FAILED.equals(task.status())) {
+                    return resolvedStatus(entry, task, Status.FAILED);
+                }
+                if (Status.CANCELLED.equals(task.status())) {
+                    return resolvedStatus(entry, task, Status.CANCELLED);
+                }
+                if (Status.ERRORS.equals(task.status())) {
+                    return resolvedStatus(entry, task, Status.ERRORS);
+                }
+                if (Status.WARNINGS.equals(task.status())) {
+                    return resolvedStatus(entry, task, Status.WARNINGS);
+                }
+            } else {
+                if (logger.isInfoEnabled()) {
+                    logger.info("Entry {} has no tasks, resolving entry as cancelled", entry.publicId());
+                }
+                return Status.CANCELLED;
 
-            Task task = firstTask.get();
-
-            if (Status.FAILED.equals(task.status())) {
-                return resolvedStatus(entryRecord, task, Status.FAILED);
             }
-
-            if (Status.CANCELLED.equals(task.status())) {
-                return resolvedStatus(entryRecord, task, Status.CANCELLED);
-            }
-
-            if (Status.ERRORS.equals(task.status())) {
-                return resolvedStatus(entryRecord, task, Status.ERRORS);
-            }
-
-            if (Status.WARNINGS.equals(task.status())) {
-                return resolvedStatus(entryRecord, task, Status.WARNINGS);
-            }
-
-        } else {
-
             if (logger.isInfoEnabled()) {
-                logger.info("Entry {} has no tasks, resolving entry as cancelled", entryRecord.get().publicId());
+
+                logger.info("All of entry {}'s tasks are successful, resolving entry as success", entry.publicId());
             }
-
-            return Status.CANCELLED;
-
+            return Status.SUCCESS;
+        } else {
+            logger.warn("Entry not present, cannot resolve status - possible data corruption");
+            return Status.FAILED;
         }
-
-        if (logger.isInfoEnabled()) {
-
-            logger.info("All of entry {}'s tasks are successful, resolving entry as success", entryRecord.get().publicId());
-        }
-
-        return Status.SUCCESS;
-
     }
 
-    private Status resolvedStatus(Optional<EntryRecord> entryRecord, Task t, Status status) {
+    private Status resolvedStatus(EntryRecord entryRecord, Task t, Status status) {
         if (logger.isInfoEnabled()) {
-            logger.info("Entry {} has a task with status {}, resolving entry as {}}", entryRecord.get().publicId(), t.status(), status);
+            logger.info("Entry {} has a task with status {}, resolving entry as {}}", entryRecord.publicId(), t.status(), status);
         }
         return status;
     }

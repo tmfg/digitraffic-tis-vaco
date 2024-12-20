@@ -29,7 +29,7 @@ public class ValidationQueueSqsListener extends SqsListenerBase<ImmutableValidat
 
     @SqsListener(QueueNames.VACO_JOBS_VALIDATION)
     public void listen(ImmutableValidationJobMessage message, Acknowledgement acknowledgement) {
-        handle(message, message.entry().publicId(), acknowledgement, (ignored) -> {});
+        handle(message, message.entry().publicId(), acknowledgement, ignored -> {});
     }
 
     @Override

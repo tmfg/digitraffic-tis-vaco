@@ -84,6 +84,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public final class RowMappers {
 
@@ -512,7 +513,7 @@ public final class RowMappers {
         return pgi;
     }
 
-    public static RowMapper<CredentialsRecord> CREDENTIALS_RECORD(Function<byte[], byte[]> converter) {
+    public static RowMapper<CredentialsRecord> CREDENTIALS_RECORD(UnaryOperator<byte[]> converter) {
         return (rs, rowNum) -> ImmutableCredentialsRecord.builder()
             .id(rs.getLong("id"))
             .publicId(rs.getString("public_id"))

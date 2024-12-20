@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 @RestController
 @RequestMapping({"/v1/credentials", "/credentials"})
@@ -55,7 +56,8 @@ public class CredentialsController {
                 default -> Responses.badRequest(String.format("Unsupported credentials type '%s'", credentials.type()));
             };
         } else {
-            return Responses.unauthorized("Not allowed to access %s".formatted(credentials.owner()));
+            String resource = credentials.owner();
+            return unauthorizedResponse(resource);
         }
     }
 
@@ -68,7 +70,7 @@ public class CredentialsController {
                 .map(Responses::ok)
                 .orElseGet(() -> Responses.badRequest(String.format("Could not fetch all credentials for '%s'", businessId)));
         } else {
-            return Responses.unauthorized("Not allowed to access %s".formatted(businessId));
+            return unauthorizedResponse(businessId);
         }
     }
 
@@ -83,10 +85,10 @@ public class CredentialsController {
                         .map(Responses::ok)
                         .orElseGet(() -> Responses.badRequest(String.format("Could not fetch credentials with id '%s'", publicId)));
                 } else {
-                    return Responses.<Credentials>unauthorized("Not allowed to access %s".formatted(publicId));
+                    return CredentialsController.<Credentials>unauthorizedResponse(publicId);
                 }
             })
-            .orElseGet(() -> Responses.notFound("%s not found".formatted(publicId)));
+            .orElseGet(notFoundResponse(publicId));
     }
 
     @PutMapping(path = "/{publicId}")
@@ -101,10 +103,10 @@ public class CredentialsController {
                         .map(Responses::ok)
                         .orElseGet(() -> Responses.badRequest(String.format("Could not update credentials with id '%s'", publicId)));
                 } else {
-                    return Responses.<Credentials>unauthorized("Not allowed to access %s".formatted(publicId));
+                    return CredentialsController.<Credentials>unauthorizedResponse(publicId);
                 }
             })
-            .orElseGet(() -> Responses.notFound("%s not found".formatted(publicId)));
+            .orElseGet(notFoundResponse(publicId));
     }
 
     @DeleteMapping(path = "/{publicId}")
@@ -118,10 +120,17 @@ public class CredentialsController {
                         .map(Responses::ok)
                         .orElseGet(() -> Responses.badRequest(String.format("Could not delete credentials with id '%s'", publicId)));
                 } else {
-                    return Responses.<Boolean>unauthorized("Not allowed to access %s".formatted(publicId));
+                    return CredentialsController.<Boolean>unauthorizedResponse(publicId);
                 }
             })
-            .orElseGet(() -> Responses.notFound("%s not found".formatted(publicId)));
+            .orElseGet(notFoundResponse(publicId));
     }
 
+    private static <T> Supplier<ResponseEntity<Resource<T>>> notFoundResponse(String publicId) {
+        return () -> Responses.notFound("%s not found".formatted(publicId));
+    }
+
+    private static <T> ResponseEntity<Resource<T>> unauthorizedResponse(String resource) {
+        return Responses.unauthorized("Not allowed to access %s".formatted(resource));
+    }
 }
