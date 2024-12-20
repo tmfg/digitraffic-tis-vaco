@@ -87,9 +87,7 @@ public class NetexInputSummaryService {
                                 if (nextEvent.isStartElement()) {
                                     StartElement startElement = nextEvent.asStartElement();
                                     switch (startElement.getName().getLocalPart()) {
-                                        case "Operator" -> {
-                                            operatorTotalCount += processOperator(reader, startElement, netexInputSummaryBuilder, zipFile.getName(), taskId, operators);
-                                        }
+                                        case "Operator" -> operatorTotalCount += processOperator(reader, startElement, netexInputSummaryBuilder, zipFile.getName(), taskId, operators);
                                         case "Route" -> {
                                             routeTotalCount++;
                                             Route route = processRoute(reader, startElement, zipFile.getName(), taskId);
