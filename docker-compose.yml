@@ -42,7 +42,7 @@ services:
       - DEBUG=${DEBUG-}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DISABLE_EVENTS=1
-      - SERVICES=sqs,s3
+      - SERVICES=sqs,s3,kms
       - AWS_ACCESS_KEY_ID=localstack
       - AWS_SECRET_ACCESS_KEY=localstack
       - AWS_DEFAULT_REGION=eu-north-1

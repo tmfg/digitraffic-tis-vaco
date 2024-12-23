@@ -4,17 +4,38 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.credentials.model.AuthenticationDetails;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.retry.RetryPolicy;
+import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.kms.KmsAsyncClient;
+import software.amazon.awssdk.services.kms.model.DecryptRequest;
+import software.amazon.awssdk.services.kms.model.DecryptResponse;
+import software.amazon.awssdk.services.kms.model.EncryptRequest;
+import software.amazon.awssdk.services.kms.model.EncryptResponse;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Base64;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Simple wrapper for symmetric encryption and decryption of strings Should be considered "secure enough", that is, for
@@ -23,9 +44,9 @@ import java.util.Base64;
 @Service
 public class EncryptionService {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
     private final SecretKey secretKey;
-
     private final Cipher cipher;
 
     public EncryptionService(VacoProperties vacoProperties,
@@ -75,4 +96,81 @@ public class EncryptionService {
             throw new VacoException("Failed to deserialize decrypted result", e);
         }
     }
+
+    @Value("${vaco.encryptionKeys.credentials}")
+    private String keyId;
+
+    private static KmsAsyncClient kmsAsyncClient;
+
+    public byte[] encryptBlob(AuthenticationDetails details) {
+
+            SdkBytes myBytes = SdkBytes.fromUtf8String(details.toString());
+            EncryptRequest encryptRequest = EncryptRequest.builder()
+                .keyId(keyId)
+                .plaintext(myBytes)
+                .build();
+
+            try {
+                EncryptResponse response = getAsyncClient()
+                    .encrypt(encryptRequest)
+                    .toCompletableFuture()
+                    .get();
+
+                return response.ciphertextBlob().asByteArray();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException("Error during encryption", e);
+            }
+    }
+
+    public byte[] decryptBlob(byte[] encryptedData) {
+
+        SdkBytes bytes = SdkBytes.fromByteArray(encryptedData);
+        logger.debug("Decrypting data: {}", Base64.getEncoder().encodeToString(encryptedData));
+        DecryptRequest decryptRequest = DecryptRequest.builder()
+            .ciphertextBlob(bytes)
+            .keyId(keyId)
+            .build();
+
+        try {
+            DecryptResponse decryptResponse = getAsyncClient()
+                .decrypt(decryptRequest)
+                .toCompletableFuture()
+                .join();
+
+            return decryptResponse.plaintext().asByteArray();
+
+        } catch (CompletionException e) {
+            throw new RuntimeException("Error occurred during decryption: " + e.getCause().getMessage(), e.getCause());
+        }
+    }
+
+    private static KmsAsyncClient getAsyncClient() {
+        if (kmsAsyncClient == null) {
+            SdkAsyncHttpClient httpClient = NettyNioAsyncHttpClient.builder()
+                .maxConcurrency(100)
+                .connectionTimeout(Duration.ofSeconds(60))
+                .readTimeout(Duration.ofSeconds(60))
+                .writeTimeout(Duration.ofSeconds(60))
+                .build();
+
+            ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
+                .apiCallTimeout(Duration.ofMinutes(2))
+                .apiCallAttemptTimeout(Duration.ofSeconds(90))
+                .retryPolicy(RetryPolicy.builder()
+                    .numRetries(3)
+                    .build())
+                .build();
+
+            kmsAsyncClient = KmsAsyncClient.builder()
+                .httpClient(httpClient)
+                .endpointOverride(URI.create("http://localhost:4566"))
+                .credentialsProvider(
+                    StaticCredentialsProvider.create(AwsBasicCredentials.create("localstack", "localstack"))
+                )
+                .region(Region.of("eu-north-1"))
+                .build();
+        }
+        return kmsAsyncClient;
+    }
+
 }
