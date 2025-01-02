@@ -245,6 +245,10 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sqs</artifactId>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>kms</artifactId>
+        </dependency>
         <!-- AWSpring starters for AWS services -->
         <dependency>
             <groupId>io.awspring.cloud</groupId>

@@ -1,11 +1,10 @@
 package fi.digitraffic.tis.vaco.credentials;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.credentials.model.AuthenticationDetails;
 import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
+import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
@@ -30,9 +29,12 @@ public class CredentialsRepository {
 
     private final ObjectMapper objectMapper;
 
-    public CredentialsRepository(JdbcTemplate jdbc, ObjectMapper objectMapper) {
+    private final EncryptionService encryptionService;
+
+    public CredentialsRepository(JdbcTemplate jdbc, ObjectMapper objectMapper, EncryptionService encryptionService) {
         this.jdbc = Objects.requireNonNull(jdbc);
         this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.encryptionService = Objects.requireNonNull(encryptionService);
     }
 
     public Optional<CredentialsRecord> createCredentials(Credentials credentials, CompanyRecord owner) {
@@ -49,12 +51,12 @@ public class CredentialsRepository {
                             description,
                             details
                 """,
-                RowMappers.CREDENTIALS_RECORD(this::decryptBlob),
+                RowMappers.CREDENTIALS_RECORD(encryptionService::decryptBlob),
                 owner.id(),
                 credentials.name(),
                 credentials.description(),
                 credentials.type().fieldName(),
-                encryptBlob(credentials.details())
+                encryptionService.encryptBlob(credentials.details())
             ));
         } catch (DataAccessException dae) {
             logger.warn("Failed to create credentials", dae);
@@ -70,7 +72,7 @@ public class CredentialsRepository {
                   FROM credentials
                  WHERE owner_id = ?
                 """,
-                RowMappers.CREDENTIALS_RECORD(this::decryptBlob),
+                RowMappers.CREDENTIALS_RECORD(encryptionService::decryptBlob),
                 companyRecord.id());
         } catch (EmptyResultDataAccessException erdae) {
             logger.warn("Failed to find all by business id", erdae);
@@ -86,7 +88,7 @@ public class CredentialsRepository {
                   FROM credentials c
                  WHERE c.public_id = ?
                 """,
-                RowMappers.CREDENTIALS_RECORD(this::decryptBlob),
+                RowMappers.CREDENTIALS_RECORD(encryptionService::decryptBlob),
                 publicId));
         } catch (EmptyResultDataAccessException erdae) {
             logger.warn("No credentials available by publicId {}", publicId, erdae);
@@ -104,11 +106,11 @@ public class CredentialsRepository {
                 WHERE id = ?
             RETURNING *
             """,
-            RowMappers.CREDENTIALS_RECORD(this::decryptBlob),
+            RowMappers.CREDENTIALS_RECORD(encryptionService::decryptBlob),
             name,
             description,
             type.fieldName(),
-            encryptBlob(details),
+            encryptionService.encryptBlob(details),
             previous.id()
         );
     }
@@ -133,7 +135,7 @@ public class CredentialsRepository {
                   FROM credentials c
                  WHERE c.id = ?
                 """,
-                RowMappers.CREDENTIALS_RECORD(this::decryptBlob),
+                RowMappers.CREDENTIALS_RECORD(encryptionService::decryptBlob),
                 entry.credentials()));
         } catch (DataAccessException dae) {
             logger.warn("Failed to find credentials record for credentials %s/%s".formatted(entry.publicId(), entry.credentials()), dae);
@@ -141,21 +143,5 @@ public class CredentialsRepository {
         }
     }
 
-    private byte[] encryptBlob(AuthenticationDetails details) {
-        // TODO: temporary solution until EncryptionService is extended for this use case
-        try {
-            return objectMapper.writeValueAsBytes(details);
-        } catch (JsonProcessingException e) {
-            throw new InvalidMappingException("Failed to encrypt bytes", e);
-        }
-    }
 
-    private byte[] decryptBlob(byte[] blob) {
-        // TODO: temporary solution until EncryptionService is extended for this use case
-        try {
-            return blob;
-        } catch (Exception e) {
-            throw new InvalidMappingException("Failed to decrypt bytes", e);
-        }
-    }
 }
