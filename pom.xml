@@ -52,7 +52,7 @@
         <jackson.version>2.18.2</jackson.version>
         <mockito.version>5.14.2</mockito.version>
         <caffeine.version>3.1.8</caffeine.version>
-        <guava.version>33.3.0-jre</guava.version>
+        <guava.version>33.4.0-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
         <msgraph.version>[6.0,)</msgraph.version>
         <!-- tooling parameters -->
