@@ -122,8 +122,22 @@ public class RuleResultsListener extends SqsListener {
                     taskService.markStatus(task, Status.FAILED);
                     return true;
                 }).orElse(false);
+        }).whenComplete((deadLetterProcessingSuccess, maybeEx) -> {
+            if (maybeEx != null) {
+                logger.warn("Handling deal letter queue message failed due to unhandled exception", maybeEx);
+            }
+            // resubmit to processing queue to continue general logic
+            Optional<String> entryPublicId = Optional.ofNullable(jsonNode)
+                .filter(node -> node.has("entry"))
+                .map(node -> node.get("entry").get("publicId"))
+                .map(JsonNode::asText);
+            entryPublicId.flatMap(entryService::findEntry)
+                .ifPresent(entry ->
+                    messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
+                        .entry(entry)
+                        .retryStatistics(ImmutableRetryStatistics.of(5))
+                        .build()));
         });
-
     }
 
     protected CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {
