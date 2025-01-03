@@ -21,8 +21,8 @@ import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.entryWithTask;
@@ -95,7 +94,6 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
         Map<String, List<String>> uploadedFiles = Map.of("reports.json", List.of("report"));
         resultMessage = asResultMessage(vacoProperties, RuleName.NETEX_ENTUR, entry, uploadedFiles);
         netexEnturRuleset = ImmutableRuleset.of(
-                new Random().nextLong(),
                 RuleName.NETEX_ENTUR,
                 "bleh",
                 Category.GENERIC,

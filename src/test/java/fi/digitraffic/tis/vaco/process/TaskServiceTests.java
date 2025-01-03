@@ -80,7 +80,6 @@ class TaskServiceTests {
         // these model "download, validate, convert, re-validate" pattern we want to support
         // the data should match with contents of R__seed_data.sql so be careful if you need to edit these
         gtfsCanonicalRuleset = ImmutableRuleset.of(
-                entry.id(),
                 RuleName.GTFS_CANONICAL,
                 "GTFS Canonical",
                 Category.GENERIC,
@@ -88,7 +87,6 @@ class TaskServiceTests {
                 TransitDataFormat.GTFS)
             .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK));
         gtfs2NetexRuleset = ImmutableRuleset.of(
-                entry.id(),
                 RuleName.GTFS2NETEX_FINTRAFFIC,
                 "GTFS2NETEX Fintraffic",
                 Category.GENERIC,
@@ -97,7 +95,6 @@ class TaskServiceTests {
             .withBeforeDependencies(List.of(DownloadRule.PREPARE_DOWNLOAD_TASK, RuleName.GTFS_CANONICAL))
             .withAfterDependencies(List.of(RuleName.NETEX_ENTUR));
         netexEnturRuleset = ImmutableRuleset.of(
-                entry.id(),
                 RuleName.NETEX_ENTUR,
                 "NeTEx Entur",
                 Category.GENERIC,

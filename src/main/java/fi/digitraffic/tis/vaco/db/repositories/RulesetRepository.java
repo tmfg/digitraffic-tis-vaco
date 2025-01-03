@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -143,7 +144,7 @@ public class RulesetRepository {
         return Set.copyOf(rulesets);
     }
 
-    public RulesetRecord createRuleset(Ruleset ruleset) {
+    public RulesetRecord createRuleset(CompanyRecord companyRecord, Ruleset ruleset) {
         return jdbc.queryForObject(
                 """
                 INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format, before_dependencies, after_dependencies)
@@ -151,7 +152,7 @@ public class RulesetRepository {
                   RETURNING *;
                 """,
                 RowMappers.RULESET_RECORD,
-                ruleset.ownerId(),
+                companyRecord.id(),
                 ruleset.category().fieldName(),
                 ruleset.identifyingName(),
                 ruleset.description(),
@@ -175,8 +176,8 @@ public class RulesetRepository {
         }
     }
 
-    public void deleteRuleset(Ruleset rule) {
-        jdbc.update("DELETE FROM ruleset WHERE public_id = ?", rule.publicId());
+    public void deleteRuleset(RulesetRecord rulesetRecord) {
+        jdbc.update("DELETE FROM ruleset WHERE id = ?", rulesetRecord.id());
     }
 
     public Set<String> listAllNames() {

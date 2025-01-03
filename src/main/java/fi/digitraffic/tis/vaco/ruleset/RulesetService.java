@@ -6,10 +6,9 @@ import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -55,15 +54,6 @@ public class RulesetService {
         logger.info("Selected {} {} rulesets for {} are {}, requested {}", format, type, businessId, Streams.collect(rulesets, Ruleset::identifyingName), names);
 
         return rulesets;
-    }
-
-    public Ruleset createRuleset(ImmutableRuleset ruleset) {
-        return recordMapper.toRuleset(rulesetRepository.createRuleset(ruleset));
-    }
-
-    public void deleteRuleset(Ruleset ruleset) {
-        rulesetRepository.deleteRuleset(ruleset);
-        cachingService.invalidateRuleset(ruleset.identifyingName());
     }
 
     public Optional<Ruleset> findByName(String rulesetName) {

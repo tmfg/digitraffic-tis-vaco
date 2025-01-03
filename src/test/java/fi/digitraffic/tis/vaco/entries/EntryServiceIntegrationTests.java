@@ -7,8 +7,11 @@ import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
-import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
+import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
+import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
+import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -19,7 +22,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
-import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -46,10 +48,13 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private RulesetService rulesetService;
+    private RulesetRepository rulesetRepository;
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private CompanyRepository companyRepository;
 
     @Autowired
     private CompanyHierarchyService companyHierarchyService;
@@ -99,17 +104,16 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void entryWithConversionsGetsGeneratedValidationAndConversionTasks() {
         // matching Ruleset must exist for the task to be generated
-        Optional<Company> org = companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID);
-        assertThat(org.isPresent(), equalTo(true));
-        Ruleset bananasRule = rulesetService.createRuleset(
-            ImmutableRuleset.of(
-                    org.get().id(),
-                    conversion.name(),
-                    "This test data is bananas!",
-                    Category.GENERIC,
-                    RulesetType.CONVERSION_SYNTAX,
-                    TransitDataFormat.forField(entry.format()))
-                .withBeforeDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK));
+        Optional<CompanyRecord> company = companyRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID);
+        assertThat(company.isPresent(), equalTo(true));
+        Ruleset ruleset = ImmutableRuleset.of(
+                conversion.name(),
+                "This test data is bananas!",
+                Category.GENERIC,
+                RulesetType.CONVERSION_SYNTAX,
+                TransitDataFormat.forField(entry.format()))
+            .withBeforeDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK);
+        RulesetRecord bananasRule = rulesetRepository.createRuleset(company.get(), ruleset);
 
         // TODO: should be PersistentEntry for better assertions
         Entry result = entryService.create(entry.withConversions(conversion)).get();

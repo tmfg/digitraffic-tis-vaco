@@ -143,7 +143,6 @@ public final class RowMappers {
     @Deprecated(since = "2024-08-20")
     public static final Function<String, RowMapper<Company>> ALIASED_COMPANY = alias ->
         (rs, rowNum) -> ImmutableCompany.builder()
-            .id(rs.getLong(alias + "id"))
             .businessId(rs.getString(alias + "business_id"))
             .name(rs.getString(alias + "name"))
             .language(rs.getString(alias + "language"))

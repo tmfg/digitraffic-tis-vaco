@@ -34,7 +34,7 @@ public class FeedService {
     public Optional<Feed> createFeed(CreateFeedRequest feed) {
 
         Optional<CompanyRecord> company = companyRepository.findByBusinessId(feed.owner());
-        return company.flatMap(companyRecord -> feedRepository.createFeed(toFeed(feed))
+        return company.flatMap(companyRecord -> feedRepository.createFeed(companyRecord, toFeed(feed))
                 .map(feedRecord -> recordMapper.toFeed(feedRecord, companyRecord)));
     }
 
