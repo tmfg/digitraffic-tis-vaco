@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.EntryService;
@@ -142,11 +143,13 @@ class RuleResultsListenerTests {
 
         JsonNode message = objectMapper.readValue(jsonString, JsonNode.class);
         Task task = ImmutableTask.of("dlqTest", 100).withPublicId("abc2");
-
-        given(taskService.findTask(task.publicId())).willReturn(Optional.of(task));
         given(taskService.markStatus(task, Status.FAILED)).willReturn(task);
-        assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(true));
+        given(taskService.findTask(task.publicId())).willReturn(Optional.of(task));
+        Entry entry = ImmutableEntry.of("abc1", "dlq test entry", "gtfs", "http://example.fintraffic", Constants.FINTRAFFIC_BUSINESS_ID);
+        given(entryService.findEntry(entry.publicId())).willReturn(Optional.of(entry));
+        givenResultProcessingResultsInNewProcessingJobSubmission();
 
+        assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(true));
     }
 
     @Test
@@ -159,8 +162,12 @@ class RuleResultsListenerTests {
             """;
 
         JsonNode message = objectMapper.readValue(jsonString, JsonNode.class);
-        assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(false));
 
+        Entry entry = ImmutableEntry.of("abc1", "dlq test entry", "gtfs", "http://example.fintraffic", Constants.FINTRAFFIC_BUSINESS_ID);
+        given(entryService.findEntry(entry.publicId())).willReturn(Optional.of(entry));
+        givenResultProcessingResultsInNewProcessingJobSubmission();
+
+        assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(false));
     }
 
     private void assertResultProcessorIsUsed(String ruleName, ResultProcessor resultProcessor) throws JsonProcessingException {
