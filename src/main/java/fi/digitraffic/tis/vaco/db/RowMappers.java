@@ -55,10 +55,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
-import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
-import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
@@ -91,23 +89,6 @@ public final class RowMappers {
     private RowMappers() {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RowMappers.class);
-
-    /**
-     * @deprecated Replace with {@link #RULESET_RECORD}
-     */
-    @Deprecated(since = "2024-08-22")
-    public static final RowMapper<Ruleset> RULESET = (rs, rowNum) -> ImmutableRuleset.builder()
-        .id(rs.getLong("id"))
-        .publicId(rs.getString("public_id"))
-        .ownerId(rs.getLong("owner_id"))
-        .identifyingName(rs.getString("identifying_name"))
-        .description(rs.getString("description"))
-        .category(Category.forField(rs.getString("category")))
-        .type(RulesetType.forField(rs.getString("type")))
-        .format(TransitDataFormat.forField(rs.getString("format")))
-        .beforeDependencies(Set.of(ArraySqlValue.read(rs, "before_dependencies")))
-        .afterDependencies(Set.of(ArraySqlValue.read(rs, "after_dependencies")))
-        .build();
 
     public static final RowMapper<RulesetRecord> RULESET_RECORD = (rs, rowNum) -> ImmutableRulesetRecord.builder()
         .id(rs.getLong("id"))

@@ -34,8 +34,8 @@ public class RulesetRepository {
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
 
-    public Set<Ruleset> findRulesets(String businessId) {
-        List<Ruleset> rulesets = namedJdbc.query("""
+    public Set<RulesetRecord> findRulesets(String businessId) {
+        List<RulesetRecord> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM company
@@ -57,13 +57,13 @@ public class RulesetRepository {
                 """,
             new MapSqlParameterSource()
                 .addValue("businessId", businessId),
-            RowMappers.RULESET);
-        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
+            RowMappers.RULESET_RECORD);
+        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(RulesetRecord::identifyingName).toList());
         return Set.copyOf(rulesets);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, TransitDataFormat format, RulesetType type) {
-        List<Ruleset> rulesets = namedJdbc.query("""
+    public Set<RulesetRecord> findRulesets(String businessId, TransitDataFormat format, RulesetType type) {
+        List<RulesetRecord> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM company
@@ -91,16 +91,16 @@ public class RulesetRepository {
                 .addValue("businessId", businessId)
                 .addValue("type", type.fieldName())
                 .addValue("format", format.fieldName()),
-            RowMappers.RULESET);
-        logger.info("Found {} rulesets of type {} for {} of format {}: {}", rulesets.size(), type, businessId, format, rulesets.stream().map(Ruleset::identifyingName).toList());
+            RowMappers.RULESET_RECORD);
+        logger.info("Found {} rulesets of type {} for {} of format {}: {}", rulesets.size(), type, businessId, format, rulesets.stream().map(RulesetRecord::identifyingName).toList());
         return Set.copyOf(rulesets);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> rulesetNames) {
+    public Set<RulesetRecord> findRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> rulesetNames) {
         if (rulesetNames.isEmpty()) {
             return findRulesets(businessId, format, type);
         }
-        List<Ruleset> rulesets = namedJdbc.query("""
+        List<RulesetRecord> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM company
@@ -137,20 +137,20 @@ public class RulesetRepository {
                 .addValue("rulesetNames", rulesetNames)
                 .addValue("type", type.fieldName())
                 .addValue("format", format.fieldName()),
-            RowMappers.RULESET);
+            RowMappers.RULESET_RECORD);
         logger.debug("Found {} rulesets of type {} with format {} for {}: resolved {}, requested {}", rulesets.size(),
-            type, format, businessId, rulesets.stream().map(Ruleset::identifyingName).toList(), rulesetNames);
+            type, format, businessId, rulesets.stream().map(RulesetRecord::identifyingName).toList(), rulesetNames);
         return Set.copyOf(rulesets);
     }
 
-    public Ruleset createRuleset(Ruleset ruleset) {
+    public RulesetRecord createRuleset(Ruleset ruleset) {
         return jdbc.queryForObject(
                 """
                 INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format, before_dependencies, after_dependencies)
                      VALUES (?, ?::ruleset_category, ?, ?, ?, ?::transit_data_format, ?, ?)
                   RETURNING *;
                 """,
-                RowMappers.RULESET,
+                RowMappers.RULESET_RECORD,
                 ruleset.ownerId(),
                 ruleset.category().fieldName(),
                 ruleset.identifyingName(),
