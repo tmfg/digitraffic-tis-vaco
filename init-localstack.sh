@@ -35,9 +35,9 @@ echo $(awslocal s3api list-buckets)
 # --> Verify SES fake email identity
 echo $(awslocal ses verify-email-identity --email-address 'no-reply@mail.localhost')
 
-KEY_ID=$(awslocal kms create-key --description "credentials kms key" --key-usage ENCRYPT_DECRYPT --query 'KeyMetadata.KeyId' --output text)
+TIS_APP_KEY_ID=$(awslocal kms create-key --description "credentials kms key" --key-usage ENCRYPT_DECRYPT --query 'KeyMetadata.KeyId' --output text)
 
-awslocal kms create-alias --alias-name alias/vaco_credentials_db_key --target-key-id $KEY_ID
+awslocal kms create-alias --alias-name alias/vaco_credentials_db_key --target-key-id $TIS_APP_KEY_ID
 
 
 
