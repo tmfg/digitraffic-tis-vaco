@@ -2,21 +2,14 @@ package fi.digitraffic.tis.vaco.crypt;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.credentials.model.AuthenticationDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
-import software.amazon.awssdk.core.retry.RetryPolicy;
-import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
-import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsAsyncClient;
 import software.amazon.awssdk.services.kms.model.DecryptRequest;
 import software.amazon.awssdk.services.kms.model.DecryptResponse;
@@ -28,12 +21,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
@@ -48,17 +40,22 @@ public class EncryptionService {
     private final ObjectMapper objectMapper;
     private final SecretKey secretKey;
     private final Cipher cipher;
+    private final VacoProperties vacoProperties;
+    private final KmsAsyncClient kmsAsyncClient;
+
 
     public EncryptionService(VacoProperties vacoProperties,
-                             ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-        byte[] keyBytes = vacoProperties.magicLink().key().getBytes(StandardCharsets.UTF_8);
+                             ObjectMapper objectMapper, KmsAsyncClient kmsAsyncClient) {
+        this.objectMapper = Objects.requireNonNull(objectMapper);
+        byte[] keyBytes = vacoProperties.encryptionKeys().magicLink().getBytes(StandardCharsets.UTF_8);
         this.secretKey = new SecretKeySpec(keyBytes, "AES");
         try {
             this.cipher = Cipher.getInstance("AES/GCM/NoPadding");
         } catch (GeneralSecurityException e) {
             throw new VacoException("Failed to initialize cipher", e);
         }
+        this.vacoProperties = Objects.requireNonNull(vacoProperties);
+        this.kmsAsyncClient = Objects.requireNonNull(kmsAsyncClient);
     }
 
     public <T> String encrypt(T original) {
@@ -97,42 +94,42 @@ public class EncryptionService {
         }
     }
 
-    @Value("${vaco.encryptionKeys.credentials}")
-    private String keyId;
-
-    private static KmsAsyncClient kmsAsyncClient;
-
     public byte[] encryptBlob(AuthenticationDetails details) {
 
-            SdkBytes myBytes = SdkBytes.fromUtf8String(details.toString());
-            EncryptRequest encryptRequest = EncryptRequest.builder()
-                .keyId(keyId)
+        SdkBytes myBytes = null;
+        try {
+            myBytes = SdkBytes.fromByteArray(objectMapper.writeValueAsBytes(details));
+        } catch (JsonProcessingException e) {
+            throw new InvalidMappingException("Authentication details cannot converted to json", e);
+        }
+        EncryptRequest encryptRequest = EncryptRequest.builder()
+                .keyId(vacoProperties.encryptionKeys().feedCredentials())
                 .plaintext(myBytes)
                 .build();
 
             try {
-                EncryptResponse response = getAsyncClient()
+                EncryptResponse response = kmsAsyncClient
                     .encrypt(encryptRequest)
                     .toCompletableFuture()
                     .get();
 
                 return response.ciphertextBlob().asByteArray();
             } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException("Error during encryption", e);
+                throw new VacoException("Error during encryption", e);
             }
     }
 
     public byte[] decryptBlob(byte[] encryptedData) {
 
         SdkBytes bytes = SdkBytes.fromByteArray(encryptedData);
-        logger.debug("Decrypting data: {}", Base64.getEncoder().encodeToString(encryptedData));
+        logger.debug("Decrypting data: {}", encryptedData.length);
         DecryptRequest decryptRequest = DecryptRequest.builder()
             .ciphertextBlob(bytes)
-            .keyId(keyId)
+            .keyId(vacoProperties.encryptionKeys().feedCredentials())
             .build();
 
         try {
-            DecryptResponse decryptResponse = getAsyncClient()
+            DecryptResponse decryptResponse = kmsAsyncClient
                 .decrypt(decryptRequest)
                 .toCompletableFuture()
                 .join();
@@ -140,37 +137,8 @@ public class EncryptionService {
             return decryptResponse.plaintext().asByteArray();
 
         } catch (CompletionException e) {
-            throw new RuntimeException("Error occurred during decryption: " + e.getCause().getMessage(), e.getCause());
+            throw new VacoException("Error occurred during decryption: " + e.getCause().getMessage(), e.getCause());
         }
-    }
-
-    private static KmsAsyncClient getAsyncClient() {
-        if (kmsAsyncClient == null) {
-            SdkAsyncHttpClient httpClient = NettyNioAsyncHttpClient.builder()
-                .maxConcurrency(100)
-                .connectionTimeout(Duration.ofSeconds(60))
-                .readTimeout(Duration.ofSeconds(60))
-                .writeTimeout(Duration.ofSeconds(60))
-                .build();
-
-            ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
-                .apiCallTimeout(Duration.ofMinutes(2))
-                .apiCallAttemptTimeout(Duration.ofSeconds(90))
-                .retryPolicy(RetryPolicy.builder()
-                    .numRetries(3)
-                    .build())
-                .build();
-
-            kmsAsyncClient = KmsAsyncClient.builder()
-                .httpClient(httpClient)
-                .endpointOverride(URI.create("http://localhost:4566"))
-                .credentialsProvider(
-                    StaticCredentialsProvider.create(AwsBasicCredentials.create("localstack", "localstack"))
-                )
-                .region(Region.of("eu-north-1"))
-                .build();
-        }
-        return kmsAsyncClient;
     }
 
 }
