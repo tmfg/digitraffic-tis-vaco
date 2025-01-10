@@ -14,7 +14,7 @@ import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.Email;
-import fi.digitraffic.tis.vaco.configuration.MagicLink;
+import fi.digitraffic.tis.vaco.configuration.EncryptionKeys;
 import fi.digitraffic.tis.vaco.configuration.MsGraph;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -163,7 +163,7 @@ public class TestObjects {
     /**
      * Override specific configuration subtypes. Provide nulls for those values which should use defaults.
      */
-    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, MagicLink magicLink, Cleanup cleanup, MsGraph msGraph) {
+    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, Cleanup cleanup, MsGraph msGraph, EncryptionKeys encryptionKeys) {
         String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
 
         return new VacoProperties(
@@ -176,9 +176,11 @@ public class TestObjects {
             aws != null ? aws : new Aws("eu-north-1", null, null, null, new S3(null)),
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
             email != null ? email : new Email("king@commonwealth", null),
-            magicLink != null ? magicLink : new MagicLink("C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"),
             cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), 10, 100),
-            msGraph != null ? msGraph : new MsGraph("tenantId", "clientId", "clientSecret", "schemaExtension"));
+            msGraph != null ? msGraph : new MsGraph("tenantId", "clientId", "clientSecret", "schemaExtension"),
+            encryptionKeys != null ? encryptionKeys : new EncryptionKeys("credentials", "C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3")
+        );
+
     }
 
     public static JwtAuthenticationToken jwtAuthenticationToken(String oid) {
@@ -213,6 +215,6 @@ public class TestObjects {
     }
 
     public static CreateCredentialsRequest aCredentials(String ownerBusinessId) {
-        return ImmutableCreateCredentialsRequest.of(CredentialsType.HTTP_BASIC, "test credentials", "testing credentials", ownerBusinessId);
+        return ImmutableCreateCredentialsRequest.of(CredentialsType.HTTP_BASIC, "test credentials", "testing credentials", ownerBusinessId, ImmutableHttpBasicAuthenticationDetails.of("userId", "password"));
     }
 }
