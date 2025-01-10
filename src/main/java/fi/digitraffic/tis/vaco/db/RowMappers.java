@@ -513,7 +513,6 @@ public final class RowMappers {
 
     public static RowMapper<CredentialsRecord> CREDENTIALS_RECORD(Function<byte[], byte[]> converter) {
         return (rs, rowNum) -> {
-            byte[] details = converter.apply(rs.getBytes("details"));
             return ImmutableCredentialsRecord.builder()
                 .id(rs.getLong("id"))
                 .publicId(rs.getString("public_id"))
@@ -521,7 +520,7 @@ public final class RowMappers {
                 .name(rs.getString("name"))
                 .description(rs.getString("description"))
                 .type(CredentialsType.forField(rs.getString("type")))
-                .details(details)
+                .details(converter.apply(rs.getBytes("details")))
                 .build();
         };
     }
