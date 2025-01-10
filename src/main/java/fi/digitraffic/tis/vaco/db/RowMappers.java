@@ -56,8 +56,8 @@ import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
@@ -512,14 +512,17 @@ public final class RowMappers {
     }
 
     public static RowMapper<CredentialsRecord> CREDENTIALS_RECORD(Function<byte[], byte[]> converter) {
-        return (rs, rowNum) -> ImmutableCredentialsRecord.builder()
-            .id(rs.getLong("id"))
-            .publicId(rs.getString("public_id"))
-            .ownerId(rs.getLong("owner_id"))
-            .name(rs.getString("name"))
-            .description(rs.getString("description"))
-            .type(CredentialsType.forField(rs.getString("type")))
-            .details(converter.apply(rs.getBytes("details")))
-            .build();
+        return (rs, rowNum) -> {
+            byte[] details = converter.apply(rs.getBytes("details"));
+            return ImmutableCredentialsRecord.builder()
+                .id(rs.getLong("id"))
+                .publicId(rs.getString("public_id"))
+                .ownerId(rs.getLong("owner_id"))
+                .name(rs.getString("name"))
+                .description(rs.getString("description"))
+                .type(CredentialsType.forField(rs.getString("type")))
+                .details(details)
+                .build();
+        };
     }
 }
