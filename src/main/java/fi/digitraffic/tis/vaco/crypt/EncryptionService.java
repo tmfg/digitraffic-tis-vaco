@@ -122,7 +122,6 @@ public class EncryptionService {
     public byte[] decryptBlob(byte[] encryptedData) {
 
         SdkBytes bytes = SdkBytes.fromByteArray(encryptedData);
-        logger.debug("Decrypting data: {}", encryptedData.length);
         DecryptRequest decryptRequest = DecryptRequest.builder()
             .ciphertextBlob(bytes)
             .keyId(vacoProperties.encryptionKeys().feedCredentials())
