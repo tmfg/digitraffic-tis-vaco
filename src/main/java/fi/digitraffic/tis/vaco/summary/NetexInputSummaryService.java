@@ -77,6 +77,7 @@ public class NetexInputSummaryService {
                     }
                     try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
                         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+                        xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
                         XMLEventReader reader = xmlInputFactory.createXMLEventReader(inputStream);
                         List<Line> lines = new ArrayList<>();
                         List<Route> routes = new ArrayList<>();
@@ -86,9 +87,7 @@ public class NetexInputSummaryService {
                                 if (nextEvent.isStartElement()) {
                                     StartElement startElement = nextEvent.asStartElement();
                                     switch (startElement.getName().getLocalPart()) {
-                                        case "Operator" -> {
-                                            operatorTotalCount += processOperator(reader, startElement, netexInputSummaryBuilder, zipFile.getName(), taskId, operators);
-                                        }
+                                        case "Operator" -> operatorTotalCount += processOperator(reader, startElement, netexInputSummaryBuilder, zipFile.getName(), taskId, operators);
                                         case "Route" -> {
                                             routeTotalCount++;
                                             Route route = processRoute(reader, startElement, zipFile.getName(), taskId);
@@ -104,6 +103,7 @@ public class NetexInputSummaryService {
                                         case "Quay" -> quayTotalCount++;
                                         case "JourneyPattern" -> journeyPatternTotalCount++;
                                         case "ServiceJourney" -> serviceJourneysTotalCount++;
+                                        default -> {}
                                     }
                                 }
                         }

@@ -22,7 +22,6 @@ import fi.digitraffic.tis.vaco.summary.GtfsInputSummaryService;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -33,8 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Component
 public class GtfsToNetexResultProcessor extends RuleResultProcessor implements ResultProcessor {
@@ -75,8 +74,8 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
                 try {
                     Set<String> gtfs2netexStats = scanStatsFileToArray(path);
                     return saveGtfs2NetexSummary(task, gtfs2netexStats);
-                } catch (JSONException | IOException e) {
-                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuleExecutionException("Error processing stats file", e);
                 }
             }))
             .orElse(false);
@@ -179,7 +178,7 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
         }
     }
 
-    private Set<String> scanStatsFileToArray(Path reportsFile) throws JSONException, IOException {
+    private Set<String> scanStatsFileToArray(Path reportsFile) throws IOException {
         Map<String, Integer> statsListFile = objectMapper.readValue(reportsFile.toFile(), new TypeReference<>() {});
         return Streams.collect(statsListFile.entrySet(), e -> e.getKey() + ": " + e.getValue());
     }

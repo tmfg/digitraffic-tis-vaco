@@ -19,13 +19,14 @@ import java.util.Set;
 public class CacheStatsMapper {
     public <K, V> CacheSummaryStatistics toCacheSummaryStatistics(Cache<K, V> cache) {
         CacheStats stats = cache.stats();
-        // Average load penalty (in nanoseconds) tracks how much time is "wasted" on loading. While interesting and also
-        // related to loadFailureCount, it is not mapped because at the moment it is not really actionably interesting.
-        // stats.averageLoadPenalty();
+        /*
+         stats.averageLoadPenalty() :: Average load penalty (in nanoseconds) tracks how much time is "wasted" on
+         loading. While interesting and also related to loadFailureCount, it is not mapped because at the moment it is
+         not really actionably interesting.
 
-        // Eviction weight is Caffeine's internal concept of some object "weighing" more than others; it is not an
-        // interesting generically summarizable statistic, which is why it is not mapped.
-        //stats.evictionWeight();
+         stats.evictionWeight() :: Eviction weight is Caffeine's internal concept of some object "weighing" more than
+         others; it is not an interesting generically summarizable statistic, which is why it is not mapped.
+        */
 
         return ImmutableCacheSummaryStatistics.of(
             cache.policy().isRecordingStats(),

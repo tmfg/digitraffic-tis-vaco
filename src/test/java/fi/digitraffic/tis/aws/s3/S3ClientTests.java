@@ -4,8 +4,6 @@ import fi.digitraffic.tis.AwsIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +18,7 @@ import java.nio.file.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class S3ClientTests extends AwsIntegrationTestBase {
@@ -48,10 +47,6 @@ class S3ClientTests extends AwsIntegrationTestBase {
     @BeforeEach
     void setUp() {
         s3Client = new S3Client(vacoProperties, s3TransferManager, awsS3Client);
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test
@@ -112,7 +107,6 @@ class S3ClientTests extends AwsIntegrationTestBase {
 
     @Test
     void canWriteBinaryContent() throws URISyntaxException, IOException {
-        //String zipName = "vekka_liikenne.zip";
         String zipName = "waltti_netex_nordic.zip";
         Path inputContent = Path.of(Thread.currentThread().getContextClassLoader().getResource("public/testfiles/" + zipName).toURI());
         Path outputContent = outputs.resolve(zipName);
@@ -121,7 +115,8 @@ class S3ClientTests extends AwsIntegrationTestBase {
         PutObjectResponse r = s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), path, inputContent).join();
         Long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), path, outputContent);
 
-        Assertions.assertArrayEquals(Files.readAllBytes(inputContent), Files.readAllBytes(outputContent));
+        assertArrayEquals(Files.readAllBytes(inputContent), Files.readAllBytes(outputContent));
+        assertThat(contentLength, equalTo(15795732L));
     }
 
     @NotNull

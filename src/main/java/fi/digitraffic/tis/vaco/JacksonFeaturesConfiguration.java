@@ -24,18 +24,20 @@ public class JacksonFeaturesConfiguration {
     public Jackson2ObjectMapperBuilderCustomizer strictCoercionConfiguration() {
         return jacksonObjectMapperBuilder -> jacksonObjectMapperBuilder
             .findModulesViaServiceLoader(true)
-            .postConfigurer(objectMapper -> {
+
+            .featuresToEnable(
                 // @JsonView made easy
-                objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, true);
+                MapperFeature.DEFAULT_VIEW_INCLUSION)
+            .featuresToDisable(
                 // use nulls for unknown implementations to allow for relaxed matching of requested vs resolved
                 // RuleConfigurations
                 // Normally "fail fast" would be better, but as this relies on API users writing their types correctly,
                 // this is safer. User is expected to inspect the result of their entry submission anyways.
-                objectMapper.configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false);
+                DeserializationFeature.FAIL_ON_INVALID_SUBTYPE,
                 // JsonView may hide polymorphic data; disabling this will prevent exception to be thrown when trying
                 // to deserialize such
-                objectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_EXTERNAL_TYPE_ID_PROPERTY, false);
-
+                DeserializationFeature.FAIL_ON_MISSING_EXTERNAL_TYPE_ID_PROPERTY)
+            .postConfigurer(objectMapper -> {
                 // prevent coercion of anything to strings to allow Jakarta Validation to work as intended
                 objectMapper.coercionConfigDefaults()
                     .setCoercion(CoercionInputShape.Boolean, CoercionAction.Fail)

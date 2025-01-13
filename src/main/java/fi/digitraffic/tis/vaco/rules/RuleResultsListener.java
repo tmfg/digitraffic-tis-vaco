@@ -44,7 +44,6 @@ import java.util.concurrent.CompletableFuture;
 public class RuleResultsListener extends SqsListener {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final MessagingService messagingService;
     private final FindingService findingService;
     private final TaskService taskService;
     private final QueueHandlerService queueHandlerService;
@@ -71,7 +70,6 @@ public class RuleResultsListener extends SqsListener {
                                SummaryService summaryService,
                                GtfsToNetexResultProcessor gtfsToNetexResultProcessor) {
         super(messagingService, objectMapper);
-        this.messagingService = Objects.requireNonNull(messagingService);
         this.findingService = Objects.requireNonNull(findingService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -124,8 +122,22 @@ public class RuleResultsListener extends SqsListener {
                     taskService.markStatus(task, Status.FAILED);
                     return true;
                 }).orElse(false);
+        }).whenComplete((deadLetterProcessingSuccess, maybeEx) -> {
+            if (maybeEx != null) {
+                logger.warn("Handling deal letter queue message failed due to unhandled exception", maybeEx);
+            }
+            // resubmit to processing queue to continue general logic
+            Optional<String> entryPublicId = Optional.ofNullable(jsonNode)
+                .filter(node -> node.has("entry"))
+                .map(node -> node.get("entry").get("publicId"))
+                .map(JsonNode::asText);
+            entryPublicId.flatMap(entryService::findEntry)
+                .ifPresent(entry ->
+                    messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
+                        .entry(entry)
+                        .retryStatistics(ImmutableRetryStatistics.of(5))
+                        .build()));
         });
-
     }
 
     protected CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {

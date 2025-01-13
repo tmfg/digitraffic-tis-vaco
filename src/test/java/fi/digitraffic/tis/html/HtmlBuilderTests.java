@@ -40,9 +40,11 @@ class HtmlBuilderTests {
         htmlBuilder.content(content -> content.element("p")
             .children(content.element("c")));
         assertThat(htmlBuilder.build(new HtmlBuildOptions(0, false)), equalTo("<p><c /></p>"));
-        assertThat(htmlBuilder.build(new HtmlBuildOptions(0, true)), equalTo("<p>\n" +
-                                                                             "    <c />\n" +
-                                                                             "</p>"));
+        assertThat(htmlBuilder.build(new HtmlBuildOptions(0, true)), equalTo(
+            """
+            <p>
+                <c />
+            </p>"""));
     }
 
     @Test

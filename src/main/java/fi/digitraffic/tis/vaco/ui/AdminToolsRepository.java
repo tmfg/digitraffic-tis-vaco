@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * @deprecated Admin tools is not a concept anymore in VACO codebase. Use table specific repositories instead.
+ */
 @Deprecated(since = "2024-08-29")
 @Repository
 public class AdminToolsRepository {

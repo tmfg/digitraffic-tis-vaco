@@ -17,14 +17,29 @@ import java.util.UUID;
  */
 public final class TempFiles {
 
+    /**
+     * Constants for directory names for temporary file paths.
+     */
+    private static final class Directory {
+
+        private Directory() {}
+
+        public static final String ENTRIES = "entries";
+        public static final String PACKAGES = "packages";
+        public static final String TASKS = "tasks";
+        public static final String ARTIFACTS = "artifacts";
+        public static final String DOWNLOADS = "downloads";
+        public static final String RULES = "rules";
+    }
+
     private TempFiles() {}
 
     public static Path getPackageDirectory(VacoProperties vacoProperties, Entry entry, Task task, String packageName) {
         return tempDir(vacoProperties,
             Paths.get(
-                "entries",
+                Directory.ENTRIES,
                 entry.publicId(),
-                "packages",
+                Directory.PACKAGES,
                 task.name(),
                 packageName
             ));
@@ -33,9 +48,9 @@ public final class TempFiles {
     public static Path getTaskTempDirectory(VacoProperties vacoProperties, Entry entry, Task task) {
         return tempDir(vacoProperties,
             Paths.get(
-                "entries",
+                Directory.ENTRIES,
                 entry.publicId(),
-                "tasks",
+                Directory.TASKS,
                 task.name()
             ));
     }
@@ -50,10 +65,10 @@ public final class TempFiles {
     public static Path getArtifactDownloadDirectory(VacoProperties vacoProperties, Entry entry) {
         return tempDir(vacoProperties,
             Paths.get(
-                "entries",
+                Directory.ENTRIES,
                 entry.publicId(),
-                "artifacts",
-                "downloads",
+                Directory.ARTIFACTS,
+                Directory.DOWNLOADS,
                 UUID.randomUUID().toString()
             ));
     }
@@ -61,21 +76,21 @@ public final class TempFiles {
     public static Path getArtifactPackagingFile(VacoProperties vacoProperties, Entry entry, String zipFileName) {
         return tempDir(vacoProperties,
             Paths.get(
-                "entries",
+                Directory.ENTRIES,
                 entry.publicId(),
-                "artifacts",
-                "downloads"
+                Directory.ARTIFACTS,
+                Directory.DOWNLOADS
             )).resolve(zipFileName);
     }
 
     public static Path getRuleTempDirectory(VacoProperties vacoProperties, Entry entry, String taskName, String ruleName) {
         return tempDir(vacoProperties,
             Paths.get(
-                "entries",
+                Directory.ENTRIES,
                 entry.publicId(),
-                "tasks",
+                Directory.TASKS,
                 taskName,
-                "rules",
+                Directory.RULES,
                 ruleName
             ));
     }

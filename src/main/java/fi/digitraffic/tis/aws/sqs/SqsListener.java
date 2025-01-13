@@ -9,13 +9,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class SqsListener {
-    private final Logger logger = LoggerFactory.getLogger(getClass());;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected final MessagingService messagingService;
     private final ObjectMapper objectMapper;
@@ -28,7 +27,7 @@ public class SqsListener {
 
     protected <M, R> void listen(String queueName, Function<String, M> read, Function<M, CompletableFuture<R>> process) {
         try {
-            List<R> ignored = messagingService.readMessages(queueName)
+            messagingService.readMessages(queueName)
                 .map(m -> {
                     try {
                         logger.trace("Processing message {}", m);
@@ -46,7 +45,7 @@ public class SqsListener {
         }
     }
 
-    protected <M, R> void listenTree(String queueName, Function<JsonNode, CompletableFuture<R>> process) {
+    protected <R> void listenTree(String queueName, Function<JsonNode, CompletableFuture<R>> process) {
 
         Function<String, JsonNode> x = message -> {
             try {

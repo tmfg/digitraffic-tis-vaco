@@ -3,15 +3,15 @@ package fi.digitraffic.exceptions;
 import fi.digitraffic.DigitrafficRuntimeException;
 
 public class ServiceException extends DigitrafficRuntimeException {
-    public ServiceException(String message) {
+    protected ServiceException(String message) {
         super(message);
     }
 
-    public ServiceException(String message, Throwable cause) {
+    protected ServiceException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ServiceException(Throwable cause) {
+    protected ServiceException(Throwable cause) {
         super(cause);
     }
 }

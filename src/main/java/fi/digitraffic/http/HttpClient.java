@@ -2,8 +2,6 @@ package fi.digitraffic.http;
 
 import com.github.mizosoft.methanol.Methanol;
 import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -21,8 +19,6 @@ import java.util.concurrent.CompletableFuture;
  * Base HTTP client operations.
  */
 public class HttpClient {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private static final String BASE_USER_AGENT =  "DigiTraffic TIS/r2024-01";
 

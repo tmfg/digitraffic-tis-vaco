@@ -64,7 +64,7 @@ class SqsListenerBaseTest {
 
     @Test
     void runsValidationByDefault() {
-        listener.handle(retryableMessage, MESSAGE_IDENTIFIER, acknowledgement, (ignored) -> {});
+        listener.handle(retryableMessage, MESSAGE_IDENTIFIER, acknowledgement, ignored -> {});
         assertThat(receivedMessage, equalTo(retryableMessage));
     }
 
@@ -76,7 +76,7 @@ class SqsListenerBaseTest {
                 throw new FakeVacoExeption("ba-doom!");
             }
         };
-        listener.handle(retryableMessage, MESSAGE_IDENTIFIER, acknowledgement, (ignored) -> {});
+        listener.handle(retryableMessage, MESSAGE_IDENTIFIER, acknowledgement, ignored -> {});
 
         // ...so job is requeued...
         assertThat(retriedMessage, notNullValue());
@@ -92,7 +92,7 @@ class SqsListenerBaseTest {
                 .copyOf(retries)
                 .withTryNumber(retries.maxRetries()));
 
-        listener.handle(lastTry, MESSAGE_IDENTIFIER, acknowledgement, (ignored) -> {});
+        listener.handle(lastTry, MESSAGE_IDENTIFIER, acknowledgement, ignored -> {});
 
         assertThat(receivedMessage, equalTo(lastTry));
     }
@@ -105,7 +105,7 @@ class SqsListenerBaseTest {
                 .copyOf(retries)
                 .withTryNumber(retries.maxRetries() + 1)); // technically this is run 6 of 5, so it just skips everything
 
-        listener.handle(lastTry, MESSAGE_IDENTIFIER, acknowledgement, (ignored) -> {});
+        listener.handle(lastTry, MESSAGE_IDENTIFIER, acknowledgement, ignored -> {});
 
         // too many retries, do nothing
         assertThat(receivedMessage, nullValue());

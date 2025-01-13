@@ -40,19 +40,19 @@
         <java.version>21</java.version>
         <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
                    avoid conflicts -->
-        <springframework.boot-version>3.4.0</springframework.boot-version>
+        <springframework.boot-version>3.4.1</springframework.boot-version>
         <junit5.version>5.9.2</junit5.version>
         <testcontainers.version>1.20.1</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>3.1.1</awspringcloud.version>
-        <azurespring.version>5.18.0</azurespring.version>
+        <azurespring.version>5.19.0</azurespring.version>
         <oauth2server.version>3.3.2</oauth2server.version>
         <immutables.version>2.10.1</immutables.version>
         <jackson.version>2.18.2</jackson.version>
         <mockito.version>5.14.2</mockito.version>
         <caffeine.version>3.1.8</caffeine.version>
-        <guava.version>33.3.0-jre</guava.version>
+        <guava.version>33.4.0-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
         <msgraph.version>[6.0,)</msgraph.version>
         <!-- tooling parameters -->
@@ -461,7 +461,6 @@
                     <from>
                         <!-- base image is not set to specific artifact id to allow for rolling updates to be taken into
                              use automatically -->
-                        <!-- <image>cgr.dev/chainguard/jdk-lts:latest</image> -->
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                 </configuration>

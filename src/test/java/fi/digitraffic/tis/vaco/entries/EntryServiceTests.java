@@ -132,12 +132,12 @@ class EntryServiceTests {
     }
 
     private void givenNoTasks() {
-        BDDMockito.given(taskRepository.findFirstTask(Optional.of(entryRecord))).willReturn(Optional.empty());
+        BDDMockito.given(taskRepository.findFirstTask(entryRecord)).willReturn(Optional.empty());
     }
 
     private void givenTaskInStatus(Status status) {
         Task failed = ImmutableTask.of("failed", 100).withStatus(status);
-        BDDMockito.given(taskRepository.findFirstTask(Optional.of(entryRecord))).willReturn(Optional.of(failed));
+        BDDMockito.given(taskRepository.findFirstTask(entryRecord)).willReturn(Optional.of(failed));
     }
 
     private void thenEntryIsMarkedAs(Status status) {
