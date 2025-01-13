@@ -72,7 +72,7 @@ public class CompanyHierarchyService {
     }
 
     public Company editCompany(String businessId, Company company) {
-        return companyRepository.update(businessId, company);
+        return recordMapper.toCompany(companyRepository.update(businessId, company));
     }
 
     public Optional<Company> findByBusinessId(String businessId) {

@@ -68,7 +68,7 @@ public class CompanyRepository {
         });
     }
 
-    public Company update(String businessId, Company company) {
+    public CompanyRecord update(String businessId, Company company) {
         return jdbc.queryForObject(
             """
                UPDATE company
@@ -83,7 +83,7 @@ public class CompanyRepository {
                 WHERE business_id = ?
             RETURNING *
             """,
-            RowMappers.COMPANY,
+            RowMappers.COMPANY_RECORD,
             company.name(),
             company.language(),
             company.adGroupId(),
