@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.FeedRecord;
 import fi.digitraffic.tis.vaco.feeds.model.Feed;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ public class FeedRepository {
     }
 
     @Transactional
-    public Optional<FeedRecord> createFeed(Feed feed) {
+    public Optional<FeedRecord> createFeed(CompanyRecord owner, Feed feed) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
             """
@@ -64,7 +65,7 @@ public class FeedRepository {
                             request_body
                 """,
                 RowMappers.FEED.apply(objectMapper),
-                feed.owner().id(),
+                owner.id(),
                 feed.format().fieldName(),
                 feed.processingEnabled(),
                 feed.uri().uri(),

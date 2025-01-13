@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
+import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -34,8 +35,8 @@ public class RulesetRepository {
         this.namedJdbc = Objects.requireNonNull(namedJdbc);
     }
 
-    public Set<Ruleset> findRulesets(String businessId) {
-        List<Ruleset> rulesets = namedJdbc.query("""
+    public Set<RulesetRecord> findRulesets(String businessId) {
+        List<RulesetRecord> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM company
@@ -57,13 +58,13 @@ public class RulesetRepository {
                 """,
             new MapSqlParameterSource()
                 .addValue("businessId", businessId),
-            RowMappers.RULESET);
-        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(Ruleset::identifyingName).toList());
+            RowMappers.RULESET_RECORD);
+        logger.info("Found {} rulesets for {}: {}", rulesets.size(), businessId, rulesets.stream().map(RulesetRecord::identifyingName).toList());
         return Set.copyOf(rulesets);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, TransitDataFormat format, RulesetType type) {
-        List<Ruleset> rulesets = namedJdbc.query("""
+    public Set<RulesetRecord> findRulesets(String businessId, TransitDataFormat format, RulesetType type) {
+        List<RulesetRecord> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM company
@@ -91,16 +92,16 @@ public class RulesetRepository {
                 .addValue("businessId", businessId)
                 .addValue("type", type.fieldName())
                 .addValue("format", format.fieldName()),
-            RowMappers.RULESET);
-        logger.info("Found {} rulesets of type {} for {} of format {}: {}", rulesets.size(), type, businessId, format, rulesets.stream().map(Ruleset::identifyingName).toList());
+            RowMappers.RULESET_RECORD);
+        logger.info("Found {} rulesets of type {} for {} of format {}: {}", rulesets.size(), type, businessId, format, rulesets.stream().map(RulesetRecord::identifyingName).toList());
         return Set.copyOf(rulesets);
     }
 
-    public Set<Ruleset> findRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> rulesetNames) {
+    public Set<RulesetRecord> findRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> rulesetNames) {
         if (rulesetNames.isEmpty()) {
             return findRulesets(businessId, format, type);
         }
-        List<Ruleset> rulesets = namedJdbc.query("""
+        List<RulesetRecord> rulesets = namedJdbc.query("""
                 WITH current_id AS (
                     SELECT id
                       FROM company
@@ -137,21 +138,21 @@ public class RulesetRepository {
                 .addValue("rulesetNames", rulesetNames)
                 .addValue("type", type.fieldName())
                 .addValue("format", format.fieldName()),
-            RowMappers.RULESET);
+            RowMappers.RULESET_RECORD);
         logger.debug("Found {} rulesets of type {} with format {} for {}: resolved {}, requested {}", rulesets.size(),
-            type, format, businessId, rulesets.stream().map(Ruleset::identifyingName).toList(), rulesetNames);
+            type, format, businessId, rulesets.stream().map(RulesetRecord::identifyingName).toList(), rulesetNames);
         return Set.copyOf(rulesets);
     }
 
-    public Ruleset createRuleset(Ruleset ruleset) {
+    public RulesetRecord createRuleset(CompanyRecord companyRecord, Ruleset ruleset) {
         return jdbc.queryForObject(
                 """
                 INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format, before_dependencies, after_dependencies)
                      VALUES (?, ?::ruleset_category, ?, ?, ?, ?::transit_data_format, ?, ?)
                   RETURNING *;
                 """,
-                RowMappers.RULESET,
-                ruleset.ownerId(),
+                RowMappers.RULESET_RECORD,
+                companyRecord.id(),
                 ruleset.category().fieldName(),
                 ruleset.identifyingName(),
                 ruleset.description(),
@@ -175,8 +176,8 @@ public class RulesetRepository {
         }
     }
 
-    public void deleteRuleset(Ruleset rule) {
-        jdbc.update("DELETE FROM ruleset WHERE public_id = ?", rule.publicId());
+    public void deleteRuleset(RulesetRecord rulesetRecord) {
+        jdbc.update("DELETE FROM ruleset WHERE id = ?", rulesetRecord.id());
     }
 
     public Set<String> listAllNames() {

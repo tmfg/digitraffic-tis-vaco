@@ -152,7 +152,6 @@ public class RecordMapper {
 
     public Company toCompany(CompanyRecord companyRecord) {
         return ImmutableCompany.builder()
-            .id(companyRecord.id())
             .businessId(companyRecord.businessId())
             .name(companyRecord.name())
             .contactEmails(companyRecord.contactEmails())
@@ -209,7 +208,6 @@ public class RecordMapper {
         return ImmutableRuleset.builder()
             .id(rulesetRecord.id())
             .publicId(rulesetRecord.publicId())
-            .ownerId(rulesetRecord.ownerId())
             .identifyingName(rulesetRecord.identifyingName())
             .description(rulesetRecord.description())
             .category(rulesetRecord.category())

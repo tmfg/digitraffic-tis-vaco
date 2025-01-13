@@ -23,11 +23,6 @@ public interface Ruleset {
     @Nullable
     String publicId();
 
-    @Nullable
-    @JsonView(DataVisibility.InternalOnly.class)
-    @Value.Parameter
-    Long ownerId();  // TODO: We might want to be able to show this with publicId in some cases
-
     @NotBlank
     @Value.Parameter
     String identifyingName();
