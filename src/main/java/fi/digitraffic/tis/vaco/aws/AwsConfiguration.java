@@ -213,7 +213,8 @@ public class AwsConfiguration {
     }
 
     @Bean
-    public KmsAsyncClient kmsAsyncClient() {
+    public KmsAsyncClient kmsAsyncClient(VacoProperties vacoProperties,
+                                         AwsCredentialsProvider credentialsProvider) {
         SdkAsyncHttpClient httpClient = NettyNioAsyncHttpClient.builder()
             .maxConcurrency(100)
             .connectionTimeout(Duration.ofSeconds(60))
@@ -231,12 +232,10 @@ public class AwsConfiguration {
 
         return KmsAsyncClient.builder()
             .httpClient(httpClient)
-            .endpointOverride(URI.create("http://localhost:4566"))
+            .endpointOverride(URI.create(vacoProperties.aws().endpoint()))
             .overrideConfiguration(overrideConfig)
-            .credentialsProvider(
-                StaticCredentialsProvider.create(AwsBasicCredentials.create("localstack", "localstack"))
-            )
-            .region(Region.of("eu-north-1"))
+            .region(Region.of(vacoProperties.aws().region()))
+            .credentialsProvider(credentialsProvider)
             .build();
     }
 
