@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
-import fi.digitraffic.tis.vaco.company.model.Company;
-import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
@@ -136,29 +134,6 @@ public final class RowMappers {
         .name(rs.getString("name"))
         .path(rs.getString("path"))
         .build();
-
-    /**
-     * @deprecated Replace with {@link #COMPANY_RECORD}
-     */
-    @Deprecated(since = "2024-08-20")
-    public static final Function<String, RowMapper<Company>> ALIASED_COMPANY = alias ->
-        (rs, rowNum) -> ImmutableCompany.builder()
-            .businessId(rs.getString(alias + "business_id"))
-            .name(rs.getString(alias + "name"))
-            .language(rs.getString(alias + "language"))
-            .contactEmails(List.of(ArraySqlValue.read(rs, alias + "contact_emails")))
-            .adGroupId(rs.getString(alias + "ad_group_id"))
-            .publish(rs.getBoolean(alias + "publish"))
-            .codespaces(List.of(ArraySqlValue.read(rs, alias + "codespaces")))
-            .notificationWebhookUri(rs.getString(alias +  "notification_webhook_uri"))
-            .website(rs.getString(alias + "website"))
-            .build();
-
-    /**
-     * @deprecated Replace with {@link #COMPANY_RECORD}
-     */
-    @Deprecated(since = "2024-08-20")
-    public static final RowMapper<Company> COMPANY = ALIASED_COMPANY.apply("");
 
     public static final RowMapper<CompanyRecord> COMPANY_RECORD = (rs, rowNum) -> ImmutableCompanyRecord.builder()
         .id(rs.getLong("id"))

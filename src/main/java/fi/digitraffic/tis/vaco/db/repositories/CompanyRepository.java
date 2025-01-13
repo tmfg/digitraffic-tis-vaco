@@ -122,20 +122,6 @@ public class CompanyRepository {
             RowMappers.COMPANY_RECORD);
     }
 
-    public Set<Company> findAllByAdGroupIds(List<String> adGroupIds) {
-        if (adGroupIds.isEmpty()) {
-            return Set.of();
-        }
-        return Set.copyOf(namedJdbc.query("""
-            SELECT DISTINCT *
-              FROM company c
-             WHERE ad_group_id IN (:adGroupIds)
-            """,
-            new MapSqlParameterSource()
-                .addValue("adGroupIds", adGroupIds),
-            RowMappers.COMPANY));
-    }
-
     public Optional<CompanyRecord> findByAdGroupId(String groupId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
