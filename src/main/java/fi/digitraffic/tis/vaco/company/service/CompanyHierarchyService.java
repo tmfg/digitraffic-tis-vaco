@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.company.service;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.exceptions.PersistenceException;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
@@ -115,7 +116,7 @@ public class CompanyHierarchyService {
 
     public List<Hierarchy> getHierarchiesContainingCompany(String selectedBusinessId) {
         List<Hierarchy> fullHierarchies = new ArrayList<>();
-        Map<String, Company> companiesByBusinessId = companyRepository.findAlLByIds();
+        Map<String, Company> companiesByBusinessId = Streams.collectValues(companyRepository.findAllByIds(), recordMapper::toCompany);
 
         hierarchies.keySet().forEach(businessId -> {
             LightweightHierarchy lightweightHierarchy = hierarchies.get(businessId);
@@ -130,7 +131,7 @@ public class CompanyHierarchyService {
 
     public List<Hierarchy> getAllHierarchies() {
         List<Hierarchy> fullHierarchies = new ArrayList<>();
-        Map<String, Company> companiesByBusinessId = companyRepository.findAlLByIds();
+        Map<String, Company> companiesByBusinessId = Streams.collectValues(companyRepository.findAllByIds(), recordMapper::toCompany);
 
         hierarchies.keySet().forEach(businessId -> {
             Hierarchy hierarchy = hierarchies.get(businessId).toHierarchy(companiesByBusinessId);

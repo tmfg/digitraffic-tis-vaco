@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
@@ -182,6 +183,25 @@ public final class Streams {
     }
 
     /**
+     * Collect (=convert) given Map's values to Map using provided value mapper function. Shorthand for
+     * <pre>
+     *     objects.entrySet().stream().collect(Collectors.toMap(keyMapper, valueMapper)
+     * </pre>
+     * @param objects Objects to process.
+     * @param valueMapper Mapping function to produce values.
+     * @return Map of converted objects.
+     * @param <K> Type for map's keys.
+     * @param <IV> Type for input map's values.
+     * @param <OV> Type for output map's values.
+     */
+    public static <K, IV, OV> Map<K, OV> collectValues(
+        Map<K, IV> objects,
+        Function<? super IV, OV> valueMapper) {
+        return new Chain<>(objects.entrySet().stream())
+            .collect(Entry::getKey, e -> valueMapper.apply(e.getValue()));
+    }
+
+    /**
      *  Collect (=convert) given collection transforming each entry using the provided transformation function. Shorthand
      * for
      * <pre>
@@ -299,6 +319,7 @@ public final class Streams {
             .stream()
             .collect(Collectors.groupingBy(classifier));
     }
+
 
     /**
      * Java Streams are internally modeled as pipelines, <code>Chain</code> mimics this by providing shorthands to

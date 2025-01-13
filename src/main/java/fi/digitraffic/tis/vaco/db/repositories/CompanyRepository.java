@@ -203,7 +203,7 @@ public class CompanyRepository {
                 Streams.map(hierarchyLinks, IntermediateHierarchyLink::childId).stream())
             .filter(Objects::nonNull)
             .toSet();
-        List<CompanyRecord> companies = findAlLByIds(companyIds);
+        List<CompanyRecord> companies = findAllByIds(companyIds);
 
         // 2c. create lookup for id->entity
         Map<Long, CompanyRecord> companiesbyId = companies.stream().collect(
@@ -221,7 +221,7 @@ public class CompanyRepository {
         return buildHierarchy(companiesbyId.get(rootId), companiesbyId, parentsAndChildren);
     }
 
-    private List<CompanyRecord> findAlLByIds(Set<Long> companyIds) {
+    private List<CompanyRecord> findAllByIds(Set<Long> companyIds) {
         return namedJdbc.query(
             """
             SELECT DISTINCT *
@@ -287,15 +287,15 @@ public class CompanyRepository {
             }));
     }
 
-    public Map<String, Company> findAlLByIds() {
+    public Map<String, CompanyRecord> findAllByIds() {
         return Streams.collect(
             jdbc.query(
                 """
                 SELECT *
                   FROM company
                 """,
-                RowMappers.COMPANY),
-            Company::businessId,
+                RowMappers.COMPANY_RECORD),
+            CompanyRecord::businessId,
             Function.identity());
     }
 
