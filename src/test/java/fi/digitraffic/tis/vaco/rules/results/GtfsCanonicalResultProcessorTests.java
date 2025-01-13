@@ -36,7 +36,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.entryWithTask;
@@ -90,7 +89,6 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
         task = entry.tasks().get(0);
 
         gtfsCanonicalRuleset = ImmutableRuleset.of(
-                new Random().nextLong(),
                 RuleName.GTFS_CANONICAL,
                 "bleh",
                 Category.GENERIC,

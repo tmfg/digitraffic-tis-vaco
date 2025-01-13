@@ -5,9 +5,13 @@ import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
+import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.db.repositories.PartnershipRepository;
+import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
+import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
@@ -16,6 +20,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,20 +41,33 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Autowired
     RulesetService rulesetService;
 
+    @Autowired
+    RulesetRepository rulesetRepository;
+
+    @Autowired
+    RecordMapper recordMapper;
+
     private CompanyRecord fintraffic;
     private CompanyRecord parentOrg;
     private CompanyRecord currentOrg;
     private CompanyRecord otherOrg;
-    private Ruleset parentRuleA;
-    private Ruleset parentRuleB;
-    private Ruleset currentRuleC;
-    private Ruleset currentRuleD;
-    private Ruleset otherRuleE;
+    private RulesetRecord parentRuleA;
+    private RulesetRecord parentRuleB;
+    private RulesetRecord currentRuleC;
+    private RulesetRecord currentRuleD;
+    private RulesetRecord otherRuleE;
     /**
-     * See transit_data_format DB ENUM for valid values. This test uses 'gtfs' because it's quick to write, not because
+     * See transit_data_format DB ENUM for valid values. This test uses 'gtfs' because it's quick to type, not because
      * it's a true default.
      */
     private TransitDataFormat testFormat = TransitDataFormat.GTFS;
+
+    @BeforeAll
+    static void beforeAll_initializeSqsQueues() {
+        createQueue(MessageQueue.ERRORS.getQueueName());
+        createQueue(MessageQueue.RULE_RESULTS_INGEST.getQueueName());
+        createQueue(MessageQueue.DLQ.getQueueName());
+    }
 
     @BeforeEach
     void setUp() {
@@ -60,16 +78,16 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         partnershipRepository.create(PartnershipType.AUTHORITY_PROVIDER, parentOrg, currentOrg);
         partnershipRepository.create(PartnershipType.AUTHORITY_PROVIDER, parentOrg, otherOrg);
 
-        parentRuleA = rulesetService.createRuleset(
-            ImmutableRuleset.of(parentOrg.id(), "GENERIC_A", "GENERIC_A", Category.GENERIC, RulesetType.VALIDATION_SYNTAX, testFormat));
-        parentRuleB = rulesetService.createRuleset(
-                ImmutableRuleset.of(parentOrg.id(), "SPECIFIC_B", "SPECIFIC_B", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat));
-        currentRuleC = rulesetService.createRuleset(
-                ImmutableRuleset.of(currentOrg.id(), "SPECIFIC_C", "SPECIFIC_C", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat));
-        currentRuleD = rulesetService.createRuleset(
-                ImmutableRuleset.of(currentOrg.id(), "SPECIFIC_D", "SPECIFIC_D", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat));
-        otherRuleE = rulesetService.createRuleset(
-                ImmutableRuleset.of(otherOrg.id(), "SPECIFIC_E", "SPECIFIC_E", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat));
+        Ruleset ruleset4 = ImmutableRuleset.of("GENERIC_A", "GENERIC_A", Category.GENERIC, RulesetType.VALIDATION_SYNTAX, testFormat);
+        parentRuleA = rulesetRepository.createRuleset(parentOrg, ruleset4);
+        Ruleset ruleset3 = ImmutableRuleset.of("SPECIFIC_B", "SPECIFIC_B", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat);
+        parentRuleB = rulesetRepository.createRuleset(parentOrg, ruleset3);
+        Ruleset ruleset2 = ImmutableRuleset.of("SPECIFIC_C", "SPECIFIC_C", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat);
+        currentRuleC = rulesetRepository.createRuleset(currentOrg, ruleset2);
+        Ruleset ruleset1 = ImmutableRuleset.of("SPECIFIC_D", "SPECIFIC_D", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat);
+        currentRuleD = rulesetRepository.createRuleset(currentOrg, ruleset1);
+        Ruleset ruleset = ImmutableRuleset.of("SPECIFIC_E", "SPECIFIC_E", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat);
+        otherRuleE = rulesetRepository.createRuleset(otherOrg, ruleset);
     }
 
     @AfterEach
@@ -77,11 +95,11 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         companyRepository.deleteByBusinessId(parentOrg.businessId());
         companyRepository.deleteByBusinessId(currentOrg.businessId());
         companyRepository.deleteByBusinessId(otherOrg.businessId());
-        rulesetService.deleteRuleset(parentRuleA);
-        rulesetService.deleteRuleset(parentRuleB);
-        rulesetService.deleteRuleset(currentRuleC);
-        rulesetService.deleteRuleset(currentRuleD);
-        rulesetService.deleteRuleset(otherRuleE);
+        rulesetRepository.deleteRuleset(parentRuleA);
+        rulesetRepository.deleteRuleset(parentRuleB);
+        rulesetRepository.deleteRuleset(currentRuleC);
+        rulesetRepository.deleteRuleset(currentRuleD);
+        rulesetRepository.deleteRuleset(otherRuleE);
     }
 
     /**
@@ -125,9 +143,9 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void rulesetsAreChosenBasedOnOwnership() {
-        assertThat(rulesetService.selectRulesets(parentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), equalTo(Set.of(parentRuleA, parentRuleB)));
-        assertThat(rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), equalTo(Set.of(parentRuleA, otherRuleE)));
-        assertThat(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), equalTo(Set.of(parentRuleA, currentRuleC, currentRuleD)));
+        assertRulesets(rulesetService.selectRulesets(parentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, parentRuleB);
+        assertRulesets(rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, otherRuleE);
+        assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, currentRuleC, currentRuleD);
     }
 
     /**
@@ -136,21 +154,22 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void currentsSpecificRulesCanBeFiltered() {
         // parent's generic is always returned even when not requested, self specific is returned on request
-        assertThat(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("GENERIC_A", "SPECIFIC_C")),
-                equalTo(Set.of(parentRuleA, currentRuleC)));
+        assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("GENERIC_A", "SPECIFIC_C")), parentRuleA, currentRuleC);
     }
 
     @Test
     void parentsGenericRuleIsAlwaysReturned() {
         // parent's generic is always returned even when not requested
-        assertThat(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_C")),
-                equalTo(Set.of(parentRuleA, currentRuleC)));
+        assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_C")), parentRuleA, currentRuleC);
     }
 
     @Test
     void parentsSpecificRulesCannotBeSelected() {
         // parent's generic is always returned even when not requested, can't request parent's specific rules
-        assertThat(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_B")),
-                equalTo(Set.of(parentRuleA)));
+        assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_B")), parentRuleA);
+    }
+
+    private void assertRulesets(Set<Ruleset> selectedRulesets, RulesetRecord... expectedRulesets) {
+        assertThat(selectedRulesets, equalTo(Streams.map(expectedRulesets, recordMapper::toRuleset).toSet()));
     }
 }

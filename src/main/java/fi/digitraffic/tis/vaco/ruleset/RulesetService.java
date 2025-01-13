@@ -6,10 +6,9 @@ import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,8 @@ public class RulesetService {
     private final RulesetRepository rulesetRepository;
 
     public RulesetService(CachingService cachingService,
-                          RulesetRepository rulesetRepository, RecordMapper recordMapper) {
+                          RulesetRepository rulesetRepository,
+                          RecordMapper recordMapper) {
         this.cachingService = Objects.requireNonNull(cachingService);
         this.rulesetRepository = Objects.requireNonNull(rulesetRepository);
         this.recordMapper = Objects.requireNonNull(recordMapper);
@@ -37,31 +37,23 @@ public class RulesetService {
     public Set<Ruleset> selectRulesets(String businessId) {
         // For Public validation test, we don't want to have an actual "cooperation" with Fintraffic as a company,
         // but we still want to re-use same rulesets
-        return rulesetRepository.findRulesets(Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId)
+        String actualBusinessId = Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId)
             ? Constants.FINTRAFFIC_BUSINESS_ID
-            : businessId);
+            : businessId;
+        return Streams.collect(rulesetRepository.findRulesets(actualBusinessId), recordMapper::toRuleset);
     }
 
     public Set<Ruleset> selectRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> names) {
         Set<Ruleset> rulesets;
         if (names.isEmpty()) {
-            rulesets = rulesetRepository.findRulesets(businessId, format, type);
+            rulesets = Streams.collect(rulesetRepository.findRulesets(businessId, format, type), recordMapper::toRuleset);
         } else {
-            rulesets = rulesetRepository.findRulesets(businessId, type, format, names);
+            rulesets = Streams.collect(rulesetRepository.findRulesets(businessId, type, format, names), recordMapper::toRuleset);
         }
 
         logger.info("Selected {} {} rulesets for {} are {}, requested {}", format, type, businessId, Streams.collect(rulesets, Ruleset::identifyingName), names);
 
         return rulesets;
-    }
-
-    public Ruleset createRuleset(ImmutableRuleset ruleset) {
-        return rulesetRepository.createRuleset(ruleset);
-    }
-
-    public void deleteRuleset(Ruleset ruleset) {
-        rulesetRepository.deleteRuleset(ruleset);
-        cachingService.invalidateRuleset(ruleset.identifyingName());
     }
 
     public Optional<Ruleset> findByName(String rulesetName) {
