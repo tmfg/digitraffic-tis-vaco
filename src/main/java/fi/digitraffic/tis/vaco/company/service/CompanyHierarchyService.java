@@ -85,7 +85,7 @@ public class CompanyHierarchyService {
     }
 
     public List<Company> listAllWithEntries() {
-        return companyRepository.listAllWithEntries();
+        return Streams.collect(companyRepository.listAllWithEntries(), recordMapper::toCompany);
     }
 
     public Optional<Company> findByAdGroupId(String groupId) {

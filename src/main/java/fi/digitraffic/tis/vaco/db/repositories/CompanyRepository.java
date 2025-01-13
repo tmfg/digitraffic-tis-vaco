@@ -112,14 +112,14 @@ public class CompanyRepository {
         });
     }
 
-    public List<Company> listAllWithEntries() {
+    public List<CompanyRecord> listAllWithEntries() {
         return jdbc.query("""
             SELECT *
-              FROM company o
-             WHERE o.business_id IN (SELECT DISTINCT e.business_id
+              FROM company c
+             WHERE c.business_id IN (SELECT DISTINCT e.business_id
                                        FROM entry e)
             """,
-            RowMappers.COMPANY);
+            RowMappers.COMPANY_RECORD);
     }
 
     public Set<Company> findAllByAdGroupIds(List<String> adGroupIds) {
