@@ -136,7 +136,7 @@ public class CompanyRepository {
             RowMappers.COMPANY));
     }
 
-    public Optional<Company> findByAdGroupId(String groupId) {
+    public Optional<CompanyRecord> findByAdGroupId(String groupId) {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
                 """
@@ -144,7 +144,7 @@ public class CompanyRepository {
                   FROM company c
                  WHERE c.ad_group_id = ?
                 """,
-                RowMappers.COMPANY,
+                RowMappers.COMPANY_RECORD,
                 groupId));
         } catch (EmptyResultDataAccessException erdae) {
             return Optional.empty();

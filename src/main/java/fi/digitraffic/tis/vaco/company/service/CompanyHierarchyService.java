@@ -89,7 +89,7 @@ public class CompanyHierarchyService {
     }
 
     public Optional<Company> findByAdGroupId(String groupId) {
-        return companyRepository.findByAdGroupId(groupId);
+        return companyRepository.findByAdGroupId(groupId).map(recordMapper::toCompany);
     }
 
     public Optional<Company> updateAdGroupId(Company company, String groupId) {
