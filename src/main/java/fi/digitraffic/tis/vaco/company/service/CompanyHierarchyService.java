@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.company.service;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.exceptions.PersistenceException;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
@@ -71,7 +72,7 @@ public class CompanyHierarchyService {
     }
 
     public Company editCompany(String businessId, Company company) {
-        return companyRepository.update(businessId, company);
+        return recordMapper.toCompany(companyRepository.update(businessId, company));
     }
 
     public Optional<Company> findByBusinessId(String businessId) {
@@ -84,11 +85,11 @@ public class CompanyHierarchyService {
     }
 
     public List<Company> listAllWithEntries() {
-        return companyRepository.listAllWithEntries();
+        return Streams.collect(companyRepository.listAllWithEntries(), recordMapper::toCompany);
     }
 
     public Optional<Company> findByAdGroupId(String groupId) {
-        return companyRepository.findByAdGroupId(groupId);
+        return companyRepository.findByAdGroupId(groupId).map(recordMapper::toCompany);
     }
 
     public Optional<Company> updateAdGroupId(Company company, String groupId) {
@@ -115,7 +116,7 @@ public class CompanyHierarchyService {
 
     public List<Hierarchy> getHierarchiesContainingCompany(String selectedBusinessId) {
         List<Hierarchy> fullHierarchies = new ArrayList<>();
-        Map<String, Company> companiesByBusinessId = companyRepository.findAlLByIds();
+        Map<String, Company> companiesByBusinessId = Streams.collectValues(companyRepository.findAllByIds(), recordMapper::toCompany);
 
         hierarchies.keySet().forEach(businessId -> {
             LightweightHierarchy lightweightHierarchy = hierarchies.get(businessId);
@@ -130,7 +131,7 @@ public class CompanyHierarchyService {
 
     public List<Hierarchy> getAllHierarchies() {
         List<Hierarchy> fullHierarchies = new ArrayList<>();
-        Map<String, Company> companiesByBusinessId = companyRepository.findAlLByIds();
+        Map<String, Company> companiesByBusinessId = Streams.collectValues(companyRepository.findAllByIds(), recordMapper::toCompany);
 
         hierarchies.keySet().forEach(businessId -> {
             Hierarchy hierarchy = hierarchies.get(businessId).toHierarchy(companiesByBusinessId);
