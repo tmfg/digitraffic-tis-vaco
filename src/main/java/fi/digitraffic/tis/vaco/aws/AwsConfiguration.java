@@ -24,6 +24,7 @@ import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsAsyncClient;
+import software.amazon.awssdk.services.kms.KmsAsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -230,13 +231,17 @@ public class AwsConfiguration {
                 .build())
             .build();
 
-        return KmsAsyncClient.builder()
+        KmsAsyncClientBuilder b = KmsAsyncClient.builder()
             .httpClient(httpClient)
             .endpointOverride(URI.create("http://localhost:4566"))
-            .overrideConfiguration(overrideConfig)
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
-            .build();
+            .overrideConfiguration(overrideConfig);
+        if (vacoProperties.aws().endpoint() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        }
+
+        return b.build();
     }
 
     // NOTE: These are actually/probably not use, but should not be removed until entire AWSpring is removed
