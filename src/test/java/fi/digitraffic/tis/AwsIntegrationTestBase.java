@@ -15,6 +15,10 @@ import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.kms.KmsClient;
+import software.amazon.awssdk.services.kms.model.CreateAliasRequest;
+import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
+import software.amazon.awssdk.services.kms.model.CreateKeyResponse;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
@@ -35,13 +39,15 @@ public abstract class AwsIntegrationTestBase {
         .withServices(
             LocalStackContainer.Service.SQS,
             LocalStackContainer.Service.S3,
-            LocalStackContainer.Service.SES)
+            LocalStackContainer.Service.SES,
+            LocalStackContainer.Service.KMS)
         .withEnv("DEFAULT_REGION", Region.EU_NORTH_1.id());
     protected static S3Client awsS3Client;
     protected static S3AsyncClient s3AsyncClient;
     protected static S3TransferManager s3TransferManager;
     protected static SqsClient sqsClient;
     protected static SesClient sesClient;
+    protected static KmsClient kmsClient;
 
     @BeforeAll
     static void awsBeforeAll() {
@@ -65,6 +71,20 @@ public abstract class AwsIntegrationTestBase {
         AwsCredentialsProvider credentialsProvider = awsConfiguration.localCredentials(vacoProperties);
         ClientOverrideConfiguration overrideConfiguration = awsConfiguration.clientOverrideConfiguration();
         ApacheHttpClient.Builder sdkHttpClientBuilder = awsConfiguration.sdkHttpClientBuilder();
+
+        kmsClient = KmsClient.builder()
+            .region(region)
+            .credentialsProvider(credentialsProvider)
+            .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.KMS))
+            .build();
+
+        CreateKeyResponse createKeyResponse = kmsClient.createKey(CreateKeyRequest.builder().build());
+        String keyId = createKeyResponse.keyMetadata().keyId();
+
+        kmsClient.createAlias(CreateAliasRequest.builder()
+            .aliasName("alias/vaco_credentials_db_key")
+            .targetKeyId(keyId)
+            .build());
 
         // S3 clients are special cases because their custom endpoint need when used with Localstack
         awsS3Client = software.amazon.awssdk.services.s3.S3Client.builder()
