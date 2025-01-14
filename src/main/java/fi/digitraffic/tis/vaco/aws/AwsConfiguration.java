@@ -17,11 +17,14 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.retry.RetryPolicy;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.kms.KmsAsyncClient;
+import software.amazon.awssdk.services.kms.KmsAsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -208,6 +211,37 @@ public class AwsConfiguration {
     @Bean
     AwsClientCustomizer<S3ClientBuilder> s3ClientBuilderAwsClientConfigurer() {
         return new S3AwsClientClientConfigurer();
+    }
+
+    @Bean
+    public KmsAsyncClient kmsAsyncClient(VacoProperties vacoProperties,
+                                         AwsCredentialsProvider credentialsProvider) {
+        SdkAsyncHttpClient httpClient = NettyNioAsyncHttpClient.builder()
+            .maxConcurrency(100)
+            .connectionTimeout(Duration.ofSeconds(60))
+            .readTimeout(Duration.ofSeconds(60))
+            .writeTimeout(Duration.ofSeconds(60))
+            .build();
+
+        ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
+            .apiCallTimeout(Duration.ofMinutes(2))
+            .apiCallAttemptTimeout(Duration.ofSeconds(90))
+            .retryPolicy(RetryPolicy.builder()
+                .numRetries(3)
+                .build())
+            .build();
+
+        KmsAsyncClientBuilder b = KmsAsyncClient.builder()
+            .httpClient(httpClient)
+            .endpointOverride(URI.create("http://localhost:4566"))
+            .region(Region.of(vacoProperties.aws().region()))
+            .credentialsProvider(credentialsProvider)
+            .overrideConfiguration(overrideConfig);
+        if (vacoProperties.aws().endpoint() != null) {
+            b = b.endpointOverride(URI.create(vacoProperties.aws().endpoint()));
+        }
+
+        return b.build();
     }
 
     // NOTE: These are actually/probably not use, but should not be removed until entire AWSpring is removed

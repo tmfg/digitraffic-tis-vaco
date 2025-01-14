@@ -493,15 +493,17 @@ public final class RowMappers {
         return pgi;
     }
 
-    public static RowMapper<CredentialsRecord> CREDENTIALS_RECORD(UnaryOperator<byte[]> converter) {
-        return (rs, rowNum) -> ImmutableCredentialsRecord.builder()
-            .id(rs.getLong("id"))
-            .publicId(rs.getString("public_id"))
-            .ownerId(rs.getLong("owner_id"))
-            .name(rs.getString("name"))
-            .description(rs.getString("description"))
-            .type(CredentialsType.forField(rs.getString("type")))
-            .details(converter.apply(rs.getBytes("details")))
-            .build();
+    public static RowMapper<CredentialsRecord> CREDENTIALS_RECORD(Function<byte[], byte[]> converter) {
+        return (rs, rowNum) -> {
+            return ImmutableCredentialsRecord.builder()
+                .id(rs.getLong("id"))
+                .publicId(rs.getString("public_id"))
+                .ownerId(rs.getLong("owner_id"))
+                .name(rs.getString("name"))
+                .description(rs.getString("description"))
+                .type(CredentialsType.forField(rs.getString("type")))
+                .details(converter.apply(rs.getBytes("details")))
+                .build();
+        };
     }
 }

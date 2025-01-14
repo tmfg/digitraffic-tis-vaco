@@ -25,7 +25,7 @@ public interface CreateCredentialsRequest {
     @Value.Parameter
     String owner();
 
-    @Nullable
+    @Value.Parameter
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
     AuthenticationDetails details();
 }
