@@ -31,7 +31,7 @@ public class ContextRepository {
 
     public Optional<ContextRecord> upsert(Entry entry) {
         return cachingService.cacheContextRecord(entry.businessId() + "/" + entry.context(), key -> {
-            if (entry.context() == null) {
+            if (entry.context() == null || entry.context().trim().isEmpty()) {
                 return null;
             }
             try {
