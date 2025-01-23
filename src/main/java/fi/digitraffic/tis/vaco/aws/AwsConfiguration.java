@@ -233,7 +233,6 @@ public class AwsConfiguration {
 
         KmsAsyncClientBuilder b = KmsAsyncClient.builder()
             .httpClient(httpClient)
-            .endpointOverride(URI.create("http://localhost:4566"))
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
             .overrideConfiguration(overrideConfig);
