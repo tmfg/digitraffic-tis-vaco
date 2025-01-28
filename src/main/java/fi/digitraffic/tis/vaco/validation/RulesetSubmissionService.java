@@ -124,38 +124,76 @@ public class RulesetSubmissionService {
         }
 
         String identifyingName = r.identifyingName();
+
+        // mark the processing of matching task as started
+        Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
+        ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
+            .orElseThrow();
+
         // TODO: Should ensure the previous deps are ok, not all globally. This case trips only if the same flow has same rule multiple times, which is unlikely.
-        if (taskService.internalDependenciesCompletedSuccessfully(entry, task.name())
-            && rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
+        if (rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
             logger.debug("Entry {}, ruleset {} all dependencies completed successfully, submitting", entry.publicId(), identifyingName);
             // mark the processing of matching task as started
-            Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
-            ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
-                .orElseThrow();
-
-            Optional<RuleConfiguration> configuration = Optional.ofNullable(userProvidedConfigs.get(identifyingName));
-            ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
-                entry,
-                task,
-                configuration,
-                identifyingName);
-            messagingService.submitRuleExecutionJob(identifyingName, ruleMessage).join();
+            submit(entry, task, identifyingName, userProvidedConfigs);
         } else {
-            logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
-            // dependencies failed or were cancelled, mark this one as cancelled and complete
-            taskService.findTask(entry.publicId(), identifyingName)
+            if (rulesetService.dependenciesProcessing(entry, r)) {
+                logger.debug("Entry {}, ruleset {} some dependencies still processing, submitting", entry.publicId(), identifyingName);
+                delay(entry);
+            } else {
+                logger.warn("Entry {} ruleset {} has failed dependencies, cancelling the matching task", entry.publicId(), identifyingName);
+                cancel(entry, task, identifyingName, r);
+            }
+        }
+    }
+
+    private void cancel(Entry entry, Task task, String identifyingName, Ruleset r) {
+        // dependencies failed or were cancelled, mark this one as cancelled and complete
+        taskService.findTask(entry.publicId(), identifyingName)
+            .map(t -> taskService.trackTask(entry, t, ProcessingState.START))
+            .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
+            .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
+            .orElseThrow();
+
+        r.afterDependencies().forEach( dependency -> {
+            taskService.findTask(entry.publicId(), dependency)
+                .filter(depTask -> depTask.priority() > task.priority()) //avoid cancelling potentially wrong tasks
                 .map(t -> taskService.trackTask(entry, t, ProcessingState.START))
                 .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
                 .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
-                .orElseThrow();
+                .orElse(null);
+        });
 
-            DelegationJobMessage message = ImmutableDelegationJobMessage.builder()
-                .entry(queueHandlerService.getEntry(entry.publicId()))
-                .retryStatistics(ImmutableRetryStatistics.of(5))
-                .build();
-            messagingService.submitProcessingJob(message).join();
-        }
+        DelegationJobMessage message = ImmutableDelegationJobMessage.builder()
+            .entry(queueHandlerService.getEntry(entry.publicId()))
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
+        messagingService.submitProcessingJob(message).join();
+    }
 
+    private void submit(Entry entry, Task task, String identifyingName, Map<String, RuleConfiguration> userProvidedConfigs) {
+
+        Optional<RuleConfiguration> configuration = Optional.ofNullable(userProvidedConfigs.get(identifyingName));
+        ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
+            entry,
+            task,
+            configuration,
+            identifyingName);
+        messagingService.submitRuleExecutionJob(identifyingName, ruleMessage).join();
+    }
+
+
+    private void delay(Entry entry) {
+        DelegationJobMessage delegationJobMessage = convertoToDelegationJobMessage(
+            entry
+        );
+        messagingService.submitProcessingJob(delegationJobMessage).join();
+    }
+
+    private DelegationJobMessage convertoToDelegationJobMessage(Entry entry) {
+        return ImmutableDelegationJobMessage.builder()
+            .entry(entry)
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .build();
     }
 
     private ValidationRuleJobMessage convertToValidationRuleJobMessage(
