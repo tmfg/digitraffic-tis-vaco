@@ -125,11 +125,6 @@ public class RulesetSubmissionService {
 
         String identifyingName = r.identifyingName();
 
-        // mark the processing of matching task as started
-        Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
-        ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
-            .orElseThrow();
-
         // TODO: Should ensure the previous deps are ok, not all globally. This case trips only if the same flow has same rule multiple times, which is unlikely.
         if (rulesetService.dependenciesCompletedSuccessfully(entry, r)) {
             logger.debug("Entry {}, ruleset {} all dependencies completed successfully, submitting", entry.publicId(), identifyingName);
@@ -156,7 +151,7 @@ public class RulesetSubmissionService {
 
         r.afterDependencies().forEach( dependency -> {
             taskService.findTask(entry.publicId(), dependency)
-                .filter(depTask -> depTask.priority() > task.priority()) //avoid cancelling potentially wrong tasks
+                .filter(depTask -> depTask.priority() > task.priority())  // ensure the dependent tasks to be cancelled occur after the current one to avoid cancelling potentially wrong tasks
                 .map(t -> taskService.trackTask(entry, t, ProcessingState.START))
                 .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
                 .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
@@ -171,6 +166,10 @@ public class RulesetSubmissionService {
     }
 
     private void submit(Entry entry, Task task, String identifyingName, Map<String, RuleConfiguration> userProvidedConfigs) {
+        // mark the processing of matching task as started
+        Optional<Task> ruleTask = taskService.findTask(entry.publicId(), identifyingName);
+        ruleTask.map(t -> taskService.trackTask(entry, t, ProcessingState.START))
+            .orElseThrow();
 
         Optional<RuleConfiguration> configuration = Optional.ofNullable(userProvidedConfigs.get(identifyingName));
         ValidationRuleJobMessage ruleMessage = convertToValidationRuleJobMessage(
@@ -180,7 +179,6 @@ public class RulesetSubmissionService {
             identifyingName);
         messagingService.submitRuleExecutionJob(identifyingName, ruleMessage).join();
     }
-
 
     private void delay(Entry entry) {
         DelegationJobMessage delegationJobMessage = convertoToDelegationJobMessage(
