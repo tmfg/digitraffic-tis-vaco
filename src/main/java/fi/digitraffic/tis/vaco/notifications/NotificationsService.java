@@ -46,13 +46,15 @@ public class NotificationsService {
     public void notifyEntryComplete(Entry entry) {
         Optional<EntryRecord> entryRecord = entryRepository.findByPublicId(entry.publicId());
         if (entryRecord.isPresent()) {
-            for (Notifier notifier : notifiers) {
-                try {
-                    notifier.notifyEntryComplete(entryRecord.get());
-                } catch (Exception e) {
-                    logger.warn("Failed to send EntryComplete notification of {} with {}", entry.publicId(), notifier, e);
+            if (entryRecord.get().sendNotifications()) {
+                for (Notifier notifier : notifiers) {
+                    try {
+                        notifier.notifyEntryComplete(entryRecord.get());
+                    } catch (Exception e) {
+                        logger.warn("Failed to send EntryComplete notification of {} with {}", entry.publicId(), notifier, e);
+                    }
                 }
-            }
+            } else logger.info("Notifications are disabled for entry {}", entry.publicId());
         }
     }
 
