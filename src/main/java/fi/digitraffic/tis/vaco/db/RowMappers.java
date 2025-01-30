@@ -275,6 +275,7 @@ public final class RowMappers {
             .status(Status.forField(rs.getString("status")))
             .context(nullableLong(rs, "context_id"))
             .credentials(nullableLong(rs, "credentials_id"))
+            .sendNotifications(rs.getBoolean("send_notifications"))
             .build();
     }
 

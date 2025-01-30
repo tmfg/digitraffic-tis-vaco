@@ -85,7 +85,8 @@ public class RecordMapper {
             .completed(entryRecord.completed())
             .status(entryRecord.status())
             .context(context.map(ContextRecord::context).orElse(null))
-            .credentials(credentials.map(CredentialsRecord::publicId).orElse(null));
+            .credentials(credentials.map(CredentialsRecord::publicId).orElse(null))
+            .sendNotifications(entryRecord.sendNotifications());
     }
 
     @SuppressWarnings("unchecked")
