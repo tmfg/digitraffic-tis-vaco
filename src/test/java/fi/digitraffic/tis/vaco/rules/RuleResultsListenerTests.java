@@ -145,7 +145,7 @@ class RuleResultsListenerTests {
         Task task = ImmutableTask.of("dlqTest", 100).withPublicId("abc2");
         given(taskService.markStatus(task, Status.FAILED)).willReturn(task);
         given(taskService.findTask(task.publicId())).willReturn(Optional.of(task));
-        Entry entry = ImmutableEntry.of("abc1", "dlq test entry", "gtfs", "http://example.fintraffic", Constants.FINTRAFFIC_BUSINESS_ID);
+        Entry entry = ImmutableEntry.of("abc1", "dlq test entry", "gtfs", "http://example.fintraffic", Constants.FINTRAFFIC_BUSINESS_ID, false);
         given(entryService.findEntry(entry.publicId())).willReturn(Optional.of(entry));
         givenResultProcessingResultsInNewProcessingJobSubmission();
 
@@ -163,7 +163,7 @@ class RuleResultsListenerTests {
 
         JsonNode message = objectMapper.readValue(jsonString, JsonNode.class);
 
-        Entry entry = ImmutableEntry.of("abc1", "dlq test entry", "gtfs", "http://example.fintraffic", Constants.FINTRAFFIC_BUSINESS_ID);
+        Entry entry = ImmutableEntry.of("abc1", "dlq test entry", "gtfs", "http://example.fintraffic", Constants.FINTRAFFIC_BUSINESS_ID, false);
         given(entryService.findEntry(entry.publicId())).willReturn(Optional.of(entry));
         givenResultProcessingResultsInNewProcessingJobSubmission();
 

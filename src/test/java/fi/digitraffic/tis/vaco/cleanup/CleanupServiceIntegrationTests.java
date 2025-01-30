@@ -42,7 +42,7 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @BeforeEach
     void setUp() {
         entries = IntStream.range(0, totalEntries)
-            .mapToObj(i -> ImmutableEntry.of(NanoIdUtils.randomNanoId(), Integer.toString(i), "whatever", "https://example.no/", TestConstants.FINTRAFFIC_BUSINESS_ID))
+            .mapToObj(i -> ImmutableEntry.of(NanoIdUtils.randomNanoId(), Integer.toString(i), "whatever", "https://example.no/", TestConstants.FINTRAFFIC_BUSINESS_ID, false))
             .map(this::interleaveEntry)
             .collect(Collectors.toMap(Entry::publicId, Entry::name));
     }
@@ -111,7 +111,7 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     void removesSubsequentCancelledEntriesToReduceClutter() {
         int cancelledEntryCount = 5;
         List<Entry> cancelledEntries = IntStream.range(0, cancelledEntryCount)
-            .mapToObj(i -> ImmutableEntry.of(NanoIdUtils.randomNanoId(), Integer.toString(i), "whatever", "https://example.co.uk/cancelled", TestConstants.FINTRAFFIC_BUSINESS_ID))
+            .mapToObj(i -> ImmutableEntry.of(NanoIdUtils.randomNanoId(), Integer.toString(i), "whatever", "https://example.co.uk/cancelled", TestConstants.FINTRAFFIC_BUSINESS_ID, false))
             .map(this::interleaveEntry)
             .toList();
 
