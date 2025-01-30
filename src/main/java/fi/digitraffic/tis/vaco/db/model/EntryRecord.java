@@ -65,4 +65,7 @@ public interface EntryRecord {
 
     @Nullable
     Long credentials();
+
+    @Value.Default
+    default boolean sendNotifications() { return true; }
 }
