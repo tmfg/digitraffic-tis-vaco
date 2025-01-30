@@ -56,9 +56,10 @@ class TaskServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Optional<EntryRecord> r = entryRepository.findByPublicId(saved.get().publicId());
         List<Task> t = taskService.resolveTasks(r.get());
 
-        assertThat(t.size(), equalTo(2));
-        assertTask(t.get(0), "prepare.download", 100);
-        assertTask(t.get(1), "netex.entur", 200);
+        assertThat(t.size(), equalTo(3));
+        assertTask(t.get(0), "prepare.stopsAndQuays", 100);
+        assertTask(t.get(1), "prepare.download", 101);
+        assertTask(t.get(2), "netex.entur", 200);
     }
 
     private void assertTask(Task task, String name, int priority) {

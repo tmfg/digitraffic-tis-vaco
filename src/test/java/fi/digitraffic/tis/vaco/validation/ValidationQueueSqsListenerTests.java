@@ -55,7 +55,8 @@ class ValidationQueueSqsListenerTests {
             "entry",
             TestConstants.FORMAT_GTFS,
             TestConstants.EXAMPLE_URL,
-            Constants.FINTRAFFIC_BUSINESS_ID
+            Constants.FINTRAFFIC_BUSINESS_ID,
+            false
         );
         RetryStatistics retryStatistics = ImmutableRetryStatistics.of(1);
         message = ImmutableValidationJobMessage.builder()
