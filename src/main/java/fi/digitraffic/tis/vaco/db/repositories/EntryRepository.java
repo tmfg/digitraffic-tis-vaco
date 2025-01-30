@@ -48,8 +48,8 @@ public class EntryRepository {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
                 """
-                INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications, context_id, credentials_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO entry(business_id, format, url, etag, metadata, name, notifications, context_id, credentials_id, send_notifications)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                   RETURNING id,
                             public_id,
                             business_id,
@@ -65,7 +65,8 @@ public class EntryRepository {
                             notifications,
                             status,
                             context_id,
-                            credentials_id
+                            credentials_id,
+                            send_notifications
                 """,
                 RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
                 entry.businessId(),
@@ -76,7 +77,8 @@ public class EntryRepository {
                 entry.name(),
                 ArraySqlValue.create(entry.notifications().toArray(new String[0])),
                 context.map(ContextRecord::id).orElse(null),
-                credentials.map(CredentialsRecord::id).orElse(null)));
+                credentials.map(CredentialsRecord::id).orElse(null),
+                entry.sendNotifications()));
         } catch (DataAccessException dae) {
             logger.warn("Failed to create Entry", dae);
             return Optional.empty();
@@ -135,7 +137,8 @@ public class EntryRepository {
                                notifications,
                                status,
                                context_id,
-                               credentials_id
+                               credentials_id,
+                               send_notifications
                           FROM entry qe
                          WHERE qe.public_id = ?
                         """,

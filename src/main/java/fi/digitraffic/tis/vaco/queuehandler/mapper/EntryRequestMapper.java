@@ -50,6 +50,7 @@ public class EntryRequestMapper {
             .notifications(createEntryRequest.notifications())
             .context(createEntryRequest.context())
             .credentials(createEntryRequest.credentials())
+            .sendNotifications(createEntryRequest.sendNotifications())
             .build();
     }
 
