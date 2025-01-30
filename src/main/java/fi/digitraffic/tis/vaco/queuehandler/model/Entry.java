@@ -90,4 +90,7 @@ public interface Entry {
 
     @Nullable
     String credentials();
+
+    @Value.Parameter
+    default boolean sendNotifications() { return true; }
 }
