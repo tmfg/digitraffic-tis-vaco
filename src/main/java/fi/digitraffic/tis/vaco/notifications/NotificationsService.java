@@ -54,7 +54,9 @@ public class NotificationsService {
                         logger.warn("Failed to send EntryComplete notification of {} with {}", entry.publicId(), notifier, e);
                     }
                 }
-            } else logger.info("Notifications are disabled for entry {}", entry.publicId());
+            } else {
+                logger.info("Notifications are disabled for entry {}", entry.publicId());
+            }
         }
     }
 
