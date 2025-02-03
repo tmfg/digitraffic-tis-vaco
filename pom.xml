@@ -50,7 +50,7 @@
         <oauth2server.version>3.4.2</oauth2server.version>
         <immutables.version>2.10.1</immutables.version>
         <jackson.version>2.18.2</jackson.version>
-        <mockito.version>5.14.2</mockito.version>
+        <mockito.version>5.15.2</mockito.version>
         <caffeine.version>3.2.0</caffeine.version>
         <guava.version>33.4.0-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
