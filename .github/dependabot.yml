@@ -7,6 +7,11 @@ updates:
       interval: "monthly"
     reviewers:
       - "tmfg/digitraffic-tis-solita"
+    groups:
+      dev-deps:
+        dependency-type: "development"
+      prod-deps:
+        dependency-type: "production"
   # keep used GitHub Actions up to date
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -14,3 +19,7 @@ updates:
       interval: "monthly"
     reviewers:
       - "tmfg/digitraffic-tis-solita"
+    groups:
+      actions-deps:
+        patterns:
+          - "*"
