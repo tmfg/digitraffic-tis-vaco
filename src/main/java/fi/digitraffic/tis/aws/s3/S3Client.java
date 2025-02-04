@@ -24,7 +24,6 @@ import software.amazon.awssdk.transfer.s3.model.DownloadDirectoryRequest;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.FileDownload;
 import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
-import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -133,7 +132,7 @@ public class S3Client {
         DownloadFileRequest downloadFileRequest =
             DownloadFileRequest.builder()
                 .getObjectRequest(b -> b.bucket(bucketName).key(key.toString()))
-                .addTransferListener(LoggingTransferListener.create())
+                .addTransferListener(new SimpleTransferListener(bucketName, key))
                 .destination(downloadTargetPath)
                 .build();
 

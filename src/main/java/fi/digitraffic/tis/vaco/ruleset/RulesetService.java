@@ -73,6 +73,10 @@ public class RulesetService {
     }
 
     public boolean dependenciesCompletedSuccessfully(Entry entry, Ruleset r) {
-        return rulesetRepository.anyPrerequisiteDependencyFailed(entry, r);
+        return rulesetRepository.allPrerequisiteDependenciesCompletedSuccessfully(entry, r);
+    }
+
+    public boolean dependenciesProcessing(Entry entry, Ruleset r) {
+        return rulesetRepository.areDependenciesProcessing(entry, r);
     }
 }

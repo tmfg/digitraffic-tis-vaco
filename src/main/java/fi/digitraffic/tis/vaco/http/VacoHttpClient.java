@@ -49,7 +49,7 @@ public class VacoHttpClient {
 
             requestHeaders.put("Accept", "*/*");
 
-            if (etag != null) {
+            if (etag != null && !etag.isEmpty()) {
                 requestHeaders.put("If-None-Match", etag);
             }
 

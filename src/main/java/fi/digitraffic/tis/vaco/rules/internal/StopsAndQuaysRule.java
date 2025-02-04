@@ -52,7 +52,7 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
                     S3Path ruleS3Input = ruleBasePath.resolve("input");
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
 
-                    Path stopsAndQuays = Path.of(Thread.currentThread().getContextClassLoader().getResource("private/static/emptyStopsAndQuays.zip").toURI());
+                    Path stopsAndQuays = Path.of(Thread.currentThread().getContextClassLoader().getResource("private/static/stops.zip").toURI());
                     S3Path target = ruleS3Output.resolve("stopsAndQuays.zip");
 
                     s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), target, stopsAndQuays).join();
