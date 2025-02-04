@@ -56,4 +56,7 @@ public interface CreateEntryRequest {
     @Schema(description = "Select one of the predefined credentials to apply for the data source of this entry.")
     String credentials();
 
+    @Value.Default
+    default boolean sendNotifications() { return true; }
+
 }
