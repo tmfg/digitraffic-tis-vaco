@@ -143,8 +143,10 @@ public class TaskService {
 
     // these hardcoded values represent the dependencies which don't have a Ruleset in database and thus there isn't a
     // better place for declaring them
+    @Deprecated
     private static final Map<String, List<String>> ruleDeps = ruleDeps();
 
+    @Deprecated
     private static Map<String, List<String>> ruleDeps() {
         Map<String, List<String>> deps = new HashMap<>();
         deps.put(DownloadRule.PREPARE_DOWNLOAD_TASK, List.of());
