@@ -231,7 +231,7 @@ public class RulesetSubmissionService {
      * @see fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule
      */
     private void copyAllResultsFromCompletedTasks(S3Path targetDirectory, Entry entry, Task current) {
-        List<Task> completedTasks = entry.tasks().stream()
+        List<Task> completedTasks = taskService.findTasks(entry).stream()
             .filter(task -> task.priority() < current.priority() && task.completed() != null)
             .toList();
         completedTasks.forEach(task -> lookupDownloadedFile(entry, task.name())
