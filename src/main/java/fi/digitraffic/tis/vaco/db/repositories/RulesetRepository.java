@@ -198,7 +198,7 @@ public class RulesetRepository {
                              entry e,
                              ruleset r
                        WHERE t.entry_id = e.id
-                         AND t.status != ANY (ARRAY ['success']::status[])
+                         AND t.status NOT IN ('success', 'warnings')
                          AND t.name = ANY (r.before_dependencies)
             """,
             Integer.class,
