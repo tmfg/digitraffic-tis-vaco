@@ -25,6 +25,7 @@ import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.GtfsToNetexResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
 import fi.digitraffic.tis.vaco.summary.SummaryService;
@@ -55,6 +56,7 @@ public class RuleResultsListener extends SqsListener {
     private final InternalRuleResultProcessor internalRuleResultProcessor;
     private final SummaryService summaryService;
     private final GtfsToNetexResultProcessor gtfsToNetexResultProcessor;
+    private final NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor;
 
     public RuleResultsListener(MessagingService messagingService,
                                FindingService findingService,
@@ -68,7 +70,8 @@ public class RuleResultsListener extends SqsListener {
                                SimpleResultProcessor simpleResultProcessor,
                                InternalRuleResultProcessor internalRuleResultProcessor,
                                SummaryService summaryService,
-                               GtfsToNetexResultProcessor gtfsToNetexResultProcessor) {
+                               GtfsToNetexResultProcessor gtfsToNetexResultProcessor,
+                               NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor) {
         super(messagingService, objectMapper);
         this.findingService = Objects.requireNonNull(findingService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
@@ -81,6 +84,7 @@ public class RuleResultsListener extends SqsListener {
         this.internalRuleResultProcessor = Objects.requireNonNull(internalRuleResultProcessor);
         this.summaryService = Objects.requireNonNull(summaryService);
         this.gtfsToNetexResultProcessor = Objects.requireNonNull(gtfsToNetexResultProcessor);
+        this.netexToGtfsRuleResultProcessor = Objects.requireNonNull(netexToGtfsRuleResultProcessor);
     }
 
     @Scheduled(initialDelayString = "${vaco.scheduling.findings.poll-rate}", fixedRateString = "${vaco.scheduling.findings.poll-rate}")
@@ -189,7 +193,7 @@ public class RuleResultsListener extends SqsListener {
     }
 
     private boolean processNetex2GtfsEntur(ResultMessage resultMessage) {
-        return processRule(RuleName.NETEX2GTFS_ENTUR, resultMessage, simpleResultProcessor);
+        return processRule(RuleName.NETEX2GTFS_ENTUR, resultMessage, netexToGtfsRuleResultProcessor);
     }
 
     private boolean processGtfs2NetexFintraffic(ResultMessage resultMessage) {

@@ -25,6 +25,7 @@ import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.GtfsToNetexResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
+import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
 import fi.digitraffic.tis.vaco.summary.SummaryService;
@@ -72,6 +73,7 @@ class RuleResultsListenerTests {
     @Mock private SimpleResultProcessor simpleResultProcessor;
     @Mock private InternalRuleResultProcessor internalRuleResultProcessor;
     @Mock private GtfsToNetexResultProcessor gtfsToNetexResultProcessor;
+    @Mock private NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor;
     @Mock private SummaryService summaryService;
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
 
@@ -93,7 +95,8 @@ class RuleResultsListenerTests {
             simpleResultProcessor,
             internalRuleResultProcessor,
             summaryService,
-            gtfsToNetexResultProcessor);
+            gtfsToNetexResultProcessor,
+            netexToGtfsRuleResultProcessor);
     }
 
     @AfterEach
@@ -128,7 +131,7 @@ class RuleResultsListenerTests {
 
     @Test
     void enturNetex2GtfsConversionUsesSimpleResultProcessor() throws JsonProcessingException {
-        assertResultProcessorIsUsed(RuleName.NETEX2GTFS_ENTUR, simpleResultProcessor);
+        assertResultProcessorIsUsed(RuleName.NETEX2GTFS_ENTUR, netexToGtfsRuleResultProcessor);
     }
 
     @Test
