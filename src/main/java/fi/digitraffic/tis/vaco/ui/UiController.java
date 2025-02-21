@@ -15,6 +15,8 @@ import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.credentials.CredentialsService;
+import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
@@ -106,6 +108,7 @@ public class UiController {
     private final EntryRequestMapper entryRequestMapper;
     private final EncryptionService encryptionService;
     private final ContextService contextService;
+    private final CredentialsService credentialsService;
 
     public UiController(VacoProperties vacoProperties,
                         EntryService entryService,
@@ -120,7 +123,8 @@ public class UiController {
                         EntryRequestMapper entryRequestMapper,
                         EncryptionService encryptionService,
                         UiService uiService,
-                        ContextService contextService) {
+                        ContextService contextService,
+                        CredentialsService credentialsService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -135,6 +139,7 @@ public class UiController {
         this.encryptionService = Objects.requireNonNull(encryptionService);
         this.uiService = Objects.requireNonNull(uiService);
         this.contextService = Objects.requireNonNull(contextService);
+        this.credentialsService = credentialsService;
     }
 
     @GetMapping(path = "/bootstrap")
@@ -267,12 +272,22 @@ public class UiController {
                 });
                 List<Summary> summaries = entryStateService.getTaskSummaries(entry);
                 Optional<Company> company = companyHierarchyService.findByBusinessId(entry.businessId());
+
+                String credentialPublicId = entry.credentials();
+                Credentials entrysCredential = null;
+
+                if (credentialPublicId != null) {
+                    Optional<Credentials> credentials = credentialsService.findByPublicId(credentialPublicId);
+                    entrysCredential= credentials.get();
+                }
+
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry, entry.publicId()))
                         .reports(reports)
                         .addAllSummaries(summaries)
                         .company(company.map(c -> c.name() + " (" +c.businessId() + ")").orElse(entry.businessId()))
+                        .credentials(entrysCredential)
                         .build()));
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));
     }
