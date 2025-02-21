@@ -271,6 +271,7 @@ public class RecordMapper {
             .description(credentialsRecord.description())
             .owner(toCompany(companyRecord))
             .details(readValue(objectMapper, credentialsRecord.details(), cc))
+            .urlPattern(credentialsRecord.urlPattern())
             .build();
     }
 }

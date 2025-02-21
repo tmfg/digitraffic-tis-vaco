@@ -3,8 +3,10 @@ package fi.digitraffic.tis.vaco.ui.model;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.api.model.Resource;
+import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
+import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -27,4 +29,7 @@ public interface EntryState {
     }
 
     String company();
+
+    @Nullable
+    Credentials credentials();
 }
