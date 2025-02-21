@@ -6,10 +6,13 @@ import fi.digitraffic.http.HttpClientException;
 import fi.digitraffic.tis.vaco.credentials.CredentialsService;
 import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.credentials.model.HttpBasicAuthenticationDetails;
+import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
+import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,17 +34,18 @@ public class VacoHttpClient {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final HttpClient httpClient;
     private final CredentialsService credentialsService;
+    private EntryService entryService;
 
-    public VacoHttpClient(HttpClient httpClient, CredentialsService credentialsService) {
+    public VacoHttpClient(HttpClient httpClient, CredentialsService credentialsService, EntryService entryService) {
         this.httpClient = Objects.requireNonNull(httpClient);
         this.credentialsService = Objects.requireNonNull(credentialsService);
+        this.entryService = Objects.requireNonNull(entryService);
     }
 
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
-                                                            String etag,
-                                                            String credentials) {
-        logger.info("Downloading file from {} to {} (eTag {})", uri, targetFilePath, etag);
+                                                            Entry entry) {
+        logger.info("Downloading file from {} to {} (eTag {})", uri, targetFilePath, entry.etag());
 
         try {
 
@@ -49,12 +53,14 @@ public class VacoHttpClient {
 
             requestHeaders.put("Accept", "*/*");
 
-            if (etag != null) {
-                requestHeaders.put("If-None-Match", etag);
+            if (entry.etag() != null && !entry.etag().isEmpty()) {
+                requestHeaders.put("If-None-Match", entry.etag());
             }
 
-            if (credentials != null) {
-                addAuthorizationHeader(credentials, requestHeaders);
+            if (entry.credentials() != null) {
+                addAuthorizationHeader(entry.credentials(), requestHeaders);
+            } else {
+                addAuthorizationHeaderAutomatically(entry.businessId(), requestHeaders, uri, entry);
             }
 
             HttpRequest request = httpClient.get(uri, requestHeaders);
@@ -64,7 +70,7 @@ public class VacoHttpClient {
                 ImmutableDownloadResponse.Builder resp = ImmutableDownloadResponse.builder();
                 response.headers().firstValue("ETag").ifPresent(resp::etag);
 
-                logger.info("Response for {} with ETag {} resulted in HTTP status {}", uri, etag, response.statusCode());
+                logger.info("Response for {} with ETag {} resulted in HTTP status {}", uri, entry.etag(), response.statusCode());
 
                 if (response.statusCode() == 304) {
                     return resp.build();
@@ -84,15 +90,38 @@ public class VacoHttpClient {
         Optional<Credentials> entryCredentials = credentialsService.findByPublicId(credentials);
 
         entryCredentials.ifPresent( c -> {
-            switch (c.details()) {
-                case HttpBasicAuthenticationDetails httpBasic -> {
-                    String auth = httpBasic.userId() + ":" + httpBasic.password();
-                    requestHeaders.put("Authorization", "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
-                }
-                case null -> logger.warn("Credentials {} don't contain authentication details ", c.publicId());
-                default -> logger.warn("Unhandled credentials sub type {}", c.details().getClass());
-            }
+            setHeaders(requestHeaders, c);
         });
+    }
+
+    @VisibleForTesting
+    public void addAuthorizationHeaderAutomatically(String businessId, Map<String, String> requestHeaders, String uri, Entry entry) {
+
+        Optional<Credentials> matchingCredentials = credentialsService.findMatchingCredentials(businessId, uri);
+
+        if (matchingCredentials.isPresent()) {
+            Optional<CredentialsRecord> credentialsRecord = credentialsService.findCredentialsRecordByPublicId(matchingCredentials.get().publicId());
+
+            if (credentialsRecord.isPresent()){
+                boolean entryUpdated = entryService.updateCredentials(entry, credentialsRecord.get().id());
+                if (entryUpdated) {
+                    logger.info("Entry {} updated to contain credentials", entry.publicId());
+                }
+            }
+            logger.info("Credentials {} set to entry {} based on url pattern", matchingCredentials.get().publicId(), entry.publicId());
+            setHeaders(requestHeaders, matchingCredentials.get());
+        }
+    }
+
+    private void setHeaders(Map<String, String> requestHeaders, Credentials credentials) {
+        switch (credentials.details()) {
+            case HttpBasicAuthenticationDetails httpBasic -> {
+                String auth = httpBasic.userId() + ":" + httpBasic.password();
+                requestHeaders.put("Authorization", "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
+            }
+            case null -> logger.warn("Credentials {} don't contain authentication details ", credentials.publicId());
+            default -> logger.warn("Unhandled credentials sub type {}", credentials.details().getClass());
+        }
     }
 
     public CompletableFuture<NotificationResponse> sendWebhook(String uri, byte[] eventPayload) {

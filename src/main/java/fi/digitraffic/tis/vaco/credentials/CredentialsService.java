@@ -9,11 +9,16 @@ import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class CredentialsService {
@@ -22,6 +27,7 @@ public class CredentialsService {
     private final EntryRequestMapper entryRequestMapper;
     private final CredentialsRepository credentialsRepository;
     private final RecordMapper recordMapper;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public CredentialsService(EntryRequestMapper entryRequestMapper,
                               CompanyHierarchyService companyHierarchyService,
@@ -57,7 +63,7 @@ public class CredentialsService {
 
     public Optional<Credentials> updateCredentials(String publicId, UpdateCredentialsRequest updates) {
         return credentialsRepository.findByPublicId(publicId)
-            .map(previous -> credentialsRepository.updateCredentials(previous, updates.type(), updates.name(), updates.description(), updates.details()))
+            .map(previous -> credentialsRepository.updateCredentials(previous, updates.type(), updates.name(), updates.description(), updates.details(), updates.urlPattern()))
             .map(this::asCredentialsEntity);
     }
 
@@ -67,5 +73,53 @@ public class CredentialsService {
 
     public Optional<Boolean> deleteCredentials(String publicId) {
         return credentialsRepository.deleteCredentials(publicId);
+    }
+
+    public Optional<CredentialsRecord> findCredentialsRecordByPublicId(String publicId){
+        return credentialsRepository.findByPublicId(publicId);
+    }
+
+    public Optional<Credentials> findMatchingCredentials(String businessId, String uri) {
+
+        Optional<List<Credentials>> credentialsList = findAllForBusinessId(businessId);
+
+        if (credentialsList.isPresent()) {
+            List<Credentials> companiesCredentials = credentialsList.get();
+
+            for (Credentials companyCredentials : companiesCredentials) {
+                if (companyCredentials.urlPattern() != null) {
+                    Matcher matcher = Pattern.compile(companyCredentials.urlPattern()).matcher(uri);
+
+                    if (matcher.matches()) {
+                        Map<String, Integer> stringIntegerMap = matcher.namedGroups();
+                        Integer scheme = stringIntegerMap.get("scheme");
+                        Integer domain = stringIntegerMap.get("domain");
+                        Integer path = stringIntegerMap.get("path");
+                        Integer params = stringIntegerMap.get("params");
+
+                        if (scheme != null) {
+                            String schemeGroup = matcher.group(scheme);
+                        }
+                        if (domain != null) {
+                            String domainGroup = matcher.group(domain);
+                        }
+                        if (path != null) {
+                            String pathGroup = matcher.group(path);
+                        }
+                        if (params != null) {
+                            String paramsGroup = matcher.group(params);
+                        }
+                        return Optional.of(companyCredentials);
+
+
+                    } else {
+                        logger.info("No matching url patterns in found credentials");
+                    }
+                } else {
+                    logger.info("No url patterns in found credentials");
+                }
+            }
+        }
+        return Optional.empty();
     }
 }
