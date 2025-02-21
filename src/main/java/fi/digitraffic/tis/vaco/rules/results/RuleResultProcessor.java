@@ -8,8 +8,8 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
-import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
@@ -21,7 +21,11 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -64,19 +68,21 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         // package generation based on rule outputs
         ConcurrentMap<String, List<String>> packagesToCreate = collectPackageContents(resultMessage.uploadedFiles());
 
-        packagesToCreate.forEach((packageName, files) -> {
-            logger.info("Creating package '{}' with files {}", packageName, files);
-            packagesService.createPackage(
-                entry,
-                task,
-                packageName,
-                S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
-                file -> {
-                    boolean match = files.stream().anyMatch(content -> content.endsWith(file));
-                    logger.trace("Matching {} / {}", file, match);
-                    return match;
-                });
-        });
+        packagesToCreate.forEach((packageName, files) -> createOutputPackage(resultMessage, entry, task, packageName, files));
+    }
+
+    protected void createOutputPackage(ResultMessage resultMessage, Entry entry, Task task, String packageName, List<String> files) {
+        logger.info("Creating package '{}' with files {}", packageName, files);
+        packagesService.createPackage(
+            entry,
+            task,
+            packageName,
+            S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
+            file -> {
+                boolean match = files.stream().anyMatch(content -> content.endsWith(file));
+                logger.trace("Matching {} / {}", file, match);
+                return match;
+            });
     }
 
     protected ConcurrentMap<String, List<String>> collectPackageContents(Map<String, List<String>> uploadedFiles) {

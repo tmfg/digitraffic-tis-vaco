@@ -184,24 +184,50 @@ public class RulesetRepository {
         return Set.copyOf(jdbc.queryForList("SELECT DISTINCT identifying_name FROM ruleset", String.class));
     }
 
-    public boolean anyPrerequisiteDependencyFailed(Entry entry, Ruleset ruleset) {
-        return Boolean.FALSE.equals(jdbc.queryForObject("""
-            SELECT EXISTS(WITH entry AS (SELECT *
-                                       FROM entry
-                                      WHERE public_id = ?),
-                           ruleset AS (SELECT *
-                                         FROM ruleset
-                                        WHERE id = ?)
-                    SELECT
-                      FROM task t,
-                           entry e,
-                           ruleset r
-                     WHERE t.entry_id = e.id
-                       AND t.status = ANY (ARRAY ['cancelled', 'failed']::status[])
-                       AND t.name = ANY (r.before_dependencies))
+    public boolean allPrerequisiteDependenciesCompletedSuccessfully(Entry entry, Ruleset ruleset) {
+        return jdbc.queryForObject(
+        """
+            WITH entry AS (SELECT *
+                             FROM entry
+                            WHERE public_id = ?),
+                 ruleset AS (SELECT *
+                               FROM ruleset
+                              WHERE id = ?)
+                      SELECT count(*)
+                        FROM task t,
+                             entry e,
+                             ruleset r
+                       WHERE t.entry_id = e.id
+                         AND t.status NOT IN ('success', 'warnings')
+                         AND t.name = ANY (r.before_dependencies)
             """,
-            Boolean.class,
+            Integer.class,
             entry.publicId(),
-            ruleset.id()));
+            ruleset.id()
+        ) == 0;
+
+    }
+
+    public boolean areDependenciesProcessing(Entry entry, Ruleset ruleset) {
+        return jdbc.queryForObject(
+            """
+                WITH entry AS (SELECT *
+                                 FROM entry
+                                WHERE public_id = ?),
+                     ruleset AS (SELECT *
+                                   FROM ruleset
+                                  WHERE id = ?)
+                          SELECT count(*)
+                            FROM task t,
+                                 entry e,
+                                 ruleset r
+                           WHERE t.entry_id = e.id
+                             AND t.status != ANY (ARRAY ['processing', 'received']::status[])
+                             AND t.name = ANY (r.before_dependencies)
+                """,
+            Integer.class,
+            entry.publicId(),
+            ruleset.id()
+        ) == 0;
     }
 }
