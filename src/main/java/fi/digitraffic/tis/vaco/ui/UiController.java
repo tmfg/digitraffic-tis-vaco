@@ -16,7 +16,6 @@ import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.credentials.CredentialsService;
-import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
@@ -273,21 +272,13 @@ public class UiController {
                 List<Summary> summaries = entryStateService.getTaskSummaries(entry);
                 Optional<Company> company = companyHierarchyService.findByBusinessId(entry.businessId());
 
-                String credentialPublicId = entry.credentials();
-                Credentials entrysCredential = null;
-
-                if (credentialPublicId != null) {
-                    Optional<Credentials> credentials = credentialsService.findByPublicId(credentialPublicId);
-                    entrysCredential= credentials.get();
-                }
-
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
                         .entry(asEntryStateResource(entry, entry.publicId()))
                         .reports(reports)
                         .addAllSummaries(summaries)
                         .company(company.map(c -> c.name() + " (" +c.businessId() + ")").orElse(entry.businessId()))
-                        .credentials(entrysCredential)
+                        .credentials(credentialsService.findByPublicId(entry.credentials()).orElse(null))
                         .build()));
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));
     }

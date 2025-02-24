@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,8 +58,9 @@ public class CredentialsService {
     }
 
     public Optional<Credentials> findByPublicId(String publicId) {
-        return credentialsRepository.findByPublicId(publicId)
-            .map(this::asCredentialsEntity);
+        return Optional.ofNullable(publicId)
+            .map(credentialsRepository::findByPublicId).flatMap(credentialsRecord -> credentialsRecord
+                .map(this::asCredentialsEntity));
     }
 
     public Optional<Credentials> updateCredentials(String publicId, UpdateCredentialsRequest updates) {
@@ -97,17 +99,27 @@ public class CredentialsService {
                         Integer path = stringIntegerMap.get("path");
                         Integer params = stringIntegerMap.get("params");
 
+                        Map<String,String> groups = new HashMap<>();
+
                         if (scheme != null) {
                             String schemeGroup = matcher.group(scheme);
+                            groups.put("scheme", schemeGroup);
                         }
                         if (domain != null) {
                             String domainGroup = matcher.group(domain);
+                            groups.put("domain", domainGroup);
                         }
                         if (path != null) {
                             String pathGroup = matcher.group(path);
+                            groups.put("path", pathGroup);
                         }
                         if (params != null) {
                             String paramsGroup = matcher.group(params);
+                            groups.put("params", paramsGroup);
+                        }
+
+                        if (logger.isDebugEnabled()){
+                            logger.debug("Given URL matches with identified groups {}", groups);
                         }
                         return Optional.of(companyCredentials);
 
