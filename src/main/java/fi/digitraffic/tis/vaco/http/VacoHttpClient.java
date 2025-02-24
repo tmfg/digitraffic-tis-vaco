@@ -34,7 +34,7 @@ public class VacoHttpClient {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final HttpClient httpClient;
     private final CredentialsService credentialsService;
-    private EntryService entryService;
+    private final EntryService entryService;
 
     public VacoHttpClient(HttpClient httpClient, CredentialsService credentialsService, EntryService entryService) {
         this.httpClient = Objects.requireNonNull(httpClient);
@@ -58,9 +58,9 @@ public class VacoHttpClient {
             }
 
             if (entry.credentials() != null) {
-                addAuthorizationHeader(entry.credentials(), requestHeaders);
+                requestHeaders.putAll(addAuthorizationHeader(entry.credentials()));
             } else {
-                addAuthorizationHeaderAutomatically(entry.businessId(), requestHeaders, uri, entry);
+                requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
             }
 
             HttpRequest request = httpClient.get(uri, requestHeaders);
@@ -85,17 +85,23 @@ public class VacoHttpClient {
     }
 
     @VisibleForTesting
-    protected void addAuthorizationHeader(String credentials, Map<String, String> requestHeaders) {
+    protected Map<String, String> addAuthorizationHeader(String credentials) {
+
+        Map<String,String> extraHeaders = new HashMap<>();
 
         Optional<Credentials> entryCredentials = credentialsService.findByPublicId(credentials);
 
-        entryCredentials.ifPresent( c -> {
-            setHeaders(requestHeaders, c);
+        entryCredentials.ifPresent(c -> {
+            extraHeaders.putAll(setHeaders(c));
         });
+
+        return extraHeaders;
     }
 
     @VisibleForTesting
-    public void addAuthorizationHeaderAutomatically(String businessId, Map<String, String> requestHeaders, String uri, Entry entry) {
+    public Map<String, String> addAuthorizationHeaderAutomatically(String businessId, String uri, Entry entry) {
+
+        Map<String,String> extraHeaders = new HashMap<>();
 
         Optional<Credentials> matchingCredentials = credentialsService.findMatchingCredentials(businessId, uri);
 
@@ -109,19 +115,26 @@ public class VacoHttpClient {
                 }
             }
             logger.info("Credentials {} set to entry {} based on url pattern", matchingCredentials.get().publicId(), entry.publicId());
-            setHeaders(requestHeaders, matchingCredentials.get());
+            extraHeaders.putAll(setHeaders(matchingCredentials.get()));
         }
+        return  extraHeaders;
+
     }
 
-    private void setHeaders(Map<String, String> requestHeaders, Credentials credentials) {
+    private Map<String, String> setHeaders(Credentials credentials) {
+
+        Map<String,String> extraHeaders = new HashMap<>();
+
         switch (credentials.details()) {
             case HttpBasicAuthenticationDetails httpBasic -> {
                 String auth = httpBasic.userId() + ":" + httpBasic.password();
-                requestHeaders.put("Authorization", "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
+                extraHeaders.put("Authorization", "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
+                return extraHeaders;
             }
             case null -> logger.warn("Credentials {} don't contain authentication details ", credentials.publicId());
             default -> logger.warn("Unhandled credentials sub type {}", credentials.details().getClass());
         }
+        return extraHeaders;
     }
 
     public CompletableFuture<NotificationResponse> sendWebhook(String uri, byte[] eventPayload) {

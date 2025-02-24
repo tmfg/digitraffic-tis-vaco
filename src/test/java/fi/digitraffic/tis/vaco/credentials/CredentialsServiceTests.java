@@ -52,7 +52,7 @@ class CredentialsServiceTests {
     private HttpClient httpClient;
     @Mock
     private EntryService entryService;
-    private final Map<String, String> requestHeaders = new HashMap<>();
+    private Map<String, String> requestHeaders = new HashMap<>();
     private ObjectMapper objectMapper;
     private CompanyRecord companyRecord;
     private ImmutableCredentialsRecord credentialsRecord;
@@ -101,7 +101,7 @@ class CredentialsServiceTests {
 
         when(credentialsRepository.findAllForCompany(companyRecord)).thenReturn(List.of(credentialsRecord));
 
-        vacoHttpClient.addAuthorizationHeaderAutomatically(businessId, requestHeaders, "https://test.fintraffic.fi/exports/test.zip", entry);
+        requestHeaders = vacoHttpClient.addAuthorizationHeaderAutomatically(businessId, "https://test.fintraffic.fi/exports/test.zip", entry);
 
         String detailsJson = new String(credentialsRecord.details());
         HttpBasicAuthenticationDetails details = objectMapper.readValue(detailsJson, HttpBasicAuthenticationDetails.class);
@@ -118,6 +118,9 @@ class CredentialsServiceTests {
     @Test
     void testCredentialsNotAutomaticallySet() {
 
+        String detailsJson = "{\"userId\":\"testUser\", \"password\":\"testPassword\"}";
+        byte[] detailsBytes = detailsJson.getBytes(StandardCharsets.UTF_8);
+
         credentialsRecord = ImmutableCredentialsRecord.builder()
             .id(120000)
             .publicId(NanoIdUtils.randomNanoId())
@@ -133,7 +136,7 @@ class CredentialsServiceTests {
 
         when(credentialsRepository.findAllForCompany(companyRecord)).thenReturn(List.of(credentialsRecord));
 
-        vacoHttpClient.addAuthorizationHeaderAutomatically(businessId, requestHeaders, "https://test.fi/exports/test.zip", entry);
+        requestHeaders = vacoHttpClient.addAuthorizationHeaderAutomatically(businessId, "https://test.fi/exports/test.zip", entry);
 
         assertTrue(requestHeaders.isEmpty());
 

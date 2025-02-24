@@ -54,7 +54,6 @@ class VacoHttpClientTests {
     private HttpResponse mockResponse;
     @Mock
     private EntryService entryService;
-
     private Map<String, String> requestHeaders = new HashMap<>();
     private ImmutableCredentials credentials;
     private ImmutableEntry entry;
@@ -106,7 +105,7 @@ class VacoHttpClientTests {
 
         given(credentialsService.findByPublicId(credentials.publicId())).willReturn(Optional.of(credentials));
 
-        vacoClient.addAuthorizationHeader(credentials.publicId(), requestHeaders);
+        requestHeaders = vacoClient.addAuthorizationHeader(credentials.publicId());
 
         HttpBasicAuthenticationDetails details = (HttpBasicAuthenticationDetails) credentials.details();
         String userId = details.userId();
@@ -124,7 +123,7 @@ class VacoHttpClientTests {
 
         given(credentialsService.findByPublicId(null)).willReturn(Optional.empty());
 
-        vacoClient.addAuthorizationHeader(null, requestHeaders);
+        requestHeaders = vacoClient.addAuthorizationHeader(null);
         assertTrue(requestHeaders.isEmpty());
 
     }
