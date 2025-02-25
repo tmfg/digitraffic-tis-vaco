@@ -479,6 +479,7 @@ public final class RowMappers {
                 .description(rs.getString("description"))
                 .type(CredentialsType.forField(rs.getString("type")))
                 .details(converter.apply(rs.getBytes("details")))
+                .urlPattern(rs.getString("url_pattern"))
                 .build();
         };
     }

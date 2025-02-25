@@ -22,4 +22,7 @@ public interface CredentialsRecord {
 
     byte[] details();
 
+    @Nullable
+    String urlPattern();
+
 }

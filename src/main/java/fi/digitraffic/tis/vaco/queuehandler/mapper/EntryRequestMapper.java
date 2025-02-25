@@ -120,6 +120,7 @@ public class EntryRequestMapper {
             .description(credentials.description())
             .owner(companyLoader.apply(credentials.owner()).orElseThrow(() -> new InvalidMappingException("Could not load owner '" + credentials.owner() + "' details for CreateCredentialsRequest")))
             .details(credentials.details())
+            .urlPattern(credentials.urlPattern())
             .build();
     }
 }

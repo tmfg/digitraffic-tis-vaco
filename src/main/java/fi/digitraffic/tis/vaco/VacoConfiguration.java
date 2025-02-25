@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.configuration.JaxbHttpMessageConverter;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.credentials.CredentialsService;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
 import fi.digitraffic.tis.vaco.fintrafficid.MsGraphBackedFintrafficIdService;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
@@ -32,12 +33,13 @@ public class VacoConfiguration {
     public VacoHttpClient httpClient(VacoProperties vacoProperties,
                                      @Value("${git.commit.id.abbrev:#{null}}")
                                      String gitCommitIdAbbreviation,
-                                     CredentialsService credentialsService) {
+                                     CredentialsService credentialsService,
+                                     EntryService entryService) {
         HttpClientConfiguration configuration = ImmutableHttpClientConfiguration.builder()
             .baseUri(vacoProperties.baseUrl())
             .userAgentExtension("VACO/" + ((gitCommitIdAbbreviation != null) ? gitCommitIdAbbreviation : vacoProperties.environment()))
             .build();
-        return new VacoHttpClient(new HttpClient(configuration), credentialsService);
+        return new VacoHttpClient(new HttpClient(configuration), credentialsService, entryService);
     }
 
     @Bean

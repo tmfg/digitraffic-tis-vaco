@@ -34,4 +34,7 @@ public interface Credentials {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
     @JsonView(DataVisibility.InternalOnly.class)
     AuthenticationDetails details();
+
+    @Nullable
+    String urlPattern();
 }

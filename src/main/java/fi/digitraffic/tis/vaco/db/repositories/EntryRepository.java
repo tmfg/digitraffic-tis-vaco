@@ -366,4 +366,17 @@ public class EntryRepository {
         }
 
     }
+
+    public boolean updateEntry(Entry entry, Long credentialsId) {
+        return jdbc.update(
+            """
+            UPDATE entry
+               SET credentials_id = ?
+             WHERE public_id = ?
+            """,
+            credentialsId,
+            entry.publicId()
+        ) == 1;
+
+    }
 }

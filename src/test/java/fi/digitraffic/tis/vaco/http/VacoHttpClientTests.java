@@ -6,13 +6,14 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.credentials.CredentialsService;
 import fi.digitraffic.tis.vaco.credentials.model.HttpBasicAuthenticationDetails;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
+import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.BDDMockito.given;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -35,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -48,17 +50,20 @@ class VacoHttpClientTests {
     private HttpClient httpClient;
     @Mock
     private HttpRequest mockRequest;
-
     @Mock
     private HttpResponse mockResponse;
-
+    @Mock
+    private EntryService entryService;
     private Map<String, String> requestHeaders = new HashMap<>();
-
+    private ImmutableCredentials credentials;
+    private ImmutableEntry entry;
 
     @BeforeEach
     void setUp() {
 
-        this.vacoClient = new VacoHttpClient(httpClient, credentialsService);
+        this.vacoClient = new VacoHttpClient(httpClient, credentialsService, entryService);
+        credentials = ImmutableCredentials.copyOf(TestObjects.aCredentials().build());
+        entry = ImmutableEntry.copyOf(TestObjects.anEntry().build());
 
     }
 
@@ -73,7 +78,7 @@ class VacoHttpClientTests {
 
         Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
 
-        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org", null, null);
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org", entry);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().body().isEmpty(), equalTo(true));
@@ -98,11 +103,9 @@ class VacoHttpClientTests {
     @Test
     void testAuthorizationHeadersWithCredentials() {
 
-        ImmutableCredentials credentials = ImmutableCredentials.copyOf(TestObjects.aCredentials().build());
-
         given(credentialsService.findByPublicId(credentials.publicId())).willReturn(Optional.of(credentials));
 
-        vacoClient.addAuthorizationHeader(credentials.publicId(), requestHeaders);
+        requestHeaders = vacoClient.addAuthorizationHeader(credentials.publicId());
 
         HttpBasicAuthenticationDetails details = (HttpBasicAuthenticationDetails) credentials.details();
         String userId = details.userId();
@@ -120,7 +123,7 @@ class VacoHttpClientTests {
 
         given(credentialsService.findByPublicId(null)).willReturn(Optional.empty());
 
-        vacoClient.addAuthorizationHeader(null, requestHeaders);
+        requestHeaders = vacoClient.addAuthorizationHeader(null);
         assertTrue(requestHeaders.isEmpty());
 
     }
@@ -129,4 +132,5 @@ class VacoHttpClientTests {
         when(mockResponse.statusCode()).thenReturn(stubStatusCode);
         when(mockResponse.body()).thenReturn(stubResponseBody);
     }
+
 }

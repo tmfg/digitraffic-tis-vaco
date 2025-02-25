@@ -218,4 +218,8 @@ public class EntryService {
             return entry;
         }
     }
+
+    public boolean updateCredentials(Entry entry, Long credentialsId) {
+        return entryRepository.updateEntry(entry, credentialsId);
+    }
 }

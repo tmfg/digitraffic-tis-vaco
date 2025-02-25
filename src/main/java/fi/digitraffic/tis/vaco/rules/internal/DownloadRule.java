@@ -148,8 +148,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                 feedArchive = httpClient.downloadFile(
                         TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".json"),
                         entry.url(),
-                        entry.etag(),
-                        entry.credentials())
+                        entry)
                     .thenApply(updateEtag(entry))
                     .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
             } else {
@@ -157,8 +156,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                 feedArchive = httpClient.downloadFile(
                         TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip"),
                         entry.url(),
-                        entry.etag(),
-                        entry.credentials())
+                        entry)
                     .thenApply(updateEtag(entry))
                     .thenApply(DownloadResponse::body);
             }
@@ -211,8 +209,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         .flatten(Function.identity())
                         .map(feed -> httpClient.downloadFile(
                             TempFiles.getTaskTempFile(discoveryDir, feed.name() + ".json"),
-                            feed.url(),
-                            null, entry.credentials()))
+                            feed.url(), entry))
                         .filter(Objects::nonNull)
                         .toList();
 

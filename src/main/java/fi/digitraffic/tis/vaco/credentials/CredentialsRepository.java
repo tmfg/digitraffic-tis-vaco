@@ -41,22 +41,24 @@ public class CredentialsRepository {
         try {
             return Optional.ofNullable(jdbc.queryForObject(
                 """
-                INSERT INTO credentials(owner_id, name, description, type, details)
-                     VALUES (?, ?, ?, ?::credentials_type, ?)
+                INSERT INTO credentials(owner_id, name, description, type, details, url_pattern)
+                     VALUES (?, ?, ?, ?::credentials_type, ?, ?)
                   RETURNING id,
                             public_id,
                             owner_id,
                             name,
                             type,
                             description,
-                            details
+                            details,
+                            url_pattern
                 """,
                 RowMappers.CREDENTIALS_RECORD(encryptionService::decryptBlob),
                 owner.id(),
                 credentials.name(),
                 credentials.description(),
                 credentials.type().fieldName(),
-                encryptionService.encryptBlob(credentials.details())
+                encryptionService.encryptBlob(credentials.details()),
+                credentials.urlPattern()
             ));
         } catch (DataAccessException dae) {
             logger.warn("Failed to create credentials", dae);
@@ -95,14 +97,15 @@ public class CredentialsRepository {
             return Optional.empty();
         }
     }
-    public CredentialsRecord updateCredentials(CredentialsRecord previous, CredentialsType type, String name, String description, AuthenticationDetails details) {
+    public CredentialsRecord updateCredentials(CredentialsRecord previous, CredentialsType type, String name, String description, AuthenticationDetails details, String urlPattern) {
         return jdbc.queryForObject(
             """
                UPDATE credentials
                   SET name = ?,
                       description = ?,
                       type = ?::credentials_type,
-                      details = ?
+                      details = ?,
+                      url_pattern = ?
                 WHERE id = ?
             RETURNING *
             """,
@@ -111,6 +114,7 @@ public class CredentialsRepository {
             description,
             type.fieldName(),
             encryptionService.encryptBlob(details),
+            urlPattern,
             previous.id()
         );
     }

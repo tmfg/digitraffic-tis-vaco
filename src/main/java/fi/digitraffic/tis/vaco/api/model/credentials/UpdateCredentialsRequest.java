@@ -27,4 +27,7 @@ public interface UpdateCredentialsRequest {
     @Nullable
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
     AuthenticationDetails details();
+
+    @Nullable
+    String urlPattern();
 }
