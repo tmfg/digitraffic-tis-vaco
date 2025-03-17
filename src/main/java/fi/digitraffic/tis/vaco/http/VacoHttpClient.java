@@ -13,11 +13,15 @@ import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.HashMap;
@@ -64,7 +68,7 @@ public class VacoHttpClient {
             }
 
             HttpRequest request = httpClient.get(uri, requestHeaders);
-            HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
+            HttpResponse.BodyHandler<InputStream> bodyHandler = HttpResponse.BodyHandlers.ofInputStream();
 
             return httpClient.send(request, bodyHandler).thenApply(response -> {
                 ImmutableDownloadResponse.Builder resp = ImmutableDownloadResponse.builder();
@@ -75,7 +79,12 @@ public class VacoHttpClient {
                 if (response.statusCode() == 304) {
                     return resp.build();
                 } else {
-                    return resp.body(response.body()).build();
+                    try {
+                        Files.copy(response.body(), targetFilePath);
+                    } catch (IOException e) {
+                        throw new RuleExecutionException("Failed to write download stream of " + entry.publicId() + "/" + uri + " into file " + targetFilePath, e);
+                    }
+                    return resp.body(targetFilePath).build();
                 }
             });
         } catch (HttpClientException e) {

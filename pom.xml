@@ -386,7 +386,7 @@
         <dependency>
             <groupId>com.github.mizosoft.methanol</groupId>
             <artifactId>methanol</artifactId>
-            <version>1.8.1</version>
+            <version>1.8.2</version>
         </dependency>
 
         <!-- MS Graph client and its dependencies for reading extended group data for overage scenario -->
