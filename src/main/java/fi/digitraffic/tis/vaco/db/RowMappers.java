@@ -30,12 +30,14 @@ import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePackageRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableRulesetRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableStatusStatisticsRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableSummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableTaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
+import fi.digitraffic.tis.vaco.db.model.StatusStatisticsRecord;
 import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
@@ -483,4 +485,14 @@ public final class RowMappers {
                 .build();
         };
     }
+
+    public static RowMapper<StatusStatisticsRecord> STATUS_STATISTICS_RECORD() {
+        return (rs, rowNum) -> ImmutableStatusStatisticsRecord.builder()
+            .status(rs.getString("status"))
+            .count(rs.getInt("count"))
+            .unit(rs.getString("unit"))
+            .timestamp(readZonedDateTime(rs,"view_created_at"))
+            .build();
+    }
+
 }
