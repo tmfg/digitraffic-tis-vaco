@@ -5,11 +5,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.model.FindingRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
+import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
@@ -43,6 +50,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -76,6 +84,7 @@ class RuleResultsListenerTests {
     @Mock private NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor;
     @Mock private SummaryService summaryService;
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
+    @Mock private FindingRepository findingRepository;
 
     @BeforeEach
     void setUp() {
@@ -96,7 +105,8 @@ class RuleResultsListenerTests {
             internalRuleResultProcessor,
             summaryService,
             gtfsToNetexResultProcessor,
-            netexToGtfsRuleResultProcessor);
+            netexToGtfsRuleResultProcessor,
+            findingRepository);
     }
 
     @AfterEach
@@ -111,7 +121,8 @@ class RuleResultsListenerTests {
             gbfsResultProcessor,
             gtfsCanonicalProcessor,
             simpleResultProcessor,
-            internalRuleResultProcessor);
+            internalRuleResultProcessor,
+            findingRepository);
     }
 
     @Test
@@ -140,18 +151,45 @@ class RuleResultsListenerTests {
         String jsonString = """
                 {
                   "entry": { "publicId":"abc1"},
-                  "task": { "id":2, "publicId":"abc2"}
+                  "task": { "id":2, "publicId":"abc2", "name": "gtfs.canonical" }
                 }
             """;
 
         JsonNode message = objectMapper.readValue(jsonString, JsonNode.class);
-        Task task = ImmutableTask.of("dlqTest", 100).withPublicId("abc2");
+        Task task = ImmutableTask.of("gtfs.canonical", 100).withPublicId("abc2");
         given(taskService.markStatus(task, Status.FAILED)).willReturn(task);
         given(taskService.findTask(task.publicId())).willReturn(Optional.of(task));
-        Entry entry = ImmutableEntry.of("abc1", "dlq test entry", "gtfs", "http://example.fintraffic", Constants.FINTRAFFIC_BUSINESS_ID, false);
+
+        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
+        Entry entry = entryBuilder.addTasks(task)
+            .publicId("abc1")
+            .name("dlq test entry")
+            .format("gtfs")
+            .url("http://example.fintraffic")
+            .businessId(Constants.FINTRAFFIC_BUSINESS_ID)
+            .sendNotifications(false)
+            .build();
+
         given(entryService.findEntry(entry.publicId())).willReturn(Optional.of(entry));
         givenResultProcessingResultsInNewProcessingJobSubmission();
 
+        Finding finding = ImmutableFinding.builder()
+            .publicId(entry.publicId())
+            .source(task.name())
+            .taskId(2L)
+            .message("Entry ended up in dead letter queue ")
+            .severity(FindingSeverity.ERROR)
+            .build();
+
+        FindingRecord findingRecord = ImmutableFindingRecord.builder()
+            .id(500L)
+            .publicId(String.valueOf(UUID.randomUUID()))
+            .taskId(500L)
+            .source(task.name())
+            .build();
+
+        given(findingRepository.create(finding)).willReturn(findingRecord);
+        given(taskService.trackTask(entry, task, ProcessingState.COMPLETE)).willReturn(task);
         assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(true));
     }
 
