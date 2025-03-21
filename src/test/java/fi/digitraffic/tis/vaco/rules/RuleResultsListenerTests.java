@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -183,7 +184,7 @@ class RuleResultsListenerTests {
 
         FindingRecord findingRecord = ImmutableFindingRecord.builder()
             .id(500L)
-            .publicId(String.valueOf(UUID.randomUUID()))
+            .publicId(NanoIdUtils.randomNanoId())
             .taskId(500L)
             .source(task.name())
             .build();

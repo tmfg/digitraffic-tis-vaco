@@ -131,17 +131,14 @@ public class RuleResultsListener extends SqsListener {
                 .map(node -> node.get("task").get("publicId"))
                 .map(JsonNode::asText);
 
-            Optional<String> entryPublicId = getEntryPublicId(jsonNode);
-
-            Optional<Entry> entry = entryPublicId
+            Optional<Entry> entry = getEntryPublicId(jsonNode)
                 .flatMap(entryService::findEntry);
 
             return taskPublicId
                 .flatMap(taskService::findTask)
                 .map(task -> {
                     taskService.markStatus(task, Status.FAILED);
-                    entry.ifPresent(e ->
-                        taskService.trackTask(e, task, ProcessingState.COMPLETE));
+                    entry.ifPresent(e -> taskService.trackTask(e, task, ProcessingState.COMPLETE));
                     return true;
                 }).orElse(false);
         }).whenComplete((deadLetterProcessingSuccess, maybeEx) -> {
