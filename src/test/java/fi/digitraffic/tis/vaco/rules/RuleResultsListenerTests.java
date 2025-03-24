@@ -123,6 +123,8 @@ class RuleResultsListenerTests {
             gtfsCanonicalProcessor,
             simpleResultProcessor,
             internalRuleResultProcessor,
+            gtfsToNetexResultProcessor,
+            netexToGtfsRuleResultProcessor,
             findingRepository);
     }
 
