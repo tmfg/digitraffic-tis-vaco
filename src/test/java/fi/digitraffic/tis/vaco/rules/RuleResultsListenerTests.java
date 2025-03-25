@@ -193,6 +193,7 @@ class RuleResultsListenerTests {
 
         given(findingRepository.create(finding)).willReturn(findingRecord);
         given(taskService.trackTask(entry, task, ProcessingState.COMPLETE)).willReturn(task);
+        given(taskService.cancelRemainingTasks(entry)).willReturn(true);
         assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(true));
     }
 

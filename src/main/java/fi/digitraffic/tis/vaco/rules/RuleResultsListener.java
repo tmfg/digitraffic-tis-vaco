@@ -138,7 +138,13 @@ public class RuleResultsListener extends SqsListener {
                 .flatMap(taskService::findTask)
                 .map(task -> {
                     taskService.markStatus(task, Status.FAILED);
-                    entry.ifPresent(e -> taskService.trackTask(e, task, ProcessingState.COMPLETE));
+                    entry.ifPresent(e ->  {
+                        taskService.trackTask(e, task, ProcessingState.COMPLETE);
+                        boolean cancelled = taskService.cancelRemainingTasks(e);
+                        if (!cancelled) {
+                            logger.warn("Not all tasks after dead letter queue were cancelled");
+                        }
+                    });
                     return true;
                 }).orElse(false);
         }).whenComplete((deadLetterProcessingSuccess, maybeEx) -> {

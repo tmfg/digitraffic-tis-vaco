@@ -362,4 +362,21 @@ public class TaskService {
         return taskRepository.findByPublicId(taskPublicId)
             .map(recordMapper::toTask);
     }
+
+    public boolean cancelRemainingTasks(Entry entry) {
+
+        List<Task> tasks = taskRepository.findAllTasksNotStarted(entry);
+
+        return tasks.stream()
+                .allMatch(task -> {
+                    try {
+                        trackTask(entry, task, ProcessingState.START);
+                        trackTask(entry, task, ProcessingState.COMPLETE);
+                        markStatus(entry, task, Status.CANCELLED);
+                        return true;
+                    } catch (Exception e) {
+                        return  false;
+                    }
+                });
+    }
 }
