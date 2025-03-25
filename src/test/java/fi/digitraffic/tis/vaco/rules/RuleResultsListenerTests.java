@@ -36,6 +36,7 @@ import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.summary.SummaryService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -51,7 +52,6 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -86,6 +86,7 @@ class RuleResultsListenerTests {
     @Mock private SummaryService summaryService;
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
     @Mock private FindingRepository findingRepository;
+    @Mock private RulesetService rulesetService;
 
     @BeforeEach
     void setUp() {
@@ -107,7 +108,8 @@ class RuleResultsListenerTests {
             summaryService,
             gtfsToNetexResultProcessor,
             netexToGtfsRuleResultProcessor,
-            findingRepository);
+            findingRepository,
+            rulesetService);
     }
 
     @AfterEach
@@ -180,7 +182,7 @@ class RuleResultsListenerTests {
             .publicId(entry.publicId())
             .source(task.name())
             .taskId(2L)
-            .message("Entry ended up in dead letter queue ")
+            .message("Entry ended up in Dead Letter Queue")
             .severity(FindingSeverity.ERROR)
             .build();
 
@@ -193,7 +195,6 @@ class RuleResultsListenerTests {
 
         given(findingRepository.create(finding)).willReturn(findingRecord);
         given(taskService.trackTask(entry, task, ProcessingState.COMPLETE)).willReturn(task);
-        given(taskService.cancelRemainingTasks(entry)).willReturn(true);
         assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(true));
     }
 
