@@ -32,6 +32,8 @@ import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.SummaryService;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -63,6 +65,7 @@ public class RuleResultsListener extends SqsListener {
     private final GtfsToNetexResultProcessor gtfsToNetexResultProcessor;
     private final NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor;
     private final FindingRepository findingRepository;
+    private final RulesetService rulesetService;
 
     public RuleResultsListener(MessagingService messagingService,
                                FindingService findingService,
@@ -78,7 +81,7 @@ public class RuleResultsListener extends SqsListener {
                                SummaryService summaryService,
                                GtfsToNetexResultProcessor gtfsToNetexResultProcessor,
                                NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor,
-                               FindingRepository findingRepository) {
+                               FindingRepository findingRepository, RulesetService rulesetService) {
         super(messagingService, objectMapper);
         this.findingService = Objects.requireNonNull(findingService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
@@ -93,6 +96,7 @@ public class RuleResultsListener extends SqsListener {
         this.gtfsToNetexResultProcessor = Objects.requireNonNull(gtfsToNetexResultProcessor);
         this.netexToGtfsRuleResultProcessor = Objects.requireNonNull(netexToGtfsRuleResultProcessor);
         this.findingRepository = Objects.requireNonNull(findingRepository);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
     }
 
     @Scheduled(initialDelayString = "${vaco.scheduling.findings.poll-rate}", fixedRateString = "${vaco.scheduling.findings.poll-rate}")
@@ -140,10 +144,8 @@ public class RuleResultsListener extends SqsListener {
                     taskService.markStatus(task, Status.FAILED);
                     entry.ifPresent(e ->  {
                         taskService.trackTask(e, task, ProcessingState.COMPLETE);
-                        boolean cancelled = taskService.cancelRemainingTasks(e);
-                        if (!cancelled) {
-                            logger.warn("Not all tasks after dead letter queue were cancelled");
-                        }
+                        Optional<Ruleset> ruleset = rulesetService.findByName(task.name());
+                        ruleset.ifPresent(r -> taskService.cancelAfterDependencies(e, task, r));
                     });
                     return true;
                 }).orElse(false);
@@ -183,7 +185,7 @@ public class RuleResultsListener extends SqsListener {
                     .publicId(e)
                     .source(taskName.get())
                     .taskId(t)
-                    .message("Entry ended up in dead letter queue ")
+                    .message("Entry ended up in Dead Letter Queue")
                     .severity(FindingSeverity.ERROR)
                     .build());
             } else {
