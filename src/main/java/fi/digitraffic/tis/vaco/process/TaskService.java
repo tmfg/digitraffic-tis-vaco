@@ -363,20 +363,16 @@ public class TaskService {
             .map(recordMapper::toTask);
     }
 
-    public boolean cancelRemainingTasks(Entry entry) {
+    public void cancelAfterDependencies(Entry entry, Task task, Ruleset r) {
 
-        List<Task> tasks = taskRepository.findAllTasksNotStarted(entry);
+        r.afterDependencies().forEach(dependency -> {
+            findTask(entry.publicId(), dependency)
+                .filter(depTask -> depTask.priority() > task.priority())  // ensure the dependent tasks to be cancelled occur after the current one to avoid cancelling potentially wrong tasks
+                .map(t -> trackTask(entry, t, ProcessingState.START))
+                .map(t -> markStatus(entry, t, Status.CANCELLED))
+                .map(t -> trackTask(entry, t, ProcessingState.COMPLETE))
+                .orElse(null);
+        });
 
-        return tasks.stream()
-                .allMatch(task -> {
-                    try {
-                        trackTask(entry, task, ProcessingState.START);
-                        trackTask(entry, task, ProcessingState.COMPLETE);
-                        markStatus(entry, task, Status.CANCELLED);
-                        return true;
-                    } catch (Exception e) {
-                        return  false;
-                    }
-                });
     }
 }
