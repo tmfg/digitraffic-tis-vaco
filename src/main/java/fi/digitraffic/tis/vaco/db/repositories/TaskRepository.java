@@ -320,18 +320,4 @@ public class TaskRepository {
         }
     }
 
-    public List<Task> findAllTasksNotStarted(Entry entry){
-        return namedJdbc.query(
-            """
-                WITH entry AS (SELECT * FROM entry
-                        WHERE public_id = :publicId)
-                SELECT t.*
-                FROM task t
-                JOIN entry e ON t.entry_id = e.id
-                WHERE t.entry_id = e.id
-                  AND t.started IS NULL
-            """,
-            new MapSqlParameterSource("publicId", entry.publicId()),
-            RowMappers.TASK);
-    }
 }
