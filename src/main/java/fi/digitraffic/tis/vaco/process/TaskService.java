@@ -362,4 +362,17 @@ public class TaskService {
         return taskRepository.findByPublicId(taskPublicId)
             .map(recordMapper::toTask);
     }
+
+    public void cancelAfterDependencies(Entry entry, Task task, Ruleset r) {
+
+        r.afterDependencies().forEach(dependency -> {
+            findTask(entry.publicId(), dependency)
+                .filter(depTask -> depTask.priority() > task.priority())  // ensure the dependent tasks to be cancelled occur after the current one to avoid cancelling potentially wrong tasks
+                .map(t -> trackTask(entry, t, ProcessingState.START))
+                .map(t -> markStatus(entry, t, Status.CANCELLED))
+                .map(t -> trackTask(entry, t, ProcessingState.COMPLETE))
+                .orElse(null);
+        });
+
+    }
 }

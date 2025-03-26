@@ -36,6 +36,9 @@ import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.summary.SummaryService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -51,7 +54,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -59,9 +62,13 @@ import java.util.stream.Stream;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -86,6 +93,7 @@ class RuleResultsListenerTests {
     @Mock private SummaryService summaryService;
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
     @Mock private FindingRepository findingRepository;
+    @Mock private RulesetService rulesetService;
 
     @BeforeEach
     void setUp() {
@@ -107,7 +115,8 @@ class RuleResultsListenerTests {
             summaryService,
             gtfsToNetexResultProcessor,
             netexToGtfsRuleResultProcessor,
-            findingRepository);
+            findingRepository,
+            rulesetService);
     }
 
     @AfterEach
@@ -180,7 +189,7 @@ class RuleResultsListenerTests {
             .publicId(entry.publicId())
             .source(task.name())
             .taskId(2L)
-            .message("Entry ended up in dead letter queue ")
+            .message("Entry ended up in Dead Letter Queue")
             .severity(FindingSeverity.ERROR)
             .build();
 
@@ -191,9 +200,20 @@ class RuleResultsListenerTests {
             .source(task.name())
             .build();
 
+        ImmutableRuleset ruleset = TestObjects.aRuleset().format(TransitDataFormat.GTFS)
+            .identifyingName(task.name())
+            .addAllAfterDependencies(Set.of("gtfs.canonical"))
+            .build();
+
+        given(rulesetService.findByName(task.name())).willReturn(Optional.of(ruleset));
+        assertEquals(ruleset.afterDependencies(), Set.of("gtfs.canonical"));
+
         given(findingRepository.create(finding)).willReturn(findingRecord);
         given(taskService.trackTask(entry, task, ProcessingState.COMPLETE)).willReturn(task);
+
         assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(true));
+
+        verify(taskService, times(1)).cancelAfterDependencies(eq(entry), eq(task), eq(ruleset));
     }
 
     @Test

@@ -149,14 +149,7 @@ public class RulesetSubmissionService {
             .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
             .orElseThrow();
 
-        r.afterDependencies().forEach( dependency -> {
-            taskService.findTask(entry.publicId(), dependency)
-                .filter(depTask -> depTask.priority() > task.priority())  // ensure the dependent tasks to be cancelled occur after the current one to avoid cancelling potentially wrong tasks
-                .map(t -> taskService.trackTask(entry, t, ProcessingState.START))
-                .map(t -> taskService.markStatus(entry, t, Status.CANCELLED))
-                .map(t -> taskService.trackTask(entry, t, ProcessingState.COMPLETE))
-                .orElse(null);
-        });
+        taskService.cancelAfterDependencies(entry, task, r);
 
         DelegationJobMessage message = ImmutableDelegationJobMessage.builder()
             .entry(queueHandlerService.getEntry(entry.publicId()))
