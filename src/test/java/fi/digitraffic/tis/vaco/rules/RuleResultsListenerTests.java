@@ -189,7 +189,7 @@ class RuleResultsListenerTests {
             .publicId(entry.publicId())
             .source(task.name())
             .taskId(2L)
-            .message("Entry ended up in Dead Letter Queue")
+            .message("entry_ended_up_in_dead_letter_queue")
             .severity(FindingSeverity.ERROR)
             .build();
 
