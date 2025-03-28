@@ -185,7 +185,7 @@ public class RuleResultsListener extends SqsListener {
                     .publicId(e)
                     .source(taskName.get())
                     .taskId(t)
-                    .message("Entry ended up in Dead Letter Queue")
+                    .message("entry_ended_up_in_dead_letter_queue")
                     .severity(FindingSeverity.ERROR)
                     .build());
             } else {
