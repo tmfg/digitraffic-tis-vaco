@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -174,6 +175,9 @@ public class RuleResultsListener extends SqsListener {
             .map(node -> node.get("task").get("name"))
             .map(JsonNode::asText);
 
+        String findingRaw = "{}";
+        byte[] raw = findingRaw.getBytes(StandardCharsets.UTF_8);
+
         return entryId.flatMap(e -> {
             Optional<Long> taskId = Optional.ofNullable(jsonNode)
                 .filter(node -> node.has("task"))
@@ -181,12 +185,16 @@ public class RuleResultsListener extends SqsListener {
                 .map(JsonNode::asLong);
 
             if (taskName.isPresent()) {
+                Optional<Ruleset> ruleset = rulesetService.findByName(taskName.get());
+
                 return taskId.map(t -> ImmutableFinding.builder()
                     .publicId(e)
                     .source(taskName.get())
                     .taskId(t)
                     .message("entry_ended_up_in_dead_letter_queue")
                     .severity(FindingSeverity.ERROR)
+                    .raw(raw)
+                    .rulesetId(ruleset.map(Ruleset::id).orElse(null))
                     .build());
             } else {
                 return Optional.empty();
