@@ -52,6 +52,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -185,12 +186,16 @@ class RuleResultsListenerTests {
         given(entryService.findEntry(entry.publicId())).willReturn(Optional.of(entry));
         givenResultProcessingResultsInNewProcessingJobSubmission();
 
+        String findingRaw = "{}";
+        byte[] raw = findingRaw.getBytes(StandardCharsets.UTF_8);
+
         Finding finding = ImmutableFinding.builder()
             .publicId(entry.publicId())
             .source(task.name())
             .taskId(2L)
             .message("entry_ended_up_in_dead_letter_queue")
             .severity(FindingSeverity.ERROR)
+            .raw(raw)
             .build();
 
         FindingRecord findingRecord = ImmutableFindingRecord.builder()
