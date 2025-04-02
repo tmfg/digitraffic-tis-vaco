@@ -75,6 +75,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -486,12 +487,16 @@ public final class RowMappers {
         };
     }
 
+    public static LocalDate readLocalDate(ResultSet rs, String columnName) throws SQLException {
+        return rs.getObject(columnName, LocalDate.class);
+    }
+
     public static RowMapper<StatusStatisticsRecord> STATUS_STATISTICS_RECORD() {
         return (rs, rowNum) -> ImmutableStatusStatisticsRecord.builder()
             .status(rs.getString("status"))
             .count(rs.getInt("count"))
             .unit(rs.getString("unit"))
-            .timestamp(readZonedDateTime(rs,"view_created_at"))
+            .timestamp(readLocalDate(rs,"record_created_at"))
             .build();
     }
 

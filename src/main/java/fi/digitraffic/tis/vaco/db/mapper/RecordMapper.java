@@ -280,7 +280,6 @@ public class RecordMapper {
 
     public StatusStatistics toStatusStatistics(StatusStatisticsRecord statusStatisticsRecord) {
 
-        System.out.println(statusStatisticsRecord);
         return ImmutableStatusStatistics.builder()
             .status(statusStatisticsRecord.status())
             .unit(statusStatisticsRecord.unit())
