@@ -26,8 +26,9 @@ public class StatisticsRepository {
     public List<StatusStatisticsRecord> listStatusStatistics () {
         try {
             return jdbc.query("""
-                SELECT *
-                  FROM status_statistics
+               SELECT status, count, date_trunc('day', record_created_at)::date AS record_created_at, unit
+               FROM status_statistics
+               ORDER BY status, record_created_at ASC
                 """,
                 RowMappers.STATUS_STATISTICS_RECORD());
         } catch (EmptyResultDataAccessException e) {
