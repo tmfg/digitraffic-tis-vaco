@@ -43,7 +43,7 @@ public class EntryRequestMapper {
             .format(safeTrim(createEntryRequest.format()))
             .url(safeTrim(createEntryRequest.url()))
             .businessId(safeTrim(createEntryRequest.businessId()))
-            .etag(strip("\"", safeTrim(createEntryRequest.etag()), "\""))
+            .etag(safeTrim(createEntryRequest.etag()))
             .metadata(createEntryRequest.metadata())
             .validations(mapValidations(createEntryRequest.validations()))
             .conversions(mapConversions(createEntryRequest.conversions()))
