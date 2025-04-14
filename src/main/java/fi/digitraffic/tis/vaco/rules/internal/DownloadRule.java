@@ -9,9 +9,12 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
@@ -58,19 +61,21 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     private final VacoHttpClient httpClient;
     private final S3Client s3Client;
     private final FindingService findingService;
+    private final FindingRepository findingRepository;
 
     public DownloadRule(ObjectMapper objectMapper, TaskService taskService,
                         VacoProperties vacoProperties,
                         VacoHttpClient httpClient,
                         S3Client s3Client,
-                        FindingService findingService, EntryService entryService) {
+                        FindingService findingService, EntryService entryService, FindingRepository findingRepository) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.httpClient = Objects.requireNonNull(httpClient);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.findingService = Objects.requireNonNull(findingService);
-        this.entryService = entryService;
+        this.entryService = Objects.requireNonNull(entryService);
+        this.findingRepository = Objects.requireNonNull(findingRepository);
     }
 
     @Override
@@ -111,7 +116,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         .uploadedFiles(uploadedFiles)
                         .build();
                 }  catch (Exception e) {
-                    logger.warn("Caught unrecoverable exception during file download", e);
+                    logger.warn("Caught unrecoverable exception during file download in entry {} in task {}", entry.publicId(), tracked.name(), e);
                     taskService.markStatus(entry, tracked, Status.FAILED);
                     return ImmutableResultMessage.builder()
                         .entryId(entry.publicId())
@@ -150,6 +155,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         entry.url(),
                         entry)
                     .thenApply(updateEtag(entry))
+                    .thenApply(reportResult(entry, tracked))
                     .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
             } else {
                 // by default we assume single ZIP files, this applies to e.g. GTFS and NeTEx
@@ -158,6 +164,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         entry.url(),
                         entry)
                     .thenApply(updateEtag(entry))
+                    .thenApply(reportResult(entry, tracked))
                     .thenApply(DownloadResponse::body);
             }
 
@@ -171,6 +178,27 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             track(entry, tracked, ProcessingState.COMPLETE).apply(tracked);
             return Optional.empty();
         }
+    }
+
+    private Function<DownloadResponse, DownloadResponse> reportResult(Entry entry, Task task) {
+        return downloadResponse -> {
+            if (downloadResponse.result().equals(DownloadResponse.Result.NOT_MODIFIED)) {
+                Optional<Finding> finding = createFinding(entry, task, downloadResponse.result());
+                finding.ifPresent(findingRepository::create);
+            }
+            return downloadResponse;
+        };
+    }
+
+    private Optional<Finding> createFinding(Entry entry, Task task, DownloadResponse.Result result){
+
+        return Optional.of(ImmutableFinding.builder()
+            .publicId(entry.publicId())
+            .taskId(task.id())
+            .source("prepare.download")
+            .message(String.valueOf(result))
+            .severity(FindingSeverity.ERROR)
+            .build());
     }
 
     /**
