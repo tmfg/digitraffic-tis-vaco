@@ -67,7 +67,8 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         VacoProperties vacoProperties,
                         VacoHttpClient httpClient,
                         S3Client s3Client,
-                        FindingService findingService, EntryService entryService, FindingRepository findingRepository) {
+                        FindingService findingService, EntryService entryService,
+                        FindingRepository findingRepository) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
