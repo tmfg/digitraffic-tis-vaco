@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
+import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
@@ -150,7 +151,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     void sendsMessageToJobQueueForTaskWithFailedDependencies() throws InterruptedException {
         Entry entry = createEntryForTesting();
         when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), eq(entry)))
-            .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.empty()).build()));
+            .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.empty()).result(DownloadResponse.Result.OK).build()));
 
         String testQueueName = createSqsQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
