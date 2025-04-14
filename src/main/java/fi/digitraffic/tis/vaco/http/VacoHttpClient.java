@@ -70,26 +70,28 @@ public class VacoHttpClient {
             HttpRequest request = httpClient.get(uri, requestHeaders);
             HttpResponse.BodyHandler<InputStream> bodyHandler = HttpResponse.BodyHandlers.ofInputStream();
 
+            ImmutableDownloadResponse.Builder resp = ImmutableDownloadResponse.builder();
+
             return httpClient.send(request, bodyHandler).thenApply(response -> {
-                ImmutableDownloadResponse.Builder resp = ImmutableDownloadResponse.builder();
+
                 response.headers().firstValue("ETag").ifPresent(resp::etag);
 
                 logger.info("Response for {} with ETag {} resulted in HTTP status {}", uri, entry.etag(), response.statusCode());
 
                 if (response.statusCode() == 304) {
-                    return resp.build();
+                    return resp.result(DownloadResponse.Result.NOT_MODIFIED).build();
                 } else {
                     try {
                         Files.copy(response.body(), targetFilePath);
                     } catch (IOException e) {
                         throw new RuleExecutionException("Failed to write download stream of " + entry.publicId() + "/" + uri + " into file " + targetFilePath, e);
                     }
-                    return resp.body(targetFilePath).build();
+                    return resp.result(DownloadResponse.Result.OK).body(targetFilePath).build();
                 }
             });
         } catch (HttpClientException e) {
             logger.warn("HTTP execution failure for %s".formatted(uri), e);
-            return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().build());
+            return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.FAILED_DOWNLOAD).build());
         }
     }
 

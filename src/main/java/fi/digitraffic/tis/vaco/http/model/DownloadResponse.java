@@ -9,4 +9,10 @@ import java.util.Optional;
 public interface DownloadResponse {
     Optional<String> etag();
     Optional<Path> body();
+    Result result();
+    enum Result {
+        OK,
+        NOT_MODIFIED,
+        FAILED_DOWNLOAD
+    }
 }

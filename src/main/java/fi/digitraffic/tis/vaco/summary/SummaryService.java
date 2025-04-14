@@ -50,13 +50,13 @@ public class SummaryService {
             try {
                 gtfsInputSummaryService.generateGtfsInputSummaries(entry, task, downloadedPackagePath.get());
             } catch (IOException e) {
-                logger.error("Failed to generate GTFS input data summaries for entry {}", entry.publicId(), e);
+                logger.warn("Failed to generate GTFS input data summaries for entry {}", entry.publicId(), e);
             }
         } else if (TransitDataFormat.NETEX.fieldName().equals(entry.format())) {
             try {
                 netexInputSummaryService.generateNetexInputSummaries(downloadedPackagePath.get(), task.id());
             } catch (IOException e) {
-                logger.error("Failed to generate NeTEx input data summaries for entry {}", entry.publicId(), e);
+                logger.warn("Failed to generate NeTEx input data summaries for entry {}", entry.publicId(), e);
             }
         }
     }

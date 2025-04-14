@@ -115,7 +115,6 @@ class VacoHttpClientTests {
         String authHeader = requestHeaders.get("Authorization");
         String expectedAuthValue = "Basic " + Base64.getEncoder().encodeToString((userId + ":" + password).getBytes());
         assertEquals(expectedAuthValue, authHeader);
-
     }
 
     @Test

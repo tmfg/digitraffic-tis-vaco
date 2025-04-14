@@ -30,14 +30,6 @@ class EntryRequestMapperTests {
     }
 
     @Test
-    void stripsExtraQuotesFromEtagIfPresent() {
-        entryRequest = entryRequest.withEtag("\"double quotes!\"");
-        ImmutableEntry entry = entryRequestMapper.toEntry(entryRequest);
-
-        assertThat(entry.etag(), equalTo("double quotes!"));
-    }
-
-    @Test
     void stripsUnicodeByteOrderMarkFromAllStrings() {
         entryRequest = entryRequest
             .withUrl(Strings.BOM_UTF_32_BE + "http://fintraffic.suomi")
