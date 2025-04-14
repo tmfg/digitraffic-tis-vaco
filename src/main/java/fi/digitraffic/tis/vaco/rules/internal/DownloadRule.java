@@ -197,6 +197,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             .publicId(entry.publicId())
             .taskId(task.id())
             .source("prepare.download")
+            .source(task.name())
             .message(String.valueOf(result))
             .severity(FindingSeverity.ERROR)
             .build());
