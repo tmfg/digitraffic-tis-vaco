@@ -36,7 +36,7 @@ class FeatureFlagsControllerIntegrationTests extends SpringBootIntegrationTestBa
 
         assertThat(
             Streams.map(featureFlags, FeatureFlag::name).toSet(),
-            equalTo(Set.of("emails.entryCompleteEmail", "emails.feedStatusEmail", "scheduledTasks.oldDataCleanup")));
+            equalTo(Set.of("emails.entryCompleteEmail", "emails.feedStatusEmail", "scheduledTasks.oldDataCleanup", "tasks.prepareDownload.skipDownloadOnStaleETag")));
     }
 
     @Test

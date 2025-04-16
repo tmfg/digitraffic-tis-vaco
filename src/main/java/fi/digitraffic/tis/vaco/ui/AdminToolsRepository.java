@@ -41,7 +41,8 @@ public class AdminToolsRepository {
                                                  e.created,
                                                  ROW_NUMBER() OVER (PARTITION BY business_id, context_id, url, format ORDER BY created DESC) r,
                                                  e.context_id
-                                            FROM entry e),
+                                            FROM entry e
+                                            WHERE e.status NOT IN ('cancelled'::status, 'received'::status)),
                   latest_entry AS (SELECT *
                                      FROM partitioned_entries pe
                                     WHERE pe.r = 1)
