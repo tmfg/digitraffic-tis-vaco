@@ -69,20 +69,20 @@ public class CompanyRepository {
     }
 
     public CompanyRecord update(String businessId, Company company) {
-        return jdbc.queryForObject(
+        CompanyRecord companyRecord = jdbc.queryForObject(
             """
-               UPDATE company
-                  SET name = ?,
-                      language = (?)::company_language,
-                      ad_group_id = ?,
-                      contact_emails = ?,
-                      publish = ?,
-                      codespaces = ?,
-                      notification_webhook_uri = ?,
-                      website = ?
-                WHERE business_id = ?
-            RETURNING *
-            """,
+                   UPDATE company
+                      SET name = ?,
+                          language = (?)::company_language,
+                          ad_group_id = ?,
+                          contact_emails = ?,
+                          publish = ?,
+                          codespaces = ?,
+                          notification_webhook_uri = ?,
+                          website = ?
+                    WHERE business_id = ?
+                RETURNING *
+                """,
             RowMappers.COMPANY_RECORD,
             company.name(),
             company.language(),
@@ -93,6 +93,8 @@ public class CompanyRepository {
             company.notificationWebhookUri(),
             company.website(),
             businessId);
+        cachingService.invalidateCompanyRecord(company.businessId());
+        return findById(companyRecord.id());
     }
 
     public Optional<CompanyRecord> findByBusinessId(String businessId) {
