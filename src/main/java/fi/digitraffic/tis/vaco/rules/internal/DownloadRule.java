@@ -9,9 +9,9 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
@@ -53,6 +53,7 @@ import java.util.zip.ZipFile;
 public class DownloadRule implements Rule<Entry, ResultMessage> {
     public static final String PREPARE_DOWNLOAD_TASK = "prepare.download";
     private final EntryService entryService;
+    private final FeatureFlagsService featureFlagsService;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
@@ -61,14 +62,13 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     private final VacoHttpClient httpClient;
     private final S3Client s3Client;
     private final FindingService findingService;
-    private final FindingRepository findingRepository;
 
     public DownloadRule(ObjectMapper objectMapper, TaskService taskService,
                         VacoProperties vacoProperties,
                         VacoHttpClient httpClient,
                         S3Client s3Client,
                         FindingService findingService, EntryService entryService,
-                        FindingRepository findingRepository) {
+                        FeatureFlagsService featureFlagsService) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
@@ -76,7 +76,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         this.s3Client = Objects.requireNonNull(s3Client);
         this.findingService = Objects.requireNonNull(findingService);
         this.entryService = Objects.requireNonNull(entryService);
-        this.findingRepository = Objects.requireNonNull(findingRepository);
+        this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
     @Override
@@ -185,7 +185,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         return downloadResponse -> {
             if (downloadResponse.result().equals(DownloadResponse.Result.NOT_MODIFIED)) {
                 Optional<Finding> finding = createFinding(entry, task, downloadResponse.result());
-                finding.ifPresent(findingRepository::create);
+                finding.ifPresent(findingService::reportFinding);
             }
             return downloadResponse;
         };
@@ -218,14 +218,19 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     }
 
     private boolean shouldDownload(Entry entry) {
-        if (entry.context() != null && entry.etag() != null) {
-            Optional<Entry> previousEntry = entryService.findLatestEntryForContext(entry.businessId(), entry.context());
-            if (previousEntry.isPresent() && previousEntry.get().etag().equals(entry.etag())) {
-                logger.info("Entry {} with context '{}' has same ETag '{}' as its predecessor, skipping download", entry.publicId(), entry.context(), entry.etag());
-                return false;
+        if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
+            logger.info("Feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' is currently disabled, ETags will not be used to skip stale downloads for entry {}/context {}/ETag {}", entry.publicId(), entry.context(), entry.etag());
+            return true;
+        } else {
+            if (entry.context() != null && entry.etag() != null) {
+                Optional<Entry> previousEntry = entryService.findLatestEntryForContext(entry.businessId(), entry.context());
+                if (previousEntry.isPresent() && previousEntry.get().etag().equals(entry.etag())) {
+                    logger.info("Entry {} with context '{}' has same ETag '{}' as its predecessor, skipping download", entry.publicId(), entry.context(), entry.etag());
+                    return false;
+                }
             }
+            return true;
         }
-        return true;
     }
 
     private Function<DownloadResponse, CompletionStage<Optional<Path>>> downloadGbfsDiscovery(Entry entry, Path tempDirPath) {
