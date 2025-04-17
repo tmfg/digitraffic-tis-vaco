@@ -8,6 +8,7 @@ import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.credentials.model.HttpBasicAuthenticationDetails;
 import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse;
@@ -36,20 +37,29 @@ import java.util.concurrent.CompletableFuture;
 public class VacoHttpClient {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final HttpClient httpClient;
+
     private final CredentialsService credentialsService;
+
     private final EntryService entryService;
 
-    public VacoHttpClient(HttpClient httpClient, CredentialsService credentialsService, EntryService entryService) {
+    private final FeatureFlagsService featureFlagsService;
+
+    public VacoHttpClient(HttpClient httpClient,
+                          CredentialsService credentialsService,
+                          EntryService entryService,
+                          FeatureFlagsService featureFlagsService) {
         this.httpClient = Objects.requireNonNull(httpClient);
         this.credentialsService = Objects.requireNonNull(credentialsService);
         this.entryService = Objects.requireNonNull(entryService);
+        this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
                                                             Entry entry) {
-        logger.info("Downloading file from {} to {} (eTag {})", uri, targetFilePath, entry.etag());
+        logger.info("Downloading {}/{} to {} (eTag {})", entry.publicId(), uri, targetFilePath, entry.etag());
 
         try {
 
@@ -57,7 +67,9 @@ public class VacoHttpClient {
 
             requestHeaders.put("Accept", "*/*");
 
-            if (entry.etag() != null && !entry.etag().isEmpty()) {
+            if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
+                logger.debug("Skipping If-None-Match header setting for {}/{} due to feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' being disabled", entry.publicId(), uri);
+            } else if (entry.etag() != null && !entry.etag().isEmpty()) {
                 requestHeaders.put("If-None-Match", entry.etag());
             }
 

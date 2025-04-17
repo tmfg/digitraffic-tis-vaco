@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.credentials.CredentialsService;
 import fi.digitraffic.tis.vaco.credentials.model.HttpBasicAuthenticationDetails;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
 import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -54,6 +55,8 @@ class VacoHttpClientTests {
     private HttpResponse mockResponse;
     @Mock
     private EntryService entryService;
+    @Mock
+    private FeatureFlagsService featureFlagsService;
     private Map<String, String> requestHeaders = new HashMap<>();
     private ImmutableCredentials credentials;
     private ImmutableEntry entry;
@@ -61,7 +64,7 @@ class VacoHttpClientTests {
     @BeforeEach
     void setUp() {
 
-        this.vacoClient = new VacoHttpClient(httpClient, credentialsService, entryService);
+        this.vacoClient = new VacoHttpClient(httpClient, credentialsService, entryService, featureFlagsService);
         credentials = ImmutableCredentials.copyOf(TestObjects.aCredentials().build());
         entry = ImmutableEntry.copyOf(TestObjects.anEntry().build());
 
@@ -69,11 +72,12 @@ class VacoHttpClientTests {
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(httpClient, mockRequest, mockResponse);
+        verifyNoMoreInteractions(httpClient, mockRequest, mockResponse, entryService, featureFlagsService);
     }
 
     @Test
     void handlesHttpClientExceptionsGracefully() throws IOException, ExecutionException, InterruptedException {
+        given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
         when(httpClient.get(any(String.class),any(Map.class))).thenThrow(new HttpClientException("simulated http client error"));
 
         Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
