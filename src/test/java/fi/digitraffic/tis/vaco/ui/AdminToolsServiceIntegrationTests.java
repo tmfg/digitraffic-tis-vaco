@@ -39,7 +39,6 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private Company companyWithOnlyNetex;
     private Company noDataCompany;
 
-
     @BeforeEach
     void setUp() {
         companyWithMultipleFeeds = createCompany("Company with multiple feeds", "AdminToolsService-1234");
@@ -72,7 +71,10 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     private void createEntries(Entry... entries) {
         for (Entry entry : entries) {
-            entryRepository.create(entry, Optional.empty(), Optional.empty());
+            entryRepository.create(entry, Optional.empty(), Optional.empty()).map(created -> {
+                entryRepository.markStatus(created, Status.SUCCESS);
+                return created;
+            }).get();
         }
     }
 
@@ -128,7 +130,7 @@ class AdminToolsServiceIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(gtfsEntry.businessId(), equalTo(companyWithOnlyGtfs.businessId()));
         assertThat(gtfsEntry.url(), equalTo(gtfsEntry.url()));
         assertThat(gtfsEntry.feedName(), equalTo(gtfsEntry.feedName()));
-        assertThat(gtfsEntry.status(), equalTo(Status.RECEIVED));
+        assertThat(gtfsEntry.status(), equalTo(Status.SUCCESS));
 
         List<CompanyLatestEntry> companyWithOnlyNetexEntries = data.stream()
             .filter(c -> c.companyName().equals(companyWithOnlyNetex.name())).toList();
