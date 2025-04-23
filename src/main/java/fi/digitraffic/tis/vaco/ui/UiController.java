@@ -84,7 +84,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
-import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
@@ -614,14 +613,14 @@ public class UiController {
         return new Resource<>(entry, null, links);
     }
 
-    @GetMapping(path ="/refresh-materialized-view")
-    public String refreshMaterializedView() {
-        statisticsService.refreshMaterializedView();
-        return "Materialized view refreshed successfully!";
+    @GetMapping(path="/entry-statistics")
+    public ResponseEntity<List<Resource<StatusStatistics>>> getEntryStatistics() {
+        return ResponseEntity.ok(Streams.map(statisticsService.fetchAllEntryStatistics(), Resource::resource).toList());
     }
-    @GetMapping(path="/statistics")
-    public ResponseEntity<List<Resource<StatusStatistics>>> getStatistics() {
-        return ResponseEntity.ok(Streams.map(statisticsService.fetchAllStatistics(), Resource::resource).toList());
+
+    @GetMapping(path="/task-statistics")
+    public ResponseEntity<List<Resource<StatusStatistics>>> getTaskStatistics() {
+        return ResponseEntity.ok(Streams.map(statisticsService.fetchAllTaskStatistics(), Resource::resource).toList());
     }
 
 }
