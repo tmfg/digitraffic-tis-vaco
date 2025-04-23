@@ -24,7 +24,7 @@ import fi.digitraffic.tis.vaco.db.model.FindingRecord;
 import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
-import fi.digitraffic.tis.vaco.db.model.StatusStatisticsRecord;
+import fi.digitraffic.tis.vaco.db.model.StatisticsRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.model.notifications.SubscriptionRecord;
@@ -48,8 +48,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.statistics.model.ImmutableStatusStatistics;
-import fi.digitraffic.tis.vaco.statistics.model.StatusStatistics;
+import fi.digitraffic.tis.vaco.statistics.model.ImmutableStatistics;
+import fi.digitraffic.tis.vaco.statistics.model.Statistics;
 import fi.digitraffic.tis.vaco.ui.model.Context;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
 import jakarta.annotation.Nullable;
@@ -278,13 +278,14 @@ public class RecordMapper {
             .build();
     }
 
-    public StatusStatistics toStatusStatistics(StatusStatisticsRecord statusStatisticsRecord) {
+    public Statistics toStatusStatistics(StatisticsRecord statisticsRecord) {
 
-        return ImmutableStatusStatistics.builder()
-            .status(statusStatisticsRecord.status())
-            .unit(statusStatisticsRecord.unit())
-            .count(statusStatisticsRecord.count())
-            .timestamp(statusStatisticsRecord.timestamp())
+        return ImmutableStatistics.builder()
+            .name(statisticsRecord.name())
+            .status(statisticsRecord.status())
+            .unit(statisticsRecord.unit())
+            .count(statisticsRecord.count())
+            .timestamp(statisticsRecord.timestamp())
             .build();
     }
 }

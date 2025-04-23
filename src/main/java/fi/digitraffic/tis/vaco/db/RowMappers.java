@@ -30,14 +30,14 @@ import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePackageRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutablePartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableRulesetRecord;
-import fi.digitraffic.tis.vaco.db.model.ImmutableStatusStatisticsRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableStatisticsRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableSummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableTaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableValidationInputRecord;
 import fi.digitraffic.tis.vaco.db.model.PackageRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.model.RulesetRecord;
-import fi.digitraffic.tis.vaco.db.model.StatusStatisticsRecord;
+import fi.digitraffic.tis.vaco.db.model.StatisticsRecord;
 import fi.digitraffic.tis.vaco.db.model.SummaryRecord;
 import fi.digitraffic.tis.vaco.db.model.TaskRecord;
 import fi.digitraffic.tis.vaco.db.model.ValidationInputRecord;
@@ -83,7 +83,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 public final class RowMappers {
 
@@ -491,9 +490,10 @@ public final class RowMappers {
         return rs.getObject(columnName, LocalDate.class);
     }
 
-    public static RowMapper<StatusStatisticsRecord> STATUS_STATISTICS_RECORD() {
-        return (rs, rowNum) -> ImmutableStatusStatisticsRecord.builder()
-            .status(rs.getString("status"))
+    public static RowMapper<StatisticsRecord> STATISTICS_RECORD() {
+        return (rs, rowNum) -> ImmutableStatisticsRecord.builder()
+            .name(rs.getString("name"))
+            .status(rs.getString("subserie"))
             .count(rs.getInt("count"))
             .unit(rs.getString("unit"))
             .timestamp(readLocalDate(rs,"record_created_at"))

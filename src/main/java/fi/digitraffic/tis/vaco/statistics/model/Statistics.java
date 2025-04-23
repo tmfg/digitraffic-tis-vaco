@@ -9,9 +9,9 @@ import java.time.LocalDate;
 
 @DomainValue
 @Value.Immutable
-@JsonSerialize(as = ImmutableStatusStatistics.class)
-@JsonDeserialize(as = ImmutableStatusStatistics.class)
-public interface StatusStatistics {
+@JsonSerialize(as = ImmutableStatistics.class)
+@JsonDeserialize(as = ImmutableStatistics.class)
+public interface Statistics {
 
     @Value.Parameter
     String status();
@@ -19,6 +19,8 @@ public interface StatusStatistics {
     int count();
     @Value.Parameter
     String unit();
+    @Value.Parameter
+    String name();
     @Value.Parameter
     LocalDate timestamp();
 
