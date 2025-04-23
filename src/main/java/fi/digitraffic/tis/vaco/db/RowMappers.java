@@ -490,8 +490,7 @@ public final class RowMappers {
         return rs.getObject(columnName, LocalDate.class);
     }
 
-    public static RowMapper<StatisticsRecord> STATISTICS_RECORD() {
-        return (rs, rowNum) -> ImmutableStatisticsRecord.builder()
+    public static RowMapper<StatisticsRecord> STATISTICS_RECORD = (rs, rowNum) -> ImmutableStatisticsRecord.builder()
             .name(rs.getString("name"))
             .status(rs.getString("subserie"))
             .count(rs.getInt("count"))
@@ -499,6 +498,5 @@ public final class RowMappers {
             .timestamp(readLocalDate(rs,"record_created_at"))
             .series(rs.getString("series"))
             .build();
-    }
 
 }
