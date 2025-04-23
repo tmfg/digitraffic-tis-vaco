@@ -23,6 +23,8 @@ public interface Statistics {
     String name();
     @Value.Parameter
     LocalDate timestamp();
+    @Value.Parameter
+    String series();
 
 
 }

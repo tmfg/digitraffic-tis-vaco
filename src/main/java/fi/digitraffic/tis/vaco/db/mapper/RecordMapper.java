@@ -286,6 +286,7 @@ public class RecordMapper {
             .unit(statisticsRecord.unit())
             .count(statisticsRecord.count())
             .timestamp(statisticsRecord.timestamp())
+            .series(statisticsRecord.series())
             .build();
     }
 }

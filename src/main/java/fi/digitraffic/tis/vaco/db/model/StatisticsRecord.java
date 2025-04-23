@@ -15,5 +15,8 @@ public interface StatisticsRecord {
     String name();
     @Value.Parameter
     LocalDate timestamp();
+    @Value.Parameter
+    String series();
+
 
 }

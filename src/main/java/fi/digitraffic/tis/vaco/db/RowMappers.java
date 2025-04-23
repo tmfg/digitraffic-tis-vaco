@@ -497,6 +497,7 @@ public final class RowMappers {
             .count(rs.getInt("count"))
             .unit(rs.getString("unit"))
             .timestamp(readLocalDate(rs,"record_created_at"))
+            .series(rs.getString("series"))
             .build();
     }
 
