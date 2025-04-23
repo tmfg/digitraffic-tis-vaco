@@ -29,7 +29,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.statistics.StatisticsService;
-import fi.digitraffic.tis.vaco.statistics.model.StatusStatistics;
+import fi.digitraffic.tis.vaco.statistics.model.Statistics;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
@@ -614,12 +614,12 @@ public class UiController {
     }
 
     @GetMapping(path="/entry-statistics")
-    public ResponseEntity<List<Resource<StatusStatistics>>> getEntryStatistics() {
+    public ResponseEntity<List<Resource<Statistics>>> getEntryStatistics() {
         return ResponseEntity.ok(Streams.map(statisticsService.fetchAllEntryStatistics(), Resource::resource).toList());
     }
 
     @GetMapping(path="/task-statistics")
-    public ResponseEntity<List<Resource<StatusStatistics>>> getTaskStatistics() {
+    public ResponseEntity<List<Resource<Statistics>>> getTaskStatistics() {
         return ResponseEntity.ok(Streams.map(statisticsService.fetchAllTaskStatistics(), Resource::resource).toList());
     }
 
