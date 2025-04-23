@@ -26,11 +26,14 @@ public class StatisticsService {
     @Scheduled(cron = "${vaco.scheduling.refresh-statistics.cron}")
     public void dailyStatistics() {
         try {
-            statisticsRepository.refreshView();
+            refreshMaterializedView();
         } catch (Exception e) {
             logger.warn("Failed to refresh status views ", e);
         }
+    }
 
+    public void refreshMaterializedView() {
+        statisticsRepository.refreshView();
     }
 
     public List<Statistics> fetchAllEntryStatistics() {

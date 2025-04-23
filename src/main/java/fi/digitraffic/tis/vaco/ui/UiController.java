@@ -627,4 +627,12 @@ public class UiController {
         return ResponseEntity.ok(Streams.map(statisticsService.fetchAllTaskStatistics(), Resource::resource).toList());
     }
 
+    @GetMapping(path ="/refresh-materialized-view")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public String refreshMaterializedView() {
+        statisticsService.refreshMaterializedView();
+        return "Materialized view refreshed successfully!";
+    }
+
 }
