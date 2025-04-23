@@ -614,11 +614,15 @@ public class UiController {
     }
 
     @GetMapping(path="/entry-statistics")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<Statistics>>> getEntryStatistics() {
         return ResponseEntity.ok(Streams.map(statisticsService.fetchAllEntryStatistics(), Resource::resource).toList());
     }
 
     @GetMapping(path="/task-statistics")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<List<Resource<Statistics>>> getTaskStatistics() {
         return ResponseEntity.ok(Streams.map(statisticsService.fetchAllTaskStatistics(), Resource::resource).toList());
     }

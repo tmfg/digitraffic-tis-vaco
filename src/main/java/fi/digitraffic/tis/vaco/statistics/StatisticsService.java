@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class StatisticsService {
@@ -16,12 +17,13 @@ public class StatisticsService {
     private final StatisticsRepository statisticsRepository;
     private final RecordMapper recordMapper;
 
-    private StatisticsService(StatisticsRepository statisticsRepository, RecordMapper recordMapper) {
-        this.statisticsRepository = statisticsRepository;
-        this.recordMapper = recordMapper;
+    public StatisticsService(StatisticsRepository statisticsRepository,
+                              RecordMapper recordMapper) {
+        this.statisticsRepository = Objects.requireNonNull(statisticsRepository);
+        this.recordMapper = Objects.requireNonNull(recordMapper);
     }
 
-    @Scheduled(cron = "${vaco.scheduling.daily-statistics-refresh.cron}")
+    @Scheduled(cron = "${vaco.scheduling.refresh-statistics.cron}")
     public void dailyStatistics() {
         try {
             statisticsRepository.refreshView();
