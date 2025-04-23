@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCredentialsRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
@@ -52,6 +53,9 @@ class CredentialsServiceTests {
     private HttpClient httpClient;
     @Mock
     private EntryService entryService;
+    @Mock
+    private FeatureFlagsService featureFlagsService;
+
     private Map<String, String> requestHeaders = new HashMap<>();
     private ObjectMapper objectMapper;
     private CompanyRecord companyRecord;
@@ -70,7 +74,7 @@ class CredentialsServiceTests {
                 entryRequestMapper, companyHierarchyService,
                 credentialsRepository, companyRepository, recordMapper);
 
-        vacoHttpClient = new VacoHttpClient(httpClient, credentialsService, entryService);
+        vacoHttpClient = new VacoHttpClient(httpClient, credentialsService, entryService, featureFlagsService);
 
         businessId = Constants.FINTRAFFIC_BUSINESS_ID;
 

@@ -1,15 +1,23 @@
 package fi.digitraffic.tis.vaco.rules;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.model.FindingRecord;
+import fi.digitraffic.tis.vaco.db.model.ImmutableFindingRecord;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
+import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.DelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.QueueNames;
@@ -28,6 +36,9 @@ import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
+import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.summary.SummaryService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -41,8 +52,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -50,9 +63,13 @@ import java.util.stream.Stream;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.asResultMessage;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,6 +93,8 @@ class RuleResultsListenerTests {
     @Mock private NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor;
     @Mock private SummaryService summaryService;
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
+    @Mock private FindingRepository findingRepository;
+    @Mock private RulesetService rulesetService;
 
     @BeforeEach
     void setUp() {
@@ -96,7 +115,9 @@ class RuleResultsListenerTests {
             internalRuleResultProcessor,
             summaryService,
             gtfsToNetexResultProcessor,
-            netexToGtfsRuleResultProcessor);
+            netexToGtfsRuleResultProcessor,
+            findingRepository,
+            rulesetService);
     }
 
     @AfterEach
@@ -111,7 +132,10 @@ class RuleResultsListenerTests {
             gbfsResultProcessor,
             gtfsCanonicalProcessor,
             simpleResultProcessor,
-            internalRuleResultProcessor);
+            internalRuleResultProcessor,
+            gtfsToNetexResultProcessor,
+            netexToGtfsRuleResultProcessor,
+            findingRepository);
     }
 
     @Test
@@ -140,19 +164,61 @@ class RuleResultsListenerTests {
         String jsonString = """
                 {
                   "entry": { "publicId":"abc1"},
-                  "task": { "id":2, "publicId":"abc2"}
+                  "task": { "id":2, "publicId":"abc2", "name": "gtfs.canonical" }
                 }
             """;
 
         JsonNode message = objectMapper.readValue(jsonString, JsonNode.class);
-        Task task = ImmutableTask.of("dlqTest", 100).withPublicId("abc2");
+        Task task = ImmutableTask.of("gtfs.canonical", 100).withPublicId("abc2");
         given(taskService.markStatus(task, Status.FAILED)).willReturn(task);
         given(taskService.findTask(task.publicId())).willReturn(Optional.of(task));
-        Entry entry = ImmutableEntry.of("abc1", "dlq test entry", "gtfs", "http://example.fintraffic", Constants.FINTRAFFIC_BUSINESS_ID, false);
+
+        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
+        Entry entry = entryBuilder.addTasks(task)
+            .publicId("abc1")
+            .name("dlq test entry")
+            .format("gtfs")
+            .url("http://example.fintraffic")
+            .businessId(Constants.FINTRAFFIC_BUSINESS_ID)
+            .sendNotifications(false)
+            .build();
+
         given(entryService.findEntry(entry.publicId())).willReturn(Optional.of(entry));
         givenResultProcessingResultsInNewProcessingJobSubmission();
 
+        String findingRaw = "{}";
+        byte[] raw = findingRaw.getBytes(StandardCharsets.UTF_8);
+
+        Finding finding = ImmutableFinding.builder()
+            .publicId(entry.publicId())
+            .source(task.name())
+            .taskId(2L)
+            .message("entry_ended_up_in_dead_letter_queue")
+            .severity(FindingSeverity.ERROR)
+            .raw(raw)
+            .build();
+
+        FindingRecord findingRecord = ImmutableFindingRecord.builder()
+            .id(500L)
+            .publicId(NanoIdUtils.randomNanoId())
+            .taskId(500L)
+            .source(task.name())
+            .build();
+
+        ImmutableRuleset ruleset = TestObjects.aRuleset().format(TransitDataFormat.GTFS)
+            .identifyingName(task.name())
+            .addAllAfterDependencies(Set.of("gtfs.canonical"))
+            .build();
+
+        given(rulesetService.findByName(task.name())).willReturn(Optional.of(ruleset));
+        assertEquals(ruleset.afterDependencies(), Set.of("gtfs.canonical"));
+
+        given(findingRepository.create(finding)).willReturn(findingRecord);
+        given(taskService.trackTask(entry, task, ProcessingState.COMPLETE)).willReturn(task);
+
         assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(true));
+
+        verify(taskService, times(1)).cancelAfterDependencies(eq(entry), eq(task), eq(ruleset));
     }
 
     @Test

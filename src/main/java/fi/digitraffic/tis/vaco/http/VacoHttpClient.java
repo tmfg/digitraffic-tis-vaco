@@ -8,16 +8,21 @@ import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.credentials.model.HttpBasicAuthenticationDetails;
 import fi.digitraffic.tis.vaco.db.model.CredentialsRecord;
 import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.HashMap;
@@ -32,20 +37,29 @@ import java.util.concurrent.CompletableFuture;
 public class VacoHttpClient {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final HttpClient httpClient;
+
     private final CredentialsService credentialsService;
+
     private final EntryService entryService;
 
-    public VacoHttpClient(HttpClient httpClient, CredentialsService credentialsService, EntryService entryService) {
+    private final FeatureFlagsService featureFlagsService;
+
+    public VacoHttpClient(HttpClient httpClient,
+                          CredentialsService credentialsService,
+                          EntryService entryService,
+                          FeatureFlagsService featureFlagsService) {
         this.httpClient = Objects.requireNonNull(httpClient);
         this.credentialsService = Objects.requireNonNull(credentialsService);
         this.entryService = Objects.requireNonNull(entryService);
+        this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
                                                             Entry entry) {
-        logger.info("Downloading file from {} to {} (eTag {})", uri, targetFilePath, entry.etag());
+        logger.info("Downloading {}/{} to {} (eTag {})", entry.publicId(), uri, targetFilePath, entry.etag());
 
         try {
 
@@ -53,7 +67,9 @@ public class VacoHttpClient {
 
             requestHeaders.put("Accept", "*/*");
 
-            if (entry.etag() != null && !entry.etag().isEmpty()) {
+            if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
+                logger.debug("Skipping If-None-Match header setting for {}/{} due to feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' being disabled", entry.publicId(), uri);
+            } else if (entry.etag() != null && !entry.etag().isEmpty()) {
                 requestHeaders.put("If-None-Match", entry.etag());
             }
 
@@ -64,23 +80,30 @@ public class VacoHttpClient {
             }
 
             HttpRequest request = httpClient.get(uri, requestHeaders);
-            HttpResponse.BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(targetFilePath);
+            HttpResponse.BodyHandler<InputStream> bodyHandler = HttpResponse.BodyHandlers.ofInputStream();
+
+            ImmutableDownloadResponse.Builder resp = ImmutableDownloadResponse.builder();
 
             return httpClient.send(request, bodyHandler).thenApply(response -> {
-                ImmutableDownloadResponse.Builder resp = ImmutableDownloadResponse.builder();
+
                 response.headers().firstValue("ETag").ifPresent(resp::etag);
 
                 logger.info("Response for {} with ETag {} resulted in HTTP status {}", uri, entry.etag(), response.statusCode());
 
                 if (response.statusCode() == 304) {
-                    return resp.build();
+                    return resp.result(DownloadResponse.Result.NOT_MODIFIED).build();
                 } else {
-                    return resp.body(response.body()).build();
+                    try {
+                        Files.copy(response.body(), targetFilePath);
+                    } catch (IOException e) {
+                        throw new RuleExecutionException("Failed to write download stream of " + entry.publicId() + "/" + uri + " into file " + targetFilePath, e);
+                    }
+                    return resp.result(DownloadResponse.Result.OK).body(targetFilePath).build();
                 }
             });
         } catch (HttpClientException e) {
             logger.warn("HTTP execution failure for %s".formatted(uri), e);
-            return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().build());
+            return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.FAILED_DOWNLOAD).build());
         }
     }
 

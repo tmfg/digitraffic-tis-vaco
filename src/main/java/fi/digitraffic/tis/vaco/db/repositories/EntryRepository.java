@@ -189,6 +189,16 @@ public class EntryRepository {
             entry.publicId());
     }
 
+    public void markStatus(EntryRecord entry, Status status) {
+        jdbc.update("""
+               UPDATE entry
+                  SET status = (?)::status
+                WHERE id = ?
+            """,
+            status.fieldName(),
+            entry.id());
+    }
+
     public List<EntryRecord> findAllByBusinessId(String businessId) {
         try {
             return jdbc.query("""

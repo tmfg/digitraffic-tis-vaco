@@ -5,9 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.aws.sqs.SqsListener;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
+import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
+import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableDelegationJobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
@@ -28,12 +32,16 @@ import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
 import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.SummaryService;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -57,6 +65,8 @@ public class RuleResultsListener extends SqsListener {
     private final SummaryService summaryService;
     private final GtfsToNetexResultProcessor gtfsToNetexResultProcessor;
     private final NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor;
+    private final FindingRepository findingRepository;
+    private final RulesetService rulesetService;
 
     public RuleResultsListener(MessagingService messagingService,
                                FindingService findingService,
@@ -71,7 +81,8 @@ public class RuleResultsListener extends SqsListener {
                                InternalRuleResultProcessor internalRuleResultProcessor,
                                SummaryService summaryService,
                                GtfsToNetexResultProcessor gtfsToNetexResultProcessor,
-                               NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor) {
+                               NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor,
+                               FindingRepository findingRepository, RulesetService rulesetService) {
         super(messagingService, objectMapper);
         this.findingService = Objects.requireNonNull(findingService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
@@ -85,6 +96,8 @@ public class RuleResultsListener extends SqsListener {
         this.summaryService = Objects.requireNonNull(summaryService);
         this.gtfsToNetexResultProcessor = Objects.requireNonNull(gtfsToNetexResultProcessor);
         this.netexToGtfsRuleResultProcessor = Objects.requireNonNull(netexToGtfsRuleResultProcessor);
+        this.findingRepository = Objects.requireNonNull(findingRepository);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
     }
 
     @Scheduled(initialDelayString = "${vaco.scheduling.findings.poll-rate}", fixedRateString = "${vaco.scheduling.findings.poll-rate}")
@@ -115,26 +128,35 @@ public class RuleResultsListener extends SqsListener {
         return CompletableFuture.supplyAsync(() -> {
             logger.info("Dead letter Queue Message {}", jsonNode);
 
+            Optional<Finding> finding = createDeadLetterQueueFinding(jsonNode);
+            finding.ifPresent(findingRepository::create);
+
             Optional<String> taskPublicId = Optional.ofNullable(jsonNode)
                 .filter(node -> node.has("task"))
                 .map(node -> node.get("task").get("publicId"))
                 .map(JsonNode::asText);
 
+            Optional<Entry> entry = getEntryPublicId(jsonNode)
+                .flatMap(entryService::findEntry);
+
             return taskPublicId
                 .flatMap(taskService::findTask)
                 .map(task -> {
                     taskService.markStatus(task, Status.FAILED);
+                    entry.ifPresent(e ->  {
+                        taskService.trackTask(e, task, ProcessingState.COMPLETE);
+                        Optional<Ruleset> ruleset = rulesetService.findByName(task.name());
+                        ruleset.ifPresent(r -> taskService.cancelAfterDependencies(e, task, r));
+                    });
                     return true;
                 }).orElse(false);
         }).whenComplete((deadLetterProcessingSuccess, maybeEx) -> {
             if (maybeEx != null) {
-                logger.warn("Handling deal letter queue message failed due to unhandled exception", maybeEx);
+                logger.warn("Handling dead letter queue message failed due to unhandled exception", maybeEx);
             }
             // resubmit to processing queue to continue general logic
-            Optional<String> entryPublicId = Optional.ofNullable(jsonNode)
-                .filter(node -> node.has("entry"))
-                .map(node -> node.get("entry").get("publicId"))
-                .map(JsonNode::asText);
+            Optional<String> entryPublicId = getEntryPublicId(jsonNode);
+
             entryPublicId.flatMap(entryService::findEntry)
                 .ifPresent(entry ->
                     messagingService.submitProcessingJob(ImmutableDelegationJobMessage.builder()
@@ -142,6 +164,50 @@ public class RuleResultsListener extends SqsListener {
                         .retryStatistics(ImmutableRetryStatistics.of(5))
                         .build()));
         });
+    }
+
+    private Optional<Finding> createDeadLetterQueueFinding(JsonNode jsonNode) {
+
+        Optional<String> entryId = getEntryPublicId(jsonNode);
+
+        Optional<String> taskName = Optional.ofNullable(jsonNode)
+            .filter(node -> node.has("task"))
+            .map(node -> node.get("task").get("name"))
+            .map(JsonNode::asText);
+
+        String findingRaw = "{}";
+        byte[] raw = findingRaw.getBytes(StandardCharsets.UTF_8);
+
+        return entryId.flatMap(e -> {
+            Optional<Long> taskId = Optional.ofNullable(jsonNode)
+                .filter(node -> node.has("task"))
+                .map(node -> node.get("task").get("id"))
+                .map(JsonNode::asLong);
+
+            if (taskName.isPresent()) {
+                Optional<Ruleset> ruleset = rulesetService.findByName(taskName.get());
+
+                return taskId.map(t -> ImmutableFinding.builder()
+                    .publicId(e)
+                    .source(taskName.get())
+                    .taskId(t)
+                    .message("entry_ended_up_in_dead_letter_queue")
+                    .severity(FindingSeverity.ERROR)
+                    .raw(raw)
+                    .rulesetId(ruleset.map(Ruleset::id).orElse(null))
+                    .build());
+            } else {
+                return Optional.empty();
+            }
+        });
+    }
+
+    @NotNull
+    private static Optional<String> getEntryPublicId(JsonNode jsonNode) {
+        return Optional.ofNullable(jsonNode)
+            .filter(node -> node.has("entry"))
+            .map(node -> node.get("entry").get("publicId"))
+            .map(JsonNode::asText);
     }
 
     protected CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {

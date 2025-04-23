@@ -11,7 +11,10 @@ import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
+import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.findings.FindingService;
+import fi.digitraffic.tis.vaco.findings.model.Finding;
+import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
@@ -50,6 +53,7 @@ import java.util.zip.ZipFile;
 public class DownloadRule implements Rule<Entry, ResultMessage> {
     public static final String PREPARE_DOWNLOAD_TASK = "prepare.download";
     private final EntryService entryService;
+    private final FeatureFlagsService featureFlagsService;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
@@ -63,14 +67,16 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         VacoProperties vacoProperties,
                         VacoHttpClient httpClient,
                         S3Client s3Client,
-                        FindingService findingService, EntryService entryService) {
+                        FindingService findingService, EntryService entryService,
+                        FeatureFlagsService featureFlagsService) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.httpClient = Objects.requireNonNull(httpClient);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.findingService = Objects.requireNonNull(findingService);
-        this.entryService = entryService;
+        this.entryService = Objects.requireNonNull(entryService);
+        this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
     @Override
@@ -111,7 +117,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         .uploadedFiles(uploadedFiles)
                         .build();
                 }  catch (Exception e) {
-                    logger.warn("Caught unrecoverable exception during file download", e);
+                    logger.warn("Caught unrecoverable exception during file download in entry {} in task {}", entry.publicId(), tracked.name(), e);
                     taskService.markStatus(entry, tracked, Status.FAILED);
                     return ImmutableResultMessage.builder()
                         .entryId(entry.publicId())
@@ -150,6 +156,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         entry.url(),
                         entry)
                     .thenApply(updateEtag(entry))
+                    .thenApply(reportResult(entry, tracked))
                     .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
             } else {
                 // by default we assume single ZIP files, this applies to e.g. GTFS and NeTEx
@@ -158,6 +165,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         entry.url(),
                         entry)
                     .thenApply(updateEtag(entry))
+                    .thenApply(reportResult(entry, tracked))
                     .thenApply(DownloadResponse::body);
             }
 
@@ -171,6 +179,28 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             track(entry, tracked, ProcessingState.COMPLETE).apply(tracked);
             return Optional.empty();
         }
+    }
+
+    private Function<DownloadResponse, DownloadResponse> reportResult(Entry entry, Task task) {
+        return downloadResponse -> {
+            if (downloadResponse.result().equals(DownloadResponse.Result.NOT_MODIFIED)) {
+                Optional<Finding> finding = createFinding(entry, task, downloadResponse.result());
+                finding.ifPresent(findingService::reportFinding);
+            }
+            return downloadResponse;
+        };
+    }
+
+    private Optional<Finding> createFinding(Entry entry, Task task, DownloadResponse.Result result){
+
+        return Optional.of(ImmutableFinding.builder()
+            .publicId(entry.publicId())
+            .taskId(task.id())
+            .source("prepare.download")
+            .source(task.name())
+            .message(String.valueOf(result))
+            .severity(FindingSeverity.ERROR)
+            .build());
     }
 
     /**
@@ -188,14 +218,19 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     }
 
     private boolean shouldDownload(Entry entry) {
-        if (entry.context() != null && entry.etag() != null) {
-            Optional<Entry> previousEntry = entryService.findLatestEntryForContext(entry.businessId(), entry.context());
-            if (previousEntry.isPresent() && previousEntry.get().etag().equals(entry.etag())) {
-                logger.info("Entry {} with context '{}' has same ETag '{}' as its predecessor, skipping download", entry.publicId(), entry.context(), entry.etag());
-                return false;
+        if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
+            logger.info("Feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' is currently disabled, ETags will not be used to skip stale downloads for entry {}/context {}/ETag {}", entry.publicId(), entry.context(), entry.etag());
+            return true;
+        } else {
+            if (entry.context() != null && entry.etag() != null) {
+                Optional<Entry> previousEntry = entryService.findLatestEntryForContext(entry.businessId(), entry.context());
+                if (previousEntry.isPresent() && previousEntry.get().etag().equals(entry.etag())) {
+                    logger.info("Entry {} with context '{}' has same ETag '{}' as its predecessor, skipping download", entry.publicId(), entry.context(), entry.etag());
+                    return false;
+                }
             }
+            return true;
         }
-        return true;
     }
 
     private Function<DownloadResponse, CompletionStage<Optional<Path>>> downloadGbfsDiscovery(Entry entry, Path tempDirPath) {

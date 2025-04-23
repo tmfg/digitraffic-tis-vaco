@@ -105,7 +105,7 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
                 entryService.updateStatus(entry);
                 notificationsService.notifyEntryComplete(entry);
             } else {
-                // some kind of limbo/crash
+                logger.info("Entry {} still has tasks running, will wait for completion", entry.publicId());
             }
         }
     }
