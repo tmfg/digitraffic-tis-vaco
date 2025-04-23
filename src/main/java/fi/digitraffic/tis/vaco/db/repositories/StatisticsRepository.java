@@ -1,12 +1,12 @@
 package fi.digitraffic.tis.vaco.db.repositories;
 
 import fi.digitraffic.tis.vaco.db.RowMappers;
-import fi.digitraffic.tis.vaco.db.model.StatisticsRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import fi.digitraffic.tis.vaco.db.model.StatisticsRecord;
 
 import java.util.List;
 
@@ -26,12 +26,12 @@ public class StatisticsRepository {
     public List<StatisticsRecord> listEntryStatusStatistics() {
         try {
             return jdbc.query("""
-               SELECT name, subserie, date_trunc('day', record_created_at)::date AS record_created_at, unit, count
+               SELECT name, subserie, date_trunc('day', record_created_at)::date AS record_created_at, unit, count, series
                FROM status_statistics
                WHERE series = 'entry-statuses'
                AND record_created_at >= now() - interval '30 days';
                 """,
-                RowMappers.STATISTICS_RECORD());
+                RowMappers.STATISTICS_RECORD);
         } catch (EmptyResultDataAccessException e) {
             return List.of();
         }
@@ -41,12 +41,12 @@ public class StatisticsRepository {
 
         try {
             return jdbc.query("""
-               SELECT name, subserie, date_trunc('day', record_created_at)::date AS record_created_at, unit, count
+               SELECT name, subserie, date_trunc('day', record_created_at)::date AS record_created_at, unit, count, series
                FROM status_statistics
                WHERE series = 'task-statuses'
                AND record_created_at >= now() - interval '30 days';
                 """,
-                RowMappers.STATISTICS_RECORD());
+                RowMappers.STATISTICS_RECORD);
         } catch (EmptyResultDataAccessException e) {
             return List.of();
         }
