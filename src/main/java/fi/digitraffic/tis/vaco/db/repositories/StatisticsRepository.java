@@ -27,9 +27,8 @@ public class StatisticsRepository {
         try {
             return jdbc.query("""
                SELECT name, subserie, date_trunc('day', record_created_at)::date AS record_created_at, unit, count, series
-               FROM status_statistics
-               WHERE series = 'entry-statuses'
-               AND record_created_at >= now() - interval '30 days';
+               FROM statistics
+               WHERE series = 'entry-statuses';
                 """,
                 RowMappers.STATISTICS_RECORD);
         } catch (EmptyResultDataAccessException e) {
@@ -42,9 +41,8 @@ public class StatisticsRepository {
         try {
             return jdbc.query("""
                SELECT name, subserie, date_trunc('day', record_created_at)::date AS record_created_at, unit, count, series
-               FROM status_statistics
-               WHERE series = 'task-statuses'
-               AND record_created_at >= now() - interval '30 days';
+               FROM statistics
+               WHERE series = 'task-statuses';
                 """,
                 RowMappers.STATISTICS_RECORD);
         } catch (EmptyResultDataAccessException e) {
@@ -54,7 +52,7 @@ public class StatisticsRepository {
     }
 
     public void refreshView() {
-        String refreshSql = "REFRESH MATERIALIZED VIEW status_statistics";
+        String refreshSql = "REFRESH MATERIALIZED VIEW statistics";
         jdbcTemplate.execute(refreshSql);
     }
 }
