@@ -28,6 +28,8 @@ import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.statistics.StatisticsService;
+import fi.digitraffic.tis.vaco.statistics.model.Statistics;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
@@ -108,6 +110,7 @@ public class UiController {
     private final EncryptionService encryptionService;
     private final ContextService contextService;
     private final CredentialsService credentialsService;
+    private final StatisticsService statisticsService;
 
     public UiController(VacoProperties vacoProperties,
                         EntryService entryService,
@@ -123,7 +126,8 @@ public class UiController {
                         EncryptionService encryptionService,
                         UiService uiService,
                         ContextService contextService,
-                        CredentialsService credentialsService) {
+                        CredentialsService credentialsService,
+                        StatisticsService statisticsService) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryService = Objects.requireNonNull(entryService);
         this.taskService = Objects.requireNonNull(taskService);
@@ -139,6 +143,7 @@ public class UiController {
         this.uiService = Objects.requireNonNull(uiService);
         this.contextService = Objects.requireNonNull(contextService);
         this.credentialsService = credentialsService;
+        this.statisticsService = statisticsService;
     }
 
     @GetMapping(path = "/bootstrap")
@@ -607,4 +612,27 @@ public class UiController {
 
         return new Resource<>(entry, null, links);
     }
+
+    @GetMapping(path="/entry-statistics")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<Statistics>>> getEntryStatistics() {
+        return ResponseEntity.ok(new Resource<>(statisticsService.fetchAllEntryStatistics(), null, null));
+    }
+
+    @GetMapping(path="/task-statistics")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public ResponseEntity<Resource<List<Statistics>>> getTaskStatistics() {
+        return ResponseEntity.ok(new Resource<>(statisticsService.fetchAllTaskStatistics(), null, null));
+    }
+
+    @GetMapping(path ="/refresh-materialized-view")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
+    public String refreshMaterializedView() {
+        statisticsService.refreshMaterializedView();
+        return "Materialized view refreshed successfully!";
+    }
+
 }

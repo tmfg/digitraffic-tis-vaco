@@ -91,6 +91,7 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
         registry.add("vaco.scheduling.weekly-feed-status.cron", () -> "0 0 23 * * SAT");
         registry.add("vaco.scheduling.cleanup.cron", () -> "0 0 23 * * SAT");
         registry.add("spring.cloud.azure.active-directory.enabled", () -> false);
+        registry.add("vaco.scheduling.refresh-statistics.cron", () -> "0 0 12 * * *");
     }
 
     @Autowired
