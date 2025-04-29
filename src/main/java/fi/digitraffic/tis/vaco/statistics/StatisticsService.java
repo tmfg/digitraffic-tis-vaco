@@ -33,6 +33,7 @@ public class StatisticsService {
     }
 
     public void refreshMaterializedView() {
+        logger.info("Starting refreshing statistics views");
         statisticsRepository.refreshView();
     }
 

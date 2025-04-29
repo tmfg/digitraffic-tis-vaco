@@ -632,6 +632,7 @@ public class UiController {
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public String refreshMaterializedView() {
         statisticsService.refreshMaterializedView();
+        logger.info("Materialized views refreshed");
         return "Materialized view refreshed successfully!";
     }
 
