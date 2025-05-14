@@ -53,7 +53,8 @@ public class AadOAuth2LoginSecurityConfig {
                 // magic link exceptions:
                 "/ui/processing-results/**", // Entry processing result page may be accessed with magic link
                 "/ui/entries/*/state",       // entry state checks its own permissions internally
-                "/static/**"                 // allow unauthenticated access to static resources for testing
+                "/static/**",                // allow unauthenticated access to static resources for testing
+                "/v1/webhooks"               // webhooks endpoint is open to all for now TODO: add shared secret
                 ).permitAll()
                 // private endpoints (=everything else)
                 .anyRequest().authenticated())
