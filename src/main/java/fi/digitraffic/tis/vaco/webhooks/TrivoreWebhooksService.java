@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 @Service
-@Profile("!local")
+@Profile("!local & !tests")
 public class TrivoreWebhooksService {
 
     private static final String EVENT_HANDLING_SUCCEEDED = "succeeded";
