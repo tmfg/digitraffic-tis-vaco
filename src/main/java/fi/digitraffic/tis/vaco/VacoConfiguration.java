@@ -20,8 +20,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.reactive.function.client.WebClient;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import java.time.Clock;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Generic didn't-fit-anywhere-else configuration container
@@ -65,5 +68,12 @@ public class VacoConfiguration {
     @Bean
     public Clock clock() {
         return Clock.systemDefaultZone();
+    }
+
+    @Bean
+    public WebClient webClient(WebClient.Builder webClientBuilder) {
+        return webClientBuilder
+            .defaultHeader("User-Agent", "Fintraffic TIS-VACO/" + LocalDate.now().format(DateTimeFormatter.ISO_DATE))
+            .build();
     }
 }
