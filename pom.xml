@@ -146,6 +146,11 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- Webflux contains the WebClient used in Trivore integration -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
         <!-- Handle JDK8 new classes and JSR-310 date/time types correctly when (de)serializing -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
