@@ -75,7 +75,7 @@ public class MessagingService {
     public Stream<Message> readMessages(String queueName) {
         ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
             .queueUrl(resolveQueueUrl(queueName))
-            .maxNumberOfMessages(Runtime.getRuntime().availableProcessors())
+            .maxNumberOfMessages(Math.min(10, Runtime.getRuntime().availableProcessors()))
             .waitTimeSeconds(1)
             .build();
 
