@@ -44,14 +44,14 @@ class CleanupServiceTests {
 
     @Test
     void returnsDefaultCleanupValuesForNull() {
-        assertThat(cleanupService.cleanupOlderThan(null), equalTo(vacoProperties.cleanup().olderThan()));
         assertThat(cleanupService.cleanupKeepAtLeast(null), equalTo(vacoProperties.cleanup().keepAtLeast()));
         assertThat(cleanupService.cleanupRemoveAtMostInTotal(null), equalTo(vacoProperties.cleanup().removeAtMostInTotal()));
     }
 
     @Test
     void returnsHardcodedLimitValuesForValuesOutOfBounds() {
-        assertThat(cleanupService.cleanupOlderThan(Duration.ofSeconds(1)), equalTo(Cleanup.MINIMUM_CLEANUP_DURATION));
+        assertThat(cleanupService.cleanupHistoryOlderThan(Duration.ofSeconds(1)), equalTo(Cleanup.MINIMUM_CLEANUP_DURATION));
+        assertThat(cleanupService.cleanupEntriesWithoutContextOlderThan(Duration.ofSeconds(2)), equalTo(Cleanup.MINIMUM_CLEANUP_DURATION));
         assertThat(cleanupService.cleanupKeepAtLeast(0), equalTo(Cleanup.MINIMUM_KEEP_AT_LEAST));
         assertThat(cleanupService.cleanupRemoveAtMostInTotal(1_000_000), equalTo(Cleanup.MAXIMUM_REMOVE_AT_MOST_IN_TOTAL));
     }
@@ -59,7 +59,8 @@ class CleanupServiceTests {
     @Test
     void returnsGivenValuesIfTheyAreWithinAllowedRanges() {
         // duration doesn't have upper bound
-        assertThat(cleanupService.cleanupOlderThan(Duration.ofDays(600)), equalTo(Duration.ofDays(600)));
+        assertThat(cleanupService.cleanupHistoryOlderThan(Duration.ofDays(600)), equalTo(Duration.ofDays(600)));
+        assertThat(cleanupService.cleanupEntriesWithoutContextOlderThan(Duration.ofDays(700)), equalTo(Duration.ofDays(700)));
         assertThat(cleanupService.cleanupKeepAtLeast(100), equalTo(100));
         assertThat(cleanupService.cleanupRemoveAtMostInTotal(42), equalTo(42));
     }

@@ -45,20 +45,20 @@ public class CleanupService {
     }
 
     public Set<String> runCleanup() {
-        return runCleanup(cleanupProperties.olderThan(), cleanupProperties.keepAtLeast(), cleanupProperties.removeAtMostInTotal());
+        return runCleanup(cleanupProperties.historyOlderThan(), cleanupProperties.entriesWithoutContextOlderThan(), cleanupProperties.keepAtLeast(), cleanupProperties.removeAtMostInTotal());
     }
 
-    public Set<String> runCleanup(Duration olderThan, Integer keepAtLeast, Integer atMostInTotal) {
+    public Set<String> runCleanup(Duration historyOlderThan, Duration entriesWithoutContextOlderThan, Integer keepAtLeast, Integer atMostInTotal) {
         // 1. remove in-between cancelled entries no one cares about
         List<String> removedByCompression = entryRepository.compressHistory();
         // 2. run generic cleanup
         List<String> removedByCleanup = entryRepository.cleanupHistory(
-            cleanupOlderThan(olderThan),
+            cleanupHistoryOlderThan(historyOlderThan),
             cleanupKeepAtLeast(keepAtLeast),
             cleanupRemoveAtMostInTotal(atMostInTotal));
         // 3. remove entries without context id
         List<String> removedByWithoutContextCleanUp = entryRepository.cleanEntriesWithoutContext(
-            cleanupOlderThan(olderThan));
+            cleanupEntriesWithoutContextOlderThan(entriesWithoutContextOlderThan));
         if (logger.isInfoEnabled()) {
             int count = removedByCompression.size() + removedByCleanup.size() + removedByWithoutContextCleanUp.size();
             logger.info("Cleanup removed {} entries (compressed: {}, cleaned up: {}, cleaned up without context: {})", count, removedByCompression, removedByCleanup, removedByWithoutContextCleanUp);
@@ -71,9 +71,18 @@ public class CleanupService {
     }
 
     @VisibleForTesting
-    protected Duration cleanupOlderThan(Duration olderThanRequest) {
+    protected Duration cleanupHistoryOlderThan(Duration olderThanRequest) {
+        return cleanupEntriesOlderThan(olderThanRequest, cleanupProperties.historyOlderThan());
+    }
+
+    @VisibleForTesting
+    protected Duration cleanupEntriesWithoutContextOlderThan(Duration olderThanRequest) {
+        return cleanupEntriesOlderThan(olderThanRequest, cleanupProperties.entriesWithoutContextOlderThan());
+    }
+
+    private Duration cleanupEntriesOlderThan(Duration olderThanRequest, Duration fallback) {
         if (olderThanRequest == null) {
-            olderThanRequest = cleanupProperties.olderThan();
+            olderThanRequest = fallback;
         }
         if (olderThanRequest.compareTo(Cleanup.MINIMUM_CLEANUP_DURATION) < 0) {
             logger.warn("Tried to run cleanup with less than allowed minimum duration of {}! Using minimum value instead of {}", Cleanup.MINIMUM_CLEANUP_DURATION, olderThanRequest);
