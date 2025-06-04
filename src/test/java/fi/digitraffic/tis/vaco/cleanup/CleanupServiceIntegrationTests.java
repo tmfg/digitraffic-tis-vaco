@@ -3,6 +3,8 @@ package fi.digitraffic.tis.vaco.cleanup;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -16,6 +18,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -31,12 +34,15 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private EntryService entryService;
 
     @Autowired
+    private EntryRepository entryRepository;
+
+    @Autowired
     private CleanupService cleanupService;
 
     @Autowired
     private JdbcTemplate jdbc;
 
-    private int totalEntries = 25;
+    private final int totalEntries = 25;
     private Map<String, String> entries;
 
     @BeforeEach
@@ -53,7 +59,7 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
      */
     @NotNull
     private Entry interleaveEntry(Entry e) {
-        Entry result = entryService.create(e).get();
+        EntryRecord result = entryRepository.create(e, Optional.empty(), Optional.empty()).orElseThrow();
         String days = String.format("%d", totalEntries - Integer.parseInt(result.name()));
         jdbc.update("UPDATE entry SET created=timezone('utc', now())- INTERVAL '" + days + " DAYS' WHERE public_id = ?",
             result.publicId());
@@ -153,9 +159,11 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void removesSubsequentCancelledEntriesToReduceClutter() {
         int cancelledEntryCount = 5;
-        List<Entry> cancelledEntries = IntStream.range(0, cancelledEntryCount)
+        List<EntryRecord> cancelledEntries = IntStream.range(0, cancelledEntryCount)
             .mapToObj(i -> ImmutableEntry.of(NanoIdUtils.randomNanoId(), Integer.toString(i), "whatever", "https://example.co.uk/cancelled", TestConstants.FINTRAFFIC_BUSINESS_ID, false))
-            .map((e) -> entryService.create(e).get())
+            .map(e -> entryRepository.create(e, Optional.empty(), Optional.empty()))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .toList();
 
         assertThat(cancelledEntries.size(), equalTo(cancelledEntryCount));
