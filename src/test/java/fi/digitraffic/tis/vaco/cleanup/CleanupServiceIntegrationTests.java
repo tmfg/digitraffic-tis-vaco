@@ -3,6 +3,8 @@ package fi.digitraffic.tis.vaco.cleanup;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
+import fi.digitraffic.tis.vaco.db.model.EntryRecord;
+import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
@@ -16,6 +18,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -31,12 +34,15 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private EntryService entryService;
 
     @Autowired
+    private EntryRepository entryRepository;
+
+    @Autowired
     private CleanupService cleanupService;
 
     @Autowired
     private JdbcTemplate jdbc;
 
-    private int totalEntries = 25;
+    private final int totalEntries = 25;
     private Map<String, String> entries;
 
     @BeforeEach
@@ -53,8 +59,9 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
      */
     @NotNull
     private Entry interleaveEntry(Entry e) {
-        Entry result = entryService.create(e).get();
-        jdbc.update("UPDATE entry SET updated=NOW() - INTERVAL '" + result.name() + " days' WHERE public_id = ?",
+        EntryRecord result = entryRepository.create(e, Optional.empty(), Optional.empty()).orElseThrow();
+        String days = String.format("%d", totalEntries - Integer.parseInt(result.name()));
+        jdbc.update("UPDATE entry SET created=timezone('utc', now())- INTERVAL '" + days + " DAYS' WHERE public_id = ?",
             result.publicId());
         return entryService.findEntry(result.publicId()).get();
     }
@@ -66,12 +73,13 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
-    void keepsGivenAmountOfEntries() {
-        // remove anything without timelimit, keep 10 latest
+    void keepsGivenAmountOfHistoryEntries() {
+        // keep 10 latest entries
         int keepEntries = 10;
-        Duration olderThan = Duration.parse("P5D");
+        Duration historyOlderThan = Duration.parse("P20D");
+        Duration entriesWithoutContextOlderThan = Duration.parse("P20D");
         int atMost = 100;
-        Set<String> removed = cleanupService.runCleanup(olderThan, keepEntries, atMost);
+        Set<String> removed = cleanupService.runCleanup(historyOlderThan, entriesWithoutContextOlderThan, keepEntries, atMost);
 
         // old are removed - the smaller the sequence number in name field, the older the entry is
         removed.forEach(r -> assertThat(Integer.parseInt(entries.get(r)), lessThan(totalEntries - keepEntries)));
@@ -87,12 +95,33 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
-    void onlyRemovesEntriesOlderThanSpecified() {
-        // keep everything newer than specified
-        int keepEntries = 5;
-        Duration olderThan = Duration.parse("P10D");
+    void deletesOldEntries() {
+        // Delete entries older than 8 days
+        int keepEntries = 100;
+        Duration historyOlderThan = Duration.parse("P9D");
+        // use larger value here to ensure that history -rule gets tested properly
+        Duration entriesWithoutContextOlderThan = Duration.parse("P20D");
         int atMost = 100;
-        Set<String> removed = cleanupService.runCleanup(olderThan, keepEntries, atMost);
+        Set<String> removed = cleanupService.runCleanup(historyOlderThan, entriesWithoutContextOlderThan, keepEntries, atMost);
+
+        assertThat(removed.size(), equalTo(17));
+
+        List<Entry> remaining = entryService.findAllByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
+
+        assertThat(remaining.size(), equalTo(8));
+
+        // new are kept - the bigger the sequence number in name field, the newer the entry is
+        remaining.forEach(r -> assertThat(Integer.parseInt(r.name()), greaterThanOrEqualTo(17)));
+    }
+
+    @Test
+    void onlyRemovesEntriesOlderThanSpecified() {
+        // keep 5 latest entries
+        int keepEntries = 5;
+        Duration historyOlderThan = Duration.parse("P10D");
+        Duration entriesWithoutContextOlderThan = Duration.parse("P10D");
+        int atMost = 100;
+        Set<String> removed = cleanupService.runCleanup(historyOlderThan, entriesWithoutContextOlderThan, keepEntries, atMost);
 
         // old are removed - the smaller the sequence number in name field, the older the entry is
         removed.forEach(r -> assertThat(Integer.parseInt(entries.get(r)), lessThan(20)));
@@ -108,11 +137,33 @@ class CleanupServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
+    void removeOldEntriesWithoutContext() {
+        // keep everything newer than specified
+        int keepEntries = 100;
+        // use large value here to ensure that the entries without context -rule gets tested properly
+        Duration historyOlderThan = Duration.parse("P20D");
+        Duration entriesWithoutContextOlderThan = Duration.parse("P9D");
+        int atMost = 100;
+        Set<String> removed = cleanupService.runCleanup(historyOlderThan, entriesWithoutContextOlderThan, keepEntries, atMost);
+
+        assertThat(removed.size(), equalTo(17));
+
+        List<Entry> remaining = entryService.findAllByBusinessId(TestConstants.FINTRAFFIC_BUSINESS_ID);
+
+        assertThat(remaining.size(), equalTo(8));
+
+        // new are kept - the bigger the sequence number in name field, the newer the entry is
+        remaining.forEach(r -> assertThat(Integer.parseInt(r.name()), greaterThanOrEqualTo(17)));
+    }
+
+    @Test
     void removesSubsequentCancelledEntriesToReduceClutter() {
         int cancelledEntryCount = 5;
-        List<Entry> cancelledEntries = IntStream.range(0, cancelledEntryCount)
+        List<EntryRecord> cancelledEntries = IntStream.range(0, cancelledEntryCount)
             .mapToObj(i -> ImmutableEntry.of(NanoIdUtils.randomNanoId(), Integer.toString(i), "whatever", "https://example.co.uk/cancelled", TestConstants.FINTRAFFIC_BUSINESS_ID, false))
-            .map(this::interleaveEntry)
+            .map(e -> entryRepository.create(e, Optional.empty(), Optional.empty()))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .toList();
 
         assertThat(cancelledEntries.size(), equalTo(cancelledEntryCount));
