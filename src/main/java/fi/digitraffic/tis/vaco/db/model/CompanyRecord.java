@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.db.model;
 
+import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -43,4 +44,7 @@ public interface CompanyRecord {
 
     @Nullable
     String website();
+
+    @Value.Default
+    default List<CompanyRole> roles() { return List.of(); }
 }
