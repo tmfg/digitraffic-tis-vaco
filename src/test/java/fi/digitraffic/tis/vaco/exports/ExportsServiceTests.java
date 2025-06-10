@@ -2,6 +2,12 @@ package fi.digitraffic.tis.vaco.exports;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
+import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.rutebanken.netex.model.AvailabilityCondition;
 import org.rutebanken.netex.model.ContactStructure;
@@ -23,9 +29,34 @@ import static org.hamcrest.Matchers.equalTo;
 class ExportsServiceTests extends SpringBootIntegrationTestBase {
 
     private final static Logger logger = LoggerFactory.getLogger(ExportsServiceTests.class);
+    private final static String TEST_COMPANY_BUSINESS_ID = "123456-7";
 
     @Autowired
     private ExportsService exportsService;
+
+    @Autowired
+    private CompanyRepository companyRepository;
+
+    @Autowired
+    private CompanyHierarchyService companyHierarchyService;
+
+    @BeforeEach
+    void before() {
+        var newCompany = companyHierarchyService.createCompany(
+            ImmutableCompany.of(TEST_COMPANY_BUSINESS_ID, "Test Authority Operator Oy", true)
+        ).orElseThrow();
+
+        var updatedCompany = ImmutableCompany.copyOf(newCompany).withWebsite("https://example.com").withRoles(
+            List.of(CompanyRole.AUTHORITY, CompanyRole.OPERATOR)
+        );
+        companyHierarchyService.editCompany(TEST_COMPANY_BUSINESS_ID, updatedCompany);
+
+    }
+
+    @AfterEach
+    void tearDown() {
+        companyRepository.deleteByBusinessId(TEST_COMPANY_BUSINESS_ID);
+    }
 
     @Test
     void exportsFullCompanyDetails() {
@@ -39,32 +70,31 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
             });
         });
 
-        //TODO: this is 2*2 since each organization is now duplicated as both Authority and Operator
         assertThat(organisations.size(), equalTo(4));
-        assertOrganisation(organisations.getFirst(),
+        assertOrganisation(getOrganisation(organisations, "FSR:Operator:" + Constants.PUBLIC_VALIDATION_TEST_ID),
             Constants.PUBLIC_VALIDATION_TEST_ID,
             "public-validation-test",
-            "FSR:Authority:" + Constants.PUBLIC_VALIDATION_TEST_ID,
+            "FSR:Operator:" + Constants.PUBLIC_VALIDATION_TEST_ID,
             assertValidityConditions("FSR:AvailabilityCondition:1"),
             assertContactStructure("https://www.fintraffic.fi"));
-        assertOrganisation(organisations.get(1),
+        assertOrganisation(getOrganisation(organisations, "FSR:Operator:" + Constants.FINTRAFFIC_BUSINESS_ID),
             Constants.FINTRAFFIC_BUSINESS_ID,
             "Fintraffic Oy",
             "FSR:Operator:" + Constants.FINTRAFFIC_BUSINESS_ID,
             assertValidityConditions("FSR:AvailabilityCondition:2"),
             assertContactStructure("https://www.fintraffic.fi"));
-        assertOrganisation(organisations.getFirst(),
-            Constants.PUBLIC_VALIDATION_TEST_ID,
-            "public-validation-test",
-            "FSR:Authority:" + Constants.PUBLIC_VALIDATION_TEST_ID,
+        assertOrganisation(getOrganisation(organisations, "FSR:Operator:" + TEST_COMPANY_BUSINESS_ID),
+            TEST_COMPANY_BUSINESS_ID,
+            "Test Authority Operator Oy",
+            "FSR:Operator:" + TEST_COMPANY_BUSINESS_ID,
             assertValidityConditions("FSR:AvailabilityCondition:3"),
-            assertContactStructure("https://www.fintraffic.fi"));
-        assertOrganisation(organisations.get(1),
-            Constants.FINTRAFFIC_BUSINESS_ID,
-            "Fintraffic Oy",
-            "FSR:Operator:" + Constants.FINTRAFFIC_BUSINESS_ID,
+            assertContactStructure("https://example.com"));
+        assertOrganisation(getOrganisation(organisations, "FSR:Authority:" + TEST_COMPANY_BUSINESS_ID),
+            TEST_COMPANY_BUSINESS_ID,
+            "Test Authority Operator Oy",
+            "FSR:Authority:" + TEST_COMPANY_BUSINESS_ID,
             assertValidityConditions("FSR:AvailabilityCondition:4"),
-            assertContactStructure("https://www.fintraffic.fi"));
+            assertContactStructure("https://example.com"));
     }
 
     private static Consumer<ValidityConditions_RelStructure> assertValidityConditions(String expectedAvailabilityConditionId) {
@@ -98,5 +128,9 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
         assertThat("Version attribute for organisations must be set to hardcoded '1'", organisation.getVersion(), equalTo("1"));
         validityConditionsAsserter.accept(organisation.getValidityConditions());
         contactStructureAsserter.accept(organisation.getContactDetails());
+    }
+
+    private Organisation_VersionStructure getOrganisation(List<Organisation_VersionStructure> organisations, String id) {
+        return organisations.stream().filter(o -> o.getId().equals(id)).findFirst().orElseThrow();
     }
 }

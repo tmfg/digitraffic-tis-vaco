@@ -54,12 +54,16 @@ public class ExportsService {
     }
 
     public JAXBElement<PublicationDeliveryStructure> netexOrganisations() {
-        // XXX: This is a quick hack for now, we have better reimplementation in backlog as TIS-878
         AtomicInteger availabilityConditionCounter = new AtomicInteger(1);
         List<Organisation_VersionStructure> organisations = new ArrayList<>();
         companyRepository.listAll().forEach(companyRecord -> {
-            asAuthority(availabilityConditionCounter, companyRecord).ifPresent(organisations::add);
-            asOperator(availabilityConditionCounter, companyRecord).ifPresent(organisations::add);
+            companyRecord.roles().forEach(role -> {
+                var organisation = switch (role) {
+                    case OPERATOR -> asOperator(availabilityConditionCounter, companyRecord);
+                    case AUTHORITY -> asAuthority(availabilityConditionCounter, companyRecord);
+                };
+                organisation.ifPresent(organisations::add);
+            });
         });
 
         ResourceFrame compositeFrame = netexObjectFactory.createResourceFrame(
@@ -110,7 +114,7 @@ public class ExportsService {
     }
 
     private Optional<ContactStructure> createContactStructure(CompanyRecord companyRecord) {
-        if (companyRecord.website() == null || companyRecord.website().isBlank()) {
+        if (companyRecord.website() == null || Objects.requireNonNull(companyRecord.website()).isBlank()) {
             return Optional.empty();
         }
         ContactStructure contactStructure = new ContactStructure()
