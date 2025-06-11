@@ -56,15 +56,13 @@ public class ExportsService {
     public JAXBElement<PublicationDeliveryStructure> netexOrganisations() {
         AtomicInteger availabilityConditionCounter = new AtomicInteger(1);
         List<Organisation_VersionStructure> organisations = new ArrayList<>();
-        companyRepository.listAll().forEach(companyRecord -> {
-            companyRecord.roles().forEach(role -> {
-                var organisation = switch (role) {
-                    case OPERATOR -> asOperator(availabilityConditionCounter, companyRecord);
-                    case AUTHORITY -> asAuthority(availabilityConditionCounter, companyRecord);
-                };
-                organisation.ifPresent(organisations::add);
-            });
-        });
+        companyRepository.listAll().forEach(companyRecord -> companyRecord.roles().forEach(role -> {
+            var organisation = switch (role) {
+                case OPERATOR -> asOperator(availabilityConditionCounter, companyRecord);
+                case AUTHORITY -> asAuthority(availabilityConditionCounter, companyRecord);
+            };
+            organisation.ifPresent(organisations::add);
+        }));
 
         ResourceFrame compositeFrame = netexObjectFactory.createResourceFrame(
             NETEX_ROOT_ID + ":ResourceFrame:1",
@@ -102,7 +100,7 @@ public class ExportsService {
             .map(contactStructure -> {
                 Operator operator = createOrganisation(Operator::new, companyRecord);
                 return operator.withValidityConditions(createValidityConditions(availabilityConditionCounter))
-                    .withContactDetails(contactStructure);
+                    .withCustomerServiceContactDetails(contactStructure);
             });
     }
 
