@@ -57,7 +57,7 @@ public class ExportsService {
         AtomicInteger availabilityConditionCounter = new AtomicInteger(1);
         List<Organisation_VersionStructure> organisations = new ArrayList<>();
         companyRepository.listAll().forEach(companyRecord -> companyRecord.roles().forEach(role -> {
-            var organisation = switch (role) {
+            Optional<Organisation_VersionStructure> organisation = switch (role) {
                 case OPERATOR -> asOperator(availabilityConditionCounter, companyRecord);
                 case AUTHORITY -> asAuthority(availabilityConditionCounter, companyRecord);
             };

@@ -9,7 +9,14 @@ import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.rutebanken.netex.model.*;
+import org.rutebanken.netex.model.Authority_VersionStructure;
+import org.rutebanken.netex.model.AvailabilityCondition;
+import org.rutebanken.netex.model.ContactStructure;
+import org.rutebanken.netex.model.Operator_VersionStructure;
+import org.rutebanken.netex.model.Organisation_VersionStructure;
+import org.rutebanken.netex.model.PublicationDeliveryStructure;
+import org.rutebanken.netex.model.ResourceFrame;
+import org.rutebanken.netex.model.ValidityConditions_RelStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,11 +141,11 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
     }
 
     private void assertOperatorOrganisation(Operator_VersionStructure organisation,
-                                             String companyNumber,
-                                             String name,
-                                             String id,
-                                             Consumer<ValidityConditions_RelStructure> validityConditionsAsserter,
-                                             Consumer<ContactStructure> contactStructureAsserter) {
+                                            String companyNumber,
+                                            String name,
+                                            String id,
+                                            Consumer<ValidityConditions_RelStructure> validityConditionsAsserter,
+                                            Consumer<ContactStructure> contactStructureAsserter) {
         assertOrganisation(organisation, companyNumber, name, id, validityConditionsAsserter);
         contactStructureAsserter.accept(organisation.getCustomerServiceContactDetails());
     }
