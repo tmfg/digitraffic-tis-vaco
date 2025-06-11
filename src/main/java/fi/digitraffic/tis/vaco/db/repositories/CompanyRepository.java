@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
@@ -79,7 +80,8 @@ public class CompanyRepository {
                           publish = ?,
                           codespaces = ?,
                           notification_webhook_uri = ?,
-                          website = ?
+                          website = ?,
+                          roles = ?
                     WHERE business_id = ?
                 RETURNING *
                 """,
@@ -92,6 +94,7 @@ public class CompanyRepository {
             ArraySqlValue.create(company.codespaces().toArray(new String[0])),
             company.notificationWebhookUri(),
             company.website(),
+            ArraySqlValue.create(company.roles().stream().map(CompanyRole::fieldName).toArray(String[]::new)),
             businessId);
         cachingService.invalidateCompanyRecord(company.businessId());
         return findById(companyRecord.id());

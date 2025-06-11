@@ -10,6 +10,7 @@ import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ContextRecord;
@@ -78,10 +79,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public final class RowMappers {
@@ -148,6 +146,7 @@ public final class RowMappers {
         .codespaces(List.of(ArraySqlValue.read(rs, "codespaces")))
         .notificationWebhookUri(rs.getString("notification_webhook_uri"))
         .website(rs.getString("website"))
+        .roles(Arrays.stream(ArraySqlValue.read(rs, "roles")).map(role -> CompanyRole.forField((String) role)).toList())
         .build();
 
     public static final RowMapper<PartnershipRecord> PARTNERSHIP_RECORD = (rs, rowNum) -> ImmutablePartnershipRecord.of(

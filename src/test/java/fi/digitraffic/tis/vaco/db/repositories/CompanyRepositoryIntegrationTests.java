@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,7 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
             .withAdGroupId("ad")
             .withContactEmails(List.of("email"))
             .withLanguage("en")
+            .withRoles(List.of(CompanyRole.AUTHORITY, CompanyRole.OPERATOR))
             .withPublish(false);
         CompanyRecord updatedCompany = companyRepository.update(companyToUpdate.businessId(), companyToUpdate);
         assertThat(updatedCompany.name(), equalTo(companyToUpdate.name()));
@@ -66,5 +68,6 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(updatedCompany.contactEmails(), equalTo(companyToUpdate.contactEmails()));
         assertThat(updatedCompany.language(), equalTo(companyToUpdate.language()));
         assertThat(updatedCompany.publish(), equalTo(companyToUpdate.publish()));
+        assertThat(updatedCompany.roles(), equalTo(companyToUpdate.roles()));
     }
 }

@@ -13,6 +13,10 @@ import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.fintrafficid.FintrafficIdService;
 import fi.digitraffic.tis.vaco.fintrafficid.MsGraphBackedFintrafficIdService;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.rutebanken.netex.model.PublicationDeliveryStructure;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -75,5 +79,15 @@ public class VacoConfiguration {
         return webClientBuilder
             .defaultHeader("User-Agent", "Fintraffic TIS-VACO/" + LocalDate.now().format(DateTimeFormatter.ISO_DATE))
             .build();
+    }
+
+    @Bean
+    public OpenAPI openAPIConfiguration() {
+        return new OpenAPI()
+            .components(new Components()
+                .addSecuritySchemes("Bearer",
+                    new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT"))
+            )
+            .addSecurityItem(new SecurityRequirement().addList("Bearer"));
     }
 }
