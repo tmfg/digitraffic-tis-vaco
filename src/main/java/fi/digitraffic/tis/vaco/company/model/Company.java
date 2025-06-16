@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.DomainValue;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
 
@@ -48,4 +49,8 @@ public interface Company {
 
     @Nullable
     String website();
+
+    default List<CompanyRole> roles() {
+        return List.of();
+    }
 }

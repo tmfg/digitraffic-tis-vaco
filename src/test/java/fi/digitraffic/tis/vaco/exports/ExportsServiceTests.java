@@ -2,9 +2,17 @@ package fi.digitraffic.tis.vaco.exports;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
+import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
+import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.rutebanken.netex.model.Authority_VersionStructure;
 import org.rutebanken.netex.model.AvailabilityCondition;
 import org.rutebanken.netex.model.ContactStructure;
+import org.rutebanken.netex.model.Operator_VersionStructure;
 import org.rutebanken.netex.model.Organisation_VersionStructure;
 import org.rutebanken.netex.model.PublicationDeliveryStructure;
 import org.rutebanken.netex.model.ResourceFrame;
@@ -22,10 +30,35 @@ import static org.hamcrest.Matchers.equalTo;
 
 class ExportsServiceTests extends SpringBootIntegrationTestBase {
 
-    private final static Logger logger = LoggerFactory.getLogger(ExportsServiceTests.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExportsServiceTests.class);
+    private static final String TEST_COMPANY_BUSINESS_ID = "123456-7";
 
     @Autowired
     private ExportsService exportsService;
+
+    @Autowired
+    private CompanyRepository companyRepository;
+
+    @Autowired
+    private CompanyHierarchyService companyHierarchyService;
+
+    @BeforeEach
+    void before() {
+        var newCompany = companyHierarchyService.createCompany(
+            ImmutableCompany.of(TEST_COMPANY_BUSINESS_ID, "Test Authority Operator Oy", true)
+        ).orElseThrow();
+
+        var updatedCompany = ImmutableCompany.copyOf(newCompany).withWebsite("https://example.com").withRoles(
+            List.of(CompanyRole.AUTHORITY, CompanyRole.OPERATOR)
+        );
+        companyHierarchyService.editCompany(TEST_COMPANY_BUSINESS_ID, updatedCompany);
+
+    }
+
+    @AfterEach
+    void tearDown() {
+        companyRepository.deleteByBusinessId(TEST_COMPANY_BUSINESS_ID);
+    }
 
     @Test
     void exportsFullCompanyDetails() {
@@ -39,32 +72,31 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
             });
         });
 
-        //TODO: this is 2*2 since each organization is now duplicated as both Authority and Operator
         assertThat(organisations.size(), equalTo(4));
-        assertOrganisation(organisations.getFirst(),
+        assertOperatorOrganisation(getOperator(organisations, Constants.PUBLIC_VALIDATION_TEST_ID),
             Constants.PUBLIC_VALIDATION_TEST_ID,
             "public-validation-test",
-            "FSR:Authority:" + Constants.PUBLIC_VALIDATION_TEST_ID,
+            "FSR:Operator:" + Constants.PUBLIC_VALIDATION_TEST_ID,
             assertValidityConditions("FSR:AvailabilityCondition:1"),
             assertContactStructure("https://www.fintraffic.fi"));
-        assertOrganisation(organisations.get(1),
+        assertOperatorOrganisation(getOperator(organisations, Constants.FINTRAFFIC_BUSINESS_ID),
             Constants.FINTRAFFIC_BUSINESS_ID,
             "Fintraffic Oy",
             "FSR:Operator:" + Constants.FINTRAFFIC_BUSINESS_ID,
             assertValidityConditions("FSR:AvailabilityCondition:2"),
             assertContactStructure("https://www.fintraffic.fi"));
-        assertOrganisation(organisations.getFirst(),
-            Constants.PUBLIC_VALIDATION_TEST_ID,
-            "public-validation-test",
-            "FSR:Authority:" + Constants.PUBLIC_VALIDATION_TEST_ID,
+        assertOperatorOrganisation(getOperator(organisations, TEST_COMPANY_BUSINESS_ID),
+            TEST_COMPANY_BUSINESS_ID,
+            "Test Authority Operator Oy",
+            "FSR:Operator:" + TEST_COMPANY_BUSINESS_ID,
             assertValidityConditions("FSR:AvailabilityCondition:3"),
-            assertContactStructure("https://www.fintraffic.fi"));
-        assertOrganisation(organisations.get(1),
-            Constants.FINTRAFFIC_BUSINESS_ID,
-            "Fintraffic Oy",
-            "FSR:Operator:" + Constants.FINTRAFFIC_BUSINESS_ID,
+            assertContactStructure("https://example.com"));
+        assertAuthorityOrganisation(getAuthority(organisations, TEST_COMPANY_BUSINESS_ID),
+            TEST_COMPANY_BUSINESS_ID,
+            "Test Authority Operator Oy",
+            "FSR:Authority:" + TEST_COMPANY_BUSINESS_ID,
             assertValidityConditions("FSR:AvailabilityCondition:4"),
-            assertContactStructure("https://www.fintraffic.fi"));
+            assertContactStructure("https://example.com"));
     }
 
     private static Consumer<ValidityConditions_RelStructure> assertValidityConditions(String expectedAvailabilityConditionId) {
@@ -90,13 +122,43 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
                                     String companyNumber,
                                     String name,
                                     String id,
-                                    Consumer<ValidityConditions_RelStructure> validityConditionsAsserter,
-                                    Consumer<ContactStructure> contactStructureAsserter) {
+                                    Consumer<ValidityConditions_RelStructure> validityConditionsAsserter) {
         assertThat(organisation.getCompanyNumber(), equalTo(companyNumber));
         assertThat(organisation.getName().getValue(), equalTo(name));
         assertThat(organisation.getId(), equalTo(id));
         assertThat("Version attribute for organisations must be set to hardcoded '1'", organisation.getVersion(), equalTo("1"));
         validityConditionsAsserter.accept(organisation.getValidityConditions());
+    }
+
+    private void assertAuthorityOrganisation(Authority_VersionStructure organisation,
+                                             String companyNumber,
+                                             String name,
+                                             String id,
+                                             Consumer<ValidityConditions_RelStructure> validityConditionsAsserter,
+                                             Consumer<ContactStructure> contactStructureAsserter) {
+        assertOrganisation(organisation, companyNumber, name, id, validityConditionsAsserter);
         contactStructureAsserter.accept(organisation.getContactDetails());
+    }
+
+    private void assertOperatorOrganisation(Operator_VersionStructure organisation,
+                                            String companyNumber,
+                                            String name,
+                                            String id,
+                                            Consumer<ValidityConditions_RelStructure> validityConditionsAsserter,
+                                            Consumer<ContactStructure> contactStructureAsserter) {
+        assertOrganisation(organisation, companyNumber, name, id, validityConditionsAsserter);
+        contactStructureAsserter.accept(organisation.getCustomerServiceContactDetails());
+    }
+
+    private Organisation_VersionStructure getOrganisation(List<Organisation_VersionStructure> organisations, String id) {
+        return organisations.stream().filter(o -> o.getId().equals(id)).findFirst().orElseThrow();
+    }
+
+    private Operator_VersionStructure getOperator(List<Organisation_VersionStructure> organisations, String id) {
+        return (Operator_VersionStructure) getOrganisation(organisations, "FSR:Operator:" + id);
+    }
+
+    private Authority_VersionStructure getAuthority(List<Organisation_VersionStructure> organisations, String id) {
+        return (Authority_VersionStructure) getOrganisation(organisations, "FSR:Authority:" + id);
     }
 }
