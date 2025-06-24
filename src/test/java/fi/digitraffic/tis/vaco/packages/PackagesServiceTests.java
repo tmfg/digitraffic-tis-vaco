@@ -18,7 +18,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -43,7 +42,8 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
 
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
-        CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
+        createBucket(vacoProperties.s3ProcessingBucket());
+        createBucket(vacoProperties.s3PackagesBucket());
     }
 
     @Test

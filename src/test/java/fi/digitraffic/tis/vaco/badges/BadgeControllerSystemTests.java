@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
@@ -115,7 +114,8 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
 
     @BeforeAll
     static void beforeAll(@Autowired VacoProperties vacoProperties) {
-        CreateBucketResponse r = createBucket(vacoProperties.s3ProcessingBucket());
+        createBucket(vacoProperties.s3ProcessingBucket());
+        createBucket(vacoProperties.s3PackagesBucket());
     }
 
     @BeforeEach
@@ -253,6 +253,8 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
         waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         messagingService.submitProcessingJob(job);
+
+        waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
         stopServer();
 

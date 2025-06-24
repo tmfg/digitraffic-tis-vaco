@@ -70,18 +70,19 @@ public class PackagesService {
      * @param packageName Package name to produce. This should be unique per task.
      * @param packageContentsS3Path Where in S3 the package contents are stored before packaging.
      * @param fileName Final file name for the package.
-     * @param contentFilter Filter predicate for matching each file name for inclusion. Allows finegrained control over
+     * @param contentFilter Filter predicate for matching each file name for inclusion. Allows fine-grained control over
      *                      package contents.
      * @return Created package
      * @see S3Packager#producePackage(Entry, S3Path, S3Path, String, Predicate)
      */
+
     public Package createPackage(Entry entry,
                                  Task task,
                                  String packageName,
                                  S3Path packageContentsS3Path,
                                  String fileName,
                                  Predicate<String> contentFilter) {
-        // upload package file to S3
+        // upload package file to S3 long term storage
         s3Packager.producePackage(
                         entry,
                         S3Artifact.getRuleDirectory(entry.publicId(), task.name(), task.name()),
@@ -114,7 +115,7 @@ public class PackagesService {
 
     public List<Package> findAvailablePackages(Task task) {
         List<PackageRecord> packages = packageRepository.findPackages(task);
-        return Streams.filter(packages, p -> s3Client.keyExists(vacoProperties.s3ProcessingBucket(), p.path()))
+        return Streams.filter(packages, p -> s3Client.keyExists(vacoProperties.s3PackagesBucket(), p.path()))
             .map(p -> recordMapper.toPackage(task, p))
             .toList();
     }
@@ -132,11 +133,10 @@ public class PackagesService {
                     .resolve(Path.of(p.path()).getFileName());
 
                 return cachingService.cacheLocalTemporaryPath(targetPackagePath, path -> {
-
-                    logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3ProcessingBucket(), p.path(), targetPackagePath);
+                    logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3PackagesBucket(), p.path(), targetPackagePath);
 
                     s3Client.downloadFile(
-                        vacoProperties.s3ProcessingBucket(),
+                        vacoProperties.s3PackagesBucket(),
                         S3Path.of(p.path()),  // reuse local path as S3 path key
                         targetPackagePath);
                     return targetPackagePath;

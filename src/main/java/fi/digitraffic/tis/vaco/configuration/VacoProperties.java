@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 public record VacoProperties(@DefaultValue("local") String environment,
                              String temporaryDirectory,
                              @NotBlank String s3ProcessingBucket,
+                             @NotBlank String s3PackagesBucket,
                              @NotBlank String baseUrl,
                              @NotBlank String contextUrl,
                              String companyNameClaim,

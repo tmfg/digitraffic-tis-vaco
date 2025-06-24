@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -48,7 +49,8 @@ class SimpleResultProcessorTests extends ResultProcessorTestBase {
         VacoProperties vacoProperties = TestObjects.vacoProperties();
         simpleResultProcessor = new SimpleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService);
 
-        entry = entryWithTask(e -> ImmutableTask.of(RuleName.GTFS2NETEX_FINTRAFFIC, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(RuleName.GTFS2NETEX_FINTRAFFIC, 100)
+            .withId(9_000_000L).withPublicId(NanoIdUtils.randomNanoId()));
         conversionTask = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of(
             "file.txt", List.of("all", "debug"),

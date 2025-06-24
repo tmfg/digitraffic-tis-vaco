@@ -60,7 +60,7 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
         }
         packages.remove("result");
 
-        packages.forEach((packageName, files) -> createOutputPackage(resultMessage, entry, task, packageName, files));
+        packages.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
 
         return resultFound;
 

@@ -218,8 +218,8 @@ public class RulesetSubmissionService {
      * directory and another which categorizes the outputs of previous tasks by name. The latter is the one which should
      * be used in longterm.
      *
-     * @param targetDirectory
-     * @param entry
+     * @param targetDirectory Target directory to copy files to
+     * @param entry Entry
      * @see DownloadRule
      * @see fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule
      */
@@ -229,12 +229,15 @@ public class RulesetSubmissionService {
             .toList();
         completedTasks.forEach(task -> lookupDownloadedFile(entry, task.name())
             .ifPresent(s3Path -> {
+                String sourceBucket = vacoProperties.s3PackagesBucket();
+                String destinationBucket = vacoProperties.s3ProcessingBucket();
+
                 // legacy logic: copy all results as is
                 S3Path targetPath = targetDirectory.resolve(s3Path.path().getLast());
-                s3Client.copyFile(vacoProperties.s3ProcessingBucket(), s3Path, targetPath).join();
+                s3Client.copyFile(sourceBucket, s3Path, destinationBucket, targetPath).join();
                 // new logic: categorize outputs by task name (could be publicId?)
                 S3Path targetTaskPath = targetDirectory.resolve(task.name()).resolve(s3Path.path().getLast());
-                s3Client.copyFile(vacoProperties.s3ProcessingBucket(), s3Path, targetTaskPath).join();
+                s3Client.copyFile(sourceBucket, s3Path, destinationBucket, targetTaskPath).join();
             }));
     }
 

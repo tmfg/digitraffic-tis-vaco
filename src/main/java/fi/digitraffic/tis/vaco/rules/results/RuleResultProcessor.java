@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Streams;
@@ -68,16 +69,17 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         // package generation based on rule outputs
         ConcurrentMap<String, List<String>> packagesToCreate = collectPackageContents(resultMessage.uploadedFiles());
 
-        packagesToCreate.forEach((packageName, files) -> createOutputPackage(resultMessage, entry, task, packageName, files));
+        packagesToCreate.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
     }
 
-    protected void createOutputPackage(ResultMessage resultMessage, Entry entry, Task task, String packageName, List<String> files) {
+    protected void createOutputPackage(Entry entry, Task task, String packageName, List<String> files) {
         logger.info("Creating package '{}' with files {}", packageName, files);
         packagesService.createPackage(
             entry,
             task,
             packageName,
-            S3Path.of(URI.create(resultMessage.outputs()).getPath()), packageName + ".zip",
+            ImmutableS3Path.of(List.of(entry.publicId(), Objects.requireNonNull(task.publicId()))),
+            packageName + ".zip",
             file -> {
                 boolean match = files.stream().anyMatch(content -> content.endsWith(file));
                 logger.trace("Matching {} / {}", file, match);
