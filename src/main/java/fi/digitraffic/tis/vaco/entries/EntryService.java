@@ -174,7 +174,7 @@ public class EntryService {
      */
     private Entry buildCompleteEntry(EntryRecord entry) {
         List<Task> tasks = taskService.findTasks(entry);
-        List<Package> packages = Streams.flatten(tasks, packagesService::findAvailablePackages).toList();
+        List<Package> packages = Streams.flatten(tasks, task -> packagesService.findAvailablePackages(task, entry.publicId())).toList();
         Optional<ContextRecord> context = contextRepository.find(entry);
         Optional<CredentialsRecord> credentials = credentialsRepository.findForEntry(entry);
         return recordMapper.toEntryBuilder(entry, context, credentials)

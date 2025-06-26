@@ -113,9 +113,9 @@ public class PackagesService {
         return recordMapper.toPackage(p.task(), packageRepository.upsertPackage(p));
     }
 
-    public List<Package> findAvailablePackages(Task task) {
+    public List<Package> findAvailablePackages(Task task, String entryPublicId) {
         List<PackageRecord> packages = packageRepository.findPackages(task);
-        return Streams.filter(packages, p -> s3Client.keyExists(vacoProperties.s3PackagesBucket(), p.path()))
+        return Streams.filter(packages, p -> s3Client.keyExists(resolveBucketName(p.path(), entryPublicId, task.name()), p.path()))
             .map(p -> recordMapper.toPackage(task, p))
             .toList();
     }
@@ -133,14 +133,25 @@ public class PackagesService {
                     .resolve(Path.of(p.path()).getFileName());
 
                 return cachingService.cacheLocalTemporaryPath(targetPackagePath, path -> {
-                    logger.info("Downloading s3://{}/{} to local temp path {}", vacoProperties.s3PackagesBucket(), p.path(), targetPackagePath);
+                    String bucket = resolveBucketName(p.path(), entry.publicId(), task.name());
+                    logger.info("Downloading s3://{}/{} to local temp path {}", bucket, p.path(), targetPackagePath);
 
                     s3Client.downloadFile(
-                        vacoProperties.s3PackagesBucket(),
+                        bucket,
                         S3Path.of(p.path()),  // reuse local path as S3 path key
                         targetPackagePath);
                     return targetPackagePath;
                 });
             });
+    }
+
+    private String resolveBucketName(String path, String entryPublicId, String taskName) {
+        // Maintain compatibility with packages still in processing bucket.
+        // TODO: To be removed 7 days after this feature has been released
+        String legacyPackagePath = S3Artifact.getTaskPath(entryPublicId, taskName).toString();
+        if (path.startsWith(legacyPackagePath)) {
+            return vacoProperties.s3ProcessingBucket();
+        }
+        return vacoProperties.s3PackagesBucket();
     }
 }

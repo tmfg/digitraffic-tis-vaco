@@ -68,7 +68,7 @@ class PackagesServiceTests extends SpringBootIntegrationTestBase {
         Task task = forceTaskCreation(createdEntry, ImmutableTask.of("FAKE_TASK", 1));
         Optional<ContextRecord> context = Optional.empty(); // TODO: add actual context
         Optional<CredentialsRecord> credentials = Optional.empty(); // TODO: add actual credentials
-        Package saved = packagesService.createPackage(recordMapper.toEntryBuilder(createdEntry, context, credentials).build(), task, "FAKE_RULE", ImmutableS3Path.of("nothing/in/this/path"), "resulting.zip", p -> true);
+        packagesService.createPackage(recordMapper.toEntryBuilder(createdEntry, context, credentials).build(), task, "FAKE_RULE", ImmutableS3Path.of(entry.publicId() + "/" + task.publicId()), "resulting.zip", p -> true);
         Optional<Path> loaded = packagesService.downloadPackage(entry, task, "FAKE_RULE");
 
         assertThat(loaded.isPresent(), equalTo(true));
