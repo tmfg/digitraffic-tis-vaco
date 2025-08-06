@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.aws.s3.S3Client;
@@ -85,7 +86,10 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
                 }
             }
         };
-        entry = entryWithTask(e -> ImmutableTask.of(RuleName.GTFS_CANONICAL, 100).withId(9_000_000L));
+        entry = entryWithTask(
+            e -> ImmutableTask.of(RuleName.GTFS_CANONICAL, 100)
+                .withId(9_000_000L)
+                .withPublicId(NanoIdUtils.randomNanoId()));
         task = entry.tasks().get(0);
 
         gtfsCanonicalRuleset = ImmutableRuleset.of(

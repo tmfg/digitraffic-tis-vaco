@@ -151,7 +151,7 @@ public class WebhookNotifier implements Notifier {
 
     private Map<String, Map<String, Link>> packagesAsTaskGroupedLinks(EntryRecord entry) {
         return Streams.collect(taskService.findTasks(entry), Task::name, task -> {
-            List<Package> packages = packagesService.findAvailablePackages(task);
+            List<Package> packages = packagesService.findAvailablePackages(task, entry.publicId());
             return Streams.collect(packages, Package::name, p -> packageToLink(entry, task, p));
         });
     }

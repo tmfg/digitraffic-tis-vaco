@@ -66,7 +66,7 @@ public class S3Packager {
                     .from(s3TargetPath)
                     .addPath(zipFileName)
                     .build();
-                s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3FullTargetPath, localTargetFile).join();
+                s3Client.uploadFile(vacoProperties.s3PackagesBucket(), s3FullTargetPath, localTargetFile).join();
                 logger.info("Successfully completed packaging s3://{}/{} via {} into {}", vacoProperties.s3ProcessingBucket(), s3SourcePath, localArtifactTemp, s3FullTargetPath);
             } catch (IOException e) {
                 throw new AwsS3Exception(String.format("Encountered IOException while packaging %s into %s", s3SourcePath, zipFileName), e);

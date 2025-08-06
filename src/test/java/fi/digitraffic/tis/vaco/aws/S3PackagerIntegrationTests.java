@@ -14,11 +14,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -99,19 +105,27 @@ class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
         entry = TestObjects.anEntry("gtfs").build();
 
         awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
+        awsS3Client.createBucket(CreateBucketRequest.builder().bucket(vacoProperties.s3PackagesBucket()).build());
         s3Client.uploadDirectory(testDirectory.toPath(), vacoProperties.s3ProcessingBucket(), ImmutableS3Path.of("")).join();
     }
 
     @AfterEach
     void s3Cleanup() {
-        List<ObjectIdentifier> objects = Streams.map(s3Client.listObjectsInBucket(ImmutableS3Path.of(""), vacoProperties.s3ProcessingBucket()),
+        List<ObjectIdentifier> processingBucketObjects = Streams.map(listObjectsInBucket(ImmutableS3Path.of(""), vacoProperties.s3ProcessingBucket()),
             obj -> ObjectIdentifier.builder().key(obj.key()).build()).toList();
-        awsS3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).delete(Delete.builder().objects(objects).build()).build());
+        awsS3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).delete(Delete.builder().objects(processingBucketObjects).build()).build());
         awsS3Client.deleteBucket(DeleteBucketRequest.builder().bucket(vacoProperties.s3ProcessingBucket()).build());
+
+        List<ObjectIdentifier> packagesBucketObjects = Streams.map(listObjectsInBucket(ImmutableS3Path.of(""), vacoProperties.s3PackagesBucket()),
+            obj -> ObjectIdentifier.builder().key(obj.key()).build()).toList();
+        if (!packagesBucketObjects.isEmpty()) {
+            awsS3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(vacoProperties.s3PackagesBucket()).delete(Delete.builder().objects(packagesBucketObjects).build()).build());
+        }
+        awsS3Client.deleteBucket(DeleteBucketRequest.builder().bucket(vacoProperties.s3PackagesBucket()).build());
     }
 
     ZipFile downloadProducedZipPackage(String packageName) throws IOException {
-        byte[] producePackageData = s3Client.getObjectBytes(TestData.outputDirectory + "/" + packageName);
+        byte[] producePackageData = getObjectBytes(TestData.outputDirectory + "/" + packageName);
         File zipFile = new File(TestData.outputDirectoryPath.toFile(), UUID.randomUUID() + ".zip");
         zipFile.createNewFile();
         try(OutputStream os = new FileOutputStream(zipFile)) {
@@ -207,6 +221,25 @@ class S3PackagerIntegrationTests extends SpringBootIntegrationTestBase {
         s3Packager.cleanup(inputRootDirectoryPath.toFile());
         assertThat(inputRootDirectoryPath.toFile().listFiles(), nullValue());
         assertThat(outputDirectoryPath.toFile().listFiles(), notNullValue());
+    }
+
+    private byte[] getObjectBytes(String keyName) {
+        GetObjectRequest objectRequest = GetObjectRequest
+            .builder()
+            .key(keyName)
+            .bucket(vacoProperties.s3PackagesBucket())
+            .build();
+        ResponseBytes<GetObjectResponse> objectBytes = awsS3Client.getObjectAsBytes(objectRequest);
+        return objectBytes.asByteArray();
+    }
+
+    private List<S3Object> listObjectsInBucket(S3Path root, String bucket) {
+        ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+            .bucket(bucket)
+            .prefix(root.toString())
+            .build();
+        ListObjectsV2Response listObjectsV2Response = awsS3Client.listObjectsV2(listObjectsV2Request);
+        return listObjectsV2Response.contents();
     }
 }
 

@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.aws.s3.S3Client;
@@ -93,7 +94,7 @@ class DownloadRuleTests {
     @Test
     void ruleExecutionForGtfs() throws URISyntaxException {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GTFS.fieldName());
-        Task dlTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
+        Task dlTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L).withPublicId(NanoIdUtils.randomNanoId());
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Path gtfsTestFile = resolveTestFile("padasjoen_kunta.zip");
         DownloadResponse response = ImmutableDownloadResponse.builder().body(gtfsTestFile).result(DownloadResponse.Result.OK).build();
@@ -103,7 +104,7 @@ class DownloadRuleTests {
         given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
         given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry))).willAnswer(a -> CompletableFuture.completedFuture(response));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
-        given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
+        given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
         given(taskService.markStatus(entry, dlTask, Status.SUCCESS)).willReturn(dlTask);
 
@@ -112,7 +113,7 @@ class DownloadRuleTests {
         assertThat(result.ruleName(), equalTo(DownloadRule.PREPARE_DOWNLOAD_TASK));
 
         assertThat(tempFilePath.getValue().toString(), endsWith("entries/" + entry.publicId() + "/tasks/prepare.download/gtfs.zip"));
-        assertThat(targetPath.getValue().toString(), equalTo("entries/" + entry.publicId() + "/tasks/prepare.download/rules/prepare.download/output/gtfs.zip"));
+        assertThat(targetPath.getValue().toString(), equalTo(entry.publicId() + "/" + dlTask.publicId() + "/gtfs.zip"));
     }
 
     @Captor
@@ -121,7 +122,7 @@ class DownloadRuleTests {
     @Test
     void ruleExecutionForGbfs() throws URISyntaxException {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GBFS.fieldName());
-        Task dlTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L);
+        Task dlTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L).withPublicId(NanoIdUtils.randomNanoId());
         Entry entry = entryBuilder.addTasks(dlTask).build();
         Path gbfsDiscoveryFile = resolveTestFile("lahti_gbfs/gbfs.json");
         String newEtag = "W/new etag";
@@ -150,7 +151,7 @@ class DownloadRuleTests {
 
         given(entryService.updateEtag(entry, newEtag)).willReturn(ImmutableEntry.copyOf(entry).withEtag(newEtag));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
-        given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
+        given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture() , sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
         given(taskService.markStatus(entry, dlTask, Status.SUCCESS)).willReturn(dlTask);
 
@@ -163,7 +164,7 @@ class DownloadRuleTests {
             equalTo(List.of("gbfs.json", "system_information.json", "station_information.json", "vehicle_types.json", "station_status.json", "free_bike_status.json", "system_pricing_plans.json")));
         assertThat(
             "Download of discovered GBFS files resulted in a single archive",
-            targetPath.getValue().toString(), equalTo("entries/" + entry.publicId() + "/tasks/prepare.download/rules/prepare.download/output/gbfs.zip"));
+            targetPath.getValue().toString(), equalTo(entry.publicId() + "/" + dlTask.publicId() + "/gbfs.zip"));
     }
 
     @Test

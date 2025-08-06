@@ -30,7 +30,7 @@ public abstract class ResultProcessorTestBase {
             eq(entry),
             eq(task),
             eq(packageName),
-            eq(S3Path.of("outputs")),
+            eq(S3Path.of(entry.publicId() + "/" + task.publicId() + "/")),
             eq(packageName + ".zip"),
             any()));
     }

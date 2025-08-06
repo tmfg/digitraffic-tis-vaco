@@ -170,6 +170,7 @@ public class TestObjects {
             "unittests-" + randomSeed,
             null,
             "unittests-" + randomSeed + "-processing-bucket",
+            "unittests-" + randomSeed + "-packages-bucket",
             "http://localhost:5173",
             "http://localhost:8080/api",
             "biz",

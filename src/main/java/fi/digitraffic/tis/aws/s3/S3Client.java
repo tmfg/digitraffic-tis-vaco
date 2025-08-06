@@ -4,17 +4,11 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedCopy;
 import software.amazon.awssdk.transfer.s3.model.CompletedDirectoryDownload;
@@ -28,7 +22,6 @@ import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -95,31 +88,6 @@ public class S3Client {
             .completionFuture();
     }
 
-    // For local debug/test purposes:
-    public List<S3Object> listObjectsInBucket(S3Path root, String bucket) {
-        ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
-            .bucket(bucket)
-            .prefix(root.toString())
-            .build();
-        ListObjectsV2Response listObjectsV2Response = awsS3Client.listObjectsV2(listObjectsV2Request);
-        List<S3Object> contents = listObjectsV2Response.contents();
-        logger.trace("Number of objects in the bucket: {}", contents.size());
-        if (logger.isTraceEnabled()) {
-            contents.forEach(s -> logger.trace(s.toString()));
-        }
-        return contents;
-    }
-
-    public byte[] getObjectBytes(String keyName) {
-        GetObjectRequest objectRequest = GetObjectRequest
-            .builder()
-            .key(keyName)
-            .bucket(vacoProperties.s3ProcessingBucket())
-            .build();
-        ResponseBytes<GetObjectResponse> objectBytes = awsS3Client.getObjectAsBytes(objectRequest);
-        return objectBytes.asByteArray();
-    }
-
     public Long downloadFile(String bucketName,
                              S3Path key,
                              Path downloadTargetPath) {
@@ -146,23 +114,23 @@ public class S3Client {
     /**
      * Copies given file in specified bucket from given location to target directory. Both paths are treated as absolute.
      *
-     * @param bucket     Bucket in which the copy should occur.
+     * @param sourceBucket     Bucket in which the copy should occur.
      * @param file       Source file.
-     * @param targetPath Target path.
+     * @param destinationKey Target path.
      * @return
      */
-    public CompletableFuture<CompletedCopy> copyFile(String bucket, S3Path file, S3Path targetPath) {
-        logger.info("Copying object in path s3://{}/{} to s3://{}/{}", bucket, file, bucket, targetPath);
+    public CompletableFuture<CompletedCopy> copyFile(String sourceBucket, S3Path file, String destinationBucket, S3Path destinationKey) {
+        logger.info("Copying object in path s3://{}/{} to s3://{}/{}", sourceBucket, file, destinationBucket, destinationKey);
         return s3TransferManager.copy(build ->
                 build.copyObjectRequest(copyObject ->
-                    copyObject.sourceBucket(bucket)
+                    copyObject.sourceBucket(sourceBucket)
                         .sourceKey(file.toString())
-                        .destinationBucket(bucket)
-                        .destinationKey(targetPath.toString())))
+                        .destinationBucket(destinationBucket)
+                        .destinationKey(destinationKey.toString())))
             .completionFuture();
     }
 
-    public HeadObjectResponse headObject(String bucketName, String key) {
+    private HeadObjectResponse headObject(String bucketName, String key) {
         HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
             .bucket(bucketName)
             .key(key)
@@ -172,8 +140,8 @@ public class S3Client {
 
     public boolean keyExists(String bucketName, String key) {
         try {
-            headObject(bucketName, key);
-            return true;
+            HeadObjectResponse head = headObject(bucketName, key);
+            return Objects.nonNull(head);
         }
         catch (S3Exception e) {
             if (e.statusCode() != 404) {

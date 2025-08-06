@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -89,7 +90,8 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
                 }
             }
         };
-        entry = entryWithTask(e -> ImmutableTask.of(RuleName.NETEX_ENTUR, 100).withId(9_000_000L));
+        entry = entryWithTask(e -> ImmutableTask.of(RuleName.NETEX_ENTUR, 100)
+            .withId(9_000_000L).withPublicId(NanoIdUtils.randomNanoId()));
         task = entry.tasks().get(0);
         Map<String, List<String>> uploadedFiles = Map.of("reports.json", List.of("report"));
         resultMessage = asResultMessage(vacoProperties, RuleName.NETEX_ENTUR, entry, uploadedFiles);

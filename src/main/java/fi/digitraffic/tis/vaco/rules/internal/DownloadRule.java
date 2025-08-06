@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.Archiver;
@@ -93,7 +94,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
 
                 try {
                     // download: maybe fetch files and validate it
-                    Optional<S3Path> result = download(entry, tempDirPath, tracked, ruleS3Output);
+                    Optional<S3Path> result = download(entry, tempDirPath, tracked);
 
                     // inspect result: did download result in file(s) in S3?
                     String downloadedFilePackage = "result";
@@ -145,7 +146,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         });
     }
 
-    private Optional<S3Path> download(Entry entry, Path tempDirPath, Task tracked, S3Path ruleS3Output) {
+    private Optional<S3Path> download(Entry entry, Path tempDirPath, Task tracked) {
         if (shouldDownload(entry)) {
             CompletableFuture<Optional<Path>> feedArchive;
 
@@ -171,7 +172,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
 
             return feedArchive.thenCompose(validateZip(tracked))
                 .thenApply(track(entry, tracked, ProcessingState.UPDATE))
-                .thenCompose(uploadToS3(entry, ruleS3Output, tracked))
+                .thenCompose(uploadToS3(entry, tracked))
                 .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
                 .join();
         } else {
@@ -311,15 +312,13 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         };
     }
 
-    private Function<Optional<Path>, CompletableFuture<Optional<S3Path>>> uploadToS3(Entry entry,
-                                                                                     S3Path outputDir,
-                                                                                     Task task) {
+    private Function<Optional<Path>, CompletableFuture<Optional<S3Path>>> uploadToS3(Entry entry, Task task) {
         return path -> {
             if (path.isPresent()) {
                 Path localPath = path.get();
-                S3Path s3TargetPath = outputDir.resolve(entry.format() + ".zip");
+                S3Path s3TargetPath = ImmutableS3Path.of(List.of(entry.publicId(), Objects.requireNonNull(task.publicId()), entry.format() + ".zip"));
 
-                return s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), s3TargetPath, localPath)
+                return s3Client.uploadFile(vacoProperties.s3PackagesBucket(), s3TargetPath, localPath)
                     .thenApply(track(entry, task, ProcessingState.UPDATE))
                     .thenApply(u -> Optional.of(s3TargetPath));  // NOTE: There's probably something useful in the `u` parameter
             } else {
