@@ -46,9 +46,9 @@
         <awssdk.version>2.20.139</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>3.1.1</awspringcloud.version>
-        <azurespring.version>5.22.0</azurespring.version>
+        <azurespring.version>5.23.0</azurespring.version>
         <oauth2server.version>3.5.4</oauth2server.version>
-        <immutables.version>2.11.1</immutables.version>
+        <immutables.version>2.11.2</immutables.version>
         <jackson.version>2.19.2</jackson.version>
         <mockito.version>5.18.0</mockito.version>
         <caffeine.version>3.2.2</caffeine.version>
