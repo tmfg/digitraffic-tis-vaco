@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
@@ -26,6 +27,8 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PackagesService packagesService;
     private final TaskService taskService;
+    private final S3Client s3Client;
+    private final VacoProperties properties;
 
     public NetexToGtfsRuleResultProcessor(VacoProperties vacoProperties,
                                           PackagesService packagesService,
@@ -35,6 +38,8 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
         super(vacoProperties, packagesService, s3Client, taskService, findingService);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.taskService = Objects.requireNonNull(taskService);
+        this.s3Client = Objects.requireNonNull(s3Client);
+        this.properties = Objects.requireNonNull(vacoProperties);
     }
 
     @Override
@@ -50,10 +55,12 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
         } else {
             String sourceFile = packages.get("result").getFirst();
             S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
+            S3Path resultPackagePath = ImmutableS3Path.of(List.of(entry.publicId(), Objects.requireNonNull(task.publicId()), dlFile.path().getLast()));
+            s3Client.copyFile(properties.s3ProcessingBucket(), dlFile, properties.s3PackagesBucket(), resultPackagePath).join();
             packagesService.registerPackage(ImmutablePackage.of(
                     task,
                     "result",
-                    dlFile.toString()));
+                    resultPackagePath.toString()));
             taskService.markStatus(entry, task, Status.SUCCESS);
             taskService.trackTask(entry, task, ProcessingState.COMPLETE);
             resultFound = true;

@@ -102,7 +102,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     if (result.isPresent()) {
                         taskService.markStatus(entry, tracked, Status.SUCCESS);
                         S3Path s3Path = result.get();
-                        uploadedFiles = Map.of(s3Path.asUri(vacoProperties.s3ProcessingBucket()), List.of(downloadedFilePackage));
+                        uploadedFiles = Map.of(s3Path.asUri(vacoProperties.s3PackagesBucket()), List.of(downloadedFilePackage));
                     } else {
                         // did not produce file but that might be intended (e.g. ETag results in 304), cancel task
                         taskService.markStatus(entry, tracked, Status.CANCELLED);

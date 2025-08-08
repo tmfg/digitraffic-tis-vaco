@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
+import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
@@ -53,9 +54,10 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
                     S3Path ruleS3Output = ruleBasePath.resolve("output");
 
                     Path stopsAndQuays = Path.of(Thread.currentThread().getContextClassLoader().getResource("private/static/stops.zip").toURI());
-                    S3Path target = ruleS3Output.resolve("stopsAndQuays.zip");
 
-                    s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), target, stopsAndQuays).join();
+                    S3Path s3TargetPath = ImmutableS3Path.of(List.of(entry.publicId(), Objects.requireNonNull(t.publicId()),"stopsAndQuays.zip"));
+
+                    s3Client.uploadFile(vacoProperties.s3PackagesBucket(), s3TargetPath, stopsAndQuays).join();
 
                     taskService.trackTask(entry, t, ProcessingState.COMPLETE);
 
@@ -65,7 +67,7 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
                         .ruleName(PREPARE_STOPS_AND_QUAYS_TASK)
                         .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
                         .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
-                        .uploadedFiles(Map.of(target.asUri(vacoProperties.s3ProcessingBucket()), List.of("result")))
+                        .uploadedFiles(Map.of(s3TargetPath.asUri(vacoProperties.s3PackagesBucket()), List.of("result")))
                         .build();
                 } catch (URISyntaxException e) {
                     // thrown if static file is unavailable

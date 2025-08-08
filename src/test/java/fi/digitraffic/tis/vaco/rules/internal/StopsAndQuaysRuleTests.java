@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
@@ -60,18 +61,18 @@ class StopsAndQuaysRuleTests {
     @Test
     void copiesStaticFileToOutputs() {
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
-        Task saqTask = ImmutableTask.of(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, -1).withId(5000000L);
+        Task saqTask = ImmutableTask.of(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, -1).withId(5000000L).withPublicId(NanoIdUtils.randomNanoId());
         Entry entry = entryBuilder.addTasks(saqTask).build();
 
         given(taskService.findTask(entry.publicId(), StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));
         given(taskService.trackTask(entry, saqTask, ProcessingState.START)).willReturn(saqTask);
-        given(s3Client.uploadFile(eq(vacoProperties.s3ProcessingBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
+        given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
         given(taskService.trackTask(entry, saqTask, ProcessingState.COMPLETE)).willReturn(saqTask);
 
         ResultMessage result = rule.execute(entry).join();
 
         assertThat(result.ruleName(), equalTo(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK));
 
-        assertThat(targetPath.getValue().toString(), equalTo("entries/" + entry.publicId() + "/tasks/prepare.stopsAndQuays/rules/prepare.stopsAndQuays/output/stopsAndQuays.zip"));
+        assertThat(targetPath.getValue().toString(), equalTo( entry.publicId() + "/" + saqTask.publicId() + "/stopsAndQuays.zip"));
     }
 }
