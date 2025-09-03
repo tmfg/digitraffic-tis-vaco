@@ -1,5 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
@@ -8,21 +10,27 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.db.UnknownEntityException;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
+import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public abstract class RuleResultProcessor implements ResultProcessor {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -39,17 +48,23 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     private final TaskService taskService;
     private final FindingService findingService;
     private final VacoProperties vacoProperties;
+    private final RulesetService rulesetService;
+    private final ObjectMapper objectMapper;
 
     protected RuleResultProcessor(VacoProperties vacoProperties,
                                   PackagesService packagesService,
                                   S3Client s3Client,
                                   TaskService taskService,
-                                  FindingService findingService) {
+                                  FindingService findingService,
+                                  RulesetService rulesetService,
+                                  ObjectMapper objectMapper) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.packagesService = Objects.requireNonNull(packagesService);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.taskService = Objects.requireNonNull(taskService);
         this.findingService = Objects.requireNonNull(findingService);
+        this.rulesetService = Objects.requireNonNull(rulesetService);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     /**
@@ -159,4 +174,47 @@ public abstract class RuleResultProcessor implements ResultProcessor {
             return false;
         }
     }
+
+    protected List<ImmutableFinding> scanErrorLog(Entry entry, Task task, String ruleName, Path reportsFile, String errorMarker) throws IOException {
+
+        try {
+            Long rulesetId = rulesetService.findByName(ruleName)
+                .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
+                .id();
+            try (Stream<String> reportLines = Files.lines(reportsFile)) {
+
+                return reportLines.map(errorLine -> {
+                        if (errorLine.contains(errorMarker)) {
+                            String errorDetail = errorLine.substring(errorLine.indexOf(":") + 1).trim();
+                            Map<String, String> errorMap = new HashMap<>();
+                            errorMap.put(errorMarker, errorDetail);
+                            try {
+                                return ImmutableFinding.of(
+                                        task.id(),
+                                        rulesetId,
+                                        ruleName,
+                                        errorMarker,
+                                        FindingSeverity.FAILURE
+                                    )
+                                    .withRaw(objectMapper.writeValueAsBytes(errorMap));
+                            } catch (JsonProcessingException e) {
+                                logger.warn("Failed to convert tree to bytes", e);
+                                return null;
+                            }
+
+                        } else {
+                            return null;
+                        }
+
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+            }
+
+        } catch (IOException e) {
+            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
+            return List.of();
+        }
+    }
+
 }
