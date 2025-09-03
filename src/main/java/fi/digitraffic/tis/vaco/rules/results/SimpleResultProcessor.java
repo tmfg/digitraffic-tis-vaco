@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -10,6 +11,7 @@ import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -25,8 +27,10 @@ public class SimpleResultProcessor extends RuleResultProcessor implements Result
                                  PackagesService packagesService,
                                  S3Client s3Client,
                                  TaskService taskService,
-                                 FindingService findingService) {
-        super(vacoProperties, packagesService, s3Client, taskService, findingService);
+                                 FindingService findingService,
+                                 RulesetService rulesetService,
+                                 ObjectMapper objectMapper) {
+        super(vacoProperties, packagesService, s3Client, taskService, findingService, rulesetService, objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
     }
 

@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -12,6 +13,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,11 +38,14 @@ class InternalRuleResultProcessorTests extends ResultProcessorTestBase {
 
     private Entry entry;
     private Task downloadTask;
-
     private ResultMessage downloadMessage;
-
     private InternalRuleResultProcessor resultProcessor;
     private VacoProperties vacoProperties;
+    @Mock
+    private RulesetService rulesetService;
+    @Mock
+    private ObjectMapper objectMapper;
+
     @Mock private S3Client s3Client;
     @Mock private FindingService findingService;
     @Captor private ArgumentCaptor<ImmutablePackage> registeredPackage;
@@ -48,7 +53,7 @@ class InternalRuleResultProcessorTests extends ResultProcessorTestBase {
     @BeforeEach
     void setUp() {
         vacoProperties = TestObjects.vacoProperties();
-        resultProcessor = new InternalRuleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService);
+        resultProcessor = new InternalRuleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService, rulesetService, objectMapper);
 
         entry = entryWithTask(e -> ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100).withId(9_000_000L));
         downloadTask = entry.tasks().get(0);
