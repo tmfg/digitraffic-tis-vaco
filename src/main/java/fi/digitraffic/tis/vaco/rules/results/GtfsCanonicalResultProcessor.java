@@ -46,7 +46,7 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
                                         FindingService findingService,
                                         RulesetService rulesetService,
                                         ObjectMapper objectMapper) {
-        super(vacoProperties, packagesService, s3Client, taskService, findingService);
+        super(vacoProperties, packagesService, s3Client, taskService, findingService, rulesetService, objectMapper);
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.findingService = Objects.requireNonNull(findingService);

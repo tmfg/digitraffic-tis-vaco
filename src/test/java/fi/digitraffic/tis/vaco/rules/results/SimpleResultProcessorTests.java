@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -13,6 +14,7 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
+import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,17 +39,19 @@ class SimpleResultProcessorTests extends ResultProcessorTestBase {
     private ResultMessage gtfs2netexMessage;
 
     private SimpleResultProcessor simpleResultProcessor;
-
+    @Mock
+    private RulesetService rulesetService;
+    @Mock
+    private ObjectMapper objectMapper;
     @Mock
     private S3Client s3Client;
-
     @Mock
     private FindingService findingService;
 
     @BeforeEach
     void setUp() {
         VacoProperties vacoProperties = TestObjects.vacoProperties();
-        simpleResultProcessor = new SimpleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService);
+        simpleResultProcessor = new SimpleResultProcessor(vacoProperties, packagesService, s3Client, taskService, findingService, rulesetService, objectMapper);
 
         entry = entryWithTask(e -> ImmutableTask.of(RuleName.GTFS2NETEX_FINTRAFFIC, 100)
             .withId(9_000_000L).withPublicId(NanoIdUtils.randomNanoId()));

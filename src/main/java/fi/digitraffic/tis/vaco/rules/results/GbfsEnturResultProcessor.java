@@ -44,7 +44,7 @@ public class GbfsEnturResultProcessor extends RuleResultProcessor implements Res
                                     FindingService findingService,
                                     ObjectMapper objectMapper,
                                     RulesetService rulesetService) {
-        super(vacoProperties, packagesService, s3Client, taskService, findingService);
+        super(vacoProperties, packagesService, s3Client, taskService, findingService, rulesetService, objectMapper);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.rulesetService = Objects.requireNonNull(rulesetService);
     }
