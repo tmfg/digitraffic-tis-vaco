@@ -65,13 +65,12 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
             Map<String, String> fileNames = collectOutputFileNames(resultMessage);
 
             processFile(resultMessage, entry, task, fileNames, "stdout.log", path -> {
-                List<Finding> findings = null;
                 try {
-                    findings = new ArrayList<>(scanErrorLog(entry, task, resultMessage.ruleName(), path, ERROR_MARKER));
+                    List<Finding> findings = new ArrayList<>(scanErrorLog(entry, task, resultMessage.ruleName(), path, ERROR_MARKER));
+                    return storeFindings(findings);
                 } catch (IOException e) {
                     throw new RuleExecutionException("Stdout.log file could not be read into findings in entry " + entry.publicId());
                 }
-                return storeFindings(findings);
             });
 
             taskService.markStatus(entry, task, Status.FAILED);
