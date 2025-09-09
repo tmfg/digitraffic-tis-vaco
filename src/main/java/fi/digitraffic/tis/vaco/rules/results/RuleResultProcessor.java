@@ -186,8 +186,7 @@ public abstract class RuleResultProcessor implements ResultProcessor {
                 return reportLines.map(errorLine -> {
                         if (errorLine.contains(errorMarker)) {
                             String errorDetail = errorLine.substring(errorLine.indexOf(":") + 1).trim();
-                            Map<String, String> errorMap = new HashMap<>();
-                            errorMap.put(errorMarker, errorDetail);
+                            Map<String, String> errorMap = Map.of(errorMarker, errorDetail);
                             try {
                                 return ImmutableFinding.of(
                                         task.id(),
