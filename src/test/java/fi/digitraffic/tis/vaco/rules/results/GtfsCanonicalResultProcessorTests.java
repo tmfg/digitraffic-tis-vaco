@@ -108,9 +108,16 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
 
     @Test
     void mapsGtfsCanonicalNoticesToFindings() {
-        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("report.json", List.of("report")));
+        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of(
+            "report.json", List.of("report"),
+            "stdout.log", List.of("debug"),
+            "stderr.log", List.of("debug")
+        ));
+
+        System.out.println(resultMessage);
 
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("debug", entry, task).willReturn(ImmutablePackage.of(task, "debug", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.findFindingsByName(task, "thread_execution_error")).willReturn(List.of());
@@ -129,9 +136,14 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
 
     @Test
     void mapsGtfsCanonicalSystemErrorsToFindings() {
-        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("system_errors.json", List.of("report")));
+        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of(
+            "system_errors.json", List.of("report"),
+            "stdout.log", List.of("debug"),
+            "stderr.log", List.of("debug")
+        ));
 
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("debug", entry, task).willReturn(ImmutablePackage.of(task, "debug", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.findFindingsByName(task, "thread_execution_error")).willReturn(List.of());
@@ -150,9 +162,14 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
 
     @Test
     void GtfsCanonicalRuntimeErrorGivesWarning() {
-        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of("system_errors.json", List.of("report")));
+        resultMessage = asResultMessage(vacoProperties, RuleName.GTFS_CANONICAL, entry, Map.of(
+            "system_errors.json", List.of("report"),
+            "stdout.log", List.of("debug"),
+            "stderr.log", List.of("debug")
+        ));
 
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("debug", entry, task).willReturn(ImmutablePackage.of(task, "debug", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.GTFS_CANONICAL)).willReturn(Optional.of(gtfsCanonicalRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.findFindingsByName(task, "thread_execution_error")).willReturn(List.of());

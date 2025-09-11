@@ -338,14 +338,31 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     public void uploadFile(String publicId, String localFilePath) throws URISyntaxException {
 
         String bucketName = vacoProperties.s3ProcessingBucket();
-        S3Path s3path = S3Artifact.getRuleDirectory(publicId, RuleName.GTFS_CANONICAL, RuleName.GTFS_CANONICAL).resolve("output/report.json");
 
-        CompletableFuture<PutObjectResponse> uploadedResponse = s3Client.uploadFile(bucketName, s3path, resolveTestFile(localFilePath));
-        uploadedResponse.join();
+        S3Path basePath = S3Artifact.getRuleDirectory(publicId, RuleName.GTFS_CANONICAL, RuleName.GTFS_CANONICAL);
 
-        testListener.setResultConverter(publicId, jobMessage -> converter(jobMessage, Map.of(s3path.asUri(bucketName), List.of("report"))));
+        S3Path reportS3Path = basePath.resolve("output/report.json");
+        S3Path stderrS3Path = basePath.resolve("output/stderr.log");
+        S3Path stdoutS3Path = basePath.resolve("output/stdout.log");
+
+        Path localReportFile = resolveTestFile(localFilePath);
+        Path localStderrFile = resolveTestFile("rule/results/gtfs/stderr.log");
+        Path localStdoutFile = resolveTestFile("rule/results/gtfs//stdout.log");
+
+        CompletableFuture<PutObjectResponse> reportUpload = s3Client.uploadFile(bucketName, reportS3Path, localReportFile);
+        CompletableFuture<PutObjectResponse> stderrUpload = s3Client.uploadFile(bucketName, stderrS3Path, localStderrFile);
+        CompletableFuture<PutObjectResponse> stdoutUpload = s3Client.uploadFile(bucketName, stdoutS3Path, localStdoutFile);
+
+        CompletableFuture.allOf(reportUpload, stderrUpload, stdoutUpload).join();
+
+        Map<String, List<String>> uploadedFiles = Map.of(
+            reportS3Path.asUri(bucketName), List.of("report"),
+            stderrS3Path.asUri(bucketName), List.of("debug"),
+            stdoutS3Path.asUri(bucketName), List.of("debug")
+        );
+
+        testListener.setResultConverter(publicId, jobMessage -> converter(jobMessage, uploadedFiles));
     }
-
 
     @NotNull
     private static Path resolveTestFile(String testFile) throws URISyntaxException {
