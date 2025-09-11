@@ -93,7 +93,11 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
         entry = entryWithTask(e -> ImmutableTask.of(RuleName.NETEX_ENTUR, 100)
             .withId(9_000_000L).withPublicId(NanoIdUtils.randomNanoId()));
         task = entry.tasks().get(0);
-        Map<String, List<String>> uploadedFiles = Map.of("reports.json", List.of("report"));
+        Map<String, List<String>> uploadedFiles = Map.of(
+            "reports.json", List.of("report"),
+            "stdout.log", List.of("debug"),
+            "stderr.log", List.of("debug")
+        );
         resultMessage = asResultMessage(vacoProperties, RuleName.NETEX_ENTUR, entry, uploadedFiles);
         netexEnturRuleset = ImmutableRuleset.of(
                 RuleName.NETEX_ENTUR,
@@ -112,6 +116,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
     @Test
     void mapsNetexValidationReportsToFindings() {
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("debug", entry, task).willReturn(ImmutablePackage.of(task, "debug", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.NETEX_ENTUR)).willReturn(Optional.of(netexEnturRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
@@ -131,6 +136,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
     void repetitiveFindingsGetSplit() {
 
         givenPackageIsCreated("report", entry, task).willReturn(ImmutablePackage.of(task, "all", IGNORED_PATH_VALUE));
+        givenPackageIsCreated("debug", entry, task).willReturn(ImmutablePackage.of(task, "debug", IGNORED_PATH_VALUE));
         given(rulesetService.findByName(RuleName.NETEX_ENTUR)).willReturn(Optional.of(netexEnturRuleset));
         given(findingService.reportFindings(generatedFindings.capture())).willReturn(true);
         given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());

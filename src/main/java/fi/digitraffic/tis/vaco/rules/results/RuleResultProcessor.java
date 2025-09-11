@@ -20,6 +20,7 @@ import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
@@ -27,14 +28,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -48,8 +52,10 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     private final TaskService taskService;
     private final FindingService findingService;
     private final VacoProperties vacoProperties;
-    private final RulesetService rulesetService;
+
     private final ObjectMapper objectMapper;
+
+    private final RulesetService rulesetService;
 
     protected RuleResultProcessor(VacoProperties vacoProperties,
                                   PackagesService packagesService,
@@ -67,6 +73,21 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
+    @Override
+    public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
+        Map<String, String> fileNames = collectOutputFileNames(resultMessage);
+        scanDebugLogs(resultMessage, entry, task, fileNames);
+        return doProcessResults(resultMessage, entry, task, fileNames);
+    }
+
+    private void scanDebugLogs(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
+        processLog(resultMessage, entry, task, fileNames, "stderr.log", "Exception");
+        processLog(resultMessage, entry, task, fileNames, "stdout.log", "Exception");
+
+    }
+
+    abstract boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames);
+
     /**
      * Truncate output filenames to contain only the file name without path. Assumes results are in flat directory.
      *
@@ -80,11 +101,22 @@ public abstract class RuleResultProcessor implements ResultProcessor {
             Function.identity());
     }
 
-    protected void createOutputPackages(ResultMessage resultMessage, Entry entry, Task task) {
+    protected Set<String> createOutputPackages(ResultMessage resultMessage, Entry entry, Task task, Set<String> requiredFiles) {
         // package generation based on rule outputs
         ConcurrentMap<String, List<String>> packagesToCreate = collectPackageContents(resultMessage.uploadedFiles());
 
         packagesToCreate.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
+        Set<String> uploadedFileNames = new HashSet<>();
+
+        for (String url : resultMessage.uploadedFiles().keySet()) {
+            String fileName = url.substring(url.lastIndexOf('/') + 1);
+            uploadedFileNames.add(fileName);
+        }
+
+        packagesToCreate.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
+
+        requiredFiles.removeAll(uploadedFileNames);
+        return requiredFiles;
     }
 
     protected void createOutputPackage(Entry entry, Task task, String packageName, List<String> files) {
@@ -216,4 +248,88 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         }
     }
 
+
+    protected boolean processLog(ResultMessage resultMessage,
+                                 Entry entry,
+                                 Task task,
+                                 Map<String, String> fileNames,
+                                 String fileName,
+                                 String errorMarker) {
+        return processFile(resultMessage, entry, task, fileNames, fileName, path -> {
+            List<Finding> findings;
+            try {
+                findings = new ArrayList<>(scanErrorLog(entry, task, resultMessage.ruleName(), path, errorMarker));
+                return storeFindings(findings);
+            } catch (IOException e) {
+                throw new RuleExecutionException("Stdout.log file could not be read into findings in entry " + entry.publicId());
+            }
+        });
+    }
+
+    protected List<ImmutableFinding> scanLog(Entry entry, Task task, String ruleName, Path reportsFile, String errorMarker) throws IOException {
+
+        try {
+            Long rulesetId = rulesetService.findByName(ruleName)
+                .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
+                .id();
+            try (Stream<String> reportLines = Files.lines(reportsFile)) {
+
+                return reportLines.map(errorLine -> {
+                        if (errorLine.startsWith(errorMarker)) {
+                            String errorDetail = errorLine.substring(errorLine.indexOf(":") + 1).trim();
+                            Map<String, String> errorMap = new HashMap<>();
+                            errorMap.put(errorMarker, errorDetail);
+                            try {
+                                return ImmutableFinding.of(
+                                        task.id(),
+                                        rulesetId,
+                                        ruleName,
+                                        errorMarker,
+                                        FindingSeverity.ERROR
+                                    )
+                                    .withRaw(objectMapper.writeValueAsBytes(errorMap));
+                            } catch (JsonProcessingException e) {
+                                logger.warn("Failed to convert tree to bytes", e);
+                                return null;
+                            }
+
+                        } else {
+                            return null;
+                        }
+
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+            }
+
+        } catch (IOException e) {
+            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
+            return List.of();
+        }
+    }
+
+    protected void requiredFilesNotFound(Entry entry, Task task, Set<String> filesFound){
+
+        Finding finding = createFinding(entry, task, filesFound);
+        findingService.reportFinding(finding);
+        Optional<Status> status = Optional.of(Status.ERRORS);
+        resolveTaskStatus(entry, task, status);
+        logger.warn("All required files not found {}, {}", entry, task);
+    }
+
+    protected Finding createFinding(Entry entry, Task task, Set<String> filesFound){
+
+        String findingRaw = "{\"Not all needed files were found, missing file:\":\"" + filesFound +" \"}";
+        byte[] raw = findingRaw.getBytes(StandardCharsets.UTF_8);
+
+        return ImmutableFinding.builder()
+            .publicId(entry.publicId())
+            .taskId(task.id())
+            .source(task.name())
+            .message("All required files not found")
+            .severity(FindingSeverity.ERROR)
+            .raw(raw)
+            .build();
+
+    }
 }
