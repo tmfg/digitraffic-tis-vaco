@@ -24,9 +24,11 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +39,7 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
     private final ObjectMapper objectMapper;
     private final RulesetService rulesetService;
     private static final Pattern pattern = Pattern.compile("^(cvc-[a-zA-Z-]+(?:\\.[0-9a-zA-Z]+)+):.*");
+    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
 
     protected NetexEnturValidatorResultProcessor(PackagesService packagesService,
                                                  S3Client s3Client,
@@ -51,20 +54,27 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
     }
 
     @Override
-    public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
+    public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
         logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX_ENTUR, entry.publicId(), task.name());
-        createOutputPackages(resultMessage, entry, task);
+        Set<String> filesFound = createOutputPackages(resultMessage, entry, task, requiredFiles);
 
-        Map<String, String> fileNames = collectOutputFileNames(resultMessage);
+        if (filesFound.isEmpty()) {
 
-        boolean reportsProcessed = processFile(resultMessage, entry, task, fileNames, "reports.json", path -> {
-            List<Finding> findings = new ArrayList<>(scanReportsFile(entry, task, resultMessage.ruleName(), path));
-            return storeFindings(findings);
-        });
+            boolean reportsProcessed = processFile(resultMessage, entry, task, fileNames, "reports.json", path -> {
+                List<Finding> findings = new ArrayList<>(scanReportsFile(entry, task, resultMessage.ruleName(), path));
+                return storeFindings(findings);
+            });
 
-        resolveTaskStatus(entry, task);
+            resolveTaskStatus(entry, task);
 
-        return reportsProcessed;
+            return reportsProcessed;
+
+        } else {
+
+            requiredFilesNotFound(entry, task, filesFound);
+            return false;
+        }
+
     }
 
     private List<ImmutableFinding> scanReportsFile(Entry entry, Task task, String ruleName, Path reportsFile) {
@@ -100,4 +110,5 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
         }
         return List.of();
     }
+
 }

@@ -26,16 +26,18 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Component
 public class GbfsEnturResultProcessor extends RuleResultProcessor implements ResultProcessor {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private final ObjectMapper objectMapper;
     private final RulesetService rulesetService;
+    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
 
     public GbfsEnturResultProcessor(VacoProperties vacoProperties,
                                     PackagesService packagesService,
@@ -50,19 +52,27 @@ public class GbfsEnturResultProcessor extends RuleResultProcessor implements Res
     }
 
     @Override
-    public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
-        createOutputPackages(resultMessage, entry, task);
+    public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
 
-        Map<String, String> fileNames = collectOutputFileNames(resultMessage);
+        Set<String> filesFound = createOutputPackages(resultMessage, entry, task, requiredFiles);
 
-        boolean reportsProcessed = processFile(resultMessage, entry, task, fileNames, "reports.json", reportsFile -> {
-            List<Finding> findings = new ArrayList<>(scanReportsFile(entry, task, resultMessage.ruleName(), reportsFile));
-            return storeFindings(findings);
-        });
+        if (filesFound.isEmpty()) {
 
-        resolveTaskStatus(entry, task);
+            boolean reportsProcessed = processFile(resultMessage, entry, task, fileNames, "reports.json", reportsFile -> {
+                List<Finding> findings = new ArrayList<>(scanReportsFile(entry, task, resultMessage.ruleName(), reportsFile));
+                return storeFindings(findings);
+            });
 
-        return reportsProcessed;
+            resolveTaskStatus(entry, task);
+
+            return reportsProcessed;
+
+        } else {
+
+            requiredFilesNotFound(entry, task, filesFound);
+            return false;
+        }
+
     }
 
     private List<Finding> scanReportsFile(Entry entry, Task task, String ruleName, Path reportsFile) {

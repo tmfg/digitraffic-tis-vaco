@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
@@ -42,7 +43,7 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
     }
 
     @Override
-    public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
+    public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
         // use downloaded result file as is instead of repackaging the zip
         ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
         if (!packages.containsKey("result") || packages.get("result").isEmpty()) {

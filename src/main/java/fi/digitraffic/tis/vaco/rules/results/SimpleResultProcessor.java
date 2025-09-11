@@ -14,7 +14,9 @@ import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Default implementation of {@link ResultProcessor} to be used when rule specific implementation doesn't exist yet.
@@ -22,6 +24,7 @@ import java.util.Objects;
 @Component
 public class SimpleResultProcessor extends RuleResultProcessor implements ResultProcessor {
     private final TaskService taskService;
+    private final Set<String> requiredFiles = Set.of("stderr.log", "stdout.log");
 
     public SimpleResultProcessor(VacoProperties vacoProperties,
                                  PackagesService packagesService,
@@ -29,14 +32,14 @@ public class SimpleResultProcessor extends RuleResultProcessor implements Result
                                  TaskService taskService,
                                  FindingService findingService,
                                  RulesetService rulesetService,
-                                 ObjectMapper objectMapper) {
+                                 ObjectMapper objectMapper){
         super(vacoProperties, packagesService, s3Client, taskService, findingService, rulesetService, objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
     }
 
     @Override
-    public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
-        createOutputPackages(resultMessage, entry, task);
+    public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
+        createOutputPackages(resultMessage, entry, task, requiredFiles);
         // this should call resolveTaskStatus(); if this logic gets _any_ more complex than this
         taskService.markStatus(entry, task, Status.SUCCESS);
         taskService.trackTask(entry, task, ProcessingState.COMPLETE);

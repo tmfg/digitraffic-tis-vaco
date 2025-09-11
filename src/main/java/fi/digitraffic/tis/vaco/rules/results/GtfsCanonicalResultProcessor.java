@@ -23,21 +23,20 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements ResultProcessor {
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private final FindingService findingService;
-
     private final RulesetService rulesetService;
-
     private final ObjectMapper objectMapper;
+    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
 
     public GtfsCanonicalResultProcessor(VacoProperties vacoProperties,
                                         PackagesService packagesService,
@@ -53,32 +52,39 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
     }
 
     @Override
-    public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
-        createOutputPackages(resultMessage, entry, task);
+    public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
 
-        Map<String, String> fileNames = collectOutputFileNames(resultMessage);
+        Set<String> filesFound = createOutputPackages(resultMessage, entry, task, requiredFiles);
 
-        // file specific handling
-        boolean reportProcessed = processFile(resultMessage, entry, task, fileNames, "report.json", reportFile -> {
-            List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
-            return storeFindings(findings);
-        });
+        if (filesFound.isEmpty()) {
 
-        boolean errorsProcessed = processFile(resultMessage, entry, task, fileNames, "system_errors.json", errorFile -> {
-            List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), errorFile));
-            return storeFindings(findings);
-        });
+            // file specific handling
+            boolean reportProcessed = processFile(resultMessage, entry, task, fileNames, "report.json", reportFile -> {
+                List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), reportFile));
+                return storeFindings(findings);
+            });
 
-        List<Finding> allFindings = findingService.findFindingsByName(task, "thread_execution_error");
-        Optional<Status> status;
-        if (allFindings.isEmpty()) {
-            status = Optional.empty();
+            boolean errorsProcessed = processFile(resultMessage, entry, task, fileNames, "system_errors.json", errorFile -> {
+                List<Finding> findings = new ArrayList<>(scanReportFile(entry, task, resultMessage.ruleName(), errorFile));
+                return storeFindings(findings);
+            });
+
+            List<Finding> allFindings = findingService.findFindingsByName(task, "thread_execution_error");
+            Optional<Status> status;
+            if (allFindings.isEmpty()) {
+                status = Optional.empty();
+            } else {
+                status = Optional.of(Status.FAILED);
+            }
+            resolveTaskStatus(entry, task, status);
+
+            return reportProcessed && errorsProcessed;
+
         } else {
-            status = Optional.of(Status.FAILED);
-        }
-        resolveTaskStatus(entry, task, status);
 
-        return reportProcessed && errorsProcessed;
+            requiredFilesNotFound(entry, task, filesFound);
+            return false;
+        }
     }
 
     private List<ImmutableFinding> scanReportFile(Entry entry, Task task, String ruleName, Path reportFile) {

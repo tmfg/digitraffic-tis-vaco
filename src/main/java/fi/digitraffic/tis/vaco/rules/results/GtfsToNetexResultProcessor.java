@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,12 +35,12 @@ import java.util.Set;
 @Component
 public class GtfsToNetexResultProcessor extends RuleResultProcessor implements ResultProcessor {
 
-    public static final String ERROR_MARKER = "FATAL ERROR";
     public static final String STATS_JSON = "_stats.json";
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final RulesetService rulesetService;
     private final ObjectMapper objectMapper;
     private final GtfsInputSummaryService gtfsInputSummaryService;
+    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
 
     public GtfsToNetexResultProcessor(VacoProperties vacoProperties,
                                       PackagesService packagesService,
@@ -53,47 +54,44 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
         this.rulesetService = Objects.requireNonNull(rulesetService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.gtfsInputSummaryService = Objects.requireNonNull(gtfsInputSummaryService);
+
     }
 
     @Override
-    public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
+    public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
 
-        createOutputPackages(resultMessage, entry, task);
+        Set<String> filesFound = createOutputPackages(resultMessage, entry, task, requiredFiles);
 
-        Map<String, String> fileNames = collectOutputFileNames(resultMessage);
+        if (filesFound.isEmpty()) {
 
-        boolean statsProcessed = fileNames.keySet()
-            .stream()
-            .filter(key -> key.endsWith(STATS_JSON))
-            .findFirst()
-            .map(key -> processFile(resultMessage, entry, task, fileNames, key, path -> {
-                try {
-                    Set<String> gtfs2netexStats = scanStatsFileToArray(path);
-                    return saveGtfs2NetexSummary(task, gtfs2netexStats);
-                } catch (IOException e) {
-                    throw new RuleExecutionException("Error processing stats file", e);
-                }
-            }))
-            .orElse(false);
+            boolean statsProcessed = fileNames.keySet()
+                .stream()
+                .filter(key -> key.endsWith(STATS_JSON))
+                .findFirst()
+                .map(key -> processFile(resultMessage, entry, task, fileNames, key, path -> {
+                    try {
+                        Set<String> gtfs2netexStats = scanStatsFileToArray(path);
+                        return saveGtfs2NetexSummary(task, gtfs2netexStats);
+                    } catch (IOException e) {
+                        throw new RuleExecutionException("Error processing stats file", e);
+                    }
+                }))
+                .orElse(false);
 
-        boolean errorsProcessed = processFile(resultMessage, entry, task, fileNames, "errors.json", path -> {
-            List<Finding> findings = new ArrayList<>(scanErrorFile(entry, task, resultMessage.ruleName(), path));
-            return storeFindings(findings);
-        });
+            boolean errorsProcessed = processFile(resultMessage, entry, task, fileNames, "errors.json", path -> {
+                List<Finding> findings = new ArrayList<>(scanErrorFile(entry, task, resultMessage.ruleName(), path));
+                return storeFindings(findings);
+            });
 
-        boolean errorLogProcessed = processFile(resultMessage, entry, task, fileNames, "stderr.log", path -> {
-            List<Finding> findings = null;
-            try {
-                findings = new ArrayList<>(scanErrorLog(entry, task, resultMessage.ruleName(), path, ERROR_MARKER));
-            } catch (IOException e) {
-                throw new RuleExecutionException("Stderr.log file could not be read into findings in entry " + entry.publicId());
-            }
-            return storeFindings(findings);
-        });
+            resolveTaskStatus(entry, task);
 
-        resolveTaskStatus(entry, task);
+            return errorsProcessed && statsProcessed;
 
-        return errorsProcessed && statsProcessed  && errorLogProcessed;
+        } else {
+
+            requiredFilesNotFound(entry, task, filesFound);
+            return false;
+        }
 
     }
 
