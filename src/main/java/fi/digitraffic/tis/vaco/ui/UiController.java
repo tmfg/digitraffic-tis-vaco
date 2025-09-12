@@ -324,7 +324,6 @@ public class UiController {
                     .filename(packageName + ".zip")
                     .build();
                 response.addHeader(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString());
-
                 return new FileSystemResource(filePath);
             })
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
