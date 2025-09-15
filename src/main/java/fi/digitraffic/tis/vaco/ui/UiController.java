@@ -275,7 +275,11 @@ public class UiController {
                     }
                 });
                 List<Summary> summaries = entryStateService.getTaskSummaries(entry);
+                logger.debug("Found {} summaries for entry {}", summaries.size(), entry.publicId());
+
                 Optional<Company> company = companyHierarchyService.findByBusinessId(entry.businessId());
+                logger.debug("Found company {} for entry {}", company.map(Company::businessId).orElse(null), entry.publicId());
+
 
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
@@ -320,7 +324,6 @@ public class UiController {
                     .filename(packageName + ".zip")
                     .build();
                 response.addHeader(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString());
-
                 return new FileSystemResource(filePath);
             })
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

@@ -23,6 +23,8 @@ import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableCard;
 import fi.digitraffic.tis.vaco.ui.model.summary.ImmutableLabelValuePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -49,6 +51,8 @@ public class EntryStateService {
 
     private final VacoProperties vacoProperties;
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     public EntryStateService(FindingRepository findingRepository,
                              SummaryRepository summaryRepository,
                              VacoProperties vacoProperties,
@@ -61,6 +65,7 @@ public class EntryStateService {
 
     public TaskReport getTaskReport(Task task, Entry entry, Map<String, Ruleset> rulesets) {
         List<FindingRecord> allFindings = findingRepository.findFindingsByTaskId(task.id());
+        logger.debug("Found {} findings for entry {} task {}", allFindings.size(), entry.publicId(), task.id());
 
         Map<String, Long> findingCountersBySeverity = allFindings.stream()
             .collect(Collectors.groupingBy(f -> f.severity().toUpperCase(), Collectors.counting()));
