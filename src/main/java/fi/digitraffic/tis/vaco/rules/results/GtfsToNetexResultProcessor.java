@@ -40,7 +40,7 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
     private final RulesetService rulesetService;
     private final ObjectMapper objectMapper;
     private final GtfsInputSummaryService gtfsInputSummaryService;
-    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
+    private final Set<String> requiredFiles = Set.of("stderr.log", "stdout.log");
 
     public GtfsToNetexResultProcessor(VacoProperties vacoProperties,
                                       PackagesService packagesService,
