@@ -225,7 +225,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
-    void newEntry_statusIsSuccess() throws InterruptedException, IOException {
+    void newEntry_statusIsSuccess() throws InterruptedException, IOException, URISyntaxException {
         startServer();
         ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
         Task downloadTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100);
@@ -249,6 +249,8 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
             .retryStatistics(ImmutableRetryStatistics.of(5))
             .build();
         messagingService.submitProcessingJob(job);
+
+        uploadFile(createdEntry.publicId(), "rule/results/gtfs/success/report.json");
 
         waitForEntryProcessingToFinish(createdEntry.publicId(), 10_000);
 
@@ -347,7 +349,7 @@ class BadgeControllerSystemTests extends SpringBootIntegrationTestBase {
 
         Path localReportFile = resolveTestFile(localFilePath);
         Path localStderrFile = resolveTestFile("rule/results/gtfs/stderr.log");
-        Path localStdoutFile = resolveTestFile("rule/results/gtfs//stdout.log");
+        Path localStdoutFile = resolveTestFile("rule/results/gtfs/stdout.log");
 
         CompletableFuture<PutObjectResponse> reportUpload = s3Client.uploadFile(bucketName, reportS3Path, localReportFile);
         CompletableFuture<PutObjectResponse> stderrUpload = s3Client.uploadFile(bucketName, stderrS3Path, localStderrFile);
