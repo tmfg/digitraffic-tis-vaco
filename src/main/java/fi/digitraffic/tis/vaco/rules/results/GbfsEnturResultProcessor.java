@@ -38,7 +38,7 @@ public class GbfsEnturResultProcessor extends RuleResultProcessor implements Res
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
     private final RulesetService rulesetService;
-    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
+    private final Set<String> requiredFiles = Set.of("stderr.log", "stdout.log");
 
     public GbfsEnturResultProcessor(VacoProperties vacoProperties,
                                     PackagesService packagesService,
