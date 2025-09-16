@@ -39,7 +39,7 @@ public class NetexEnturValidatorResultProcessor extends RuleResultProcessor impl
     private final ObjectMapper objectMapper;
     private final RulesetService rulesetService;
     private static final Pattern pattern = Pattern.compile("^(cvc-[a-zA-Z-]+(?:\\.[0-9a-zA-Z]+)+):.*");
-    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
+    private final Set<String> requiredFiles = Set.of("stderr.log", "stdout.log");
 
     protected NetexEnturValidatorResultProcessor(PackagesService packagesService,
                                                  S3Client s3Client,
