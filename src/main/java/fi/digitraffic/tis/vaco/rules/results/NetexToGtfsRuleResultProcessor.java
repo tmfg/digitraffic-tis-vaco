@@ -8,25 +8,23 @@ import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
-import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 @Component
@@ -36,7 +34,7 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
     private final TaskService taskService;
     private final S3Client s3Client;
     private final VacoProperties properties;
-    public static final String ERROR_MARKER = "Exception";
+    private final Set<String> requiredFiles = Set.of("stderr.log", "stdout.log");
 
     public NetexToGtfsRuleResultProcessor(VacoProperties vacoProperties,
                                           PackagesService packagesService,
@@ -53,47 +51,45 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
     }
 
     @Override
-    public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
-        // use downloaded result file as is instead of repackaging the zip
+    public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
+
+        logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX2GTFS_ENTUR, entry.publicId(), task.name());
         ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
 
         boolean resultFound;
 
-        if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
-            logger.warn("Entry {} task {} does not contain 'result' package.", resultMessage.entryId(), task.name());
+        Set<String> filesFound = createOutputPackages(resultMessage, entry, task, requiredFiles);
 
-            Map<String, String> fileNames = collectOutputFileNames(resultMessage);
+        if (filesFound.isEmpty()) {
 
-            processFile(resultMessage, entry, task, fileNames, "stdout.log", path -> {
-                try {
-                    List<Finding> findings = new ArrayList<>(scanErrorLog(entry, task, resultMessage.ruleName(), path, ERROR_MARKER));
-                    return storeFindings(findings);
-                } catch (IOException e) {
-                    throw new RuleExecutionException("Stdout.log file could not be read into findings in entry " + entry.publicId());
-                }
-            });
+            if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
+                logger.warn("Entry {} task {} does not contain 'result' package.", resultMessage.entryId(), task.name());
 
-            taskService.markStatus(entry, task, Status.FAILED);
-            taskService.trackTask(entry, task, ProcessingState.COMPLETE);
-            resultFound = false;
-        } else {
-            String sourceFile = packages.get("result").getFirst();
-            S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
-            S3Path resultPackagePath = ImmutableS3Path.of(List.of(entry.publicId(), Objects.requireNonNull(task.publicId()), dlFile.path().getLast()));
-            s3Client.copyFile(properties.s3ProcessingBucket(), dlFile, properties.s3PackagesBucket(), resultPackagePath).join();
-            packagesService.registerPackage(ImmutablePackage.of(
+                taskService.markStatus(entry, task, Status.FAILED);
+                taskService.trackTask(entry, task, ProcessingState.COMPLETE);
+                resultFound = false;
+            } else {
+                String sourceFile = packages.get("result").getFirst();
+                S3Path dlFile = S3Path.of(URI.create(sourceFile).getPath());
+                S3Path resultPackagePath = ImmutableS3Path.of(List.of(entry.publicId(), Objects.requireNonNull(task.publicId()), dlFile.path().getLast()));
+                s3Client.copyFile(properties.s3ProcessingBucket(), dlFile, properties.s3PackagesBucket(), resultPackagePath).join();
+                packagesService.registerPackage(ImmutablePackage.of(
                     task,
                     "result",
                     resultPackagePath.toString()));
-            taskService.markStatus(entry, task, Status.SUCCESS);
-            taskService.trackTask(entry, task, ProcessingState.COMPLETE);
-            resultFound = true;
+                taskService.markStatus(entry, task, Status.SUCCESS);
+                taskService.trackTask(entry, task, ProcessingState.COMPLETE);
+                resultFound = true;
+            }
+            packages.remove("result");
+            packages.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
+
+            return resultFound;
+
+        } else {
+            requiredFilesNotFound(entry, task, filesFound);
+            return false;
         }
-        packages.remove("result");
-
-        packages.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
-
-        return resultFound;
 
     }
 }
