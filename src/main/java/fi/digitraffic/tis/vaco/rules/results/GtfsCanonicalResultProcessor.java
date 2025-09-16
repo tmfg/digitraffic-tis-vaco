@@ -36,7 +36,7 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
     private final FindingService findingService;
     private final RulesetService rulesetService;
     private final ObjectMapper objectMapper;
-    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
+    private final Set<String> requiredFiles = Set.of("stderr.log", "stdout.log");
 
     public GtfsCanonicalResultProcessor(VacoProperties vacoProperties,
                                         PackagesService packagesService,
