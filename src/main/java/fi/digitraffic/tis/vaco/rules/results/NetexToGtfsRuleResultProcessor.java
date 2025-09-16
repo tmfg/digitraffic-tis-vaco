@@ -34,7 +34,7 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
     private final TaskService taskService;
     private final S3Client s3Client;
     private final VacoProperties properties;
-    private final Set<String> requiredFiles = new HashSet<>(Set.of("stderr.log", "stdout.log"));
+    private final Set<String> requiredFiles = Set.of("stderr.log", "stdout.log");
 
     public NetexToGtfsRuleResultProcessor(VacoProperties vacoProperties,
                                           PackagesService packagesService,
