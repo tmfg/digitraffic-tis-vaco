@@ -53,7 +53,7 @@ public class GbfsEnturResultProcessor extends RuleResultProcessor implements Res
 
     @Override
     public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
-
+logger.info("Processing result from {} for entry {}/task {}", RuleName.GBFS_ENTUR, entry.publicId(), task.name());
         Set<String> filesFound = createOutputPackages(resultMessage, entry, task, requiredFiles);
 
         if (filesFound.isEmpty()) {
