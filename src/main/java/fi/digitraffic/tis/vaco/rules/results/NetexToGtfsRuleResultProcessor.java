@@ -52,7 +52,7 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
 
     @Override
     public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
-        // use downloaded result file as is instead of repackaging the zip
+        logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX2GTFS_ENTUR, entry.publicId(), task.name());
         ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
 
         boolean resultFound;
