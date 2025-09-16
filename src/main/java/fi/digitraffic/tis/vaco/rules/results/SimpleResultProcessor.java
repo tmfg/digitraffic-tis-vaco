@@ -12,6 +12,8 @@ import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -23,6 +25,8 @@ import java.util.Set;
  */
 @Component
 public class SimpleResultProcessor extends RuleResultProcessor implements ResultProcessor {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final TaskService taskService;
     private final Set<String> requiredFiles = Set.of("stderr.log", "stdout.log");
 

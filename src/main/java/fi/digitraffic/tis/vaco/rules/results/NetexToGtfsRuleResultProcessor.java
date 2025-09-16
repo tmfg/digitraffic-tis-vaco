@@ -13,6 +13,7 @@ import fi.digitraffic.tis.vaco.packages.model.ImmutablePackage;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import org.slf4j.Logger;
@@ -20,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,6 +52,7 @@ public class NetexToGtfsRuleResultProcessor extends RuleResultProcessor implemen
 
     @Override
     public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
+
         logger.info("Processing result from {} for entry {}/task {}", RuleName.NETEX2GTFS_ENTUR, entry.publicId(), task.name());
         ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
 

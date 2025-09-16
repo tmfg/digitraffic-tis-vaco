@@ -13,6 +13,7 @@ import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.Report;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -53,7 +53,8 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
 
     @Override
     public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
-logger.info("Processing result from {} for entry {}/task {}", RuleName.GTFS_CANONICAL, entry.publicId(), task.name());
+
+        logger.info("Processing result from {} for entry {}/task {}", RuleName.GTFS_CANONICAL, entry.publicId(), task.name());
         Set<String> filesFound = createOutputPackages(resultMessage, entry, task, requiredFiles);
 
         if (filesFound.isEmpty()) {
