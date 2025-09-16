@@ -39,6 +39,7 @@ public class SimpleResultProcessor extends RuleResultProcessor implements Result
 
     @Override
     public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
+        logger.info("Processing result from PREPARE for entry {}/task {}", entry.publicId(), task.name());
         createOutputPackages(resultMessage, entry, task, requiredFiles);
         // this should call resolveTaskStatus(); if this logic gets _any_ more complex than this
         taskService.markStatus(entry, task, Status.SUCCESS);
