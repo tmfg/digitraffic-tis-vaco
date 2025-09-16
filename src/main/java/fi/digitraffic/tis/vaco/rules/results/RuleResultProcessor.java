@@ -115,8 +115,7 @@ public abstract class RuleResultProcessor implements ResultProcessor {
 
         packagesToCreate.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
 
-        requiredFiles.removeAll(uploadedFileNames);
-        return requiredFiles;
+        return requiredFiles.stream().filter(f -> !uploadedFileNames.contains(f)).collect(Collectors.toSet());
     }
 
     protected void createOutputPackage(Entry entry, Task task, String packageName, List<String> files) {
