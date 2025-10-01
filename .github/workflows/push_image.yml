@@ -18,12 +18,12 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.OIDC_DEPLOY_ROLE_ARN }}
           aws-region: eu-north-1
@@ -36,7 +36,7 @@ jobs:
           mask-password: 'true'
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version-file: '.java-version'
           distribution: 'temurin'
