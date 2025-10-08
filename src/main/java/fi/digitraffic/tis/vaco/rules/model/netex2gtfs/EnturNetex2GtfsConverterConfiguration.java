@@ -12,4 +12,8 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableEnturNetex2GtfsConverterConfiguration.class)
 public interface EnturNetex2GtfsConverterConfiguration extends RuleConfiguration {
     String codespace();
+
+    default boolean stopsOnly() {
+        return false;
+    }
 }
