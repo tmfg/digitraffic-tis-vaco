@@ -5,6 +5,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 2
     groups:
       dev-deps:
         dependency-type: "development"
@@ -15,6 +17,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 2
     groups:
       actions-deps:
         patterns:
