@@ -212,7 +212,7 @@ public class EntryRepository {
             // Count and name not provided
             sql = "SELECT * FROM entry WHERE business_id = ? ORDER BY created DESC";
             params = new Object[] {businessId};
-        } else if (count.isEmpty()) {
+        } else if (count.isEmpty() && name.isPresent()) {
             // Only name provided
             sql = "SELECT * FROM entry WHERE business_id = ? AND name = ? ORDER BY created DESC";
             params = new Object[] {businessId, name.get()};
