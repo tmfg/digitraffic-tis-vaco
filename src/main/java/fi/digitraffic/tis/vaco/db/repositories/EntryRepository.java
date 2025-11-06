@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 @Repository
 public class EntryRepository {
@@ -200,15 +201,32 @@ public class EntryRepository {
     }
 
     public List<EntryRecord> findAllByBusinessId(String businessId) {
+        return findAllByBusinessId(businessId, OptionalInt.empty(), Optional.empty());
+    }
+
+    public List<EntryRecord> findAllByBusinessId(String businessId, OptionalInt count, Optional<String> name) {
+        Object[] params;
+        String sql;
+
+        if (count.isEmpty() && name.isEmpty()) {
+            // Count and name not provided
+            sql = "SELECT * FROM entry WHERE business_id = ? ORDER BY created DESC";
+            params = new Object[] {businessId};
+        } else if (count.isEmpty()) {
+            // Only name provided
+            sql = "SELECT * FROM entry WHERE business_id = ? AND name = ? ORDER BY created DESC";
+            params = new Object[] {businessId, name.get()};
+        } else if (name.isEmpty()) {
+            // Only count provided
+            sql = "SELECT * FROM entry WHERE business_id = ? ORDER BY created DESC LIMIT ?";
+            params = new Object[] {businessId, count.getAsInt()};
+        } else {
+            // Both count and name provided
+            sql = "SELECT * FROM entry WHERE business_id = ? AND name = ? ORDER BY created DESC LIMIT ?";
+            params = new Object[] {businessId, name.get(), count.getAsInt()};
+        }
         try {
-            return jdbc.query("""
-                    SELECT *
-                      FROM entry
-                     WHERE business_id = ?
-                     ORDER BY created DESC
-                    """,
-                RowMappers.PERSISTENT_ENTRY.apply(objectMapper),
-                businessId);
+            return jdbc.query(sql, RowMappers.PERSISTENT_ENTRY.apply(objectMapper), params);
         } catch (EmptyResultDataAccessException erdae) {
             logger.warn("Failed to find all by business id", erdae);
             return List.of();

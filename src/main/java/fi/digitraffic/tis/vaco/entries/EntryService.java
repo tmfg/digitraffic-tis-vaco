@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 @Service
 public class EntryService {
@@ -162,7 +163,11 @@ public class EntryService {
     }
 
     public List<Entry> findAllByBusinessId(String businessId) {
-        List<EntryRecord> entries = entryRepository.findAllByBusinessId(businessId);
+        return findAllByBusinessId(businessId, OptionalInt.empty(), Optional.empty());
+    }
+
+    public List<Entry> findAllByBusinessId(String businessId, OptionalInt count, Optional<String> name) {
+        List<EntryRecord> entries = entryRepository.findAllByBusinessId(businessId, count, name);
         return Streams.map(entries, this::buildCompleteEntry).toList();
     }
 

@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -75,10 +77,21 @@ public class QueueController {
 
     @GetMapping(path = "")
     @JsonView(DataVisibility.Public.class)
-    public ResponseEntity<List<Resource<Entry>>> listEntries(@RequestParam(name = "businessId") String businessId) {
+    public ResponseEntity<List<Resource<Entry>>> listEntries(
+        @RequestParam(name = "businessId") String businessId,
+        @RequestParam(name = "count", required = false) Integer count,
+        @RequestParam(name = "name") Optional<String> name
+    ) {
+        if (count != null && count < 1) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        if (name.isPresent() && name.get().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
         if (meService.isAllowedToAccess(businessId)) {
+            OptionalInt countOpt = count != null ? OptionalInt.of(count) : OptionalInt.empty();
             return ResponseEntity.ok(
-                Streams.collect(queueHandlerService.getAllQueueEntriesFor(businessId), this::asQueueHandlerResource));
+                Streams.collect(queueHandlerService.getAllQueueEntriesFor(businessId, countOpt, name), this::asQueueHandlerResource));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
