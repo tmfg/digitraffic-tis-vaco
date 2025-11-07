@@ -35,6 +35,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import static fi.digitraffic.tis.Constants.FINTRAFFIC_BUSINESS_ID;
 
@@ -206,7 +207,11 @@ public class QueueHandlerService {
     }
 
     public List<Entry> getAllQueueEntriesFor(String businessId) {
-        List<Entry> entries = entryService.findAllByBusinessId(businessId);
+        return getAllQueueEntriesFor(businessId, OptionalInt.empty(), Optional.empty());
+    }
+
+    public List<Entry> getAllQueueEntriesFor(String businessId, OptionalInt count, Optional<String> name) {
+        List<Entry> entries = entryService.findAllByBusinessId(businessId, count, name);
         entries.forEach(entry -> cachingService.cacheEntry(
             entry.publicId(),
             key -> entry));
