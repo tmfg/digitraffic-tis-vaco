@@ -129,6 +129,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         .uploadedFiles(Map.of())
                         .build();
                 } finally {
+                    logger.info("Cleaning up temp files from temp directory {} for EntryId {}", tempDirPath, entry.publicId());
                     try (Stream<Path> tempFiles = Files.walk(tempDirPath)) {
                         tempFiles.sorted(Comparator.reverseOrder())
                             .forEach(path -> {
