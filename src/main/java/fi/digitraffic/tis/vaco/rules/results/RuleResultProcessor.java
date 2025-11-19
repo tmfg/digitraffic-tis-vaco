@@ -188,18 +188,25 @@ public abstract class RuleResultProcessor implements ResultProcessor {
                                   String fileName,
                                   Predicate<Path> consumeFile) {
         if (fileNames.containsKey(fileName)) {
+            Path reportsFile = null;
             try {
                 Path ruleTemp = TempFiles.getRuleTempDirectory(vacoProperties, entry, task.name(), resultMessage.ruleName());
                 Path outputDir = ruleTemp.resolve("output");
 
-                Path reportsFile = downloadFile(fileNames, fileName, outputDir);
+                reportsFile = downloadFile(fileNames, fileName, outputDir);
 
                 return consumeFile.test(reportsFile);
-            } catch (VacoException e) {
+            }
+            catch (VacoException e) {
                 if (logger.isWarnEnabled()) {
                     logger.warn("Failed to process file %s of %s/%s".formatted(fileName, entry.publicId(), task.name()), e);
                 }
                 return false;
+            }
+            finally {
+                if (reportsFile != null) {
+                    cleanUpTempRulePathFile(entry, reportsFile);
+                }
             }
         } else {
             logger.warn("Expected file '{}' missing from output for message {}", fileName, resultMessage);
@@ -331,5 +338,21 @@ public abstract class RuleResultProcessor implements ResultProcessor {
             .raw(raw)
             .build();
 
+    }
+
+    /**
+     * Deletes the temporary rule output file.
+     *
+     * @param entry the related entry
+     * @param localRulePathFile path to the temp file to remove
+     */
+    private void cleanUpTempRulePathFile(Entry entry, Path localRulePathFile) {
+        try {
+            Files.deleteIfExists(localRulePathFile); // remove downloaded temp file
+            logger.info("Deleted local rule path files for EntryId {} from {}", entry.publicId(), localRulePathFile);
+        }
+        catch (Exception e) {
+            logger.error("Failed to delete local rule path files for EntryId {} from {}", entry.publicId(),localRulePathFile, e);
+        }
     }
 }

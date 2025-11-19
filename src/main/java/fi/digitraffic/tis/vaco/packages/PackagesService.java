@@ -141,7 +141,6 @@ public class PackagesService {
                         bucket,
                         S3Path.of(p.path()),  // reuse local path as S3 path key
                         targetPackagePath);
-                    cleanUpTempPackagePathFile(entry,targetPackagePath); // cleanup temp package path
                     return targetPackagePath;
                 });
             });
@@ -155,14 +154,5 @@ public class PackagesService {
             return vacoProperties.s3ProcessingBucket();
         }
         return vacoProperties.s3PackagesBucket();
-    }
-    private void cleanUpTempPackagePathFile(Entry entry, Path localPackagePathFile ) {
-        try {
-            Files.deleteIfExists(localPackagePathFile); // remove downloaded temp file
-            logger.info("Deleted local package path files for EntryId {} from {}", entry.publicId(), localPackagePathFile);
-        }
-        catch (Exception e) {
-            logger.error("Failed to delete local package path files for EntryId {} from {}", entry.publicId(),localPackagePathFile, e);
-        }
     }
 }

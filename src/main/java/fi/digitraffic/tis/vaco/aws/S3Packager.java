@@ -82,7 +82,12 @@ public class S3Packager {
             }
         });
     }
-
+    /**
+     * Deletes the temporary artifact file.
+     *
+     * @param entry the related entry
+     * @param localArtifactPathFile path to the temp file to remove
+     */
     private void cleanUpTempArtifactPathFile(Entry entry, Path localArtifactPathFile) {
         try {
             Files.deleteIfExists(localArtifactPathFile); // remove downloaded temp file
