@@ -151,7 +151,7 @@ public class CachingService {
             .evictionListener(((key, value, cause) -> {
                 try {
                     if (key != null) {
-                        logger.error("Deleting Package path file matching to evicted entry '{}' from packagesCache", key);
+                        logger.info("Deleting Package path file matching to evicted entry '{}' from packagesCache", key);
                         Files.deleteIfExists((Path) key);
                     }
                 } catch (IOException e) {
