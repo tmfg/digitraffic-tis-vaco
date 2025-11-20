@@ -33,7 +33,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -81,11 +83,15 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
             @Override
             protected Path downloadFile(Map<String, String> fileNames, String fileName, Path outputDir) {
                 try {
-                    return Path.of(Thread.currentThread()
+                    Path originalFile = Path.of(Thread.currentThread()
                         .getContextClassLoader()
                         .getResource("rule/results/netex/" + fileName)
                         .toURI());
-                } catch (URISyntaxException e) {
+
+                    Path tempDir = Files.createTempDirectory("tempdir_");
+                    Path target = tempDir.resolve(originalFile.getFileName());
+                    return Files.copy(originalFile, target);
+                } catch (URISyntaxException | IOException e) {
                     throw new RuntimeException(e);
                 }
             }

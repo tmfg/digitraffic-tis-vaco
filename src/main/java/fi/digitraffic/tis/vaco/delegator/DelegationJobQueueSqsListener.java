@@ -79,20 +79,20 @@ public class DelegationJobQueueSqsListener extends SqsListenerBase<ImmutableDele
         logger.info("Entry {} next tasks to run {}", entry.publicId(), tasksToRun);
         if (!tasksToRun.isEmpty()) {
             tasksToRun.forEach(task -> {
-                logger.info("Running task {}", task);
+                logger.info("Running task for entryId {} :> {}", entry.publicId(), task);
                 String name = task.name();
 
                 if (name.equals(DownloadRule.PREPARE_DOWNLOAD_TASK)) {
-                    logger.debug("Internal rule {} detected, delegating...", name);
+                    logger.debug("Internal rule {} detected for entryId {}, delegating...", name, entry.publicId());
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, downloadRule.execute(entry).join());
                 } else if (name.equals(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)) {
-                    logger.debug("Internal rule {} detected, delegating...", name);
+                    logger.debug("Internal rule {} detected for entryId {}, delegating...", name, entry.publicId());
                     messagingService.sendMessage(QueueNames.VACO_RULES_RESULTS, stopsAndQuaysRule.execute(entry).join());
                 } else if (knownExternalRules.contains(name)) {
-                    logger.debug("External rule {} detected, submitting to processing queue...", name);
+                    logger.debug("External rule {} detected for entryId {}, submitting to processing queue...", name, entry.publicId());
                     submitExternalRule(task, entry);
                 } else {
-                    logger.info("Unknown task, marking it as complete to avoid infinite looping {} / {}", task, message);
+                    logger.info("Unknown task for entryId {}, marking it as complete to avoid infinite looping {} / {}", entry.publicId(), task, message);
                     taskService.trackTask(entry, task, ProcessingState.START);
                     taskService.trackTask(entry, task, ProcessingState.COMPLETE);
                     taskService.markStatus(entry, task, Status.CANCELLED);

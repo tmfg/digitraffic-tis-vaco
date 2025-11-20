@@ -147,10 +147,11 @@ public class CachingService {
         return Caffeine.newBuilder()
             .recordStats()
             .maximumSize(500)
-            .expireAfterWrite(Duration.ofDays(3))
+            .expireAfterWrite(Duration.ofHours(12))
             .evictionListener(((key, value, cause) -> {
                 try {
                     if (key != null) {
+                        logger.info("Deleting Package path file matching to evicted entry '{}' from packagesCache", key);
                         Files.deleteIfExists((Path) key);
                     }
                 } catch (IOException e) {

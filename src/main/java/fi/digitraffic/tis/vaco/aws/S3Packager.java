@@ -74,11 +74,27 @@ public class S3Packager {
                if (Files.exists(localArtifactTemp)) {
                    try {
                        cleanup(localArtifactTemp.toFile());
+                       cleanUpTempArtifactPathFile(entry, localTargetFile);
                    } catch (IOException e) {
                        logger.error("S3Packager has failed cleaning up the temp directory {} produced during packaging {} into {}", localArtifactTemp, s3SourcePath, zipFileName, e);
                    }
                }
             }
         });
+    }
+    /**
+     * Deletes the temporary artifact file.
+     *
+     * @param entry the related entry
+     * @param localArtifactPathFile path to the temp file to remove
+     */
+    private void cleanUpTempArtifactPathFile(Entry entry, Path localArtifactPathFile) {
+        try {
+            Files.deleteIfExists(localArtifactPathFile); // remove downloaded temp file
+            logger.info("Deleted local artifact path files for EntryId {} from {}", entry.publicId(), localArtifactPathFile);
+        }
+        catch (Exception e) {
+            logger.error("Failed to delete local artifact path files for EntryId {} from {}", entry.publicId(),localArtifactPathFile, e);
+        }
     }
 }
