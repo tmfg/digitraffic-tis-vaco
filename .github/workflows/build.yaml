@@ -21,7 +21,7 @@ jobs:
         working-directory: ./digitraffic-tis-vaco
     steps:
       - name: Checkout project files
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: digitraffic-tis-vaco
 
@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout project files
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: digitraffic-tis-vaco
           fetch-depth: 0
