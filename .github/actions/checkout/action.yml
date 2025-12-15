@@ -60,6 +60,7 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{ steps.extract_branch.outputs.branch }}
         path: ${{ inputs.path }}
+        ssh-key: ${{ inputs.deploy-key }}
         fetch-depth: ${{ inputs.fetch-depth }}
 
     - if: steps.repo.outputs.ref-exists == 'false'
@@ -68,4 +69,5 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.default-branch }}
         path: ${{ inputs.path }}
+        ssh-key: ${{ inputs.deploy-key }}
         fetch-depth: ${{ inputs.fetch-depth }}
