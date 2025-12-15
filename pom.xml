@@ -40,16 +40,16 @@
         <java.version>21</java.version>
         <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
                    avoid conflicts -->
-        <springframework.boot-version>3.5.7</springframework.boot-version>
+        <springframework.boot-version>3.5.8</springframework.boot-version>
         <junit5.version>5.9.2</junit5.version>
-        <testcontainers.version>2.0.1</testcontainers.version>
+        <testcontainers.version>2.0.2</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>3.1.1</awspringcloud.version>
         <azurespring.version>6.0.0</azurespring.version>
-        <oauth2server.version>3.5.7</oauth2server.version>
-        <immutables.version>2.11.6</immutables.version>
-        <jackson.version>2.20.0</jackson.version>
+        <oauth2server.version>3.5.8</oauth2server.version>
+        <immutables.version>2.11.7</immutables.version>
+        <jackson.version>2.20.1</jackson.version>
         <mockito.version>5.20.0</mockito.version>
         <caffeine.version>3.2.3</caffeine.version>
         <guava.version>33.5.0-jre</guava.version>
@@ -59,9 +59,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
-        <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
+        <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
         <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
-        <jib-maven-plugin.version>3.4.6</jib-maven-plugin.version>
+        <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <sonar.organization>fintraffic</sonar.organization>
@@ -214,7 +214,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.8.13</version>
+            <version>2.8.14</version>
         </dependency>
 
         <!-- AWS integration -->
