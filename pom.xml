@@ -458,7 +458,11 @@
                         <jvmFlags>
                             <!-- force JVM to exit on OOME, needed due to Spring Scheduler's internals catching Errors -->
                             <jvmFlag>-XX:+ExitOnOutOfMemoryError</jvmFlag>
+                            <jvmFlag>-Djava.io.tmpdir=/app/tmp</jvmFlag>
                         </jvmFlags>
+                        <volumes>
+                            <volume>/app/tmp</volume>
+                        </volumes>
                     </container>
                     <to>
                         <image>${jib-maven-plugin.image-name}</image>
