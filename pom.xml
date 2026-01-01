@@ -40,15 +40,15 @@
         <java.version>21</java.version>
         <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
                    avoid conflicts -->
-        <springframework.boot-version>3.5.8</springframework.boot-version>
+        <springframework.boot-version>4.0.1</springframework.boot-version>
         <junit5.version>5.9.2</junit5.version>
-        <testcontainers.version>2.0.2</testcontainers.version>
+        <testcontainers.version>2.0.3</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>3.1.1</awspringcloud.version>
-        <azurespring.version>6.0.0</azurespring.version>
-        <oauth2server.version>3.5.8</oauth2server.version>
-        <immutables.version>2.11.7</immutables.version>
+        <azurespring.version>6.1.0</azurespring.version>
+        <oauth2server.version>4.0.1</oauth2server.version>
+        <immutables.version>2.12.0</immutables.version>
         <jackson.version>2.20.1</jackson.version>
         <mockito.version>5.20.0</mockito.version>
         <caffeine.version>3.2.3</caffeine.version>
@@ -214,7 +214,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.8.14</version>
+            <version>3.0.0</version>
         </dependency>
 
         <!-- AWS integration -->
@@ -391,7 +391,7 @@
         <dependency>
             <groupId>com.github.mizosoft.methanol</groupId>
             <artifactId>methanol</artifactId>
-            <version>1.8.4</version>
+            <version>1.9.0</version>
         </dependency>
 
         <!-- MS Graph client and its dependencies for reading extended group data for overage scenario -->
