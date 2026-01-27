@@ -469,16 +469,34 @@
                              use automatically -->
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
+                    <extraDirectories>
+                        <paths>
+                            <path>
+                                <from>target/sbom</from>
+                                <into>/sbom</into>
+                            </path>
+                        </paths>
+                    </extraDirectories>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
                 <version>${cyclonedx-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>makeBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <projectType>application</projectType>
                     <schemaVersion>1.6</schemaVersion>
                     <outputFormat>json</outputFormat>
+                    <outputName>${git.commit.id.full}</outputName>
+                    <outputDirectory>${project.build.directory}/sbom</outputDirectory>
                     <includeBomSerialNumber>true</includeBomSerialNumber>
                 </configuration>
             </plugin>
