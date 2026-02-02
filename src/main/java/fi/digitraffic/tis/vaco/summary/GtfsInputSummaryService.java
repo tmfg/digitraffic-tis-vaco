@@ -23,10 +23,12 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -192,13 +194,27 @@ public class GtfsInputSummaryService {
     }
 
     private ImmutableGtfsInputSummary.Builder processShapes(Entry entry, Task task, InputStream inputStream, ImmutableGtfsInputSummary.Builder summaryBuilder) {
-        List<Map<String, String>> shapes = processCsv(entry, task, inputStream, shapesCsv);
+        Set<String> uniqueShapeIds = new HashSet<>();
 
-        long uniqueShapesCount = shapes.stream().map(s -> s.get("shape_id")).distinct().count();
+        try (InputStreamReader isr = new InputStreamReader(inputStream)) {
+            // Stream CSV rows directly and collect unique shape_id values with less memory overhead
+            for (CSVRecord row : createOutputFormat().parse(isr)) {
+                if (row.isMapped("shape_id")) {
+                    String shapeId = row.get("shape_id");
+                    if (shapeId != null && !shapeId.isBlank()) {
+                        uniqueShapeIds.add(shapeId);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to process shapes.txt for entry {} task {}", entry.publicId(), task.name(), e);
+        }
+
+        long uniqueShapesCount = uniqueShapeIds.size();
         summaryBuilder = summaryBuilder
             .addCounts("Shapes: " + uniqueShapesCount);
 
-        if (!shapes.isEmpty()) {
+        if (uniqueShapesCount > 0) {
             summaryBuilder = summaryBuilder.addComponents("Shapes");
         }
         return summaryBuilder;
