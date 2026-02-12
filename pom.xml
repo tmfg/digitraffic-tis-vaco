@@ -64,6 +64,7 @@
         <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+        <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
         <sonar.organization>fintraffic</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <!-- derived properties -->
@@ -468,6 +469,35 @@
                              use automatically -->
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
+                    <extraDirectories>
+                        <paths>
+                            <path>
+                                <from>target/sbom</from>
+                                <into>/sbom</into>
+                            </path>
+                        </paths>
+                    </extraDirectories>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <version>${cyclonedx-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>makeBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <projectType>application</projectType>
+                    <schemaVersion>1.6</schemaVersion>
+                    <outputFormat>json</outputFormat>
+                    <outputName>${git.commit.id.full}</outputName>
+                    <outputDirectory>${project.build.directory}/sbom</outputDirectory>
+                    <includeBomSerialNumber>true</includeBomSerialNumber>
                 </configuration>
             </plugin>
             <plugin>
