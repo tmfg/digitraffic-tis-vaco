@@ -168,7 +168,6 @@ public class TestObjects {
 
         return new VacoProperties(
             "unittests-" + randomSeed,
-            null,
             "unittests-" + randomSeed + "-processing-bucket",
             "unittests-" + randomSeed + "-packages-bucket",
             "http://localhost:5173",
