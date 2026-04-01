@@ -6,11 +6,10 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
-import java.nio.file.Path;
-
 @ConfigurationProperties(prefix = "vaco")
 @Validated
 public record VacoProperties(@DefaultValue("local") String environment,
+                             String temporaryDirectory,
                              @NotBlank String s3ProcessingBucket,
                              @NotBlank String s3PackagesBucket,
                              @NotBlank String baseUrl,
@@ -22,7 +21,8 @@ public record VacoProperties(@DefaultValue("local") String environment,
                              @NestedConfigurationProperty Cleanup cleanup,
                              @NestedConfigurationProperty MsGraph msGraph,
                              @NestedConfigurationProperty EncryptionKeys encryptionKeys) {
+    @Override
     public String temporaryDirectory() {
-        return Path.of(System.getProperty("java.io.tmpdir"), "vaco").toString();
+        return temporaryDirectory != null ? temporaryDirectory : System.getProperty("java.io.tmpdir");
     }
 }
