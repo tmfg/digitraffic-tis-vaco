@@ -43,10 +43,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class RuleResultProcessor implements ResultProcessor {
+    /**
+     * Matches SLF4J/Logback log lines at non-error levels: {@code [thread] INFO|DEBUG|TRACE|WARN}.
+     * Lines matching this pattern are excluded from exception scanning — "Exception" in such lines
+     * appears in a class name, not as an actual runtime error.
+     */
+    private static final Pattern NON_ERROR_LOG_PATTERN =
+        Pattern.compile("\\[\\S+\\]\\s+(INFO|DEBUG|TRACE|WARN)\\s+");
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PackagesService packagesService;
     private final S3Client s3Client;
@@ -74,6 +83,10 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
+    static boolean isNonErrorLogLine(String line) {
+        return NON_ERROR_LOG_PATTERN.matcher(line).find();
+    }
+
     @Override
     public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
         Map<String, String> fileNames = collectOutputFileNames(resultMessage);
@@ -84,7 +97,6 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     private void scanDebugLogs(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
         processLog(resultMessage, entry, task, fileNames, "stderr.log", "Exception");
         processLog(resultMessage, entry, task, fileNames, "stdout.log", "Exception");
-
     }
 
     abstract boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames);
@@ -223,7 +235,7 @@ public abstract class RuleResultProcessor implements ResultProcessor {
             try (Stream<String> reportLines = Files.lines(reportsFile)) {
 
                 return reportLines.map(errorLine -> {
-                        if (errorLine.contains(errorMarker)) {
+                        if (errorLine.contains(errorMarker) && !isNonErrorLogLine(errorLine)) {
                             String errorDetail = errorLine.substring(errorLine.indexOf(":") + 1).trim();
                             Map<String, String> errorMap = Map.of(errorMarker, errorDetail);
                             try {
