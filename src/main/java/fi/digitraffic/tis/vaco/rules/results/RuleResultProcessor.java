@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -283,48 +282,6 @@ public abstract class RuleResultProcessor implements ResultProcessor {
                 throw new RuleExecutionException("Stdout.log file could not be read into findings in entry " + entry.publicId());
             }
         });
-    }
-
-    protected List<ImmutableFinding> scanLog(Entry entry, Task task, String ruleName, Path reportsFile, String errorMarker) throws IOException {
-
-        try {
-            Long rulesetId = rulesetService.findByName(ruleName)
-                .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
-                .id();
-            try (Stream<String> reportLines = Files.lines(reportsFile)) {
-
-                return reportLines.map(errorLine -> {
-                        if (errorLine.startsWith(errorMarker)) {
-                            String errorDetail = errorLine.substring(errorLine.indexOf(":") + 1).trim();
-                            Map<String, String> errorMap = new HashMap<>();
-                            errorMap.put(errorMarker, errorDetail);
-                            try {
-                                return ImmutableFinding.of(
-                                        task.id(),
-                                        rulesetId,
-                                        ruleName,
-                                        errorMarker,
-                                        FindingSeverity.ERROR
-                                    )
-                                    .withRaw(objectMapper.writeValueAsBytes(errorMap));
-                            } catch (JsonProcessingException e) {
-                                logger.warn("Failed to convert tree to bytes", e);
-                                return null;
-                            }
-
-                        } else {
-                            return null;
-                        }
-
-                    })
-                    .filter(Objects::nonNull)
-                    .toList();
-            }
-
-        } catch (IOException e) {
-            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
-            return List.of();
-        }
     }
 
     protected void requiredFilesNotFound(Entry entry, Task task, Set<String> filesFound){
