@@ -116,8 +116,6 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     protected Set<String> createOutputPackages(ResultMessage resultMessage, Entry entry, Task task, Set<String> requiredFiles) {
         // package generation based on rule outputs
         ConcurrentMap<String, List<String>> packagesToCreate = collectPackageContents(resultMessage.uploadedFiles());
-
-        packagesToCreate.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
         Set<String> uploadedFileNames = new HashSet<>();
 
         for (String url : resultMessage.uploadedFiles().keySet()) {
