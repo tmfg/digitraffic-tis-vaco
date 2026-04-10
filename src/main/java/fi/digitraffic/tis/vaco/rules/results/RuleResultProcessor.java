@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,10 +42,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class RuleResultProcessor implements ResultProcessor {
+    /**
+     * Matches SLF4J/Logback log lines at non-error levels: {@code [thread] INFO|DEBUG|TRACE|WARN}.
+     * Lines matching this pattern are excluded from exception scanning — "Exception" in such lines
+     * appears in a class name, not as an actual runtime error.
+     */
+    private static final Pattern NON_ERROR_LOG_PATTERN =
+        Pattern.compile("\\[\\S+\\]\\s+(INFO|DEBUG|TRACE|WARN)\\s+");
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PackagesService packagesService;
     private final S3Client s3Client;
@@ -74,6 +82,10 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
+    static boolean isNonErrorLogLine(String line) {
+        return NON_ERROR_LOG_PATTERN.matcher(line).find();
+    }
+
     @Override
     public boolean processResults(ResultMessage resultMessage, Entry entry, Task task) {
         Map<String, String> fileNames = collectOutputFileNames(resultMessage);
@@ -84,7 +96,6 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     private void scanDebugLogs(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
         processLog(resultMessage, entry, task, fileNames, "stderr.log", "Exception");
         processLog(resultMessage, entry, task, fileNames, "stdout.log", "Exception");
-
     }
 
     abstract boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames);
@@ -105,8 +116,6 @@ public abstract class RuleResultProcessor implements ResultProcessor {
     protected Set<String> createOutputPackages(ResultMessage resultMessage, Entry entry, Task task, Set<String> requiredFiles) {
         // package generation based on rule outputs
         ConcurrentMap<String, List<String>> packagesToCreate = collectPackageContents(resultMessage.uploadedFiles());
-
-        packagesToCreate.forEach((packageName, files) -> createOutputPackage(entry, task, packageName, files));
         Set<String> uploadedFileNames = new HashSet<>();
 
         for (String url : resultMessage.uploadedFiles().keySet()) {
@@ -223,7 +232,7 @@ public abstract class RuleResultProcessor implements ResultProcessor {
             try (Stream<String> reportLines = Files.lines(reportsFile)) {
 
                 return reportLines.map(errorLine -> {
-                        if (errorLine.contains(errorMarker)) {
+                        if (errorLine.contains(errorMarker) && !isNonErrorLogLine(errorLine)) {
                             String errorDetail = errorLine.substring(errorLine.indexOf(":") + 1).trim();
                             Map<String, String> errorMap = Map.of(errorMarker, errorDetail);
                             try {
@@ -271,48 +280,6 @@ public abstract class RuleResultProcessor implements ResultProcessor {
                 throw new RuleExecutionException("Stdout.log file could not be read into findings in entry " + entry.publicId());
             }
         });
-    }
-
-    protected List<ImmutableFinding> scanLog(Entry entry, Task task, String ruleName, Path reportsFile, String errorMarker) throws IOException {
-
-        try {
-            Long rulesetId = rulesetService.findByName(ruleName)
-                .orElseThrow(() -> new UnknownEntityException(ruleName, "Unknown rule name"))
-                .id();
-            try (Stream<String> reportLines = Files.lines(reportsFile)) {
-
-                return reportLines.map(errorLine -> {
-                        if (errorLine.startsWith(errorMarker)) {
-                            String errorDetail = errorLine.substring(errorLine.indexOf(":") + 1).trim();
-                            Map<String, String> errorMap = new HashMap<>();
-                            errorMap.put(errorMarker, errorDetail);
-                            try {
-                                return ImmutableFinding.of(
-                                        task.id(),
-                                        rulesetId,
-                                        ruleName,
-                                        errorMarker,
-                                        FindingSeverity.ERROR
-                                    )
-                                    .withRaw(objectMapper.writeValueAsBytes(errorMap));
-                            } catch (JsonProcessingException e) {
-                                logger.warn("Failed to convert tree to bytes", e);
-                                return null;
-                            }
-
-                        } else {
-                            return null;
-                        }
-
-                    })
-                    .filter(Objects::nonNull)
-                    .toList();
-            }
-
-        } catch (IOException e) {
-            logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
-            return List.of();
-        }
     }
 
     protected void requiredFilesNotFound(Entry entry, Task task, Set<String> filesFound){
