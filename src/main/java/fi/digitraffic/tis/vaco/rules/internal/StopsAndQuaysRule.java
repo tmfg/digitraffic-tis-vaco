@@ -59,8 +59,6 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
 
                     s3Client.uploadFile(vacoProperties.s3PackagesBucket(), s3TargetPath, stopsAndQuays).join();
 
-                    taskService.trackTask(entry, t, ProcessingState.COMPLETE);
-
                     return ImmutableResultMessage.builder()
                         .entryId(entry.publicId())
                         .taskId(tracked.id())
