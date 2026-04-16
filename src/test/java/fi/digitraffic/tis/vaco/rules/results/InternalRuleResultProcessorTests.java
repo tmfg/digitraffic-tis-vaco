@@ -31,6 +31,8 @@ import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.entryWith
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -81,6 +83,32 @@ class InternalRuleResultProcessorTests extends ResultProcessorTestBase {
 
     private void givenPackageIsRegistered() {
         given(packagesService.registerPackage(registeredPackage.capture())).willAnswer(i -> i.getArgument(0));
+    }
+
+    @Test
+    void preservesCancelledStatusWhenNoResultPackage() {
+        Task cancelledTask = ImmutableTask.copyOf(downloadTask).withStatus(Status.CANCELLED);
+        ResultMessage emptyResult = asResultMessage(vacoProperties, DownloadRule.PREPARE_DOWNLOAD_TASK, entry, Map.of());
+
+        givenTaskProcessingStateIsMarkedAs(entry, cancelledTask, ProcessingState.COMPLETE);
+
+        boolean result = resultProcessor.processResults(emptyResult, entry, cancelledTask);
+
+        assertThat(result, equalTo(false));
+        verify(taskService, never()).markStatus(entry, cancelledTask, Status.FAILED);
+    }
+
+    @Test
+    void marksFailedWhenNoResultPackageAndStatusNotTerminal() {
+        ResultMessage emptyResult = asResultMessage(vacoProperties, DownloadRule.PREPARE_DOWNLOAD_TASK, entry, Map.of());
+
+        givenTaskStatusIsMarkedAs(entry, Status.FAILED);
+        givenTaskProcessingStateIsMarkedAs(entry, downloadTask, ProcessingState.COMPLETE);
+
+        boolean result = resultProcessor.processResults(emptyResult, entry, downloadTask);
+
+        assertThat(result, equalTo(false));
+        verify(taskService).markStatus(entry, downloadTask, Status.FAILED);
     }
 
 }
