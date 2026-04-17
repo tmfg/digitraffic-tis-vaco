@@ -20,6 +20,7 @@ import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
+import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -79,6 +80,9 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     @Autowired
     private DownloadRule downloadRule;
 
+    @Autowired
+    private InternalRuleResultProcessor internalRuleResultProcessor;
+
     Path response;
 
     @Autowired
@@ -115,6 +119,11 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
 
         String testQueueName = createSqsQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
+
+        // Process the result through InternalRuleResultProcessor to register packages and mark task complete,
+        // to simulate the full SQS pipeline that runs in production
+        Task downloadTask = taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK).get();
+        internalRuleResultProcessor.processResults(downloadedFile, entry, downloadTask);
 
         Task task = taskService.findTask(entry.publicId(), RuleName.GTFS_CANONICAL).get();
         rulesetSubmissionService.submitTask(
@@ -155,6 +164,11 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
 
         String testQueueName = createSqsQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));
         ResultMessage downloadedFile = downloadRule.execute(entry).join();
+
+        // Process the result through InternalRuleResultProcessor to register packages and mark task complete,
+        // to simulate the full SQS pipeline that runs in production
+        Task downloadTask = taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK).get();
+        internalRuleResultProcessor.processResults(downloadedFile, entry, downloadTask);
 
         Task task = taskService.findTask(entry.publicId(), RuleName.GTFS_CANONICAL).get();
         rulesetSubmissionService.submitTask(
