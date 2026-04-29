@@ -47,8 +47,11 @@ public class InternalRuleResultProcessor extends RuleResultProcessor implements 
         // use downloaded result file as is instead of repackaging the zip
         ConcurrentMap<String, List<String>> packages = collectPackageContents(resultMessage.uploadedFiles());
         if (!packages.containsKey("result") || packages.get("result").isEmpty()) {
-            logger.warn("Entry {} internal task {} does not contain 'result' package.", resultMessage.entryId(), task.name());
-            taskService.markStatus(entry, task, Status.FAILED);
+            // preserve terminal statuses (CANCELLED, FAILED) already set by the rule itself
+            if (Status.isNotCompleted(task.status())) {
+                logger.warn("Entry {} internal task {} does not contain 'result' package.", resultMessage.entryId(), task.name());
+                taskService.markStatus(entry, task, Status.FAILED);
+            }
             taskService.trackTask(entry, task, ProcessingState.COMPLETE);
             return false;
         } else {

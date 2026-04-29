@@ -100,7 +100,6 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     String downloadedFilePackage = "result";
                     Map<String, List<String>> uploadedFiles = Map.of();
                     if (result.isPresent()) {
-                        taskService.markStatus(entry, tracked, Status.SUCCESS);
                         S3Path s3Path = result.get();
                         uploadedFiles = Map.of(s3Path.asUri(vacoProperties.s3PackagesBucket()), List.of(downloadedFilePackage));
                     } else {
@@ -174,11 +173,8 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             return feedArchive.thenCompose(validateZip(tracked))
                 .thenApply(track(entry, tracked, ProcessingState.UPDATE))
                 .thenCompose(uploadToS3(entry, tracked))
-                .thenApply(track(entry, tracked, ProcessingState.COMPLETE))
                 .join();
         } else {
-            // yes, this looks a bit weird, it's because it reuses the function from above composition
-            track(entry, tracked, ProcessingState.COMPLETE).apply(tracked);
             return Optional.empty();
         }
     }

@@ -46,6 +46,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -105,8 +107,6 @@ class DownloadRuleTests {
         given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry))).willAnswer(a -> CompletableFuture.completedFuture(response));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
-        given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
-        given(taskService.markStatus(entry, dlTask, Status.SUCCESS)).willReturn(dlTask);
 
         ResultMessage result = rule.execute(entry).join();
 
@@ -152,8 +152,6 @@ class DownloadRuleTests {
         given(entryService.updateEtag(entry, newEtag)).willReturn(ImmutableEntry.copyOf(entry).withEtag(newEtag));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture() , sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
-        given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
-        given(taskService.markStatus(entry, dlTask, Status.SUCCESS)).willReturn(dlTask);
 
         ResultMessage result = rule.execute(entry).join();
 
@@ -180,12 +178,31 @@ class DownloadRuleTests {
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
         given(entryService.findLatestEntryForContext(entry.businessId(), entry.context())).willReturn(Optional.of(previousEntry));
-        given(taskService.trackTask(entry, dlTask, ProcessingState.COMPLETE)).willReturn(dlTask);
         given(taskService.markStatus(entry, dlTask, Status.CANCELLED)).willReturn(dlTask);
 
         ResultMessage result = rule.execute(entry).join();
 
         assertThat(result.uploadedFiles().isEmpty(), equalTo(true));
+    }
+
+    @Test
+    void marksTaskFailedOnUnrecoverableException() {
+        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry(TransitDataFormat.GTFS.fieldName());
+        Task dlTask = ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, -1).withId(5000000L).withPublicId(NanoIdUtils.randomNanoId());
+        Entry entry = entryBuilder.addTasks(dlTask).build();
+
+        given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
+        given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
+        given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
+        given(httpClient.downloadFile(any(Path.class), eq(entry.url()), eq(entry)))
+            .willReturn(CompletableFuture.failedFuture(new RuntimeException("connection refused")));
+        given(taskService.markStatus(entry, dlTask, Status.FAILED)).willReturn(dlTask);
+
+        ResultMessage result = rule.execute(entry).join();
+
+        assertThat(result.uploadedFiles().isEmpty(), equalTo(true));
+        verify(taskService).markStatus(entry, dlTask, Status.FAILED);
+        verify(taskService, never()).trackTask(entry, dlTask, ProcessingState.COMPLETE);
     }
 
     @NotNull
