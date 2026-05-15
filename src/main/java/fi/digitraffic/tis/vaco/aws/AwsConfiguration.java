@@ -3,7 +3,7 @@ package fi.digitraffic.tis.vaco.aws;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import io.awspring.cloud.autoconfigure.core.AwsClientCustomizer;
+import io.awspring.cloud.autoconfigure.AwsClientCustomizer;
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
 import io.awspring.cloud.sqs.listener.acknowledgement.AcknowledgementOrdering;
 import io.awspring.cloud.sqs.listener.acknowledgement.handler.AcknowledgementMode;
@@ -243,33 +243,21 @@ public class AwsConfiguration {
         return b.build();
     }
 
-    // NOTE: These are actually/probably not use, but should not be removed until entire AWSpring is removed
+    // NOTE: These are actually/probably not used, but should not be removed until entire AWSpring is removed
     static class S3AwsClientClientConfigurer implements AwsClientCustomizer<S3ClientBuilder> {
         @Override
-        public ClientOverrideConfiguration overrideConfiguration() {
-            return ClientOverrideConfiguration.builder()
+        public void customize(S3ClientBuilder builder) {
+            builder.overrideConfiguration(ClientOverrideConfiguration.builder()
                 .apiCallAttemptTimeout(Duration.ofSeconds(15))
                 .apiCallTimeout(Duration.ofSeconds(15))
                 .retryPolicy(retryPolicy -> retryPolicy.numRetries(5))
-                .build();
-        }
-
-        @Override
-        public SdkHttpClient httpClient() {
-            return ApacheHttpClient.builder()
+                .build());
+            builder.httpClient(ApacheHttpClient.builder()
                 .connectionTimeout(Duration.ofSeconds(15))
                 .socketTimeout(Duration.ofSeconds(15))
                 .connectionAcquisitionTimeout(Duration.ofSeconds(15))
                 .connectionMaxIdleTime(Duration.ofSeconds(60))
-                .build();
-        }
-
-        @Override
-        public SdkAsyncHttpClient asyncHttpClient() {
-            return NettyNioAsyncHttpClient.builder()
-                .connectionTimeout(Duration.ofSeconds(15))
-                .writeTimeout(Duration.ofSeconds(15))
-                .build();
+                .build());
         }
     }
 }
