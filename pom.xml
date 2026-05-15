@@ -50,7 +50,7 @@
         <awspringcloud.version>3.1.1</awspringcloud.version>
         <azurespring.version>6.0.0</azurespring.version>
         <immutables.version>2.11.7</immutables.version>
-        <jackson.version>2.20.2</jackson.version>
+        <jackson.version>2.21.2</jackson.version>
         <mockito.version>5.20.0</mockito.version>
         <guava.version>33.5.0-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
