@@ -48,7 +48,6 @@
         <awspringcloud.version>4.0.2</awspringcloud.version>
         <azurespring.version>7.2.0</azurespring.version>
         <immutables.version>2.11.7</immutables.version>
-        <jackson.version>2.21.2</jackson.version>
         <mockito.version>5.20.0</mockito.version>
         <caffeine.version>3.2.3</caffeine.version>
         <guava.version>33.5.0-jre</guava.version>
@@ -111,13 +110,6 @@
                 <type>pom</type>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>${jackson.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-            <dependency>
                 <groupId>com.azure.spring</groupId>
                 <artifactId>spring-cloud-azure-dependencies</artifactId>
                 <version>${azurespring.version}</version>
@@ -138,10 +130,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-classic</artifactId>
         </dependency>
-        <!-- Jackson 2 compatibility bridge — to be removed once Jackson 3 migration is complete -->
+        <!-- Jackson 2 compatibility bridge — needed for jmespath-jackson in test; remove once Jackson 3 migration is complete -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-jackson2</artifactId>
+            <scope>test</scope>
         </dependency>
         <!-- Enable configuration classes -->
         <dependency>
@@ -153,15 +146,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-        <!-- Handle JDK8 new classes and JSR-310 date/time types correctly when (de)serializing -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jdk8</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         <!-- add ability to produce XML from API endpoints -->
         <dependency>
@@ -294,7 +278,7 @@
             <version>${guava.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <groupId>tools.jackson.datatype</groupId>
             <artifactId>jackson-datatype-guava</artifactId>
         </dependency>
 
