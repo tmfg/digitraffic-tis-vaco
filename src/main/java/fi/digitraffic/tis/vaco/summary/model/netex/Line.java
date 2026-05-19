@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableLine.class)
-@JsonDeserialize(as = ImmutableLine.class)
+@JsonDeserialize(builder = ImmutableLine.Builder.class)
 public interface Line {
     String id();
     String name();

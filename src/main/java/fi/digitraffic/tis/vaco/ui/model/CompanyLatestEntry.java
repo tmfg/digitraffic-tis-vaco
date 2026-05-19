@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCompanyLatestEntry.class)
-@JsonDeserialize(as = ImmutableCompanyLatestEntry.class)
+@JsonDeserialize(builder = ImmutableCompanyLatestEntry.Builder.class)
 public interface CompanyLatestEntry {
     String companyName();
     String businessId();

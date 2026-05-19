@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableRetryStatistics.class)
-@JsonDeserialize(as = ImmutableRetryStatistics.class)
+@JsonDeserialize(builder = ImmutableRetryStatistics.Builder.class)
 public interface RetryStatistics {
     @Value.Default
     default int tryNumber() {

@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableRulesetSubmissionConfiguration.class)
-@JsonDeserialize(as = ImmutableRulesetSubmissionConfiguration.class)
+@JsonDeserialize(builder = ImmutableRulesetSubmissionConfiguration.Builder.class)
 public interface RulesetSubmissionConfiguration {
     @Value.Parameter
     RulesetType type();

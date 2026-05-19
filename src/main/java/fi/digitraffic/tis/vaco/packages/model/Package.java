@@ -12,7 +12,7 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutablePackage.class)
-@JsonDeserialize(as = ImmutablePackage.class)
+@JsonDeserialize(builder = ImmutablePackage.Builder.class)
 public interface Package {
     /**
      * @deprecated Don't use task reference from here, (re)load within usage context if you need it

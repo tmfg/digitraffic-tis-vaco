@@ -8,7 +8,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableFileValidationResult.class)
-@JsonDeserialize(as = ImmutableFileValidationResult.class)
+@JsonDeserialize(builder = ImmutableFileValidationResult.Builder.class)
 public interface FileValidationResult {
     String file();
     boolean required();

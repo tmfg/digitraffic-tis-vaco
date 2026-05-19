@@ -5,11 +5,46 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.annotation.JsonPOJOBuilder;
 import tools.jackson.databind.cfg.CoercionAction;
 import tools.jackson.databind.cfg.CoercionInputShape;
+import tools.jackson.databind.cfg.MapperConfig;
+import tools.jackson.databind.introspect.AnnotatedClass;
+import tools.jackson.databind.introspect.AnnotatedMember;
+import tools.jackson.databind.introspect.JacksonAnnotationIntrospector;
 
 @Configuration
 public class JacksonFeaturesConfiguration {
+
+    @Bean
+    public JsonMapperBuilderCustomizer immutablesBuilderConfiguration() {
+        return builder -> builder.annotationIntrospector(new JacksonAnnotationIntrospector() {
+            @Override
+            public JsonPOJOBuilder.Value findPOJOBuilderConfig(MapperConfig<?> config, AnnotatedClass ac) {
+                if (ac.hasAnnotation(JsonPOJOBuilder.class)) {
+                    return super.findPOJOBuilderConfig(config, ac);
+                }
+                // Immutables-generated Builder classes have no @JsonPOJOBuilder annotation
+                // and use no setter prefix (methods named like businessId(), not withBusinessId())
+                return new JsonPOJOBuilder.Value("build", "");
+            }
+
+            @Override
+            public boolean hasIgnoreMarker(MapperConfig<?> config, AnnotatedMember m) {
+                // In Immutables Builder classes, skip addXxx, addAllXxx, and from() methods.
+                // These are collection helper methods that conflict with the direct Iterable setters
+                // when using empty builder prefix.
+                String className = m.getDeclaringClass().getSimpleName();
+                if ("Builder".equals(className)) {
+                    String name = m.getName();
+                    if ("from".equals(name) || name.startsWith("add")) {
+                        return true;
+                    }
+                }
+                return super.hasIgnoreMarker(config, m);
+            }
+        });
+    }
 
     @Bean
     public JsonMapperBuilderCustomizer strictCoercionConfiguration() {

@@ -9,6 +9,6 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableFintrafficGtfs2NetexConverterConfiguration.class)
-@JsonDeserialize(as = ImmutableFintrafficGtfs2NetexConverterConfiguration.class)
+@JsonDeserialize(builder = ImmutableFintrafficGtfs2NetexConverterConfiguration.Builder.class)
 public interface FintrafficGtfs2NetexConverterConfiguration extends RuleConfiguration {
 }

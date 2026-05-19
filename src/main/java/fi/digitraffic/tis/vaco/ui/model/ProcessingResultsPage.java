@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableProcessingResultsPage.class)
-@JsonDeserialize(as = ImmutableProcessingResultsPage.class)
+@JsonDeserialize(builder = ImmutableProcessingResultsPage.Builder.class)
 public interface ProcessingResultsPage {
     @Value.Parameter
     String magicLinkToken();

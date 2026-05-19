@@ -10,7 +10,7 @@ import java.util.Set;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableHierarchy.class)
-@JsonDeserialize(as = ImmutableHierarchy.class)
+@JsonDeserialize(builder = ImmutableHierarchy.Builder.class)
 public interface Hierarchy {
 
     Company company();

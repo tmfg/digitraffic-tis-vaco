@@ -9,6 +9,6 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableEnturGbfsValidatorConfiguration.class)
-@JsonDeserialize(as = ImmutableEnturGbfsValidatorConfiguration.class)
+@JsonDeserialize(builder = ImmutableEnturGbfsValidatorConfiguration.Builder.class)
 public interface EnturGbfsValidatorConfiguration extends RuleConfiguration {
 }

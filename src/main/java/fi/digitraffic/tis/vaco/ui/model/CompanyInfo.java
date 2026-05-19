@@ -11,7 +11,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCompanyInfo.class)
-@JsonDeserialize(as = ImmutableCompanyInfo.class)
+@JsonDeserialize(builder = ImmutableCompanyInfo.Builder.class)
 public interface CompanyInfo {
     Company company();
 

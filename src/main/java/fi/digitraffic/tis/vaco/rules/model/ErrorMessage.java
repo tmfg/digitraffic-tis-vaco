@@ -9,7 +9,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableErrorMessage.class)
-@JsonDeserialize(as = ImmutableErrorMessage.class)
+@JsonDeserialize(builder = ImmutableErrorMessage.Builder.class)
 public interface ErrorMessage {
     @Value.Parameter
     List<Finding> findings();

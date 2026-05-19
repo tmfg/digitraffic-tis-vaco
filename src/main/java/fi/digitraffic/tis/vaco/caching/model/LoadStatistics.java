@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableLoadStatistics.class)
-@JsonDeserialize(as = ImmutableLoadStatistics.class)
+@JsonDeserialize(builder = ImmutableLoadStatistics.Builder.class)
 public interface LoadStatistics {
     @Value.Parameter
     long loads();

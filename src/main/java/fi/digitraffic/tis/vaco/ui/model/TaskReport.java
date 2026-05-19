@@ -12,7 +12,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableTaskReport.class)
-@JsonDeserialize(as = ImmutableTaskReport.class)
+@JsonDeserialize(builder = ImmutableTaskReport.Builder.class)
 public interface TaskReport {
     String name();
 

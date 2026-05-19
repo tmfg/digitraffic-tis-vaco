@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableHttpClientConfiguration.class)
-@JsonDeserialize(as = ImmutableHttpClientConfiguration.class)
+@JsonDeserialize(builder = ImmutableHttpClientConfiguration.Builder.class)
 public interface HttpClientConfiguration {
 
     /**
