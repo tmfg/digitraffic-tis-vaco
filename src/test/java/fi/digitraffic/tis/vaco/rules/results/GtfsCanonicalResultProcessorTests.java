@@ -1,8 +1,9 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -67,8 +68,7 @@ class GtfsCanonicalResultProcessorTests extends ResultProcessorTestBase {
     @BeforeEach
     void setUp() {
         vacoProperties = TestObjects.vacoProperties();
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new GuavaModule());
+        objectMapper = JsonMapper.builder().addModule(new GuavaModule()).build();
         resultProcessor = new GtfsCanonicalResultProcessor(vacoProperties,
             packagesService,
             s3Client,

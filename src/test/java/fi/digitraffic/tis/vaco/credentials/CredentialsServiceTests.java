@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.credentials;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.http.HttpClient;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -88,7 +88,7 @@ class CredentialsServiceTests {
     }
 
     @Test
-    void testCredentialsAutomaticallySet() throws JsonProcessingException {
+    void testCredentialsAutomaticallySet() throws JacksonException {
 
         credentialsRecord = ImmutableCredentialsRecord.builder()
             .id(120000)

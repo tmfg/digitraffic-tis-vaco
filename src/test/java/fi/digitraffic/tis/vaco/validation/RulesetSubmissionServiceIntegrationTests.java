@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -144,7 +144,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         List<ValidationRuleJobMessage> messages = messagingService.readMessages(testQueueName).map(m -> {
             try {
                 return objectMapper.readValue(m.body(), ValidationRuleJobMessage.class);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }).toList();
