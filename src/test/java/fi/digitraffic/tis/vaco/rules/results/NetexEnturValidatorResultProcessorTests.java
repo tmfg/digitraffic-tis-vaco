@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.rules.results;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import tools.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.vaco.JacksonFeaturesConfiguration;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.aws.s3.S3Client;
@@ -70,7 +71,7 @@ class NetexEnturValidatorResultProcessorTests extends ResultProcessorTestBase {
     @BeforeEach
     void setUp() {
         vacoProperties = TestObjects.vacoProperties();
-        objectMapper = JsonMapper.builder().addModule(new GuavaModule()).build();
+        objectMapper = JacksonFeaturesConfiguration.configureForImmutables(JsonMapper.builder().addModule(new GuavaModule())).build();
         resultProcessor = new NetexEnturValidatorResultProcessor(
             packagesService,
             s3Client,

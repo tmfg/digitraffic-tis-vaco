@@ -3,6 +3,8 @@ package fi.digitraffic.tis.spikes.jacksonsubtype;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import fi.digitraffic.tis.vaco.JacksonFeaturesConfiguration;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -16,7 +18,7 @@ class JacksonSubtypingWithImmutablesTests {
     @Test
     void subtyping() throws JacksonException {
         ImmutableContent content = ImmutableContent.of(ImmutableSubtypeA.builder().name("a").subtypeValueA("aaa").build());
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonFeaturesConfiguration.configureForImmutables(JsonMapper.builder()).build();
         JsonNode tree = mapper.valueToTree(content);
         Content reloaded = mapper.treeToValue(tree, Content.class);
         // name gets dropped, but mapping works as expected
