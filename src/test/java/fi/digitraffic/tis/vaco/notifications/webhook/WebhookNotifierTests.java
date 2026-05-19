@@ -1,8 +1,9 @@
 package fi.digitraffic.tis.vaco.notifications.webhook;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.Link;
@@ -89,8 +90,7 @@ class WebhookNotifierTests {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new GuavaModule());
+        objectMapper = JsonMapper.builder().addModule(new GuavaModule()).build();
         webhookNotifier = new WebhookNotifier(
             companyRepository,
             httpClient,

@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.exc.InvalidFormatException;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,7 @@ class JacksonFeaturesConfigurationTest extends SpringBootIntegrationTestBase {
     private ObjectMapper objectMapper;
 
     @Test
-    void willNotCoercePrimitivesToString() throws JsonProcessingException {
+    void willNotCoercePrimitivesToString() throws JacksonException {
         List.of("123", "45.6", "false", "true").forEach(primitive -> {
             assertThrows(
                     InvalidFormatException.class,

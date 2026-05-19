@@ -1,9 +1,9 @@
 package fi.digitraffic.tis;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.VacoApplication;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -119,11 +119,11 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
         });
     }
 
-    protected <C> String toJson(C command) throws JsonProcessingException {
+    protected <C> String toJson(C command) throws JacksonException {
         return objectMapper.writeValueAsString(command);
     }
 
-    protected <T> T apiResponse(MvcResult response, TypeReference<T> result) throws UnsupportedEncodingException, JsonProcessingException {
+    protected <T> T apiResponse(MvcResult response, TypeReference<T> result) throws UnsupportedEncodingException, JacksonException {
         return objectMapper.readValue(response.getResponse().getContentAsString(), result);
     }
 
@@ -134,9 +134,9 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
      * @param response Spring Mvc rsponse
      * @return Response body as JsonNode
      * @throws UnsupportedEncodingException Thrown if Spring somehow forgets Java Strings are UTF-8/UCS-16
-     * @throws JsonProcessingException Thrown if response cannot be mapped to JSON
+     * @throws JacksonException Thrown if response cannot be mapped to JSON
      */
-    protected JsonNode apiResponse(MvcResult response) throws UnsupportedEncodingException, JsonProcessingException {
+    protected JsonNode apiResponse(MvcResult response) throws UnsupportedEncodingException, JacksonException {
         return objectMapper.readTree(response.getResponse().getContentAsString());
     }
 

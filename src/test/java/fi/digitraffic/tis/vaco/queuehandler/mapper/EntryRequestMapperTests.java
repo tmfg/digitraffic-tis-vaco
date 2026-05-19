@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;

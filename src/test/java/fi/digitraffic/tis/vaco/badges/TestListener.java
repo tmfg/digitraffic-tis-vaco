@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.badges;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.sqs.SqsListener;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;

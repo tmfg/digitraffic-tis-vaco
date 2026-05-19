@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.feeds;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.feed.ImmutableCreateFeedRequest;
