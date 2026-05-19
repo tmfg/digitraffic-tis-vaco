@@ -1,10 +1,10 @@
 package fi.digitraffic.tis.vaco.db;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
@@ -72,7 +72,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -205,7 +204,7 @@ public final class RowMappers {
                     try {
                         List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getAgencyCardUiContent(agencies);
-                    } catch (IOException e) {
+                    } catch (JacksonException e) {
                         LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
                     }
                 }
@@ -215,14 +214,14 @@ public final class RowMappers {
                     try {
                         Map<String, String> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getFeedInfoUiContent(feedInfo);
-                    } catch (IOException e) {
+                    } catch (JacksonException e) {
                         LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
                     }
                 }
                 default -> {
                     try {
                         content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
-                    } catch (IOException e) {
+                    } catch (JacksonException e) {
                         LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
                     }
                 }
@@ -363,13 +362,13 @@ public final class RowMappers {
                     .uri(mapFeedUrl(rs, objectMapper))
                     .processingEnabled(rs.getBoolean("processing_enabled"))
                     .build();
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new InvalidMappingException("Cannot deserialize data contained in database for record", e);
             }
         };
     }
 
-    private static FeedUri mapFeedUrl(ResultSet rs, ObjectMapper objectMapper) throws SQLException, JsonProcessingException {
+    private static FeedUri mapFeedUrl(ResultSet rs, ObjectMapper objectMapper) throws SQLException, JacksonException {
             return ImmutableFeedUri.builder()
                 .uri(rs.getString("uri"))
                 .queryParams(objectMapper.readValue(rs.getString("query_params"), new TypeReference<Map<String, String>>() {}))
@@ -407,7 +406,7 @@ public final class RowMappers {
         return fromJsonb(rs, field, v -> {
             try {
                 return objectMapper.readValue(v, type);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 LOGGER.error("Failed to read JSONB as valid {}", type, e);
             }
             // TODO: This is potentially fatal, we could re-throw instead
@@ -419,7 +418,7 @@ public final class RowMappers {
         return fromJsonb(rs, field, v -> {
             try {
                 return objectMapper.readTree(v);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 LOGGER.error("Failed to read JSONB as valid JsonNode", e);
             }
             // TODO: This is potentially fatal, we could re-throw instead
@@ -452,7 +451,7 @@ public final class RowMappers {
                 pgo.setValue(objectMapper.writeValueAsString(tree));
                 return pgo;
             }
-        } catch (SQLException | JsonProcessingException e) {
+        } catch (SQLException | JacksonException e) {
             LOGGER.error("Failed Jdbc conversion from JsonNode to PGobject", e);
         }
         // TODO: This is potentially fatal, we could re-throw instead

@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.db.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;

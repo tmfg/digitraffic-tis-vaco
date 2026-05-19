@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.db.repositories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.db.RowMappers;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
@@ -76,7 +76,7 @@ public class FeedRepository {
         } catch (DataAccessException dae) {
             logger.warn("Failed to create feed {}", feed, dae);
             return Optional.empty();
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new InvalidMappingException("Failed to deserialize from database for feed " + feed, e);
         }
 

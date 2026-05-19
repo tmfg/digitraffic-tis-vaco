@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
 import fi.digitraffic.tis.vaco.company.model.Company;

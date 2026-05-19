@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.aws.sqs;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ public class SqsListener {
         Function<String, JsonNode> x = message -> {
             try {
                 return objectMapper.readTree(message);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new RuleExecutionException("Failed to deserialize message in queue " + queueName, e);
             }
         };
@@ -62,7 +62,7 @@ public class SqsListener {
         Function<String, M> x = message -> {
             try {
                 return objectMapper.readValue(message, cls);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new RuleExecutionException("Failed to deserialize message in queue " + queueName, e);
             }
         };

@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.api.model.feed;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.feeds.model.FeedUri;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.immutables.value.Value;

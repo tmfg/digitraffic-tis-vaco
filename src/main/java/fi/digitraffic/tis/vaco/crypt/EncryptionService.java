@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.crypt;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -20,7 +20,6 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
@@ -72,7 +71,7 @@ public class EncryptionService {
             return new String(encoder.encode(combined.getBytes(StandardCharsets.UTF_8)));
         } catch (GeneralSecurityException e) {
             throw new VacoException("Failed to initialize cipher for encryption", e);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new VacoException("Failed to serialize given object as JSON to be used as payload", e);
         }
     }
@@ -89,7 +88,7 @@ public class EncryptionService {
             return objectMapper.readValue(decryptedData, clz);
         } catch (GeneralSecurityException e) {
             throw new VacoException("Failed to initialize cipher for encryption", e);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new VacoException("Failed to deserialize decrypted result", e);
         }
     }
@@ -99,7 +98,7 @@ public class EncryptionService {
         SdkBytes myBytes = null;
         try {
             myBytes = SdkBytes.fromByteArray(objectMapper.writeValueAsBytes(details));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new InvalidMappingException("Authentication details cannot converted to json", e);
         }
         EncryptRequest encryptRequest = EncryptRequest.builder()

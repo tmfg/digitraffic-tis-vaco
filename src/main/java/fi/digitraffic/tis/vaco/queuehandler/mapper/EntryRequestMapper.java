@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.queuehandler.mapper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
@@ -107,7 +107,7 @@ public class EntryRequestMapper {
     protected <T> T fromJson(JsonNode data, Class<T> type) {
         try {
             return objectMapper.treeToValue(data, type);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new InvalidMappingException("Could not map JsonNode to " + type, e);
         }
     }

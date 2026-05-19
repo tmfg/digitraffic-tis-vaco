@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.rules.model;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.messaging.model.JobMessage;
 import fi.digitraffic.tis.vaco.messaging.model.Retryable;
 import fi.digitraffic.tis.vaco.process.model.Task;
