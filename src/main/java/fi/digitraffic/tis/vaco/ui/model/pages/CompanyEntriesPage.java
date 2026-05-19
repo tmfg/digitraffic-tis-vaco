@@ -8,7 +8,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = fi.digitraffic.tis.vaco.ui.model.pages.ImmutableCompanyEntriesPage.class)
-@JsonDeserialize(as = fi.digitraffic.tis.vaco.ui.model.pages.ImmutableCompanyEntriesPage.class)
+@JsonDeserialize(builder = fi.digitraffic.tis.vaco.ui.model.pages.ImmutableCompanyEntriesPage.Builder.class)
 public interface CompanyEntriesPage {
     @Value.Default
     default List<EntrySummary> entries() {

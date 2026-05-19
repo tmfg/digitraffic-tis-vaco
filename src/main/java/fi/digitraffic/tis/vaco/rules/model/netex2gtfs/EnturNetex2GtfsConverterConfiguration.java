@@ -9,7 +9,7 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableEnturNetex2GtfsConverterConfiguration.class)
-@JsonDeserialize(as = ImmutableEnturNetex2GtfsConverterConfiguration.class)
+@JsonDeserialize(builder = ImmutableEnturNetex2GtfsConverterConfiguration.Builder.class)
 public interface EnturNetex2GtfsConverterConfiguration extends RuleConfiguration {
     String codespace();
 

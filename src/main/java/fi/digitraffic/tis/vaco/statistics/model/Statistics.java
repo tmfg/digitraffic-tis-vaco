@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableStatistics.class)
-@JsonDeserialize(as = ImmutableStatistics.class)
+@JsonDeserialize(builder = ImmutableStatistics.Builder.class)
 public interface Statistics {
 
     @Value.Parameter

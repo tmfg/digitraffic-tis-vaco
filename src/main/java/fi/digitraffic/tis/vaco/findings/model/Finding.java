@@ -11,7 +11,7 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableFinding.class)
-@JsonDeserialize(as = ImmutableFinding.class)
+@JsonDeserialize(builder = ImmutableFinding.Builder.class)
 public interface Finding {
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)

@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableBootstrap.class)
-@JsonDeserialize(as = ImmutableBootstrap.class)
+@JsonDeserialize(builder = ImmutableBootstrap.Builder.class)
 public interface Bootstrap {
     @Value.Parameter
     String environment();

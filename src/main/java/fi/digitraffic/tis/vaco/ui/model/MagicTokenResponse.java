@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableMagicTokenResponse.class)
-@JsonDeserialize(as = ImmutableMagicTokenResponse.class)
+@JsonDeserialize(builder = ImmutableMagicTokenResponse.Builder.class)
 public interface MagicTokenResponse {
     @Value.Parameter
     String magicLink();

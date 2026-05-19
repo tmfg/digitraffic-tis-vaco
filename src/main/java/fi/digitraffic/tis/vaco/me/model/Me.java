@@ -9,7 +9,7 @@ import java.util.Set;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableMe.class)
-@JsonDeserialize(as = ImmutableMe.class)
+@JsonDeserialize(builder = ImmutableMe.Builder.class)
 public interface Me {
     @Value.Parameter
     Set<Company> companies();

@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableGtfsInputSummary.class)
-@JsonDeserialize(as = ImmutableGtfsInputSummary.class)
+@JsonDeserialize(builder = ImmutableGtfsInputSummary.Builder.class)
 @Value.Style(jdk9Collections = true)
 public interface GtfsInputSummary {
     List<Map<String, String>> feedInfo();

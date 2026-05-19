@@ -8,7 +8,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableValidationJobMessage.class)
-@JsonDeserialize(as = ImmutableValidationJobMessage.class)
+@JsonDeserialize(builder = ImmutableValidationJobMessage.Builder.class)
 public interface ValidationJobMessage extends JobMessage, Retryable {
     RulesetSubmissionConfiguration configuration();
 }

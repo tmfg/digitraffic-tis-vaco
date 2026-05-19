@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Value.Immutable
 @JsonSerialize(as = fi.digitraffic.tis.vaco.notifications.model.ImmutableEntryCompletePayload.class)
-@JsonDeserialize(as = fi.digitraffic.tis.vaco.notifications.model.ImmutableEntryCompletePayload.class)
+@JsonDeserialize(builder = fi.digitraffic.tis.vaco.notifications.model.ImmutableEntryCompletePayload.Builder.class)
 public interface EntryCompletePayload extends Payload {
 
     Entry entry();

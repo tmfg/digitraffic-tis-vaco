@@ -9,7 +9,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableFeed.class)
-@JsonDeserialize(as = ImmutableFeed.class)
+@JsonDeserialize(builder = ImmutableFeed.Builder.class)
 public interface Feed {
 
     String FEEDREQUEST_PUBLIC_ID = "!!! FEEDREQUEST !!!";

@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableEvictionStatistics.class)
-@JsonDeserialize(as = ImmutableEvictionStatistics.class)
+@JsonDeserialize(builder = ImmutableEvictionStatistics.Builder.class)
 public interface EvictionStatistics {
 
     @Value.Parameter

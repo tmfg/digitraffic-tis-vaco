@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = fi.digitraffic.tis.vaco.notifications.model.ImmutableNotification.class)
-@JsonDeserialize(as = fi.digitraffic.tis.vaco.notifications.model.ImmutableNotification.class)
+@JsonDeserialize(builder = fi.digitraffic.tis.vaco.notifications.model.ImmutableNotification.Builder.class)
 public interface Notification {
     @Value.Parameter
     String name();

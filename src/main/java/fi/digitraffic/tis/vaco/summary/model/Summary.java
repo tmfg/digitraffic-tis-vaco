@@ -9,7 +9,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableSummary.class)
-@JsonDeserialize(as = ImmutableSummary.class)
+@JsonDeserialize(builder = ImmutableSummary.Builder.class)
 public interface Summary {
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)

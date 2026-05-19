@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 
 @Value.Immutable
 @JsonSerialize(as = fi.digitraffic.tis.vaco.ui.model.ImmutableMyDataEntrySummary.class)
-@JsonDeserialize(as = fi.digitraffic.tis.vaco.ui.model.ImmutableMyDataEntrySummary.class)
+@JsonDeserialize(builder = fi.digitraffic.tis.vaco.ui.model.ImmutableMyDataEntrySummary.Builder.class)
 public interface MyDataEntrySummary {
     @Value.Parameter
     String publicId();

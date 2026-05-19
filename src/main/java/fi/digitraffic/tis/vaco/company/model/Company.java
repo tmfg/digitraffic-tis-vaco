@@ -14,7 +14,7 @@ import java.util.List;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableCompany.class)
-@JsonDeserialize(as = ImmutableCompany.class)
+@JsonDeserialize(builder = ImmutableCompany.Builder.class)
 public interface Company {
 
     @Value.Parameter

@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Value.Immutable
 @JsonSerialize(as = fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse.class)
-@JsonDeserialize(as = fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse.class)
+@JsonDeserialize(builder = fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse.Builder.class)
 public interface NotificationResponse {
     Optional<byte[]> response();
 }

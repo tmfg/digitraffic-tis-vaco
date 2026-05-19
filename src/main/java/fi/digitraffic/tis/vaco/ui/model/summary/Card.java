@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCard.class)
-@JsonDeserialize(as = ImmutableCard.class)
+@JsonDeserialize(builder = ImmutableCard.Builder.class)
 public interface Card {
     String title();
 

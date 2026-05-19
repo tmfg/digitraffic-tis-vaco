@@ -14,7 +14,7 @@ import java.util.Set;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableRuleset.class)
-@JsonDeserialize(as = ImmutableRuleset.class)
+@JsonDeserialize(builder = ImmutableRuleset.Builder.class)
 public interface Ruleset {
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)

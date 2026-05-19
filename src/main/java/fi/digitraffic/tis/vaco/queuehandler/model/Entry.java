@@ -18,7 +18,7 @@ import java.util.List;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableEntry.class)
-@JsonDeserialize(as = ImmutableEntry.class)
+@JsonDeserialize(builder = ImmutableEntry.Builder.class)
 public interface Entry {
     /**
      * Temporary identifier to use when mapping between types in contexts where the public id is not available otherwise.

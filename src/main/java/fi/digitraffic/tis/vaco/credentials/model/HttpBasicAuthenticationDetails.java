@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableHttpBasicAuthenticationDetails.class)
-@JsonDeserialize(as = ImmutableHttpBasicAuthenticationDetails.class)
+@JsonDeserialize(builder = ImmutableHttpBasicAuthenticationDetails.Builder.class)
 public interface HttpBasicAuthenticationDetails extends AuthenticationDetails {
 
     @Value.Parameter

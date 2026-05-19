@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Value.Immutable
 @JsonSerialize(as = fi.digitraffic.tis.vaco.ui.model.pages.ImmutableEntrySummary.class)
-@JsonDeserialize(as = fi.digitraffic.tis.vaco.ui.model.pages.ImmutableEntrySummary.class)
+@JsonDeserialize(builder = fi.digitraffic.tis.vaco.ui.model.pages.ImmutableEntrySummary.Builder.class)
 public interface EntrySummary {
     @Value.Parameter
     String publicId();

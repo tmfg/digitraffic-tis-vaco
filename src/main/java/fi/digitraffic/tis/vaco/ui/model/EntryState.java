@@ -13,7 +13,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableEntryState.class)
-@JsonDeserialize(as = ImmutableEntryState.class)
+@JsonDeserialize(builder = ImmutableEntryState.Builder.class)
 public interface EntryState {
 
     Resource<Entry> entry();

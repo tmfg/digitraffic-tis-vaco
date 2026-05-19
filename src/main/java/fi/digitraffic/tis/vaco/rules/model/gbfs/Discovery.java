@@ -16,7 +16,7 @@ import java.util.Map;
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableDiscovery.class)
-@JsonDeserialize(as = ImmutableDiscovery.class)
+@JsonDeserialize(builder = ImmutableDiscovery.Builder.class)
 @Value.Style(forceJacksonPropertyNames = false)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public interface Discovery {
