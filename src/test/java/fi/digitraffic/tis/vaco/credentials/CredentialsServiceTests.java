@@ -3,6 +3,8 @@ package fi.digitraffic.tis.vaco.credentials;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import fi.digitraffic.tis.vaco.JacksonFeaturesConfiguration;
 import fi.digitraffic.http.HttpClient;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -67,7 +69,7 @@ class CredentialsServiceTests {
     @BeforeEach
     void setUp() {
 
-        objectMapper = new ObjectMapper();
+        objectMapper = JacksonFeaturesConfiguration.configureForImmutables(JsonMapper.builder()).build();
         RecordMapper recordMapper = new RecordMapper(objectMapper);
 
         CredentialsService credentialsService = new CredentialsService(
