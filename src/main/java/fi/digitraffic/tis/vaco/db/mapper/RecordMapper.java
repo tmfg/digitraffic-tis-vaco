@@ -1,9 +1,9 @@
 package fi.digitraffic.tis.vaco.db.mapper;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -55,7 +55,6 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.LongFunction;
@@ -119,7 +118,7 @@ public class RecordMapper {
         }
         try {
             return objectMapper.treeToValue(json, type);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new InvalidMappingException("Failed to read JSONB as valid " + type, e);
         }
     }
@@ -130,7 +129,7 @@ public class RecordMapper {
         }
         try {
             return objectMapper.readValue(bytes, type);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new InvalidMappingException("Failed to read JSONB as valid " + type, e);
         }
     }

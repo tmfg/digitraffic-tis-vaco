@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.summary;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.summary.model.ImmutableSummary;
 import fi.digitraffic.tis.vaco.summary.model.RendererType;
@@ -285,7 +285,7 @@ public class NetexInputSummaryService {
         try {
             summaryRepository.create(ImmutableSummary.of(taskId, itemName, rendererType, objectMapper.writeValueAsBytes(data)));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             logger.error("Failed to persist {}'s summary data {} generated for task {}", itemName, data, taskId, e);
         }
     }

@@ -1,9 +1,9 @@
 package fi.digitraffic.tis.vaco.webhooks;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -232,10 +232,8 @@ public class TrivoreWebhooksService {
     }
 
     private static JsonNode deepMerge(JsonNode root, JsonNode update) {
-        Iterator<String> fieldNames = update.fieldNames();
-        while (fieldNames.hasNext()) {
+        for (String fieldName : update.propertyNames()) {
 
-            String fieldName = fieldNames.next();
             JsonNode jsonNode = root.get(fieldName);
             // if field exists and is an embedded object
             if (jsonNode != null && jsonNode.isObject()) {
@@ -248,7 +246,7 @@ public class TrivoreWebhooksService {
                     if (value.isArray()) {
                         ((ArrayNode) root.get(fieldName)).addAll((ArrayNode) value);
                     } else {
-                        ((ObjectNode) root).put(fieldName, value);
+                        ((ObjectNode) root).set(fieldName, value);
                     }
                 }
             }

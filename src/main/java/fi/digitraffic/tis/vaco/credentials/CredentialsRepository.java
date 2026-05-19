@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.credentials;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.credentials.model.AuthenticationDetails;
 import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
