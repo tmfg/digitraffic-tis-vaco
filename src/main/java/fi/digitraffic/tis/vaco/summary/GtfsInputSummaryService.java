@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.summary;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.db.repositories.SummaryRepository;
 import fi.digitraffic.tis.vaco.exports.model.csv.CsvStructure;
@@ -316,7 +316,7 @@ public class GtfsInputSummaryService {
         try {
             summaryRepository.create(ImmutableSummary.of(task.id(), itemName, rendererType, objectMapper.writeValueAsBytes(data)));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             logger.error("Failed to persist {}'s summary data {} generated for task {}", itemName, data, task.name(), e);
         }
     }
@@ -325,7 +325,7 @@ public class GtfsInputSummaryService {
         try {
             summaryRepository.create(ImmutableSummary.of(task.id(), itemName, rendererType, objectMapper.writeValueAsBytes(data)));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             logger.error("Failed to persist {}'s summary data {} generated for task {}", itemName, data, task.name(), e);
         }
     }

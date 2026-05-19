@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -118,14 +118,14 @@ public class GtfsToNetexResultProcessor extends RuleResultProcessor implements R
                                 "ERROR"
                             )
                             .withRaw(objectMapper.writeValueAsBytes(errorMap));
-                    } catch (JsonProcessingException e) {
+                    } catch (JacksonException e) {
                         logger.warn("Failed to convert tree to bytes", e);
                         return null;
                     }
                 })
                 .filter(Objects::nonNull)
                 .toList();
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
             return List.of();
         }

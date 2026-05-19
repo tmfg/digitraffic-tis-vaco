@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.rules;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.aws.sqs.SqsListener;
 import fi.digitraffic.tis.utilities.model.ProcessingState;

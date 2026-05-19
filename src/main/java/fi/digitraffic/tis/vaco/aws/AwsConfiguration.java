@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.aws;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import io.awspring.cloud.autoconfigure.AwsClientCustomizer;
@@ -200,10 +199,9 @@ public class AwsConfiguration {
      * @return Manually handcrafted, artesanal <code>SqsMessagingMessageConverter</code>
      */
     @Bean
-    SqsMessagingMessageConverter sqsMessagingMessageConverter(ObjectMapper objectMapper) {
+    SqsMessagingMessageConverter sqsMessagingMessageConverter() {
         SqsMessagingMessageConverter converter = new SqsMessagingMessageConverter();
         MappingJackson2MessageConverter actualConverter = new MappingJackson2MessageConverter();
-        actualConverter.setObjectMapper(objectMapper);
         converter.setPayloadMessageConverter(actualConverter);
         return converter;
     }

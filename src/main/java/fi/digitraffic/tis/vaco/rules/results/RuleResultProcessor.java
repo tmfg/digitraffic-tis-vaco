@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.aws.s3.S3Path;
@@ -244,7 +244,7 @@ public abstract class RuleResultProcessor implements ResultProcessor {
                                         FindingSeverity.FAILURE
                                     )
                                     .withRaw(objectMapper.writeValueAsBytes(errorMap));
-                            } catch (JsonProcessingException e) {
+                            } catch (JacksonException e) {
                                 logger.warn("Failed to convert tree to bytes", e);
                                 return null;
                             }

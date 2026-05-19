@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.api.model.credentials;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.credentials.model.AuthenticationDetails;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import jakarta.annotation.Nullable;
