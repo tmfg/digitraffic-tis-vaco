@@ -38,20 +38,18 @@
     <properties>
         <!-- versions for all dependencies which support BOMs, see also dependencyManagement -->
         <java.version>21</java.version>
-        <!-- NOTE: JUnit vintage support uses junit.version parameter transitively, so another param name is used to
-                   avoid conflicts -->
-        <springframework.boot-version>3.5.13</springframework.boot-version>
-        <junit5.version>5.9.2</junit5.version>
+        <springframework.boot-version>3.5.14</springframework.boot-version>
+        <netty.version>4.1.134.Final</netty.version> <!-- critical CVE-2026-42581, CVE-2026-42579, CVE-2026-42584 and high CVE-2026-42583, CVE-2026-42577, CVE-2026-42578, CVE-2026-42585, CVE-2026-42587 et al. -->
+        <postgresql.version>42.7.11</postgresql.version> <!-- high GHSA-98qh-xjc8-98pq, CVE-2026-42198 -->
+        <tomcat.version>10.1.55</tomcat.version> <!-- critical GHSA-r29c-68gh-xp6x, GHSA-h6fc-48rj-7qqh, GHSA-5m62-pw8w-7w9f and high CVE-2026-34483 et al. -->
         <testcontainers.version>2.0.4</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>3.1.1</awspringcloud.version>
         <azurespring.version>6.0.0</azurespring.version>
-        <oauth2server.version>3.5.13</oauth2server.version>
         <immutables.version>2.11.7</immutables.version>
         <jackson.version>2.20.2</jackson.version>
         <mockito.version>5.20.0</mockito.version>
-        <caffeine.version>3.2.3</caffeine.version>
         <guava.version>33.5.0-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
         <msgraph.version>[6.0,)</msgraph.version>
@@ -80,12 +78,6 @@
                 <version>${springframework.boot-version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>${junit5.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
@@ -284,7 +276,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-            <version>${oauth2server.version}</version>
         </dependency>
 
         <!-- Topological sorting for ruleset selection and execution. Also requires Jackson module as Spring Boot
@@ -378,7 +369,6 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>${caffeine.version}</version>
         </dependency>
 
         <!-- CSV support -->
