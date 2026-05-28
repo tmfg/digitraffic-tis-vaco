@@ -75,6 +75,34 @@ public class ExportsService {
             LocalDateTime.now());
     }
 
+    public JAXBElement<PublicationDeliveryStructure> netexAuthorities() {
+        List<Organisation_VersionStructure> organisations = new ArrayList<>();
+        companyRepository.listPublishedAuthoritiesWithCodespace().forEach(companyRecord ->
+            companyRecord.codespaces().forEach(codespace -> {
+                Authority authority = new Authority();
+                authority
+                    .withId(codespace + ":Authority:" + codespace)
+                    .withVersion(ORGANISATION_VERSION)
+                    .withName(multilingualString(companyRecord.name(), companyRecord.language()))
+                    .withCompanyNumber(companyRecord.businessId());
+                String website = companyRecord.website();
+                if (website != null && !website.isBlank()) {
+                    authority.withContactDetails(new ContactStructure().withUrl(website));
+                }
+                organisations.add(authority);
+            }));
+
+        ResourceFrame resourceFrame = netexObjectFactory.createResourceFrame(
+            NETEX_ROOT_ID + ":ResourceFrame:1",
+            organisations);
+
+        return netexObjectFactory.createPublicationDelivery(
+            "1.08:NO-NeTEx-fares:1.0",
+            NETEX_ROOT_ID,
+            resourceFrame,
+            LocalDateTime.now());
+    }
+
     private <O extends Organisation_VersionStructure> O createOrganisation(
         Supplier<O> organisation,
         CompanyRecord companyRecord) {

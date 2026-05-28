@@ -150,6 +150,95 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
         contactStructureAsserter.accept(organisation.getCustomerServiceContactDetails());
     }
 
+    @Test
+    void netexAuthoritiesUsesCodespaceBasedIds() {
+        String testBusinessId = "987654-3";
+        var company = companyHierarchyService.createCompany(
+            ImmutableCompany.of(testBusinessId, "Test Authority TST", true)
+        ).orElseThrow();
+        companyHierarchyService.editCompany(testBusinessId,
+            ImmutableCompany.copyOf(company)
+                .withRoles(List.of(CompanyRole.AUTHORITY))
+                .withCodespaces(List.of("TST"))
+                .withWebsite("https://tst.example.com"));
+
+        try {
+            PublicationDeliveryStructure structure = exportsService.netexAuthorities().getValue();
+            List<Organisation_VersionStructure> organisations = new ArrayList<>();
+            structure.getDataObjects().getCompositeFrameOrCommonFrame().forEach(frame ->
+                ResourceFrame.class.cast(frame.getValue()).getOrganisations().getOrganisation_().forEach(dmos ->
+                    organisations.add(Organisation_VersionStructure.class.cast(dmos.getValue()))));
+
+            // Company from @BeforeEach has AUTHORITY role but no codespace — must be absent
+            assertThat(organisations.stream().noneMatch(o -> TEST_COMPANY_BUSINESS_ID.equals(o.getCompanyNumber())), equalTo(true));
+
+            // Our company must appear with codespace-based ID
+            Authority_VersionStructure authority =
+                (Authority_VersionStructure) getOrganisation(organisations, "TST:Authority:TST");
+            assertThat(authority.getCompanyNumber(), equalTo(testBusinessId));
+            assertThat(authority.getName().getValue(), equalTo("Test Authority TST"));
+            assertThat(authority.getVersion(), equalTo("1"));
+            assertThat(authority.getContactDetails().getUrl(), equalTo("https://tst.example.com"));
+            assertThat(authority.getValidityConditions(), equalTo(null));
+        } finally {
+            companyRepository.deleteByBusinessId(testBusinessId);
+        }
+    }
+
+    @Test
+    void netexAuthoritiesOmitsContactDetailsWhenNoWebsite() {
+        String testBusinessId = "111222-3";
+        var company = companyHierarchyService.createCompany(
+            ImmutableCompany.of(testBusinessId, "No Website Authority", true)
+        ).orElseThrow();
+        companyHierarchyService.editCompany(testBusinessId,
+            ImmutableCompany.copyOf(company)
+                .withRoles(List.of(CompanyRole.AUTHORITY))
+                .withCodespaces(List.of("NWA")));
+
+        try {
+            PublicationDeliveryStructure structure = exportsService.netexAuthorities().getValue();
+            List<Organisation_VersionStructure> organisations = extractOrganisations(structure);
+
+            Authority_VersionStructure authority =
+                (Authority_VersionStructure) getOrganisation(organisations, "NWA:Authority:NWA");
+            assertThat(authority.getCompanyNumber(), equalTo(testBusinessId));
+            assertThat(authority.getContactDetails(), equalTo(null));
+        } finally {
+            companyRepository.deleteByBusinessId(testBusinessId);
+        }
+    }
+
+    @Test
+    void netexAuthoritiesExcludesOperatorOnlyCompanies() {
+        String testBusinessId = "333444-5";
+        var company = companyHierarchyService.createCompany(
+            ImmutableCompany.of(testBusinessId, "Operator Only Oy", true)
+        ).orElseThrow();
+        companyHierarchyService.editCompany(testBusinessId,
+            ImmutableCompany.copyOf(company)
+                .withRoles(List.of(CompanyRole.OPERATOR))
+                .withCodespaces(List.of("OPR"))
+                .withWebsite("https://operator.example.com"));
+
+        try {
+            PublicationDeliveryStructure structure = exportsService.netexAuthorities().getValue();
+            List<Organisation_VersionStructure> organisations = extractOrganisations(structure);
+
+            assertThat(organisations.stream().noneMatch(o -> testBusinessId.equals(o.getCompanyNumber())), equalTo(true));
+        } finally {
+            companyRepository.deleteByBusinessId(testBusinessId);
+        }
+    }
+
+    private List<Organisation_VersionStructure> extractOrganisations(PublicationDeliveryStructure structure) {
+        List<Organisation_VersionStructure> organisations = new ArrayList<>();
+        structure.getDataObjects().getCompositeFrameOrCommonFrame().forEach(frame ->
+            ResourceFrame.class.cast(frame.getValue()).getOrganisations().getOrganisation_().forEach(dmos ->
+                organisations.add(Organisation_VersionStructure.class.cast(dmos.getValue()))));
+        return organisations;
+    }
+
     private Organisation_VersionStructure getOrganisation(List<Organisation_VersionStructure> organisations, String id) {
         return organisations.stream().filter(o -> o.getId().equals(id)).findFirst().orElseThrow();
     }
