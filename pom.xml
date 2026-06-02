@@ -38,19 +38,19 @@
     <properties>
         <!-- versions for all dependencies which support BOMs, see also dependencyManagement -->
         <java.version>21</java.version>
-        <springframework.boot-version>3.5.14</springframework.boot-version>
+        <springframework.boot-version>4.0.6</springframework.boot-version>
         <netty.version>4.1.134.Final</netty.version> <!-- critical CVE-2026-42581, CVE-2026-42579, CVE-2026-42584 and high CVE-2026-42583, CVE-2026-42577, CVE-2026-42578, CVE-2026-42585, CVE-2026-42587 et al. -->
         <postgresql.version>42.7.11</postgresql.version> <!-- high GHSA-98qh-xjc8-98pq, CVE-2026-42198 -->
         <tomcat.version>10.1.55</tomcat.version> <!-- critical GHSA-r29c-68gh-xp6x, GHSA-h6fc-48rj-7qqh, GHSA-5m62-pw8w-7w9f and high CVE-2026-34483 et al. -->
-        <testcontainers.version>2.0.4</testcontainers.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
         <awssdk.version>2.20.139</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
-        <awspringcloud.version>3.1.1</awspringcloud.version>
-        <azurespring.version>6.0.0</azurespring.version>
-        <immutables.version>2.11.7</immutables.version>
-        <jackson.version>2.20.2</jackson.version>
+        <awspringcloud.version>4.0.2</awspringcloud.version>
+        <azurespring.version>7.2.0</azurespring.version>
+        <immutables.version>2.12.2</immutables.version>
+        <jackson.version>2.21.3</jackson.version>
         <mockito.version>5.20.0</mockito.version>
-        <guava.version>33.5.0-jre</guava.version>
+        <guava.version>33.6.0-jre</guava.version>
         <jmespath.version>0.6.0</jmespath.version>
         <msgraph.version>[6.0,)</msgraph.version>
         <!-- tooling parameters -->
@@ -157,17 +157,17 @@
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
-            <version>4.0.4</version>
+            <version>4.0.5</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>4.0.6</version>
+            <version>4.0.8</version>
         </dependency>
         <dependency>
             <groupId>org.entur</groupId>
             <artifactId>netex-java-model</artifactId>
-            <version>2.0.15</version>
+            <version>2.0.16</version>
         </dependency>
 
         <!-- Request validation -->
@@ -188,7 +188,7 @@
         <dependency>
             <groupId>com.amazonaws.secretsmanager</groupId>
             <artifactId>aws-secretsmanager-jdbc</artifactId>
-            <version>2.0.3</version>
+            <version>2.1.2</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -207,7 +207,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.8.14</version>
+            <version>3.0.3</version>
         </dependency>
 
         <!-- AWS integration -->
@@ -382,7 +382,7 @@
         <dependency>
             <groupId>com.github.mizosoft.methanol</groupId>
             <artifactId>methanol</artifactId>
-            <version>1.8.4</version>
+            <version>1.9.0</version>
         </dependency>
 
         <!-- MS Graph client and its dependencies for reading extended group data for overage scenario -->
