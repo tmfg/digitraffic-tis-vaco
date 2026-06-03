@@ -10,7 +10,7 @@ import io.awspring.cloud.sqs.support.converter.SqsMessagingMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -189,21 +189,6 @@ public class AwsConfiguration {
             )
             .sqsAsyncClient(sqsAsyncClient)
             .build();
-    }
-
-    /**
-     * Getting around a bug in AWSpring (ref. <a href="https://github.com/awspring/spring-cloud-aws/issues/721"> awspring /
-     * spring-cloud-aws #721: Add User's MappingJackson2MessageConverter to SQS Autoconfiguration</a>)
-     *
-     * @param objectMapper Global <code>ObjectMapper</code> instance everything should use.
-     * @return Manually handcrafted, artesanal <code>SqsMessagingMessageConverter</code>
-     */
-    @Bean
-    SqsMessagingMessageConverter sqsMessagingMessageConverter() {
-        SqsMessagingMessageConverter converter = new SqsMessagingMessageConverter();
-        MappingJackson2MessageConverter actualConverter = new MappingJackson2MessageConverter();
-        converter.setPayloadMessageConverter(actualConverter);
-        return converter;
     }
 
     @Bean
