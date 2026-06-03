@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
@@ -23,6 +22,5 @@ public interface ConversionInput {
     String name();
 
     @Nullable
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "name")
     RuleConfiguration config();
 }
