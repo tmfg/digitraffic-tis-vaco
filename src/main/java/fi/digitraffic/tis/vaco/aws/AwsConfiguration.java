@@ -22,6 +22,7 @@ import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
 import software.amazon.awssdk.services.kms.KmsAsyncClient;
 import software.amazon.awssdk.services.kms.KmsAsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -131,7 +132,8 @@ public class AwsConfiguration {
         S3ClientBuilder b = S3Client.builder()
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
-            .overrideConfiguration(overrideConfiguration);
+            .overrideConfiguration(overrideConfiguration)
+            .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED);
         if (vacoProperties.aws().s3() != null) {
             b = b.endpointOverride(URI.create(vacoProperties.aws().s3().endpoint()));
         }
@@ -146,7 +148,8 @@ public class AwsConfiguration {
         S3AsyncClientBuilder b = S3AsyncClient.builder()
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
-            .overrideConfiguration(overrideConfiguration);
+            .overrideConfiguration(overrideConfiguration)
+            .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED);
         if (vacoProperties.aws().s3() != null) {
             b = b.endpointOverride(URI.create(vacoProperties.aws().s3().endpoint()));
         }
