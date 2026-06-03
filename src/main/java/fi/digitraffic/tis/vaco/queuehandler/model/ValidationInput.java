@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.queuehandler.model;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.DomainValue;
@@ -17,6 +16,5 @@ public interface ValidationInput {
     String name();
 
     @Nullable
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "name")
     RuleConfiguration config();
 }

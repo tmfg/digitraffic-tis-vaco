@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.queuehandler.mapper;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -13,10 +14,14 @@ import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -93,7 +98,13 @@ public class EntryRequestMapper {
             return List.of();
         }
 
-        return Streams.map(validations, validation -> fromJson(validation, ValidationInput.class)).toList();
+        return Streams.map(validations, validation -> {
+            String name = validation.path("name").stringValue();
+            return (ValidationInput) ImmutableValidationInput.builder()
+                .name(name)
+                .config(resolveConfig(validation, name))
+                .build();
+        }).toList();
     }
 
     private Iterable<ConversionInput> mapConversions(List<JsonNode> conversions) {
@@ -101,7 +112,25 @@ public class EntryRequestMapper {
             return List.of();
         }
 
-        return Streams.map(conversions, conversion -> fromJson(conversion, ConversionInput.class)).toList();
+        return Streams.map(conversions, conversion -> {
+            String name = conversion.path("name").stringValue();
+            return (ConversionInput) ImmutableConversionInput.builder()
+                .name(name)
+                .config(resolveConfig(conversion, name))
+                .build();
+        }).toList();
+    }
+
+    private RuleConfiguration resolveConfig(JsonNode node, String name) {
+        JsonNode configNode = node.path("config");
+        if (configNode.isMissingNode() || configNode.isNull() || name == null) {
+            return null;
+        }
+        return Arrays.stream(RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class).value())
+            .filter(t -> t.name().equals(name))
+            .findFirst()
+            .map(t -> (RuleConfiguration) fromJson(configNode, t.value()))
+            .orElse(null);
     }
 
     protected <T> T fromJson(JsonNode data, Class<T> type) {
