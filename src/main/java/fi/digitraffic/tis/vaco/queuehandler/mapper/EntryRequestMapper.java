@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
@@ -129,7 +130,13 @@ public class EntryRequestMapper {
         return Arrays.stream(RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class).value())
             .filter(t -> t.name().equals(name))
             .findFirst()
-            .map(t -> (RuleConfiguration) fromJson(configNode, t.value()))
+            .map(t -> {
+                // Jackson 3 requires the @type discriminator field to be present in the JSON for @JsonTypeInfo
+                // to work. Incoming config objects don't include it, so we inject it here before deserializing.
+                ObjectNode nodeWithType = ((ObjectNode) configNode).deepCopy();
+                nodeWithType.put("@type", t.name());
+                return (RuleConfiguration) fromJson(nodeWithType, RuleConfiguration.class);
+            })
             .orElse(null);
     }
 
