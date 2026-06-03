@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -65,6 +66,7 @@ import java.util.function.LongFunction;
 @Component
 public class RecordMapper {
 
+
     private final ObjectMapper objectMapper;
 
     public RecordMapper(ObjectMapper objectMapper) {
@@ -93,23 +95,32 @@ public class RecordMapper {
 
     @SuppressWarnings("unchecked")
     public ValidationInput toValidationInput(ValidationInputRecord validationInputRecord) {
-        Class<?> cc = findSubtypeFromAnnotation(validationInputRecord.name(), RuleConfiguration.class);
-
         return ImmutableValidationInput.builder()
             .name(validationInputRecord.name())
-            .config(readValue(objectMapper, validationInputRecord.config(), (Class<RuleConfiguration>) cc))
+            .config(readRuleConfiguration(objectMapper, validationInputRecord.config(), validationInputRecord.name()))
             .build();
     }
 
     @SuppressWarnings("unchecked")
     public ConversionInput toConversionInput(ConversionInputRecord conversionInputRecord) {
-        Class<?> cc = findSubtypeFromAnnotation(conversionInputRecord.name(), RuleConfiguration.class);
-
         return ImmutableConversionInput.builder()
             .id(conversionInputRecord.id())
             .name(conversionInputRecord.name())
-            .config(readValue(objectMapper, conversionInputRecord.config(), (Class<RuleConfiguration>) cc))
+            .config(readRuleConfiguration(objectMapper, conversionInputRecord.config(), conversionInputRecord.name()))
             .build();
+    }
+
+    private static RuleConfiguration readRuleConfiguration(ObjectMapper objectMapper, JsonNode json, String name) {
+        if (json == null || json.isNull() || json.isMissingNode()) {
+            return null;
+        }
+        try {
+            ObjectNode nodeWithType = ((ObjectNode) json).deepCopy();
+            nodeWithType.put("@type", name);
+            return objectMapper.treeToValue(nodeWithType, RuleConfiguration.class);
+        } catch (JacksonException e) {
+            throw new InvalidMappingException("Failed to read config as RuleConfiguration for rule '" + name + "'", e);
+        }
     }
 
     private static <O> O readValue(ObjectMapper objectMapper, JsonNode json, Class<O> type) {
