@@ -51,7 +51,6 @@
         <mockito.version>5.20.0</mockito.version>
         <caffeine.version>3.2.3</caffeine.version>
         <guava.version>33.5.0-jre</guava.version>
-        <jmespath.version>0.6.0</jmespath.version>
         <msgraph.version>6.64.0</msgraph.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -124,12 +123,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
-        </dependency>
-        <!-- Jackson 2 compatibility bridge — needed for jmespath-jackson in test; remove once Jackson 3 migration is complete -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-jackson2</artifactId>
-            <scope>test</scope>
         </dependency>
         <!-- Enable configuration classes -->
         <dependency>
@@ -267,7 +260,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+            <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
         </dependency>
 
         <!-- Topological sorting for ruleset selection and execution. Also requires Jackson module as Spring Boot
@@ -325,12 +318,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.burt</groupId>
-            <artifactId>jmespath-jackson</artifactId>
-            <version>${jmespath.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -402,12 +389,6 @@
             <version>${msgraph.version}</version>
         </dependency>
 
-        <!-- Temporary: detects renamed configuration properties at startup — remove after Step 7 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-properties-migrator</artifactId>
-            <scope>runtime</scope>
-        </dependency>
     </dependencies>
 
     <build>
