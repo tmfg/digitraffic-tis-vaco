@@ -113,12 +113,7 @@
         <!-- This application is built on Spring Boot 4 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <!-- Phase 1 bridge: restores the broad Boot 3 classpath — remove in Phase 2 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-classic</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
         <!-- Jackson 2 compatibility bridge — needed for jmespath-jackson in test; remove once Jackson 3 migration is complete -->
         <dependency>
@@ -136,6 +131,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <!-- Spring Boot 4 splits WebClient auto-configuration from WebFlux -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webclient</artifactId>
         </dependency>
         <!-- add ability to produce XML from API endpoints -->
         <dependency>
@@ -290,12 +290,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- Phase 1 bridge: restores the broad Boot 3 test classpath — remove in Phase 2 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test-classic</artifactId>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-webmvc-test</artifactId>
@@ -349,6 +344,12 @@
 
         <!-- XXX: Flyway is for now only a test-time dependency. This might change in the future, we'll see how the
                   development starts rolling. -->
+        <!-- Spring Boot 4 requires the starter to activate FlywayAutoConfiguration (modular design) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
