@@ -109,14 +109,9 @@ class CredentialsServiceTests {
 
         requestHeaders = vacoHttpClient.addAuthorizationHeaderAutomatically(businessId, "https://test.fintraffic.fi/exports/test.zip", entry);
 
-        String detailsJson = new String(credentialsRecord.details());
-        HttpBasicAuthenticationDetails details = objectMapper.readValue(detailsJson, HttpBasicAuthenticationDetails.class);
-        String userId = details.userId();
-        String password = details.password();
-
         assertTrue(requestHeaders.containsKey("Authorization"));
         String authHeader = requestHeaders.get("Authorization");
-        String expectedAuthValue = "Basic " + Base64.getEncoder().encodeToString((userId + ":" + password).getBytes());
+        String expectedAuthValue = "Basic " + Base64.getEncoder().encodeToString(("testUser:testPassword").getBytes());
         assertEquals(expectedAuthValue, authHeader);
 
     }
