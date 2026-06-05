@@ -1,5 +1,7 @@
 package fi.digitraffic.tis.vaco;
 
+import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
+import fi.digitraffic.tis.vaco.credentials.model.ImmutableHttpBasicAuthenticationDetails;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.rules.gbfs.ImmutableEnturGbfsValidatorConfiguration;
 import fi.digitraffic.tis.vaco.rules.model.gtfs.ImmutableCanonicalGtfsValidatorConfiguration;
@@ -55,7 +57,8 @@ public class JacksonFeaturesConfiguration {
             new NamedType(ImmutableEnturNetexValidatorConfiguration.class, RuleName.NETEX_ENTUR),
             new NamedType(ImmutableEnturNetex2GtfsConverterConfiguration.class, RuleName.NETEX2GTFS_ENTUR),
             new NamedType(ImmutableFintrafficGtfs2NetexConverterConfiguration.class, RuleName.GTFS2NETEX_FINTRAFFIC),
-            new NamedType(ImmutableEnturGbfsValidatorConfiguration.class, RuleName.GBFS_ENTUR)
+            new NamedType(ImmutableEnturGbfsValidatorConfiguration.class, RuleName.GBFS_ENTUR),
+            new NamedType(ImmutableHttpBasicAuthenticationDetails.class, CredentialsType.Name.HTTP_BASIC)
         );
     }
 }

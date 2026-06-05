@@ -138,6 +138,24 @@ public class RecordMapper {
         }
     }
 
+    /**
+     * Deserializes {@link AuthenticationDetails} from raw JSONB bytes stored in the database.
+     * The DB does not store a {@code "type"} discriminator field, so it is injected from the
+     * credentials record's {@code type} field before handing off to Jackson.
+     */
+    private static AuthenticationDetails readAuthenticationDetails(ObjectMapper objectMapper, byte[] bytes, String typeName) {
+        if (bytes == null) {
+            return null;
+        }
+        try {
+            ObjectNode node = (ObjectNode) objectMapper.readTree(bytes);
+            node.put("type", typeName);
+            return objectMapper.treeToValue(node, AuthenticationDetails.class);
+        } catch (JacksonException e) {
+            throw new InvalidMappingException("Failed to read JSONB as AuthenticationDetails for type '" + typeName + "'", e);
+        }
+    }
+
     private static <O> O readValue(ObjectMapper objectMapper, JsonNode json, Class<O> type) {
         if (type == null) {
             return null;
@@ -291,15 +309,13 @@ public class RecordMapper {
     }
 
     public Credentials toCredentials(CredentialsRecord credentialsRecord, CompanyRecord companyRecord) {
-        Class<AuthenticationDetails> cc = findSubtypeFromAnnotation(credentialsRecord.type().fieldName(), AuthenticationDetails.class);
-
         return ImmutableCredentials.builder()
             .publicId(credentialsRecord.publicId())
             .type(credentialsRecord.type())
             .name(credentialsRecord.name())
             .description(credentialsRecord.description())
             .owner(toCompany(companyRecord))
-            .details(readValue(objectMapper, credentialsRecord.details(), cc))
+            .details(readAuthenticationDetails(objectMapper, credentialsRecord.details(), credentialsRecord.type().fieldName()))
             .urlPattern(credentialsRecord.urlPattern())
             .build();
     }
