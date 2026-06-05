@@ -1,11 +1,8 @@
 package fi.digitraffic.tis.vaco.notifications.email;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.AwsIntegrationTestBase;
 import fi.digitraffic.tis.Constants;
-import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
@@ -22,8 +19,9 @@ import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import fi.digitraffic.tis.vaco.ui.model.MagicToken;
-import io.burt.jmespath.jackson.JacksonRuntime;
 import org.jetbrains.annotations.NotNull;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +39,7 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.stream.StreamSupport;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -55,8 +53,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 class EmailNotifierTests extends AwsIntegrationTestBase {
 
     private EmailNotifier emailNotifier;
-    private ObjectMapper objectMapper;
-    private JacksonRuntime jmesPath;
+    private JsonMapper objectMapper;
     private VacoProperties vacoProperties;
 
     @Mock
@@ -71,8 +68,7 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
-        jmesPath = new JacksonRuntime();
+        objectMapper = JsonMapper.builder().build();
         vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null), null, null, null);
         clock = Clock.systemDefaultZone();
         emailNotifier = createEmailNotifier(clock);
@@ -118,16 +114,18 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
 
         JsonNode messages = readReceivedMessages();
 
+        JsonNode msgs = messages.get("messages");
+
         assertAll(
             messagesSent(messages, 1),
             () -> assertThat(
-                path(messages, "messages[0].Source").textValue(),
+                msgs.get(0).get("Source").textValue(),
                 equalTo("king@commonwealth")),
             () -> assertThat(
-                list(path(messages, "messages[].Destination[].ToAddresses[]"), JsonNode::textValue),
+                strings(msgs.get(0).get("Destination").get("ToAddresses")),
                 equalTo(List.of("subjects@commonwealth"))),
             () -> assertThat(
-                path(messages, "messages[0].Body.html_part").textValue(),
+                msgs.get(0).get("Body").get("html_part").textValue(),
                 equalTo("I hereby decree that you are all free from my reign."))
         );
     }
@@ -149,37 +147,33 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
 
         JsonNode messages = readReceivedMessages();
 
+        JsonNode msgs = messages.get("messages");
+
         assertAll(
             messagesSent(messages, 4),
             () -> assertThat(
-                list(path(messages, "messages[*].Source"), JsonNode::textValue),
+                StreamSupport.stream(msgs.spliterator(), false)
+                    .map(m -> m.get("Source").textValue()).toList(),
                 equalTo(Collections.nCopies(4, "king@commonwealth"))),
             () -> assertThat(
-                list(path(messages, "messages[*].Body.html_part"), JsonNode::textValue),
+                StreamSupport.stream(msgs.spliterator(), false)
+                    .map(m -> m.get("Body").get("html_part").textValue()).toList(),
                 equalTo(Collections.nCopies(4, "My son, Prince Rechibald, is now the supreme monarch of this fine commonwealth."))),
             // all cc and bcc are referenced
             () -> assertThat(
-                list(path(messages, "messages[*].Destination[].CcAddresses[]"), JsonNode::textValue),
+                StreamSupport.stream(msgs.spliterator(), false)
+                    .flatMap(m -> strings(m.get("Destination").get("CcAddresses")).stream()).toList(),
                 equalTo(lackeys)),
             () -> assertThat(
-                list(path(messages, "messages[*].Destination[].BccAddresses[]"), JsonNode::textValue),
+                StreamSupport.stream(msgs.spliterator(), false)
+                    .flatMap(m -> strings(m.get("Destination").get("BccAddresses")).stream()).toList(),
                 equalTo(militia)),
             // test splits
-            () -> assertThat(
-                list(path(messages, "messages[0].Destination.CcAddresses"), JsonNode::textValue),
-                equalTo(lackeys.subList(0, 50))),
-            () -> assertThat(
-                list(path(messages, "messages[1].Destination.CcAddresses"), JsonNode::textValue),
-                equalTo(lackeys.subList(50, 100))),
-            () -> assertThat(
-                list(path(messages, "messages[2].Destination.CcAddresses"), JsonNode::textValue),
-                equalTo(lackeys.subList(100, 120))),
-            () -> assertThat(
-                list(path(messages, "messages[2].Destination.BccAddresses"), JsonNode::textValue),
-                equalTo(militia.subList(0, 30))),
-            () -> assertThat(
-                list(path(messages, "messages[3].Destination.BccAddresses"), JsonNode::textValue),
-                equalTo(militia.subList(30, 70)))
+            () -> assertThat(strings(msgs.get(0).get("Destination").get("CcAddresses")), equalTo(lackeys.subList(0, 50))),
+            () -> assertThat(strings(msgs.get(1).get("Destination").get("CcAddresses")), equalTo(lackeys.subList(50, 100))),
+            () -> assertThat(strings(msgs.get(2).get("Destination").get("CcAddresses")), equalTo(lackeys.subList(100, 120))),
+            () -> assertThat(strings(msgs.get(2).get("Destination").get("BccAddresses")), equalTo(militia.subList(0, 30))),
+            () -> assertThat(strings(msgs.get(3).get("Destination").get("BccAddresses")), equalTo(militia.subList(30, 70)))
         );
     }
 
@@ -205,10 +199,10 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
         assertAll(
             messagesSent(messages, 1),
             () -> assertThat(
-                list(path(messages, "messages[*].Destination[].CcAddresses[]"), JsonNode::textValue),
+                strings(messages.get("messages").get(0).get("Destination").get("CcAddresses")),
                 equalTo(org.contactEmails()))
             );
-        String message = list(path(messages, "messages[].Body.html_part"), JsonNode::textValue).get(0);
+        String message = messages.get("messages").get(0).get("Body").get("html_part").textValue();
         assertThat(message, containsString("<title>NAP:iin ilmoittamienne rajapintojen tilanneraportti</title>"));
 
         assertThat(
@@ -292,17 +286,12 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
 
     @NotNull
     private Executable messagesSent(JsonNode messages, int count) {
-        return () -> assertThat(
-            path(messages, "length(messages)").intValue(),
-            equalTo(count));
+        return () -> assertThat(messages.get("messages").size(), equalTo(count));
     }
 
-    private List<? extends String> list(JsonNode node, Function<JsonNode, String> mapper) {
-        return Streams.collect(jmesPath.toList(node), mapper);
-    }
-
-    private JsonNode path(JsonNode root, String expression) {
-        return jmesPath.compile(expression).search(root);
+    private List<String> strings(JsonNode array) {
+        if (array == null || array.isNull() || array.isMissingNode()) return List.of();
+        return StreamSupport.stream(array.spliterator(), false).map(JsonNode::textValue).toList();
     }
 
     private JsonNode readReceivedMessages() throws IOException, InterruptedException {
