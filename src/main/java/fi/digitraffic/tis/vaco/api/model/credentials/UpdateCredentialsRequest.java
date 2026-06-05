@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.api.model.credentials;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.credentials.model.AuthenticationDetails;
@@ -25,7 +24,6 @@ public interface UpdateCredentialsRequest {
     String description();
 
     @Nullable
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
     AuthenticationDetails details();
 
     @Nullable
