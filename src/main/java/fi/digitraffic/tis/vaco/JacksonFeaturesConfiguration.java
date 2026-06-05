@@ -43,6 +43,10 @@ public class JacksonFeaturesConfiguration {
      */
     public static JsonMapper.Builder configureForImmutables(JsonMapper.Builder builder) {
         return builder
+            // Fields without any @JsonView annotation must be included when writing with a view.
+            // Jackson 3 defaults this to false; set it to true so Immutables-generated classes
+            // (whose fields have no @JsonView) are serialized correctly when a view is active.
+            .enable(MapperFeature.DEFAULT_VIEW_INCLUSION)
             .accessorNaming(new DefaultAccessorNamingStrategy.Provider() {
                 @Override
                 public AccessorNamingStrategy forPOJO(MapperConfig<?> config, AnnotatedClass targetClass) {
