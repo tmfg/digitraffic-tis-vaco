@@ -299,6 +299,18 @@ public class CompanyRepository {
             RowMappers.COMPANY_RECORD);
     }
 
+    public List<CompanyRecord> listPublishedAuthoritiesWithCodespace() {
+        return jdbc.query(
+            """
+            SELECT *
+              FROM company
+             WHERE roles @> ARRAY['authority']::text[]
+               AND cardinality(codespaces) > 0
+             ORDER BY name
+            """,
+            RowMappers.COMPANY_RECORD);
+    }
+
     public boolean deleteByBusinessId(String businessId) {
         if (jdbc.update("DELETE FROM company WHERE business_id = ?", businessId) > 0) {
             cachingService.invalidateCompanyRecord(businessId);
