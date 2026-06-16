@@ -72,7 +72,8 @@ public class JacksonFeaturesConfiguration {
                             }
                             @Override
                             public String findNameForMutator(AnnotatedMethod am, String name) {
-                                return imm.findNameForMutator(am, name);
+                                String result = std.findNameForMutator(am, name);
+                                return result != null ? result : imm.findNameForMutator(am, name);
                             }
                             @Override
                             public String modifyFieldName(AnnotatedField field, String name) {
