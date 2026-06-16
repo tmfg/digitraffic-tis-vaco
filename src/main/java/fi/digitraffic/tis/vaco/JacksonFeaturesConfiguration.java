@@ -24,7 +24,6 @@ import tools.jackson.databind.introspect.AnnotatedMember;
 import tools.jackson.databind.introspect.AnnotatedMethod;
 import tools.jackson.databind.introspect.DefaultAccessorNamingStrategy;
 import tools.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import tools.jackson.databind.annotation.JsonNaming;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.jsontype.NamedType;
 
@@ -114,25 +113,6 @@ public class JacksonFeaturesConfiguration {
                     return super.hasIgnoreMarker(config, m);
                 }
 
-                /**
-                 * Jackson 3 no longer propagates {@code @JsonNaming} from the value type interface to the
-                 * Immutables-generated builder class. This override restores that behaviour: when the annotated
-                 * class is an Immutables builder, check the enclosing value class's interfaces for
-                 * {@code @JsonNaming} and return the strategy found there, if any.
-                 */
-                @Override
-                public Object findNamingStrategy(MapperConfig<?> config, AnnotatedClass ac) {
-                    Class<?> declaring = ac.getRawType().getDeclaringClass();
-                    if (declaring != null && declaring.getSimpleName().startsWith("Immutable")) {
-                        for (Class<?> iface : declaring.getInterfaces()) {
-                            JsonNaming naming = iface.getAnnotation(JsonNaming.class);
-                            if (naming != null) {
-                                return naming.value();
-                            }
-                        }
-                    }
-                    return super.findNamingStrategy(config, ac);
-                }
             });
     }
 
