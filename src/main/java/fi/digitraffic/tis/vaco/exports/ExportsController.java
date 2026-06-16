@@ -24,4 +24,9 @@ public class ExportsController {
         return exportsService.netexOrganisations();
     }
 
+    @GetMapping(path = "/netex/authorities", produces = MediaType.APPLICATION_XML_VALUE)
+    public JAXBElement<PublicationDeliveryStructure> netexAuthorities() {
+        return exportsService.netexAuthorities();
+    }
+
 }
