@@ -3,7 +3,6 @@ package fi.digitraffic.tis.vaco.queuehandler.mapper;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.utilities.Strings;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
@@ -12,6 +11,7 @@ import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
@@ -121,15 +121,7 @@ public class EntryRequestMapper {
     }
 
     private RuleConfiguration resolveConfig(JsonNode node, String name) {
-        JsonNode configNode = node.path("config");
-        if (configNode.isMissingNode() || configNode.isNull() || name == null || !configNode.isObject()) {
-            return null;
-        }
-        // Jackson 3 requires the @type discriminator to be present for polymorphic dispatch.
-        // Incoming config objects don't include it, so inject it before deserializing.
-        ObjectNode nodeWithType = ((ObjectNode) configNode).deepCopy();
-        nodeWithType.put("@type", name);
-        return fromJson(nodeWithType, RuleConfiguration.class);
+        return RecordMapper.readRuleConfiguration(objectMapper, node.path("config"), name);
     }
 
     protected <T> T fromJson(JsonNode data, Class<T> type) {

@@ -110,8 +110,23 @@ public class RecordMapper {
             .build();
     }
 
-    private static RuleConfiguration readRuleConfiguration(ObjectMapper objectMapper, JsonNode json, String name) {
-        if (json == null || json.isNull() || json.isMissingNode()) {
+    /**
+     * Deserializes a {@link RuleConfiguration} from a {@link JsonNode}, injecting the {@code @type} discriminator
+     * that {@link com.fasterxml.jackson.annotation.JsonTypeInfo} requires for polymorphic dispatch. The discriminator
+     * is not stored in the database (stripped on write) and is absent from incoming API payloads, so it must be
+     * injected from the rule {@code name} before handing off to Jackson.
+     * <p>
+     * This is the single shared implementation used by {@link fi.digitraffic.tis.vaco.db.RowMappers},
+     * {@link fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper}, and this class.
+     *
+     * @param objectMapper configured Jackson mapper
+     * @param json         the config node (without {@code @type}), or {@code null}/missing/non-object
+     * @param name         the rule name that doubles as the polymorphic type discriminator
+     * @return deserialized {@link RuleConfiguration}, or {@code null} if {@code json} is absent/null/non-object or {@code name} is null
+     * @throws InvalidMappingException if Jackson fails to deserialize the node
+     */
+    public static RuleConfiguration readRuleConfiguration(ObjectMapper objectMapper, JsonNode json, String name) {
+        if (json == null || json.isNull() || json.isMissingNode() || !json.isObject() || name == null) {
             return null;
         }
         try {

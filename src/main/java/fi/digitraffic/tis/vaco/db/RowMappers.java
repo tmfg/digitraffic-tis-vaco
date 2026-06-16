@@ -7,6 +7,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
@@ -371,22 +372,17 @@ public final class RowMappers {
     }
 
     /**
-     * Reads a {@link RuleConfiguration} from a JSONB column, injecting the {@code @type} discriminator that
-     * {@link com.fasterxml.jackson.annotation.JsonTypeInfo} requires for polymorphic dispatch. The discriminator
-     * is not stored in the database (stripped on write) so it must be re-injected on read.
+     * Reads a {@link RuleConfiguration} from a JSONB column. Delegates the actual deserialization
+     * (including {@code @type} injection) to {@link fi.digitraffic.tis.vaco.db.mapper.RecordMapper#readRuleConfiguration}.
      */
     private static RuleConfiguration readRuleConfiguration(ObjectMapper objectMapper, ResultSet rs, String name) {
         return fromJsonb(rs, "config", v -> {
             try {
                 JsonNode configNode = objectMapper.readTree(v);
-                if (configNode instanceof ObjectNode objectNode) {
-                    objectNode.put("@type", name);
-                    return objectMapper.treeToValue(configNode, RuleConfiguration.class);
-                }
+                return RecordMapper.readRuleConfiguration(objectMapper, configNode, name);
             } catch (JacksonException e) {
-                LOGGER.error("Failed to read JSONB config as RuleConfiguration for rule '{}'", name, e);
+                throw new InvalidMappingException("Failed to parse JSONB config for rule '" + name + "'", e);
             }
-            return null;
         });
     }
 
