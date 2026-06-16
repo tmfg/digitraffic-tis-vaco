@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.queuehandler.mapper;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -22,7 +21,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -124,20 +122,14 @@ public class EntryRequestMapper {
 
     private RuleConfiguration resolveConfig(JsonNode node, String name) {
         JsonNode configNode = node.path("config");
-        if (configNode.isMissingNode() || configNode.isNull() || name == null) {
+        if (configNode.isMissingNode() || configNode.isNull() || name == null || !configNode.isObject()) {
             return null;
         }
-        return Arrays.stream(RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class).value())
-            .filter(t -> t.name().equals(name))
-            .findFirst()
-            .map(t -> {
-                // Jackson 3 requires the @type discriminator field to be present in the JSON for @JsonTypeInfo
-                // to work. Incoming config objects don't include it, so we inject it here before deserializing.
-                ObjectNode nodeWithType = ((ObjectNode) configNode).deepCopy();
-                nodeWithType.put("@type", t.name());
-                return (RuleConfiguration) fromJson(nodeWithType, RuleConfiguration.class);
-            })
-            .orElse(null);
+        // Jackson 3 requires the @type discriminator to be present for polymorphic dispatch.
+        // Incoming config objects don't include it, so inject it before deserializing.
+        ObjectNode nodeWithType = ((ObjectNode) configNode).deepCopy();
+        nodeWithType.put("@type", name);
+        return fromJson(nodeWithType, RuleConfiguration.class);
     }
 
     protected <T> T fromJson(JsonNode data, Class<T> type) {
