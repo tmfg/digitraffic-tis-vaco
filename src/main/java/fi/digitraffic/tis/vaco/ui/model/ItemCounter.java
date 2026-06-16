@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableItemCounter.class)
-@JsonDeserialize(builder = ImmutableItemCounter.Builder.class)
+@JsonDeserialize(as = ImmutableItemCounter.class)
 public interface ItemCounter {
     @Value.Parameter
     String name();

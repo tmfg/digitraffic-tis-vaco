@@ -51,7 +51,7 @@
         <azurespring.version>6.0.0</azurespring.version>
         <awspringcloud.version>4.0.2</awspringcloud.version>
         <azurespring.version>7.2.0</azurespring.version>
-        <immutables.version>2.11.7</immutables.version>
+        <immutables.version>2.12.2</immutables.version>
         <mockito.version>5.20.0</mockito.version>
         <guava.version>33.5.0-jre</guava.version>
         <msgraph.version>6.64.0</msgraph.version>

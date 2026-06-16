@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableLabelValuePair.class)
-@JsonDeserialize(builder = ImmutableLabelValuePair.Builder.class)
+@JsonDeserialize(as = ImmutableLabelValuePair.class)
 public interface LabelValuePair {
     @Value.Parameter
     @Nullable

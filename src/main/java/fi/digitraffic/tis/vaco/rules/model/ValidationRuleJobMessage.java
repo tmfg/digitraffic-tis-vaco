@@ -12,7 +12,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableValidationRuleJobMessage.class)
-@JsonDeserialize(builder = ImmutableValidationRuleJobMessage.Builder.class)
+@JsonDeserialize(as = ImmutableValidationRuleJobMessage.class)
 public interface ValidationRuleJobMessage extends JobMessage, Retryable {
     Task task();
 

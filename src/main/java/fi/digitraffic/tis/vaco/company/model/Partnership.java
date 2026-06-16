@@ -8,7 +8,7 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutablePartnership.class)
-@JsonDeserialize(builder = ImmutablePartnership.Builder.class)
+@JsonDeserialize(as = ImmutablePartnership.class)
 public interface Partnership {
 
     @Value.Parameter

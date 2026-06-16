@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Value.Immutable
 @JsonSerialize(as = fi.digitraffic.tis.vaco.notifications.model.ImmutableEntryCompletePayload.class)
-@JsonDeserialize(builder = fi.digitraffic.tis.vaco.notifications.model.ImmutableEntryCompletePayload.Builder.class)
+@JsonDeserialize(as = fi.digitraffic.tis.vaco.notifications.model.ImmutableEntryCompletePayload.class)
 public interface EntryCompletePayload extends Payload {
 
     @JsonView(DataVisibility.Webhook.class)

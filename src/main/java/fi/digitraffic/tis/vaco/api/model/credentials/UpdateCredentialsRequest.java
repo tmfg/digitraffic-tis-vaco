@@ -9,7 +9,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableUpdateCredentialsRequest.class)
-@JsonDeserialize(builder = ImmutableUpdateCredentialsRequest.Builder.class)
+@JsonDeserialize(as = ImmutableUpdateCredentialsRequest.class)
 public interface UpdateCredentialsRequest {
 
     @Value.Default

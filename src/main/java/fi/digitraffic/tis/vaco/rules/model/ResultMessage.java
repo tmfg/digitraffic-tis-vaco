@@ -11,7 +11,7 @@ import java.util.Map;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableResultMessage.class)
-@JsonDeserialize(builder = ImmutableResultMessage.Builder.class)
+@JsonDeserialize(as = ImmutableResultMessage.class)
 public interface ResultMessage {
     @Value.Parameter
     @JsonView(DataVisibility.InternalOnly.class)

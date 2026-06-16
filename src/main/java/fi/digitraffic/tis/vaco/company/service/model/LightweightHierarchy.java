@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableLightweightHierarchy.class)
-@JsonDeserialize(builder = ImmutableLightweightHierarchy.Builder.class)
+@JsonDeserialize(as = ImmutableLightweightHierarchy.class)
 public interface LightweightHierarchy {
 
     @Value.Parameter

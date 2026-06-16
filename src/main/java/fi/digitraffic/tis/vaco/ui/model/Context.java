@@ -8,7 +8,7 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableContext.class)
-@JsonDeserialize(builder = ImmutableContext.Builder.class)
+@JsonDeserialize(as = ImmutableContext.class)
 public interface Context {
     @Value.Parameter
     String context();

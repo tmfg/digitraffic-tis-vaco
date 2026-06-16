@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableValidationReportEntry.class)
-@JsonDeserialize(builder = ImmutableValidationReportEntry.Builder.class)
+@JsonDeserialize(as = ImmutableValidationReportEntry.class)
 public interface ValidationReportEntry {
     String name();
 

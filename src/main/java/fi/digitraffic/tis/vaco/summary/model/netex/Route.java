@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableRoute.class)
-@JsonDeserialize(builder = ImmutableRoute.Builder.class)
+@JsonDeserialize(as = ImmutableRoute.class)
 public interface Route {
     String id();
     String lineRef();

@@ -9,5 +9,5 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableCanonicalGtfsValidatorConfiguration.class)
-@JsonDeserialize(builder = ImmutableCanonicalGtfsValidatorConfiguration.Builder.class)
+@JsonDeserialize(as = ImmutableCanonicalGtfsValidatorConfiguration.class)
 public interface CanonicalGtfsValidatorConfiguration extends RuleConfiguration {}

@@ -9,7 +9,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableNotice.class)
-@JsonDeserialize(builder = ImmutableNotice.Builder.class)
+@JsonDeserialize(as = ImmutableNotice.class)
 public interface Notice {
     String code();
 

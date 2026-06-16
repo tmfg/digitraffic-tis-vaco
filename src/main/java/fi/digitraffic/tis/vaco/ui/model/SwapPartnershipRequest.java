@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableSwapPartnershipRequest.class)
-@JsonDeserialize(builder = ImmutableSwapPartnershipRequest.Builder.class)
+@JsonDeserialize(as = ImmutableSwapPartnershipRequest.class)
 @UniquePartners
 public interface SwapPartnershipRequest {
     String oldPartnerABusinessId();

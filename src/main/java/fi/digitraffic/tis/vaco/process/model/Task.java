@@ -14,7 +14,7 @@ import java.time.ZonedDateTime;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableTask.class)
-@JsonDeserialize(builder = ImmutableTask.Builder.class)
+@JsonDeserialize(as = ImmutableTask.class)
 public interface Task {
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)

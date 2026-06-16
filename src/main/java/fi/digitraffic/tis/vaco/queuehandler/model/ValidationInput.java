@@ -10,7 +10,7 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableValidationInput.class)
-@JsonDeserialize(builder = ImmutableValidationInput.Builder.class)
+@JsonDeserialize(as = ImmutableValidationInput.class)
 public interface ValidationInput {
     @Value.Parameter
     String name();

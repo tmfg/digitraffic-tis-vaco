@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableSubscription.class)
-@JsonDeserialize(builder = ImmutableSubscription.Builder.class)
+@JsonDeserialize(as = ImmutableSubscription.class)
 public interface Subscription {
 
     @Value.Parameter

@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableDelegationJobMessage.class)
-@JsonDeserialize(builder = ImmutableDelegationJobMessage.Builder.class)
+@JsonDeserialize(as = ImmutableDelegationJobMessage.class)
 public interface DelegationJobMessage extends JobMessage, Retryable {
 
 }

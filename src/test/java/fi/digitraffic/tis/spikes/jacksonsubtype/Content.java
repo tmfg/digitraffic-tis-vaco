@@ -8,7 +8,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableContent.class)
-@JsonDeserialize(builder = ImmutableContent.Builder.class)
+@JsonDeserialize(as = ImmutableContent.class)
 public interface Content {
     @Value.Parameter
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "name")

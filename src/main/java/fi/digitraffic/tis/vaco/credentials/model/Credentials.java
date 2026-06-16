@@ -10,7 +10,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCredentials.class)
-@JsonDeserialize(builder = ImmutableCredentials.Builder.class)
+@JsonDeserialize(as = ImmutableCredentials.class)
 public interface Credentials {
     /**
      * Temporary identifier to use when mapping between types in contexts where the public id is not available otherwise.

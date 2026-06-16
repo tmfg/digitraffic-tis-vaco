@@ -9,7 +9,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableSubtype.class)
-@JsonDeserialize(builder = ImmutableSubtype.Builder.class)
+@JsonDeserialize(as = ImmutableSubtype.class)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "name")
 @JsonSubTypes({
     @JsonSubTypes.Type(name = "a", value = SubtypeA.class),

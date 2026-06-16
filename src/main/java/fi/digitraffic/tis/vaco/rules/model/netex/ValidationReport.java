@@ -11,7 +11,7 @@ import java.util.Map;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableValidationReport.class)
-@JsonDeserialize(builder = ImmutableValidationReport.Builder.class)
+@JsonDeserialize(as = ImmutableValidationReport.class)
 public interface ValidationReport {
     @Nullable
     String codespace();

@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCompanyWithFormatSummary.class)
-@JsonDeserialize(builder = ImmutableCompanyWithFormatSummary.Builder.class)
+@JsonDeserialize(as = ImmutableCompanyWithFormatSummary.class)
 public interface CompanyWithFormatSummary {
     @Value.Parameter
     String businessId();

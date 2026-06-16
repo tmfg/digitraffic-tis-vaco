@@ -11,7 +11,7 @@ import java.time.ZonedDateTime;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableFeatureFlag.class)
-@JsonDeserialize(builder = ImmutableFeatureFlag.Builder.class)
+@JsonDeserialize(as = ImmutableFeatureFlag.class)
 public interface FeatureFlag {
     // feature flag uniqueness is defined by its name, hence no id/publicId
     @Value.Parameter

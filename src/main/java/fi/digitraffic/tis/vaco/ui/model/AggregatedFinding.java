@@ -10,7 +10,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableAggregatedFinding.class)
-@JsonDeserialize(builder = ImmutableAggregatedFinding.Builder.class)
+@JsonDeserialize(as = ImmutableAggregatedFinding.class)
 public interface AggregatedFinding {
 
     String code();

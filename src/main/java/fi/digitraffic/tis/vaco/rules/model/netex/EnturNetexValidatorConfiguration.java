@@ -12,7 +12,7 @@ import java.util.Set;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableEnturNetexValidatorConfiguration.class)
-@JsonDeserialize(builder = ImmutableEnturNetexValidatorConfiguration.Builder.class)
+@JsonDeserialize(as = ImmutableEnturNetexValidatorConfiguration.class)
 public interface EnturNetexValidatorConfiguration extends RuleConfiguration {
     String codespace();
     @Nullable

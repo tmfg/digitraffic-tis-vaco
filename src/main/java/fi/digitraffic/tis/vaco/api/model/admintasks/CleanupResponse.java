@@ -8,7 +8,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = fi.digitraffic.tis.vaco.api.model.admintasks.ImmutableCleanupResponse.class)
-@JsonDeserialize(builder = fi.digitraffic.tis.vaco.api.model.admintasks.ImmutableCleanupResponse.Builder.class)
+@JsonDeserialize(as = fi.digitraffic.tis.vaco.api.model.admintasks.ImmutableCleanupResponse.class)
 public interface CleanupResponse {
 
     @Value.Parameter

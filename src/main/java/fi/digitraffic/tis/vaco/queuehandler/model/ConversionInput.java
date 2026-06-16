@@ -12,7 +12,7 @@ import org.immutables.value.Value;
 @DomainValue
 @Value.Immutable
 @JsonSerialize(as = ImmutableConversionInput.class)
-@JsonDeserialize(builder = ImmutableConversionInput.Builder.class)
+@JsonDeserialize(as = ImmutableConversionInput.class)
 public interface ConversionInput {
     @Nullable
     @JsonView(DataVisibility.InternalOnly.class)

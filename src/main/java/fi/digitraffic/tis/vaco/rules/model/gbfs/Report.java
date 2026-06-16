@@ -8,7 +8,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableReport.class)
-@JsonDeserialize(builder = ImmutableReport.Builder.class)
+@JsonDeserialize(as = ImmutableReport.class)
 public interface Report {
     FileValidationResult fileValidationResult();
     String entry();

@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableSubtypeB.class)
-@JsonDeserialize(builder = ImmutableSubtypeB.Builder.class)
+@JsonDeserialize(as = ImmutableSubtypeB.class)
 public interface SubtypeB extends Subtype {
     @Nullable
     String subtypeValueB();

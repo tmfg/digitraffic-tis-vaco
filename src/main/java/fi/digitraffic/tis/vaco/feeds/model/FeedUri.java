@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableFeedUri.class)
-@JsonDeserialize(builder = ImmutableFeedUri.Builder.class)
+@JsonDeserialize(as = ImmutableFeedUri.class)
 public interface FeedUri {
 
     @Value.Parameter

@@ -9,7 +9,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableNetexInputSummary.class)
-@JsonDeserialize(builder = ImmutableNetexInputSummary.Builder.class)
+@JsonDeserialize(as = ImmutableNetexInputSummary.class)
 @Value.Style(jdk9Collections = true)
 public interface NetexInputSummary {
     List<Card> operators();

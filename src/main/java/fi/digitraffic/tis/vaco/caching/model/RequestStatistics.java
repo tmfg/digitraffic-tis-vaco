@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableRequestStatistics.class)
-@JsonDeserialize(builder = ImmutableRequestStatistics.Builder.class)
+@JsonDeserialize(as = ImmutableRequestStatistics.class)
 public interface RequestStatistics {
     @Value.Parameter
     long hits();

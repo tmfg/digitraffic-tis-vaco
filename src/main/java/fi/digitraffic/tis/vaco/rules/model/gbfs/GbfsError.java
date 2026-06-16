@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableGbfsError.class)
-@JsonDeserialize(builder = ImmutableGbfsError.Builder.class)
+@JsonDeserialize(as = ImmutableGbfsError.class)
 public interface GbfsError {
     String schemaPath();
     String violationPath();

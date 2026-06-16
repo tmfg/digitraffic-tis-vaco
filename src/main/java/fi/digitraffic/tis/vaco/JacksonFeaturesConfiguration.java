@@ -102,14 +102,11 @@ public class JacksonFeaturesConfiguration {
                 @Override
                 public boolean hasIgnoreMarker(MapperConfig<?> config, AnnotatedMember m) {
                     String name = m.getName();
-                    // With empty getter prefix on Immutables, Object methods become spurious properties
-                    if ("hashCode".equals(name) || "toString".equals(name)) {
-                        return true;
-                    }
-                    // In Immutables Builder classes, skip addXxx, addAllXxx, and from() methods
+                    // With empty getter prefix on Immutables, Object methods become spurious properties.
+                    // Guard to Immutables-generated types to avoid suppressing legitimate properties on other types.
                     String className = m.getDeclaringClass().getSimpleName();
-                    if ("Builder".equals(className)) {
-                        if ("from".equals(name) || name.startsWith("add")) {
+                    if (className.startsWith("Immutable")) {
+                        if ("hashCode".equals(name) || "toString".equals(name)) {
                             return true;
                         }
                     }

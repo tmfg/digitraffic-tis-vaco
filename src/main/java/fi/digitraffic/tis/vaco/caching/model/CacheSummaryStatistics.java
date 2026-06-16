@@ -8,7 +8,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCacheSummaryStatistics.class)
-@JsonDeserialize(builder = ImmutableCacheSummaryStatistics.Builder.class)
+@JsonDeserialize(as = ImmutableCacheSummaryStatistics.class)
 public interface CacheSummaryStatistics {
 
     @Value.Parameter

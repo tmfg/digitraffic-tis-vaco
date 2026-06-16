@@ -8,7 +8,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCreateFeedRequest.class)
-@JsonDeserialize(builder = ImmutableCreateFeedRequest.Builder.class)
+@JsonDeserialize(as = ImmutableCreateFeedRequest.class)
 public interface CreateFeedRequest {
 
     @Value.Parameter

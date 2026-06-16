@@ -11,7 +11,7 @@ import java.util.List;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableCreateEntryRequest.class)
-@JsonDeserialize(builder = ImmutableCreateEntryRequest.Builder.class)
+@JsonDeserialize(as = ImmutableCreateEntryRequest.class)
 public interface CreateEntryRequest {
     @Schema(description = "Data format. Currently supported: GTFS, NeTEx, GBFS.", example = "gtfs")
     String format();

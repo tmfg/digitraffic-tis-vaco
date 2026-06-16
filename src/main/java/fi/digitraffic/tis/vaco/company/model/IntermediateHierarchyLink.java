@@ -7,7 +7,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableIntermediateHierarchyLink.class)
-@JsonDeserialize(builder = ImmutableIntermediateHierarchyLink.Builder.class)
+@JsonDeserialize(as = ImmutableIntermediateHierarchyLink.class)
 public interface IntermediateHierarchyLink {
     @Nullable
     Long parentId();
