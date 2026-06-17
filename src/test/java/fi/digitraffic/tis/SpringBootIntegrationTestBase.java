@@ -107,8 +107,8 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
     @NotNull
     protected static Link toLink(JsonNode jsonNode) {
         return new Link(
-                jsonNode.get("href").textValue(),
-                RequestMethod.valueOf(jsonNode.get("method").textValue()));
+                jsonNode.get("href").stringValue(),
+                RequestMethod.valueOf(jsonNode.get("method").stringValue()));
     }
 
     protected ResultActions apiCall(Link link) throws Exception {
