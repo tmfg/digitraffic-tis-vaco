@@ -119,13 +119,13 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
         assertAll(
             messagesSent(messages, 1),
             () -> assertThat(
-                msgs.get(0).get("Source").textValue(),
+                msgs.get(0).get("Source").stringValue(),
                 equalTo("king@commonwealth")),
             () -> assertThat(
                 strings(msgs.get(0).get("Destination").get("ToAddresses")),
                 equalTo(List.of("subjects@commonwealth"))),
             () -> assertThat(
-                msgs.get(0).get("Body").get("html_part").textValue(),
+                msgs.get(0).get("Body").get("html_part").stringValue(),
                 equalTo("I hereby decree that you are all free from my reign."))
         );
     }
@@ -153,11 +153,11 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
             messagesSent(messages, 4),
             () -> assertThat(
                 StreamSupport.stream(msgs.spliterator(), false)
-                    .map(m -> m.get("Source").textValue()).toList(),
+                    .map(m -> m.get("Source").stringValue()).toList(),
                 equalTo(Collections.nCopies(4, "king@commonwealth"))),
             () -> assertThat(
                 StreamSupport.stream(msgs.spliterator(), false)
-                    .map(m -> m.get("Body").get("html_part").textValue()).toList(),
+                    .map(m -> m.get("Body").get("html_part").stringValue()).toList(),
                 equalTo(Collections.nCopies(4, "My son, Prince Rechibald, is now the supreme monarch of this fine commonwealth."))),
             // all cc and bcc are referenced
             () -> assertThat(
@@ -202,7 +202,7 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
                 strings(messages.get("messages").get(0).get("Destination").get("CcAddresses")),
                 equalTo(org.contactEmails()))
             );
-        String message = messages.get("messages").get(0).get("Body").get("html_part").textValue();
+        String message = messages.get("messages").get(0).get("Body").get("html_part").stringValue();
         assertThat(message, containsString("<title>NAP:iin ilmoittamienne rajapintojen tilanneraportti</title>"));
 
         assertThat(

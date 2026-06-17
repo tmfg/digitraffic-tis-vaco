@@ -163,7 +163,7 @@ class WebhookNotifierTests {
         // VERIFY sent notification
         verify(httpClient).sendWebhook(eq(notificationUri), payload.capture());
         JsonNode sentJson = objectMapper.readTree(payload.getValue());
-        assertThat(sentJson.get("name").asText(), equalTo(NotificationType.ENTRY_COMPLETE_V1.getTypeName()));
+        assertThat(sentJson.get("name").asString(), equalTo(NotificationType.ENTRY_COMPLETE_V1.getTypeName()));
 
         // Typed deserialization of the payload (validates structure and deserializability)
         EntryCompletePayload entryCompletePayload = objectMapper.treeToValue(sentJson.get("payload"), EntryCompletePayload.class);

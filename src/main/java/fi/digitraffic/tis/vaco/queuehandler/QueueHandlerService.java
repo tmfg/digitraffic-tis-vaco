@@ -166,12 +166,12 @@ public class QueueHandlerService {
             JsonNode caller = metadata.get("caller");
             JsonNode operatorName = metadata.get("operator-name");
 
-            String callerName = caller.asText();
+            String callerName = caller.asString();
             if ("FINAP".equals(callerName)) {
-                String finapOperator = operatorName.asText();
+                String finapOperator = operatorName.asString();
                 ImmutableCompany operatorCompany = ImmutableCompany.of(businessId, finapOperator, true);
                 if (metadata.has("contact-email")) {
-                    operatorCompany = operatorCompany.withContactEmails(metadata.get("contact-email").asText());
+                    operatorCompany = operatorCompany.withContactEmails(metadata.get("contact-email").asString());
                 }
                 Optional<Company> createdCompany = companyHierarchyService.createCompany(operatorCompany);
 
@@ -189,7 +189,7 @@ public class QueueHandlerService {
                         if (metadata.has("contact-email")
                             && existingOperator.contactEmails().isEmpty()) {
                             logger.info("Updating {}'s ({}) contact emails to be the one originating from FINAP", existingOperator.name(), existingOperator.businessId());
-                            companyHierarchyService.updateContactEmails(existingOperator, List.of(metadata.get("contact-email").asText()));
+                            companyHierarchyService.updateContactEmails(existingOperator, List.of(metadata.get("contact-email").asString()));
                         }
                     });
                 }

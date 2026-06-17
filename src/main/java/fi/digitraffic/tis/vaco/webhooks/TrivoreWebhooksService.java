@@ -80,11 +80,11 @@ public class TrivoreWebhooksService {
 
 
     public String handleWebhook(JsonNode webhookData) {
-        return switch (webhookData.get("type").asText()) {
+        return switch (webhookData.get("type").asString()) {
             case "USER_EDIT" -> handleUserEdit(webhookData);
             case "USER_EMAIL_VERIFIED" -> handleUserEmailVerified(webhookData);
             default -> {
-                logger.error("Unhandled Webhook type: {}", webhookData.get("type").asText());
+                logger.error("Unhandled Webhook type: {}", webhookData.get("type").asString());
                 yield EVENT_HANDLING_FAILED;
             }
         };
@@ -124,14 +124,14 @@ public class TrivoreWebhooksService {
             "data": null
         }
          */
-        String userId = webhookData.get("id").asText();
+        String userId = webhookData.get("id").asString();
         return fetchUser(userId)
             .map(user -> {
-                String id = user.get("id").asText();
+                String id = user.get("id").asString();
                 Set<String> newGroups = new HashSet<>();
                 for (JsonNode email : user.path("emails")) {
                     if (email.has("verified") && email.get("verified").asBoolean()) {
-                        String emailAddress = email.get("address").asText();
+                        String emailAddress = email.get("address").asString();
                         newGroups.addAll(findMatchingGroups(emailAddress));
                     }
                 }
@@ -149,10 +149,10 @@ public class TrivoreWebhooksService {
                     Set<String> acceptableGroupMailDomains = new HashSet<>();
                     JsonNode customFields = group.path("customFields");
                     for (JsonNode mailDomain : customFields.path(GROUP_CUSTOM_FIELD_MAIL_DOMAINS)) {
-                        acceptableGroupMailDomains.add(mailDomain.textValue());
+                        acceptableGroupMailDomains.add(mailDomain.stringValue());
                     }
                     if (acceptableGroupMailDomains.contains(userEmailDomain)) {
-                        String groupId = group.get("id").asText();
+                        String groupId = group.get("id").asString();
                         logger.debug("User email address {} matches {} in group {}", emailAddress, userEmailDomain, groupId);
                         newGroups.add(groupId);
                     }

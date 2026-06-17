@@ -30,7 +30,7 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
             .andExpect(status().isOk())
             .andReturn();
         JsonNode createResult = apiResponse(response);
-        String entryPublicId = createResult.get("data").get("publicId").textValue();
+        String entryPublicId = createResult.get("data").get("publicId").stringValue();
 
         MvcResult fetchResponse = apiCall(get("/ui/entries/" + entryPublicId + "/state"))
             .andExpect(status().isOk())
@@ -38,10 +38,10 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         JsonNode fetchResult = apiResponse(fetchResponse);
 
         assertAll("Entry fields are fetched properly",
-            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("name").textValue(), equalTo(request.name())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("url").textValue(), equalTo(request.url())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("etag").textValue(), equalTo(request.etag())),
-            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("format").textValue(), equalTo(request.format())));
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("name").stringValue(), equalTo(request.name())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("url").stringValue(), equalTo(request.url())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("etag").stringValue(), equalTo(request.etag())),
+            () -> assertThat(fetchResult.get("data").get("entry").get("data").get("format").stringValue(), equalTo(request.format())));
     }
 
     @Test
