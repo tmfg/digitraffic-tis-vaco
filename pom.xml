@@ -129,12 +129,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-classic</artifactId>
         </dependency>
-        <!-- Jackson 2 compatibility bridge — needed for jmespath-jackson in test; remove once Jackson 3 migration is complete -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-jackson2</artifactId>
-            <scope>test</scope>
-        </dependency>
         <!-- Enable configuration classes -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -329,12 +323,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.burt</groupId>
-            <artifactId>jmespath-jackson</artifactId>
-            <version>${jmespath.version}</version>
             <scope>test</scope>
         </dependency>
 
