@@ -73,6 +73,17 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Workaround for https://github.com/immutables/immutables/issues/1659:
+                 org.immutables:bom uses org.immutables:immutables as parent, which hardcodes
+                 junit5.version=5.9.1 and imports junit-bom at that version. Importing junit-bom
+                 here first ensures our version wins. -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit-jupiter.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!-- NOTE: This is order dependent, AWS SDK must be before Spring Cloud AWS.
                        See https://docs.awspring.io/spring-cloud-aws/docs/3.0.1/reference/html/index.html#choosing-aws-sdk-version
             -->

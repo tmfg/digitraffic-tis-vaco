@@ -1,9 +1,9 @@
 package fi.digitraffic.tis.vaco.webhooks;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +45,7 @@ class TrivoreWebhooksServiceTests {
     }
 
     @Test
-    void canHandleUserVerifiedEvent() throws JsonProcessingException {
+    void canHandleUserVerifiedEvent() throws JacksonException {
         JsonNode userVerifiedEvent = objectMapper.readTree("""
             {
                 "id": "682337f04b041d1dfff95740",
