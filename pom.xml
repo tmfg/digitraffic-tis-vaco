@@ -32,36 +32,36 @@
     </scm>
 
     <prerequisites>
-        <maven>3.9.0</maven>
+        <maven>3.9.16</maven>
     </prerequisites>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.6</version>
+        <version>4.0.7</version>
     </parent>
 
     <properties>
         <!-- versions for all dependencies which support BOMs, see also dependencyManagement -->
         <java.version>21</java.version>
         <springframework.boot-version>4.0.6</springframework.boot-version>
-        <awssdk.version>2.39.0</awssdk.version>
+        <awssdk.version>2.46.11</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>4.0.2</awspringcloud.version>
-        <azurespring.version>7.2.0</azurespring.version>
+        <azurespring.version>7.3.0</azurespring.version>
         <immutables.version>2.12.2</immutables.version>
-        <mockito.version>5.20.0</mockito.version>
-        <guava.version>33.5.0-jre</guava.version>
-        <msgraph.version>6.64.0</msgraph.version>
+        <mockito.version>5.23.0</mockito.version>
+        <guava.version>33.6.0-jre</guava.version>
+        <msgraph.version>6.65.0</msgraph.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
         <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
-        <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
+        <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
         <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
         <sonar.organization>fintraffic</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
