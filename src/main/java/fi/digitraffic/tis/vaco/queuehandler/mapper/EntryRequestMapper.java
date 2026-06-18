@@ -11,10 +11,14 @@ import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.credentials.model.Credentials;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.ConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
+import fi.digitraffic.tis.vaco.rules.RuleConfiguration;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -93,7 +97,13 @@ public class EntryRequestMapper {
             return List.of();
         }
 
-        return Streams.map(validations, validation -> fromJson(validation, ValidationInput.class)).toList();
+        return Streams.map(validations, validation -> {
+            String name = validation.path("name").stringValue();
+            return (ValidationInput) ImmutableValidationInput.builder()
+                .name(name)
+                .config(resolveConfig(validation, name))
+                .build();
+        }).toList();
     }
 
     private Iterable<ConversionInput> mapConversions(List<JsonNode> conversions) {
@@ -101,7 +111,17 @@ public class EntryRequestMapper {
             return List.of();
         }
 
-        return Streams.map(conversions, conversion -> fromJson(conversion, ConversionInput.class)).toList();
+        return Streams.map(conversions, conversion -> {
+            String name = conversion.path("name").stringValue();
+            return (ConversionInput) ImmutableConversionInput.builder()
+                .name(name)
+                .config(resolveConfig(conversion, name))
+                .build();
+        }).toList();
+    }
+
+    private RuleConfiguration resolveConfig(JsonNode node, String name) {
+        return RecordMapper.readRuleConfiguration(objectMapper, node.path("config"), name);
     }
 
     protected <T> T fromJson(JsonNode data, Class<T> type) {

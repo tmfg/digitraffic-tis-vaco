@@ -1,12 +1,13 @@
 package fi.digitraffic.tis.vaco.db;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
+import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.company.model.ImmutableIntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
@@ -310,12 +311,9 @@ public final class RowMappers {
     private static RowMapper<ValidationInput> mapValidationInput(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
             String name = rs.getString("name");
-
-            Class<?> cc = findSubtypeFromAnnotation(name);
-
             return ImmutableValidationInput.builder()
-                    .name(rs.getString("name"))
-                    .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
+                    .name(name)
+                    .config(readRuleConfiguration(objectMapper, rs, name))
                     .build();
         };
     }
@@ -328,17 +326,13 @@ public final class RowMappers {
                 .build();
     }
 
-    @SuppressWarnings("unchecked")
     private static RowMapper<ConversionInput> mapConversionInput(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
             String name = rs.getString("name");
-
-            Class<?> cc = findSubtypeFromAnnotation(name);
-
             return ImmutableConversionInput.builder()
                     .id(rs.getLong("id"))
-                    .name(rs.getString("name"))
-                    .config(readValue(objectMapper, rs, "config", (Class<RuleConfiguration>) cc))
+                    .name(name)
+                    .config(readRuleConfiguration(objectMapper, rs, name))
                     .build();
         };
     }
@@ -378,21 +372,18 @@ public final class RowMappers {
     }
 
     /**
-     * Tries to find matching configuration class reference from Jackson's annotations defined in the class based on
-     * name of the rule.
-     * <p>
-     * This method exists to avoid duplicating the type mapping code.
-     *
-     * @param name Name of the rule
-     * @return Matching configuration class reference or null if one couldn't be found.
+     * Reads a {@link RuleConfiguration} from a JSONB column. Delegates the actual deserialization
+     * (including {@code @type} injection) to {@link fi.digitraffic.tis.vaco.db.mapper.RecordMapper#readRuleConfiguration}.
      */
-    private static Class<?> findSubtypeFromAnnotation(String name) {
-        JsonSubTypes definedSubTypes = RuleConfiguration.class.getDeclaredAnnotation(JsonSubTypes.class);
-
-        return Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
-            .map(JsonSubTypes.Type::value)
-            .findFirst()
-            .orElse(null);
+    private static RuleConfiguration readRuleConfiguration(ObjectMapper objectMapper, ResultSet rs, String name) {
+        return fromJsonb(rs, "config", v -> {
+            try {
+                JsonNode configNode = objectMapper.readTree(v);
+                return RecordMapper.readRuleConfiguration(objectMapper, configNode, name);
+            } catch (JacksonException e) {
+                throw new InvalidMappingException("Failed to parse JSONB config for rule '" + name + "'", e);
+            }
+        });
     }
 
     private static <I,O> O nullable(I input, Function<I, O> i2o) {
@@ -446,9 +437,13 @@ public final class RowMappers {
     public static <T> PGobject writeJson(ObjectMapper objectMapper, T tree) {
         try {
             if (tree != null) {
+                JsonNode node = objectMapper.valueToTree(tree);
+                if (node instanceof ObjectNode objectNode) {
+                    objectNode.remove("@type");
+                }
                 PGobject pgo = new PGobject();
                 pgo.setType("jsonb");
-                pgo.setValue(objectMapper.writeValueAsString(tree));
+                pgo.setValue(objectMapper.writeValueAsString(node));
                 return pgo;
             }
         } catch (SQLException | JacksonException e) {

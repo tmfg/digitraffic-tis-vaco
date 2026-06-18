@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -65,6 +66,7 @@ import java.util.function.LongFunction;
 @Component
 public class RecordMapper {
 
+
     private final ObjectMapper objectMapper;
 
     public RecordMapper(ObjectMapper objectMapper) {
@@ -93,23 +95,47 @@ public class RecordMapper {
 
     @SuppressWarnings("unchecked")
     public ValidationInput toValidationInput(ValidationInputRecord validationInputRecord) {
-        Class<?> cc = findSubtypeFromAnnotation(validationInputRecord.name(), RuleConfiguration.class);
-
         return ImmutableValidationInput.builder()
             .name(validationInputRecord.name())
-            .config(readValue(objectMapper, validationInputRecord.config(), (Class<RuleConfiguration>) cc))
+            .config(readRuleConfiguration(objectMapper, validationInputRecord.config(), validationInputRecord.name()))
             .build();
     }
 
     @SuppressWarnings("unchecked")
     public ConversionInput toConversionInput(ConversionInputRecord conversionInputRecord) {
-        Class<?> cc = findSubtypeFromAnnotation(conversionInputRecord.name(), RuleConfiguration.class);
-
         return ImmutableConversionInput.builder()
             .id(conversionInputRecord.id())
             .name(conversionInputRecord.name())
-            .config(readValue(objectMapper, conversionInputRecord.config(), (Class<RuleConfiguration>) cc))
+            .config(readRuleConfiguration(objectMapper, conversionInputRecord.config(), conversionInputRecord.name()))
             .build();
+    }
+
+    /**
+     * Deserializes a {@link RuleConfiguration} from a {@link JsonNode}, injecting the {@code @type} discriminator
+     * that {@link com.fasterxml.jackson.annotation.JsonTypeInfo} requires for polymorphic dispatch. The discriminator
+     * is not stored in the database (stripped on write) and is absent from incoming API payloads, so it must be
+     * injected from the rule {@code name} before handing off to Jackson.
+     * <p>
+     * This is the single shared implementation used by {@link fi.digitraffic.tis.vaco.db.RowMappers},
+     * {@link fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper}, and this class.
+     *
+     * @param objectMapper configured Jackson mapper
+     * @param json         the config node (without {@code @type}), or {@code null}/missing/non-object
+     * @param name         the rule name that doubles as the polymorphic type discriminator
+     * @return deserialized {@link RuleConfiguration}, or {@code null} if {@code json} is absent/null/non-object or {@code name} is null
+     * @throws InvalidMappingException if Jackson fails to deserialize the node
+     */
+    public static RuleConfiguration readRuleConfiguration(ObjectMapper objectMapper, JsonNode json, String name) {
+        if (json == null || json.isNull() || json.isMissingNode() || !json.isObject() || name == null) {
+            return null;
+        }
+        try {
+            ObjectNode nodeWithType = ((ObjectNode) json).deepCopy();
+            nodeWithType.put("@type", name);
+            return objectMapper.treeToValue(nodeWithType, RuleConfiguration.class);
+        } catch (JacksonException e) {
+            throw new InvalidMappingException("Failed to read config as RuleConfiguration for rule '" + name + "'", e);
+        }
     }
 
     private static <O> O readValue(ObjectMapper objectMapper, JsonNode json, Class<O> type) {
