@@ -291,7 +291,7 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
 
     private List<String> strings(JsonNode array) {
         if (array == null || array.isNull() || array.isMissingNode()) return List.of();
-        return StreamSupport.stream(array.spliterator(), false).map(JsonNode::textValue).toList();
+        return StreamSupport.stream(array.spliterator(), false).map(JsonNode::stringValue).toList();
     }
 
     private JsonNode readReceivedMessages() throws IOException, InterruptedException {

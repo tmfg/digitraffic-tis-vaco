@@ -32,12 +32,12 @@ class RecordMapperTest {
 
     @Test
     void toConversionInput_returnsNullConfigWhenStoredConfigIsNull() {
-        var record = ImmutableConversionInputRecord.builder()
+        var inputRecord = ImmutableConversionInputRecord.builder()
             .id(1L)
             .name(RuleName.NETEX2GTFS_ENTUR)
             .build();
 
-        ConversionInput result = recordMapper.toConversionInput(record);
+        ConversionInput result = recordMapper.toConversionInput(inputRecord);
 
         assertThat(result.config(), is(nullValue()));
     }
@@ -52,13 +52,13 @@ class RecordMapperTest {
         ObjectNode storedNode = (ObjectNode) objectMapper.valueToTree(original);
         storedNode.remove("@type");
 
-        var record = ImmutableConversionInputRecord.builder()
+        var inputRecord = ImmutableConversionInputRecord.builder()
             .id(1L)
             .name(RuleName.NETEX2GTFS_ENTUR)
             .config(storedNode)
             .build();
 
-        ConversionInput result = recordMapper.toConversionInput(record);
+        ConversionInput result = recordMapper.toConversionInput(inputRecord);
 
         assertThat(result.config(), instanceOf(EnturNetex2GtfsConverterConfiguration.class));
         EnturNetex2GtfsConverterConfiguration config = (EnturNetex2GtfsConverterConfiguration) result.config();
@@ -68,12 +68,12 @@ class RecordMapperTest {
 
     @Test
     void toValidationInput_returnsNullConfigWhenStoredConfigIsNull() {
-        var record = ImmutableValidationInputRecord.builder()
+        var inputRecord = ImmutableValidationInputRecord.builder()
             .id(1L)
             .name(RuleName.GTFS_CANONICAL)
             .build();
 
-        ValidationInput result = recordMapper.toValidationInput(record);
+        ValidationInput result = recordMapper.toValidationInput(inputRecord);
 
         assertThat(result.config(), is(nullValue()));
     }
@@ -86,13 +86,13 @@ class RecordMapperTest {
         ObjectNode storedNode = (ObjectNode) objectMapper.valueToTree(original);
         storedNode.remove("@type");
 
-        var record = ImmutableValidationInputRecord.builder()
+        var inputRecord = ImmutableValidationInputRecord.builder()
             .id(1L)
             .name(RuleName.NETEX2GTFS_ENTUR)
             .config(storedNode)
             .build();
 
-        ValidationInput result = recordMapper.toValidationInput(record);
+        ValidationInput result = recordMapper.toValidationInput(inputRecord);
 
         assertThat(result.config(), instanceOf(EnturNetex2GtfsConverterConfiguration.class));
         assertEquals("FSR", ((EnturNetex2GtfsConverterConfiguration) result.config()).codespace());

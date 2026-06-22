@@ -16,8 +16,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
-import software.amazon.awssdk.core.retry.RetryPolicy;
-import software.amazon.awssdk.http.SdkHttpClient;
+import software.amazon.awssdk.awscore.retry.AwsRetryStrategy;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
@@ -64,7 +63,7 @@ public class AwsConfiguration {
         return ClientOverrideConfiguration.builder()
             .apiCallAttemptTimeout(Duration.ofSeconds(15))
             .apiCallTimeout(Duration.ofSeconds(15))
-            .retryPolicy(retryPolicy -> retryPolicy.numRetries(5))
+            .retryStrategy(AwsRetryStrategy.standardRetryStrategy().toBuilder().maxAttempts(6).build())
             .build();
     }
 
@@ -212,9 +211,7 @@ public class AwsConfiguration {
         ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
             .apiCallTimeout(Duration.ofMinutes(2))
             .apiCallAttemptTimeout(Duration.ofSeconds(90))
-            .retryPolicy(RetryPolicy.builder()
-                .numRetries(3)
-                .build())
+            .retryStrategy(AwsRetryStrategy.standardRetryStrategy().toBuilder().maxAttempts(4).build())
             .build();
 
         KmsAsyncClientBuilder b = KmsAsyncClient.builder()
@@ -236,7 +233,7 @@ public class AwsConfiguration {
             builder.overrideConfiguration(ClientOverrideConfiguration.builder()
                 .apiCallAttemptTimeout(Duration.ofSeconds(15))
                 .apiCallTimeout(Duration.ofSeconds(15))
-                .retryPolicy(retryPolicy -> retryPolicy.numRetries(5))
+                .retryStrategy(AwsRetryStrategy.standardRetryStrategy().toBuilder().maxAttempts(6).build())
                 .build());
             builder.httpClient(ApacheHttpClient.builder()
                 .connectionTimeout(Duration.ofSeconds(15))
