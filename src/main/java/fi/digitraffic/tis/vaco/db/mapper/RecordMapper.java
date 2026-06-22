@@ -1,11 +1,9 @@
 package fi.digitraffic.tis.vaco.db.mapper;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
-import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.InvalidMappingException;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
@@ -154,47 +152,6 @@ public class RecordMapper {
         } catch (JacksonException e) {
             throw new InvalidMappingException("Failed to read JSONB as AuthenticationDetails for type '" + typeName + "'", e);
         }
-    }
-
-    private static <O> O readValue(ObjectMapper objectMapper, JsonNode json, Class<O> type) {
-        if (type == null) {
-            return null;
-        }
-        try {
-            return objectMapper.treeToValue(json, type);
-        } catch (JacksonException e) {
-            throw new InvalidMappingException("Failed to read JSONB as valid " + type, e);
-        }
-    }
-
-    private static <O> O readValue(ObjectMapper objectMapper, byte[] bytes, Class<O> type) {
-        if (type == null) {
-            return null;
-        }
-        try {
-            return objectMapper.readValue(bytes, type);
-        } catch (JacksonException e) {
-            throw new InvalidMappingException("Failed to read JSONB as valid " + type, e);
-        }
-    }
-
-    /**
-     * Tries to find matching configuration class reference from Jackson's annotations defined in the class based on
-     * name of the rule.
-     * <p>
-     * This method exists to avoid duplicating the type mapping code.
-     *
-     * @param name Name of the rule
-     * @param aClass
-     * @return Matching configuration class reference or null if one couldn't be found.
-     */
-    private static <T> Class<T> findSubtypeFromAnnotation(String name, Class<T> aClass) {
-        JsonSubTypes definedSubTypes = aClass.getDeclaredAnnotation(JsonSubTypes.class);
-
-        return (Class<T>) Streams.filter(definedSubTypes.value(), t -> t.name().equals(name))
-            .map(JsonSubTypes.Type::value)
-            .findFirst()
-            .orElse(null);
     }
 
     public Company toCompany(CompanyRecord companyRecord) {
