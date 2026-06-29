@@ -43,7 +43,7 @@
 
     <properties>
         <!-- versions for all dependencies which support BOMs, see also dependencyManagement -->
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <springframework.boot-version>4.0.6</springframework.boot-version>
         <awssdk.version>2.46.11</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
@@ -456,7 +456,7 @@
                     <from>
                         <!-- base image is not set to specific artifact id to allow for rolling updates to be taken into
                              use automatically -->
-                        <image>gcr.io/distroless/java21-debian12</image>
+                        <image>gcr.io/distroless/java25-debian12</image>
                     </from>
                     <extraDirectories>
                         <paths>
