@@ -44,7 +44,6 @@
     <properties>
         <!-- versions for all dependencies which support BOMs, see also dependencyManagement -->
         <java.version>25</java.version>
-        <springframework.boot-version>4.0.6</springframework.boot-version>
         <awssdk.version>2.46.11</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <awspringcloud.version>4.0.2</awspringcloud.version>
@@ -409,11 +408,6 @@
                             <groupId>org.immutables</groupId>
                             <artifactId>value</artifactId>
                             <version>${immutables.version}</version>
-                        </path>
-                        <path>
-                            <groupId>org.springframework.boot</groupId>
-                            <artifactId>spring-boot-configuration-processor</artifactId>
-                            <version>${springframework.boot-version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

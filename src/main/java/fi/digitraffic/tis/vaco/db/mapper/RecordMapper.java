@@ -146,7 +146,11 @@ public class RecordMapper {
             return null;
         }
         try {
-            ObjectNode node = (ObjectNode) objectMapper.readTree(bytes);
+            JsonNode json = objectMapper.readTree(bytes);
+            if (json == null || json.isNull() || json.isMissingNode() || !json.isObject()) {
+                return null;
+            }
+            ObjectNode node = (ObjectNode) json;
             node.put("type", typeName);
             return objectMapper.treeToValue(node, AuthenticationDetails.class);
         } catch (JacksonException e) {
