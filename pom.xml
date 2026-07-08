@@ -435,9 +435,7 @@
                 <configuration>
                     <container>
                         <mainClass>fi.digitraffic.tis.vaco.VacoApplication</mainClass>
-                        <!-- use numeric UID/GID to avoid group name resolution failures on ECS Fargate;
-                             65534 is "nobody" on both distroless and Ubuntu-based images -->
-                        <user>65534:65534</user>
+                        <user>nobody:nobody</user>
                         <jvmFlags>
                             <!-- force JVM to exit on OOME, needed due to Spring Scheduler's internals catching Errors -->
                             <jvmFlag>-XX:+ExitOnOutOfMemoryError</jvmFlag>
@@ -450,9 +448,8 @@
                         <image>${jib-maven-plugin.image-name}</image>
                     </to>
                     <from>
-                        <!-- distroless does not yet provide a java25 image; switch to Eclipse Temurin JRE.
-                             Not pinned to a specific digest to allow rolling security updates. -->
-                        <image>eclipse-temurin:25-jre</image>
+                        <!-- java25 is on debian13 (Trixie); debian12 only goes up to java21 -->
+                        <image>gcr.io/distroless/java25-debian13:nonroot</image>
                     </from>
                     <extraDirectories>
                         <paths>
