@@ -1,9 +1,8 @@
 package fi.digitraffic.tis.vaco.rules.model.gbfs;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -18,8 +17,8 @@ import java.util.Map;
 @JsonSerialize(as = ImmutableDiscovery.class)
 @JsonDeserialize(as = ImmutableDiscovery.class)
 @Value.Style(forceJacksonPropertyNames = false)
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public interface Discovery {
+    @JsonProperty("last_updated")
     long lastUpdated();
     int ttl();
     String version();

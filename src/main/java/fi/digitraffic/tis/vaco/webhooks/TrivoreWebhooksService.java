@@ -1,9 +1,9 @@
 package fi.digitraffic.tis.vaco.webhooks;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -22,7 +22,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -80,11 +79,11 @@ public class TrivoreWebhooksService {
 
 
     public String handleWebhook(JsonNode webhookData) {
-        return switch (webhookData.get("type").asText()) {
+        return switch (webhookData.get("type").asString()) {
             case "USER_EDIT" -> handleUserEdit(webhookData);
             case "USER_EMAIL_VERIFIED" -> handleUserEmailVerified(webhookData);
             default -> {
-                logger.error("Unhandled Webhook type: {}", webhookData.get("type").asText());
+                logger.error("Unhandled Webhook type: {}", webhookData.get("type").asString());
                 yield EVENT_HANDLING_FAILED;
             }
         };
@@ -124,14 +123,14 @@ public class TrivoreWebhooksService {
             "data": null
         }
          */
-        String userId = webhookData.get("id").asText();
+        String userId = webhookData.get("id").asString();
         return fetchUser(userId)
             .map(user -> {
-                String id = user.get("id").asText();
+                String id = user.get("id").asString();
                 Set<String> newGroups = new HashSet<>();
                 for (JsonNode email : user.path("emails")) {
                     if (email.has("verified") && email.get("verified").asBoolean()) {
-                        String emailAddress = email.get("address").asText();
+                        String emailAddress = email.get("address").asString();
                         newGroups.addAll(findMatchingGroups(emailAddress));
                     }
                 }
@@ -149,10 +148,10 @@ public class TrivoreWebhooksService {
                     Set<String> acceptableGroupMailDomains = new HashSet<>();
                     JsonNode customFields = group.path("customFields");
                     for (JsonNode mailDomain : customFields.path(GROUP_CUSTOM_FIELD_MAIL_DOMAINS)) {
-                        acceptableGroupMailDomains.add(mailDomain.textValue());
+                        acceptableGroupMailDomains.add(mailDomain.stringValue());
                     }
                     if (acceptableGroupMailDomains.contains(userEmailDomain)) {
-                        String groupId = group.get("id").asText();
+                        String groupId = group.get("id").asString();
                         logger.debug("User email address {} matches {} in group {}", emailAddress, userEmailDomain, groupId);
                         newGroups.add(groupId);
                     }
@@ -232,10 +231,8 @@ public class TrivoreWebhooksService {
     }
 
     private static JsonNode deepMerge(JsonNode root, JsonNode update) {
-        Iterator<String> fieldNames = update.fieldNames();
-        while (fieldNames.hasNext()) {
+        for (String fieldName : update.propertyNames()) {
 
-            String fieldName = fieldNames.next();
             JsonNode jsonNode = root.get(fieldName);
             // if field exists and is an embedded object
             if (jsonNode != null && jsonNode.isObject()) {
@@ -248,7 +245,7 @@ public class TrivoreWebhooksService {
                     if (value.isArray()) {
                         ((ArrayNode) root.get(fieldName)).addAll((ArrayNode) value);
                     } else {
-                        ((ObjectNode) root).put(fieldName, value);
+                        ((ObjectNode) root).set(fieldName, value);
                     }
                 }
             }

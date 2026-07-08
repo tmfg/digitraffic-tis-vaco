@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
@@ -31,7 +31,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
@@ -48,6 +50,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
@@ -65,7 +68,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     @Autowired
     private TaskService taskService;
 
-    @MockBean
+    @MockitoBean
     private VacoHttpClient httpClient;
 
     @Captor
@@ -141,7 +144,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         List<ValidationRuleJobMessage> messages = messagingService.readMessages(testQueueName).map(m -> {
             try {
                 return objectMapper.readValue(m.body(), ValidationRuleJobMessage.class);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }).toList();

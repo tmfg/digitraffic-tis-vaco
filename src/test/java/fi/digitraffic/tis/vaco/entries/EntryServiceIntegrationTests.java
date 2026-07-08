@@ -1,8 +1,8 @@
 package fi.digitraffic.tis.vaco.entries;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.utilities.Streams;
@@ -65,7 +65,7 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
     private ImmutableConversionInput conversion;
 
     @BeforeEach
-    void setUp() throws JsonProcessingException {
+    void setUp() throws JacksonException {
         entry = TestObjects.anEntry().build();
         metadata = objectMapper.readTree("{\"metadata\":true}");
         validation = ImmutableValidationInput.of("ananas");

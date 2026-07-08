@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.rules;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import fi.digitraffic.tis.aws.sqs.SqsListener;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
@@ -134,7 +134,7 @@ public class RuleResultsListener extends SqsListener {
             Optional<String> taskPublicId = Optional.ofNullable(jsonNode)
                 .filter(node -> node.has("task"))
                 .map(node -> node.get("task").get("publicId"))
-                .map(JsonNode::asText);
+                .map(JsonNode::asString);
 
             Optional<Entry> entry = getEntryPublicId(jsonNode)
                 .flatMap(entryService::findEntry);
@@ -173,7 +173,7 @@ public class RuleResultsListener extends SqsListener {
         Optional<String> taskName = Optional.ofNullable(jsonNode)
             .filter(node -> node.has("task"))
             .map(node -> node.get("task").get("name"))
-            .map(JsonNode::asText);
+            .map(JsonNode::asString);
 
         String findingRaw = "{}";
         byte[] raw = findingRaw.getBytes(StandardCharsets.UTF_8);
@@ -207,7 +207,7 @@ public class RuleResultsListener extends SqsListener {
         return Optional.ofNullable(jsonNode)
             .filter(node -> node.has("entry"))
             .map(node -> node.get("entry").get("publicId"))
-            .map(JsonNode::asText);
+            .map(JsonNode::asString);
     }
 
     protected CompletableFuture<Boolean> handleResult(ResultMessage resultMessage) {

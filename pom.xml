@@ -32,38 +32,35 @@
     </scm>
 
     <prerequisites>
-        <maven>3.9.0</maven>
+        <maven>3.9.16</maven>
     </prerequisites>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.15</version>
+        <version>4.0.7</version>
     </parent>
 
     <properties>
         <!-- versions for all dependencies which support BOMs, see also dependencyManagement -->
-        <java.version>21</java.version>
-        <springframework.boot-version>3.5.15</springframework.boot-version>
-        <awssdk.version>2.20.139</awssdk.version>
+        <java.version>25</java.version>
+        <awssdk.version>2.46.11</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
-        <awspringcloud.version>3.1.1</awspringcloud.version>
-        <azurespring.version>6.0.0</azurespring.version>
-        <immutables.version>2.11.7</immutables.version>
-        <jackson.version>2.20.2</jackson.version>
-        <mockito.version>5.20.0</mockito.version>
-        <guava.version>33.5.0-jre</guava.version>
-        <jmespath.version>0.6.0</jmespath.version>
-        <msgraph.version>[6.0,)</msgraph.version>
+        <awspringcloud.version>4.0.2</awspringcloud.version>
+        <azurespring.version>7.3.0</azurespring.version>
+        <immutables.version>2.12.2</immutables.version>
+        <mockito.version>5.23.0</mockito.version>
+        <guava.version>33.6.0-jre</guava.version>
+        <msgraph.version>6.65.0</msgraph.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
         <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
-        <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
+        <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
         <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
         <sonar.organization>fintraffic</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -74,6 +71,17 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Workaround for https://github.com/immutables/immutables/issues/1659:
+                 org.immutables:bom uses org.immutables:immutables as parent, which hardcodes
+                 junit5.version=5.9.1 and imports junit-bom at that version. Importing junit-bom
+                 here first ensures our version wins. -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit-jupiter.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!-- NOTE: This is order dependent, AWS SDK must be before Spring Cloud AWS.
                        See https://docs.awspring.io/spring-cloud-aws/docs/3.0.1/reference/html/index.html#choosing-aws-sdk-version
             -->
@@ -99,13 +107,6 @@
                 <type>pom</type>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>${jackson.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-            <dependency>
                 <groupId>com.azure.spring</groupId>
                 <artifactId>spring-cloud-azure-dependencies</artifactId>
                 <version>${azurespring.version}</version>
@@ -116,10 +117,10 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- This application is built on Spring Boot 3 -->
+        <!-- This application is built on Spring Boot 4 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
         <!-- Enable configuration classes -->
         <dependency>
@@ -132,30 +133,24 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
-        <!-- Handle JDK8 new classes and JSR-310 date/time types correctly when (de)serializing -->
+        <!-- Spring Boot 4 splits WebClient auto-configuration from WebFlux -->
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jdk8</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webclient</artifactId>
         </dependency>
         <!-- add ability to produce XML from API endpoints -->
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
-            <version>4.0.4</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>4.0.6</version>
         </dependency>
         <dependency>
             <groupId>org.entur</groupId>
             <artifactId>netex-java-model</artifactId>
-            <version>2.0.15</version>
+            <version>2.0.16</version>
         </dependency>
 
         <!-- Request validation -->
@@ -176,7 +171,7 @@
         <dependency>
             <groupId>com.amazonaws.secretsmanager</groupId>
             <artifactId>aws-secretsmanager-jdbc</artifactId>
-            <version>2.0.3</version>
+            <version>2.1.2</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -195,7 +190,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.8.14</version>
+            <version>3.0.3</version>
         </dependency>
 
         <!-- AWS integration -->
@@ -263,7 +258,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+            <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
         </dependency>
 
         <!-- Topological sorting for ruleset selection and execution. Also requires Jackson module as Spring Boot
@@ -274,7 +269,7 @@
             <version>${guava.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <groupId>tools.jackson.datatype</groupId>
             <artifactId>jackson-datatype-guava</artifactId>
         </dependency>
 
@@ -296,6 +291,17 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
@@ -312,33 +318,33 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>io.burt</groupId>
-            <artifactId>jmespath-jackson</artifactId>
-            <version>${jmespath.version}</version>
-            <scope>test</scope>
-        </dependency>
 
         <!-- Testcontainers allows the use of dependent services such as databases, web browsers etc. through Docker
              containers to be used in integration and E2E tests as throwaway dependencies. -->
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>localstack</artifactId>
+            <artifactId>testcontainers-localstack</artifactId>
             <scope>test</scope>
         </dependency>
 
         <!-- XXX: Flyway is for now only a test-time dependency. This might change in the future, we'll see how the
                   development starts rolling. -->
+        <!-- Spring Boot 4 requires the starter to activate FlywayAutoConfiguration (modular design) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -379,6 +385,7 @@
             <artifactId>microsoft-graph</artifactId>
             <version>${msgraph.version}</version>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -401,11 +408,6 @@
                             <groupId>org.immutables</groupId>
                             <artifactId>value</artifactId>
                             <version>${immutables.version}</version>
-                        </path>
-                        <path>
-                            <groupId>org.springframework.boot</groupId>
-                            <artifactId>spring-boot-configuration-processor</artifactId>
-                            <version>${springframework.boot-version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -448,7 +450,7 @@
                     <from>
                         <!-- base image is not set to specific artifact id to allow for rolling updates to be taken into
                              use automatically -->
-                        <image>gcr.io/distroless/java21-debian12</image>
+                        <image>gcr.io/distroless/java25-debian12</image>
                     </from>
                     <extraDirectories>
                         <paths>

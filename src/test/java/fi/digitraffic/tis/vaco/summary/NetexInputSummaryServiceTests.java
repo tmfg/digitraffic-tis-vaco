@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.summary;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException;
+
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
@@ -61,13 +61,7 @@ class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase {
         summaries.forEach(summary -> {
             switch (summary.name()) {
                 case "operators" -> {
-                    List<Card> operators;
-                    try {
-                        operators = objectMapper.readValue(summary.raw(), new TypeReference<>() {
-                        });
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    List<Card> operators = objectMapper.readValue(summary.raw(), new TypeReference<>() {});
                     assertNotNull(operators);
                     assertEquals(3, operators.size());
                     assertEquals("Oulaisten Liikenne Oy", operators.get(0).title());
@@ -75,13 +69,7 @@ class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase {
                     assertEquals("Kainuun Tilausliikenne P. Jääskeläinen Ky", operators.get(2).title());
                 }
                 case "lines" -> {
-                    List<Card> lines;
-                    try {
-                        lines = objectMapper.readValue(summary.raw(), new TypeReference<>() {
-                        });
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    List<Card> lines = objectMapper.readValue(summary.raw(), new TypeReference<>() {});
                     assertNotNull(lines);
                     assertEquals(24, lines.size());
                     assertTrue(lines.stream().anyMatch(line -> line.title().equals("Linja 1")));
@@ -109,13 +97,7 @@ class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase {
                     assertTrue(lines.stream().anyMatch(line -> line.title().equals("Paikallisbussi SotKatti")));
                 }
                 case "files" -> {
-                    List<String> files;
-                    try {
-                        files = objectMapper.readValue(summary.raw(), new TypeReference<>() {
-                        });
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    List<String> files = objectMapper.readValue(summary.raw(), new TypeReference<>() {});
                     assertNotNull(files);
                     assertEquals(26, files.size());
                     assertTrue(files.stream().anyMatch(file -> file.equals("211_Line-1_1_Linja 1.xml")));
@@ -124,13 +106,7 @@ class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase {
                     assertTrue(files.stream().anyMatch(file -> file.equals("211_stops.xml")));
                 }
                 case "counts" -> {
-                    List<String> counts;
-                    try {
-                        counts = objectMapper.readValue(summary.raw(), new TypeReference<>() {
-                        });
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    List<String> counts = objectMapper.readValue(summary.raw(), new TypeReference<>() {});
                     assertNotNull(counts);
                     assertEquals(7, counts.size());
                     assertTrue(counts.stream().anyMatch(count -> count.equals("Journey patterns: 109")));
@@ -154,13 +130,7 @@ class NetexInputSummaryServiceTests extends SpringBootIntegrationTestBase {
 
         summaries.forEach(summary -> {
             if (summary.name().equals("operators")) {
-                List<Card> operators;
-                try {
-                    operators = objectMapper.readValue(summary.raw(), new TypeReference<>() {
-                    });
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                List<Card> operators = objectMapper.readValue(summary.raw(), new TypeReference<>() {});
 
                 assertNotNull(operators);
                 assertEquals(4, operators.size());

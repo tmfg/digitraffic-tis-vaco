@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestConstants;
 import fi.digitraffic.tis.vaco.api.model.Link;
@@ -62,14 +62,14 @@ class QueueControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
         // assert provided data has stayed the same
         assertAll("Base fields are stored properly",
-            () -> assertThat(fetchResult.get("data").get("name").textValue(), equalTo(request.name())),
-            () -> assertThat(fetchResult.get("data").get("url").textValue(), equalTo(request.url())),
-            () -> assertThat(fetchResult.get("data").get("etag").textValue(), equalTo(request.etag())),
-            () -> assertThat(fetchResult.get("data").get("format").textValue(), equalTo(request.format())));
+            () -> assertThat(fetchResult.get("data").get("name").stringValue(), equalTo(request.name())),
+            () -> assertThat(fetchResult.get("data").get("url").stringValue(), equalTo(request.url())),
+            () -> assertThat(fetchResult.get("data").get("etag").stringValue(), equalTo(request.etag())),
+            () -> assertThat(fetchResult.get("data").get("format").stringValue(), equalTo(request.format())));
 
         // allow anonymous linking to resource
         Link magic = toLink((fetchResult.get("links").get("refs").get("magic")));
-        assertThat(magic.href(), startsWith("http://localhost:8080/ui/data/" + fetchResult.get("data").get("publicId").textValue() + "?magic="));
+        assertThat(magic.href(), startsWith("http://localhost:8080/ui/data/" + fetchResult.get("data").get("publicId").stringValue() + "?magic="));
 
         assertThat("API endpoints should not expose internal IDs.", fetchResult.get("data").has("id"), equalTo(false));
     }

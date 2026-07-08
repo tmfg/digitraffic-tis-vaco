@@ -1,10 +1,11 @@
 package fi.digitraffic.tis.vaco.rules;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -98,8 +99,7 @@ class RuleResultsListenerTests {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new GuavaModule());
+        objectMapper = JsonMapper.builder().addModule(new GuavaModule()).build();
         vacoProperties = TestObjects.vacoProperties();
         ruleResultsListener = new RuleResultsListener(
             messagingService,
@@ -139,27 +139,27 @@ class RuleResultsListenerTests {
     }
 
     @Test
-    void canonicalGtfsValidator410UsesCanonicalResultProcessor() throws JsonProcessingException {
+    void canonicalGtfsValidator410UsesCanonicalResultProcessor() throws JacksonException {
         assertResultProcessorIsUsed(RuleName.GTFS_CANONICAL, gtfsCanonicalProcessor);
     }
 
     @Test
-    void netexEnturValidatorUsesEnturResultProcessor() throws JsonProcessingException {
+    void netexEnturValidatorUsesEnturResultProcessor() throws JacksonException {
         assertResultProcessorIsUsed(RuleName.NETEX_ENTUR, netexEnturProcessor);
     }
 
     @Test
-    void fintrafficGtfs2NetexConversionUsesSimpleResultProcessor() throws JsonProcessingException {
+    void fintrafficGtfs2NetexConversionUsesSimpleResultProcessor() throws JacksonException {
         assertResultProcessorIsUsed(RuleName.GTFS2NETEX_FINTRAFFIC, gtfsToNetexResultProcessor);
     }
 
     @Test
-    void enturNetex2GtfsConversionUsesSimpleResultProcessor() throws JsonProcessingException {
+    void enturNetex2GtfsConversionUsesSimpleResultProcessor() throws JacksonException {
         assertResultProcessorIsUsed(RuleName.NETEX2GTFS_ENTUR, netexToGtfsRuleResultProcessor);
     }
 
     @Test
-    void deadLetterQueueTest() throws JsonProcessingException {
+    void deadLetterQueueTest() throws JacksonException {
 
         String jsonString = """
                 {
@@ -222,7 +222,7 @@ class RuleResultsListenerTests {
     }
 
     @Test
-    void deadLetterQueueWithoutTaskTest() throws JsonProcessingException {
+    void deadLetterQueueWithoutTaskTest() throws JacksonException {
 
         String jsonString = """
                 {
@@ -239,7 +239,7 @@ class RuleResultsListenerTests {
         assertThat(ruleResultsListener.handleDeadLetter(message).join(), equalTo(false));
     }
 
-    private void assertResultProcessorIsUsed(String ruleName, ResultProcessor resultProcessor) throws JsonProcessingException {
+    private void assertResultProcessorIsUsed(String ruleName, ResultProcessor resultProcessor) throws JacksonException {
         Entry entry = entryForRule(ruleName);
         ResultMessage resultMessage = asResultMessage(vacoProperties, ruleName, entry, Map.of());
         Message gtfs2netexMessage = sqsMessage(objectMapper, resultMessage);
@@ -318,7 +318,7 @@ class RuleResultsListenerTests {
         return entry;
     }
 
-    private static Message sqsMessage(ObjectMapper objectMapper, ResultMessage message) throws JsonProcessingException {
+    private static Message sqsMessage(ObjectMapper objectMapper, ResultMessage message) throws JacksonException {
         return Message.builder()
             .body(objectMapper.writeValueAsString(message))
             .build();

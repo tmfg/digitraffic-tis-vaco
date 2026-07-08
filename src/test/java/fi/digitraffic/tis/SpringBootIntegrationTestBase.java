@@ -1,9 +1,9 @@
 package fi.digitraffic.tis;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.VacoApplication;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.company.model.Company;
@@ -16,7 +16,7 @@ import fi.digitraffic.tis.vaco.fintrafficid.model.ImmutableOrganizationData;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
@@ -29,7 +29,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer.Service;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -61,7 +61,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBase {
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-bullseye")
+    public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer("postgres:15-bullseye")
         .withDatabaseName("vaco")
         .withUsername("postgres")
         .withPassword("h.pG2S\\~*H<-agvw")
@@ -107,8 +107,8 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
     @NotNull
     protected static Link toLink(JsonNode jsonNode) {
         return new Link(
-                jsonNode.get("href").textValue(),
-                RequestMethod.valueOf(jsonNode.get("method").textValue()));
+                jsonNode.get("href").stringValue(),
+                RequestMethod.valueOf(jsonNode.get("method").stringValue()));
     }
 
     protected ResultActions apiCall(Link link) throws Exception {
@@ -119,11 +119,11 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
         });
     }
 
-    protected <C> String toJson(C command) throws JsonProcessingException {
+    protected <C> String toJson(C command) throws JacksonException {
         return objectMapper.writeValueAsString(command);
     }
 
-    protected <T> T apiResponse(MvcResult response, TypeReference<T> result) throws UnsupportedEncodingException, JsonProcessingException {
+    protected <T> T apiResponse(MvcResult response, TypeReference<T> result) throws UnsupportedEncodingException, JacksonException {
         return objectMapper.readValue(response.getResponse().getContentAsString(), result);
     }
 
@@ -134,9 +134,9 @@ public abstract class SpringBootIntegrationTestBase extends AwsIntegrationTestBa
      * @param response Spring Mvc rsponse
      * @return Response body as JsonNode
      * @throws UnsupportedEncodingException Thrown if Spring somehow forgets Java Strings are UTF-8/UCS-16
-     * @throws JsonProcessingException Thrown if response cannot be mapped to JSON
+     * @throws JacksonException Thrown if response cannot be mapped to JSON
      */
-    protected JsonNode apiResponse(MvcResult response) throws UnsupportedEncodingException, JsonProcessingException {
+    protected JsonNode apiResponse(MvcResult response) throws UnsupportedEncodingException, JacksonException {
         return objectMapper.readTree(response.getResponse().getContentAsString());
     }
 

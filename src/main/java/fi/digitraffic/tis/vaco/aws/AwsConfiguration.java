@@ -1,9 +1,8 @@
 package fi.digitraffic.tis.vaco.aws;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.configuration.Aws;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import io.awspring.cloud.autoconfigure.core.AwsClientCustomizer;
+import io.awspring.cloud.autoconfigure.AwsClientCustomizer;
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
 import io.awspring.cloud.sqs.listener.acknowledgement.AcknowledgementOrdering;
 import io.awspring.cloud.sqs.listener.acknowledgement.handler.AcknowledgementMode;
@@ -11,18 +10,18 @@ import io.awspring.cloud.sqs.support.converter.SqsMessagingMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
-import software.amazon.awssdk.core.retry.RetryPolicy;
-import software.amazon.awssdk.http.SdkHttpClient;
+import software.amazon.awssdk.awscore.retry.AwsRetryStrategy;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
 import software.amazon.awssdk.services.kms.KmsAsyncClient;
 import software.amazon.awssdk.services.kms.KmsAsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -64,7 +63,7 @@ public class AwsConfiguration {
         return ClientOverrideConfiguration.builder()
             .apiCallAttemptTimeout(Duration.ofSeconds(15))
             .apiCallTimeout(Duration.ofSeconds(15))
-            .retryPolicy(retryPolicy -> retryPolicy.numRetries(5))
+            .retryStrategy(AwsRetryStrategy.standardRetryStrategy().toBuilder().maxAttempts(6).build())
             .build();
     }
 
@@ -132,7 +131,8 @@ public class AwsConfiguration {
         S3ClientBuilder b = S3Client.builder()
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
-            .overrideConfiguration(overrideConfiguration);
+            .overrideConfiguration(overrideConfiguration)
+            .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED);
         if (vacoProperties.aws().s3() != null) {
             b = b.endpointOverride(URI.create(vacoProperties.aws().s3().endpoint()));
         }
@@ -147,7 +147,8 @@ public class AwsConfiguration {
         S3AsyncClientBuilder b = S3AsyncClient.builder()
             .region(Region.of(vacoProperties.aws().region()))
             .credentialsProvider(credentialsProvider)
-            .overrideConfiguration(overrideConfiguration);
+            .overrideConfiguration(overrideConfiguration)
+            .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED);
         if (vacoProperties.aws().s3() != null) {
             b = b.endpointOverride(URI.create(vacoProperties.aws().s3().endpoint()));
         }
@@ -192,22 +193,6 @@ public class AwsConfiguration {
             .build();
     }
 
-    /**
-     * Getting around a bug in AWSpring (ref. <a href="https://github.com/awspring/spring-cloud-aws/issues/721"> awspring /
-     * spring-cloud-aws #721: Add User's MappingJackson2MessageConverter to SQS Autoconfiguration</a>)
-     *
-     * @param objectMapper Global <code>ObjectMapper</code> instance everything should use.
-     * @return Manually handcrafted, artesanal <code>SqsMessagingMessageConverter</code>
-     */
-    @Bean
-    SqsMessagingMessageConverter sqsMessagingMessageConverter(ObjectMapper objectMapper) {
-        SqsMessagingMessageConverter converter = new SqsMessagingMessageConverter();
-        MappingJackson2MessageConverter actualConverter = new MappingJackson2MessageConverter();
-        actualConverter.setObjectMapper(objectMapper);
-        converter.setPayloadMessageConverter(actualConverter);
-        return converter;
-    }
-
     @Bean
     AwsClientCustomizer<S3ClientBuilder> s3ClientBuilderAwsClientConfigurer() {
         return new S3AwsClientClientConfigurer();
@@ -226,9 +211,7 @@ public class AwsConfiguration {
         ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
             .apiCallTimeout(Duration.ofMinutes(2))
             .apiCallAttemptTimeout(Duration.ofSeconds(90))
-            .retryPolicy(RetryPolicy.builder()
-                .numRetries(3)
-                .build())
+            .retryStrategy(AwsRetryStrategy.standardRetryStrategy().toBuilder().maxAttempts(4).build())
             .build();
 
         KmsAsyncClientBuilder b = KmsAsyncClient.builder()
@@ -243,33 +226,21 @@ public class AwsConfiguration {
         return b.build();
     }
 
-    // NOTE: These are actually/probably not use, but should not be removed until entire AWSpring is removed
+    // NOTE: These are actually/probably not used, but should not be removed until entire AWSpring is removed
     static class S3AwsClientClientConfigurer implements AwsClientCustomizer<S3ClientBuilder> {
         @Override
-        public ClientOverrideConfiguration overrideConfiguration() {
-            return ClientOverrideConfiguration.builder()
+        public void customize(S3ClientBuilder builder) {
+            builder.overrideConfiguration(ClientOverrideConfiguration.builder()
                 .apiCallAttemptTimeout(Duration.ofSeconds(15))
                 .apiCallTimeout(Duration.ofSeconds(15))
-                .retryPolicy(retryPolicy -> retryPolicy.numRetries(5))
-                .build();
-        }
-
-        @Override
-        public SdkHttpClient httpClient() {
-            return ApacheHttpClient.builder()
+                .retryStrategy(AwsRetryStrategy.standardRetryStrategy().toBuilder().maxAttempts(6).build())
+                .build());
+            builder.httpClient(ApacheHttpClient.builder()
                 .connectionTimeout(Duration.ofSeconds(15))
                 .socketTimeout(Duration.ofSeconds(15))
                 .connectionAcquisitionTimeout(Duration.ofSeconds(15))
                 .connectionMaxIdleTime(Duration.ofSeconds(60))
-                .build();
-        }
-
-        @Override
-        public SdkAsyncHttpClient asyncHttpClient() {
-            return NettyNioAsyncHttpClient.builder()
-                .connectionTimeout(Duration.ofSeconds(15))
-                .writeTimeout(Duration.ofSeconds(15))
-                .build();
+                .build());
         }
     }
 }

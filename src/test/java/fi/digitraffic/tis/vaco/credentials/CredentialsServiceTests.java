@@ -1,14 +1,14 @@
 package fi.digitraffic.tis.vaco.credentials;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import fi.digitraffic.http.HttpClient;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
-import fi.digitraffic.tis.vaco.credentials.model.HttpBasicAuthenticationDetails;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.ImmutableCompanyRecord;
@@ -67,7 +67,7 @@ class CredentialsServiceTests {
     @BeforeEach
     void setUp() {
 
-        objectMapper = new ObjectMapper();
+        objectMapper = JsonMapper.builder().build();
         RecordMapper recordMapper = new RecordMapper(objectMapper);
 
         CredentialsService credentialsService = new CredentialsService(
@@ -88,7 +88,7 @@ class CredentialsServiceTests {
     }
 
     @Test
-    void testCredentialsAutomaticallySet() throws JsonProcessingException {
+    void testCredentialsAutomaticallySet() throws JacksonException {
 
         credentialsRecord = ImmutableCredentialsRecord.builder()
             .id(120000)
@@ -107,14 +107,9 @@ class CredentialsServiceTests {
 
         requestHeaders = vacoHttpClient.addAuthorizationHeaderAutomatically(businessId, "https://test.fintraffic.fi/exports/test.zip", entry);
 
-        String detailsJson = new String(credentialsRecord.details());
-        HttpBasicAuthenticationDetails details = objectMapper.readValue(detailsJson, HttpBasicAuthenticationDetails.class);
-        String userId = details.userId();
-        String password = details.password();
-
         assertTrue(requestHeaders.containsKey("Authorization"));
         String authHeader = requestHeaders.get("Authorization");
-        String expectedAuthValue = "Basic " + Base64.getEncoder().encodeToString((userId + ":" + password).getBytes());
+        String expectedAuthValue = "Basic " + Base64.getEncoder().encodeToString(("testUser:testPassword").getBytes());
         assertEquals(expectedAuthValue, authHeader);
 
     }

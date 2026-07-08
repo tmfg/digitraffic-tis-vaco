@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.webhooks;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.Resource;

@@ -1,8 +1,11 @@
 package fi.digitraffic.tis.vaco.notifications.webhook;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.datatype.guava.GuavaModule;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.Link;
@@ -20,7 +23,6 @@ import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.ImmutableNotificationResponse;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import fi.digitraffic.tis.vaco.notifications.model.EntryCompletePayload;
-import fi.digitraffic.tis.vaco.notifications.model.Notification;
 import fi.digitraffic.tis.vaco.notifications.model.NotificationType;
 import fi.digitraffic.tis.vaco.notifications.model.SubscriptionType;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -50,9 +52,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -89,8 +90,7 @@ class WebhookNotifierTests {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new GuavaModule());
+        objectMapper = JsonMapper.builder().addModule(new GuavaModule()).enable(MapperFeature.DEFAULT_VIEW_INCLUSION).build();
         webhookNotifier = new WebhookNotifier(
             companyRepository,
             httpClient,
@@ -162,12 +162,17 @@ class WebhookNotifierTests {
 
         // VERIFY sent notification
         verify(httpClient).sendWebhook(eq(notificationUri), payload.capture());
-        Notification sentNotification = objectMapper.readValue(payload.getValue(), Notification.class);
-        // and assert its contents
-        assertThat(sentNotification.name(), equalTo(NotificationType.ENTRY_COMPLETE_V1.getTypeName()));
-        assertThat(sentNotification.payload(), instanceOf(EntryCompletePayload.class));
-        EntryCompletePayload payload = (EntryCompletePayload) sentNotification.payload();
-        assertThat("Do not expose admin restricted notifications in webhook", payload.entry().notifications(), empty());
-        assertThat("Sent event matches expected static values", payload.packages(), equalTo(Map.of("foo", Map.of("testpackage", new Link("http://localhost:8080/api/v1/packages/" + entry.publicId() + "/foo/testpackage", RequestMethod.GET)))));
+        JsonNode sentJson = objectMapper.readTree(payload.getValue());
+        assertThat(sentJson.get("name").asString(), equalTo(NotificationType.ENTRY_COMPLETE_V1.getTypeName()));
+
+        // Typed deserialization of the payload (validates structure and deserializability)
+        EntryCompletePayload entryCompletePayload = objectMapper.treeToValue(sentJson.get("payload"), EntryCompletePayload.class);
+        String expectedHref = "http://localhost:8080/api/v1/packages/" + entry.publicId() + "/foo/testpackage";
+        assertThat("Sent event matches expected static values", entryCompletePayload.packages(),
+            equalTo(Map.of("foo", Map.of("testpackage", new Link(expectedHref, RequestMethod.GET)))));
+
+        // Security assertion: admin-restricted field must be absent from webhook JSON
+        assertThat("Do not expose admin restricted notifications in webhook",
+            sentJson.get("payload").get("entry").has("notifications"), is(false));
     }
 }

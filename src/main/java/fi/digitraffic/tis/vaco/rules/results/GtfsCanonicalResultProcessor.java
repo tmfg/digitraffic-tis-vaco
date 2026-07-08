@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,14 +107,14 @@ public class GtfsCanonicalResultProcessor extends RuleResultProcessor implements
                                     notice.code(),
                                     notice.severity())
                                 .withRaw(objectMapper.writeValueAsBytes(sn));
-                        } catch (JsonProcessingException e) {
+                        } catch (JacksonException e) {
                             logger.warn("Failed to convert tree to bytes", e);
                             return null;
                         }
                     }))
                 .filter(Objects::nonNull)
                 .toList();
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             logger.warn("Failed to process {}/{}/{} output file", entry.publicId(), task.name(), ruleName, e);
             return List.of();
         }

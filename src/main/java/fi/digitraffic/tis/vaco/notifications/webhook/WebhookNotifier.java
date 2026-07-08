@@ -1,7 +1,7 @@
 package fi.digitraffic.tis.vaco.notifications.webhook;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.DataVisibility;
 import fi.digitraffic.tis.vaco.api.model.Link;
@@ -117,7 +117,7 @@ public class WebhookNotifier implements Notifier {
                                 entry.publicId(),
                                 subscriber.businessId(),
                                 resource.businessId());
-                        } catch (JsonProcessingException e) {
+                        } catch (JacksonException e) {
                             logger.warn(
                                 "Failed to map WebHook payload to JSON when trying to send {} for entry {} to subscriber {} of resource {}",
                                 entryCompleteNotification.name(),

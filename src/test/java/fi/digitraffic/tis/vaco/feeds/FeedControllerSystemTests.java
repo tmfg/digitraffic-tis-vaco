@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.feeds;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.feed.ImmutableCreateFeedRequest;
@@ -58,15 +58,15 @@ class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
         JsonNode fetchResult = apiResponse(fetchResponse);
 
         assertEquals(fetchResult.size(), 1);
-        assertEquals(feed.owner(), fetchResult.get(0).get("owner").get("businessId").asText());
+        assertEquals(feed.owner(), fetchResult.get(0).get("owner").get("businessId").asString());
         assertTrue(feed.processingEnabled());
 
-        MvcResult modifyEnableProcessing  = apiCall(post("/v1/feeds/"+ fetchResult.get(0).get("publicId").asText()).param("enableProcessing", "false"))
+        MvcResult modifyEnableProcessing  = apiCall(post("/v1/feeds/"+ fetchResult.get(0).get("publicId").asString()).param("enableProcessing", "false"))
             .andExpect(status().isOk())
             .andReturn();
 
         JsonNode modifyEnableProcessingResponse = apiResponse(modifyEnableProcessing);
-        assertEquals(modifyEnableProcessingResponse.get("data").get("processingEnabled").asText(), "false");
+        assertEquals(modifyEnableProcessingResponse.get("data").get("processingEnabled").asString(), "false");
 
         canDeleteFeed(fetchResult);
 
@@ -76,7 +76,7 @@ class FeedControllerSystemTests extends SpringBootIntegrationTestBase {
     private void canDeleteFeed(JsonNode fetchResult) throws Exception {
 
         String oid = "admin";
-        String publicId = fetchResult.get(0).get("publicId").asText();
+        String publicId = fetchResult.get(0).get("publicId").asString();
 
         JwtAuthenticationToken token = TestObjects.jwtAdminAuthenticationToken(oid);
         SecurityContextHolder.getContext().setAuthentication(token);
