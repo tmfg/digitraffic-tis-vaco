@@ -448,9 +448,9 @@
                         <image>${jib-maven-plugin.image-name}</image>
                     </to>
                     <from>
-                        <!-- base image is not set to specific artifact id to allow for rolling updates to be taken into
-                             use automatically -->
-                        <image>gcr.io/distroless/java25-debian12</image>
+                        <!-- distroless does not yet provide a java25 image; switch to Eclipse Temurin JRE.
+                             Not pinned to a specific digest to allow rolling security updates. -->
+                        <image>eclipse-temurin:25-jre</image>
                     </from>
                     <extraDirectories>
                         <paths>
