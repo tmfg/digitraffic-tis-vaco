@@ -48,13 +48,15 @@ public class RulesetRepository {
                      WHERE partner_b_id = current_id.id
                 )
                 SELECT DISTINCT r.*
-                  FROM ruleset r, current_id
-                 WHERE r.owner_id = current_id.id
+                  FROM ruleset r
+                  JOIN ruleset_access ra ON ra.ruleset_id = r.id
+                  JOIN current_id ON ra.company_id = current_id.id
                 UNION
                 SELECT DISTINCT r.*
-                  FROM ruleset r, parents
-                 WHERE r.owner_id IN (parents.id)
-                   AND r.category = 'generic'
+                  FROM ruleset r
+                  JOIN ruleset_access ra ON ra.ruleset_id = r.id
+                  JOIN parents ON ra.company_id = parents.id
+                 WHERE r.category = 'generic'
                 """,
             new MapSqlParameterSource()
                 .addValue("businessId", businessId),
@@ -76,15 +78,17 @@ public class RulesetRepository {
                      WHERE partner_b_id = current_id.id
                 )
                 SELECT DISTINCT r.*
-                  FROM ruleset r, current_id
-                 WHERE r.owner_id = current_id.id
-                   AND r.type = :type
+                  FROM ruleset r
+                  JOIN ruleset_access ra ON ra.ruleset_id = r.id
+                  JOIN current_id ON ra.company_id = current_id.id
+                 WHERE r.type = :type
                    AND r.format = (:format)::transit_data_format
                 UNION
                 SELECT DISTINCT r.*
-                  FROM ruleset r, parents
-                 WHERE r.owner_id IN (parents.id)
-                   AND r.category = 'generic'
+                  FROM ruleset r
+                  JOIN ruleset_access ra ON ra.ruleset_id = r.id
+                  JOIN parents ON ra.company_id = parents.id
+                 WHERE r.category = 'generic'
                    AND r.type = :type
                    AND r.format = (:format)::transit_data_format
                 """,
@@ -120,16 +124,18 @@ public class RulesetRepository {
                      WHERE partner_b_id = current_id.id
                 )
                 SELECT DISTINCT r.*
-                  FROM ruleset r, current_id, specific_rulesets
-                 WHERE r.owner_id = current_id.id
-                   AND r.id IN (specific_rulesets.id)
-                   AND r.type = :type
+                  FROM ruleset r
+                  JOIN ruleset_access ra ON ra.ruleset_id = r.id
+                  JOIN current_id ON ra.company_id = current_id.id
+                  JOIN specific_rulesets ON r.id = specific_rulesets.id
+                 WHERE r.type = :type
                    AND r.format = (:format)::transit_data_format
                 UNION
                 SELECT DISTINCT r.*
-                  FROM ruleset r, parents, specific_rulesets
-                 WHERE r.owner_id IN (parents.id)
-                   AND r.category = 'generic'
+                  FROM ruleset r
+                  JOIN ruleset_access ra ON ra.ruleset_id = r.id
+                  JOIN parents ON ra.company_id = parents.id
+                 WHERE r.category = 'generic'
                    AND r.type = :type
                    AND r.format = (:format)::transit_data_format
                 """,
@@ -145,7 +151,7 @@ public class RulesetRepository {
     }
 
     public RulesetRecord createRuleset(CompanyRecord companyRecord, Ruleset ruleset) {
-        return jdbc.queryForObject(
+        RulesetRecord created = jdbc.queryForObject(
                 """
                 INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format, before_dependencies, after_dependencies)
                      VALUES (?, ?::ruleset_category, ?, ?, ?, ?::transit_data_format, ?, ?)
@@ -160,6 +166,16 @@ public class RulesetRepository {
                 ruleset.format().fieldName(),
                 ArraySqlValue.create(ruleset.beforeDependencies().toArray(new String[0])),
                 ArraySqlValue.create(ruleset.afterDependencies().toArray(new String[0])));
+        // ruleset_access is the sole source of truth for access resolution (see findRulesets).
+        // company is granted access to its own ruleset the same way any other grant would be created.
+        jdbc.update(
+                """
+                INSERT INTO ruleset_access (company_id, ruleset_id)
+                     VALUES (?, ?)
+                """,
+                companyRecord.id(),
+                created.id());
+        return created;
     }
 
     public Optional<RulesetRecord> findByName(String rulesetName) {

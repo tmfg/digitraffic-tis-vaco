@@ -29,6 +29,10 @@ import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
@@ -142,7 +146,7 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     @Test
-    void rulesetsAreChosenBasedOnOwnership() {
+    void rulesetsAreChosenBasedOnGrants() {
         assertRulesets(rulesetService.selectRulesets(parentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, parentRuleB);
         assertRulesets(rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, otherRuleE);
         assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, currentRuleC, currentRuleD);
@@ -171,5 +175,115 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     private void assertRulesets(Set<Ruleset> selectedRulesets, RulesetRecord... expectedRulesets) {
         assertThat(selectedRulesets, equalTo(Streams.map(expectedRulesets, recordMapper::toRuleset).toSet()));
+    }
+
+    /**
+     * Given a company with no hierarchy path or ownership of a ruleset,
+     * when a direct grant is created for that company+ruleset,
+     * then selectRulesets includes the granted ruleset.
+     */
+    @Test
+    void grantedRulesetIsIncludedInSelectRulesets() {
+        // given — otherOrg has no ownership of parentRuleB (it's SPECIFIC, owned by parentOrg)
+        Set<Ruleset> before = rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+        assertThat(before, not(hasItem(recordMapper.toRuleset(parentRuleB))));
+
+        // when — grant otherOrg direct access to parentRuleB
+        rulesetService.grantAccess(otherOrg.businessId(), parentRuleB.identifyingName());
+
+        // then — parentRuleB now appears in otherOrg's rulesets
+        Set<Ruleset> after = rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+        assertThat(after, hasItem(recordMapper.toRuleset(parentRuleB)));
+    }
+
+    /**
+     * Given company A is granted access to a ruleset,
+     * when we check company B's rulesets,
+     * then company B's rulesets are unchanged.
+     */
+    @Test
+    void grantDoesNotAffectOtherCompanies() {
+        // given
+        Set<Ruleset> currentOrgBefore = rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+
+        // when — grant otherOrg access to parentRuleB
+        rulesetService.grantAccess(otherOrg.businessId(), parentRuleB.identifyingName());
+
+        // then — currentOrg's rulesets unchanged
+        Set<Ruleset> currentOrgAfter = rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+        assertThat(currentOrgAfter, equalTo(currentOrgBefore));
+    }
+
+    /**
+     * Given parentOrg is granted direct access to a SPECIFIC ruleset owned by another company,
+     * when we check parentOrg's child (currentOrg) rulesets,
+     * then the grant does NOT cascade to children (grants are non-transitive;
+     * only category=generic owned/granted rulesets propagate via partnership hierarchy).
+     */
+    @Test
+    void grantIsNotTransitiveToChildren() {
+        // given — create a standalone company with a specific ruleset
+        CompanyRecord standaloneOrg = companyRepository.create(TestObjects.aCompany().build()).get();
+        Ruleset standaloneRuleset = ImmutableRuleset.of("STANDALONE_SPECIFIC", "STANDALONE_SPECIFIC", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, testFormat);
+        RulesetRecord standaloneRule = rulesetRepository.createRuleset(standaloneOrg, standaloneRuleset);
+
+        try {
+            // when — grant parentOrg (which is currentOrg's parent) access to the standalone specific ruleset
+            rulesetService.grantAccess(parentOrg.businessId(), standaloneRule.identifyingName());
+
+            // then — parentOrg can see it
+            Set<Ruleset> parentRulesets = rulesetService.selectRulesets(parentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+            assertThat(parentRulesets, hasItem(recordMapper.toRuleset(standaloneRule)));
+
+            // but currentOrg (child of parentOrg) cannot — grants are non-transitive
+            Set<Ruleset> childRulesets = rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+            assertThat(childRulesets, not(hasItem(recordMapper.toRuleset(standaloneRule))));
+        } finally {
+            rulesetRepository.deleteRuleset(standaloneRule);
+            companyRepository.deleteByBusinessId(standaloneOrg.businessId());
+        }
+    }
+
+    /**
+     * Given a company has been granted access to a ruleset,
+     * when that grant is revoked,
+     * then selectRulesets no longer includes the ruleset.
+     */
+    @Test
+    void revokingGrantRemovesAccess() {
+        // given
+        rulesetService.grantAccess(otherOrg.businessId(), parentRuleB.identifyingName());
+        Set<Ruleset> withGrant = rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+        assertThat(withGrant, hasItem(recordMapper.toRuleset(parentRuleB)));
+
+        // when
+        rulesetService.revokeAccess(otherOrg.businessId(), parentRuleB.identifyingName());
+
+        // then
+        Set<Ruleset> afterRevoke = rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+        assertThat(afterRevoke, not(hasItem(recordMapper.toRuleset(parentRuleB))));
+    }
+
+    /**
+     * Given a grant already exists for a company+ruleset,
+     * when the same grant is attempted again,
+     * then the operation is idempotent (returns false, no error, grant still active).
+     * Mirrors the createPartnership "already exists → Optional.empty()" convention.
+     */
+    @Test
+    void duplicateGrantIsIdempotentOrRejected() {
+        // given
+        boolean firstGrant = rulesetService.grantAccess(otherOrg.businessId(), parentRuleB.identifyingName());
+        assertTrue(firstGrant, "First grant should succeed");
+
+        // when — attempt duplicate grant
+        boolean secondGrant = rulesetService.grantAccess(otherOrg.businessId(), parentRuleB.identifyingName());
+
+        // then — idempotent: returns false (already exists), no exception, grant still active
+        assertFalse(secondGrant, "Duplicate grant should return false (idempotent no-op)");
+
+        // verify the grant is still in effect
+        Set<Ruleset> rulesets = rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of());
+        assertThat(rulesets, hasItem(recordMapper.toRuleset(parentRuleB)));
     }
 }
