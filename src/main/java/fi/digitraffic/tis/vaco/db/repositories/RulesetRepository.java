@@ -153,12 +153,11 @@ public class RulesetRepository {
     public RulesetRecord createRuleset(CompanyRecord companyRecord, Ruleset ruleset) {
         RulesetRecord created = jdbc.queryForObject(
                 """
-                INSERT INTO ruleset(owner_id, category, identifying_name, description, "type", format, before_dependencies, after_dependencies)
-                     VALUES (?, ?::ruleset_category, ?, ?, ?, ?::transit_data_format, ?, ?)
+                INSERT INTO ruleset(category, identifying_name, description, "type", format, before_dependencies, after_dependencies)
+                     VALUES (?::ruleset_category, ?, ?, ?, ?::transit_data_format, ?, ?)
                   RETURNING *;
                 """,
                 RowMappers.RULESET_RECORD,
-                companyRecord.id(),
                 ruleset.category().fieldName(),
                 ruleset.identifyingName(),
                 ruleset.description(),

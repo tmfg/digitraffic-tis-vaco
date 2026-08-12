@@ -14,8 +14,6 @@ public interface RulesetRecord {
 
     String publicId();
 
-    Long ownerId();
-
     String identifyingName();
 
     String description();
