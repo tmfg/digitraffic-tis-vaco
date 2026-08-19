@@ -46,7 +46,7 @@ public class RulesetService {
         this.recordMapper = Objects.requireNonNull(recordMapper);
     }
 
-    public Set<Ruleset> selectRulesets(String businessId) {
+    public Set<Ruleset> findCompanyRulesets(String businessId) {
         // For Public validation test, we don't want to have an actual "cooperation" with Fintraffic as a company,
         // but we still want to re-use same rulesets
         String actualBusinessId = Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId)
@@ -55,7 +55,7 @@ public class RulesetService {
         return Streams.collect(rulesetRepository.findRulesets(actualBusinessId), recordMapper::toRuleset);
     }
 
-    public Set<Ruleset> selectRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> names) {
+    public Set<Ruleset> findCompanyRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> names) {
         Set<Ruleset> rulesets;
         if (names.isEmpty()) {
             rulesets = Streams.collect(rulesetRepository.findRulesets(businessId, format, type), recordMapper::toRuleset);

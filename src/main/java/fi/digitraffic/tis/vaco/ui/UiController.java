@@ -180,7 +180,7 @@ public class UiController {
     public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
-                Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));
+                Streams.collect(rulesetService.findCompanyRulesets(businessId), Resource::resource));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -265,7 +265,7 @@ public class UiController {
         return entryService.findEntry(publicId)
             .filter(e -> magicTokenMatches(magicToken, publicId) || meService.isAllowedToAccess(e))
             .map(entry -> {
-                Map<String, Ruleset> rulesets = Streams.collect(rulesetService.selectRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
+                Map<String, Ruleset> rulesets = Streams.collect(rulesetService.findCompanyRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
                 List<TaskReport> reports =  new ArrayList<>();
                 entry.tasks().forEach(task -> {
                     TaskReport report = null;
@@ -402,7 +402,7 @@ public class UiController {
                 .company(company)
                 .contexts(contextService.findByBusinessId(businessId))
                 .hierarchies(companyHierarchyService.getHierarchiesContainingCompany(businessId))
-                .rulesets(rulesetService.selectRulesets(businessId))
+                .rulesets(rulesetService.findCompanyRulesets(businessId))
                 .build(), null, Map.of()))
             ).orElseGet(() ->
                 Responses.notFound((String.format("Company with business id %s either does not exist or not authorized to be accessed", businessId))));
@@ -430,7 +430,7 @@ public class UiController {
                         ImmutableCompanyInfo.builder()
                             .company(updatedCompany)
                             .hierarchies(companyHierarchyService.getHierarchiesContainingCompany(updatedCompany.businessId()))
-                            .rulesets(rulesetService.selectRulesets(updatedCompany.businessId()))
+                            .rulesets(rulesetService.findCompanyRulesets(updatedCompany.businessId()))
                             .build(),
                         null, Map.of())); })
             .orElseGet(() ->
