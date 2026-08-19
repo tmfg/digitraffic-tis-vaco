@@ -29,10 +29,10 @@ import java.util.Objects;
 @Hidden
 public class RulesetAccessController {
 
-    private final RulesetService rulesetService;
+    private final RulesetAccessService rulesetAccessService;
 
-    public RulesetAccessController(RulesetService rulesetService) {
-        this.rulesetService = Objects.requireNonNull(rulesetService);
+    public RulesetAccessController(RulesetAccessService rulesetAccessService) {
+        this.rulesetAccessService = Objects.requireNonNull(rulesetAccessService);
     }
 
     @PostMapping("/{rulesetName}/grants")
@@ -41,7 +41,7 @@ public class RulesetAccessController {
     public ResponseEntity<Resource<Boolean>> createGrant(
             @PathVariable String rulesetName,
             @Valid @RequestBody GrantRequest request) {
-        boolean created = rulesetService.grantAccess(request.businessId(), rulesetName);
+        boolean created = rulesetAccessService.grantAccess(request.businessId(), rulesetName);
         if (created) {
             return Responses.ok(true);
         } else {
@@ -55,7 +55,7 @@ public class RulesetAccessController {
     public ResponseEntity<Resource<Boolean>> deleteGrant(
             @PathVariable String rulesetName,
             @PathVariable String businessId) {
-        rulesetService.revokeAccess(businessId, rulesetName);
+        rulesetAccessService.revokeAccess(businessId, rulesetName);
         return Responses.ok(true);
     }
 
@@ -63,7 +63,7 @@ public class RulesetAccessController {
     @PreAuthorize("hasAuthority('vaco.admin')")
     @JsonView(DataVisibility.AdminRestricted.class)
     public ResponseEntity<Resource<List<Company>>> listGrants(@PathVariable String rulesetName) {
-        return rulesetService.listGrants(rulesetName)
+        return rulesetAccessService.listGrants(rulesetName)
             .map(Responses::ok)
             .orElseGet(() -> Responses.badRequest("No such ruleset: " + rulesetName));
     }
