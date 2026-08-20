@@ -72,7 +72,7 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
             });
         });
 
-        assertThat(organisations.size(), equalTo(4));
+        assertThat(organisations.size(), equalTo(5));
         assertOperatorOrganisation(getOperator(organisations, Constants.PUBLIC_VALIDATION_TEST_ID),
             Constants.PUBLIC_VALIDATION_TEST_ID,
             "public-validation-test",
@@ -97,6 +97,12 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
             "FSR:Authority:" + TEST_COMPANY_BUSINESS_ID,
             assertValidityConditions("FSR:AvailabilityCondition:4"),
             assertContactStructure("https://example.com"));
+        assertOperatorOrganisation(getOperator(organisations, Constants.TRAFICOM_BUSINESS_ID),
+            Constants.TRAFICOM_BUSINESS_ID,
+            "Liikenne- ja viestintävirasto Traficom",
+            "FSR:Operator:" + Constants.TRAFICOM_BUSINESS_ID,
+            assertValidityConditions("FSR:AvailabilityCondition:5"),
+            assertContactStructure("https://traficom.fi/fi"));
     }
 
     private static Consumer<ValidityConditions_RelStructure> assertValidityConditions(String expectedAvailabilityConditionId) {
