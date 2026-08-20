@@ -133,7 +133,7 @@ class TaskServiceTests {
     }
 
     private void givenAvailableRulesets(Set<Ruleset> gtfsCanonicalRuleset) {
-        given(rulesetService.selectRulesets(entry.businessId()))
+        given(rulesetService.findCompanyRulesets(entry.businessId()))
             .willReturn(gtfsCanonicalRuleset);
     }
 }

@@ -93,7 +93,7 @@ public class RulesetSubmissionService {
         if (ruleset.isPresent()) {
             Ruleset rs = ruleset.get();
             // TODO: this is probably not needed, but its intent is to block access to unauthorized rules
-            Set<Ruleset> allowedRulesets = rulesetService.selectRulesets(
+            Set<Ruleset> allowedRulesets = rulesetService.findCompanyRulesets(
                 entry.businessId(),
                 rs.type(),
                 rs.format(),

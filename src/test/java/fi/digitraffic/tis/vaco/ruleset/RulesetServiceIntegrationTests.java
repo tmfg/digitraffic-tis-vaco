@@ -120,7 +120,7 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Ruleset oldEnturNetex2GtfsConverter206 = rulesetService.findByName(RuleName.NETEX2GTFS_ENTUR + ".v2_0_6").get();
         Ruleset oldFintrafficGtfs2NetexConverter100 = rulesetService.findByName(RuleName.GTFS2NETEX_FINTRAFFIC + ".v1_0_0").get();
         assertThat(
-            Streams.collect(rulesetService.selectRulesets(fintraffic.businessId()), Ruleset::identifyingName),
+            Streams.collect(rulesetService.findCompanyRulesets(fintraffic.businessId()), Ruleset::identifyingName),
             equalTo(Streams.collect(Set.of(
                     canonicalGtfsValidator,
                     enturNetexValidator,
@@ -137,15 +137,15 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Test
     void publicValidationTestHasRules() {
-        Set<Ruleset> publicValidationTestRules = rulesetService.selectRulesets(Constants.PUBLIC_VALIDATION_TEST_ID);
+        Set<Ruleset> publicValidationTestRules = rulesetService.findCompanyRulesets(Constants.PUBLIC_VALIDATION_TEST_ID);
         Assertions.assertFalse(publicValidationTestRules.isEmpty());
     }
 
     @Test
-    void rulesetsAreChosenBasedOnOwnership() {
-        assertRulesets(rulesetService.selectRulesets(parentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, parentRuleB);
-        assertRulesets(rulesetService.selectRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, otherRuleE);
-        assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, currentRuleC, currentRuleD);
+    void rulesetsAreChosenBasedOnGrants() {
+        assertRulesets(rulesetService.findCompanyRulesets(parentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, parentRuleB);
+        assertRulesets(rulesetService.findCompanyRulesets(otherOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, otherRuleE);
+        assertRulesets(rulesetService.findCompanyRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, currentRuleC, currentRuleD);
     }
 
     /**
@@ -154,19 +154,19 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
     @Test
     void currentsSpecificRulesCanBeFiltered() {
         // parent's generic is always returned even when not requested, self specific is returned on request
-        assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("GENERIC_A", "SPECIFIC_C")), parentRuleA, currentRuleC);
+        assertRulesets(rulesetService.findCompanyRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("GENERIC_A", "SPECIFIC_C")), parentRuleA, currentRuleC);
     }
 
     @Test
     void parentsGenericRuleIsAlwaysReturned() {
         // parent's generic is always returned even when not requested
-        assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_C")), parentRuleA, currentRuleC);
+        assertRulesets(rulesetService.findCompanyRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_C")), parentRuleA, currentRuleC);
     }
 
     @Test
     void parentsSpecificRulesCannotBeSelected() {
         // parent's generic is always returned even when not requested, can't request parent's specific rules
-        assertRulesets(rulesetService.selectRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_B")), parentRuleA);
+        assertRulesets(rulesetService.findCompanyRulesets(currentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of("SPECIFIC_B")), parentRuleA);
     }
 
     private void assertRulesets(Set<Ruleset> selectedRulesets, RulesetRecord... expectedRulesets) {

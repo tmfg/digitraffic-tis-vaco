@@ -90,7 +90,6 @@ public final class RowMappers {
     public static final RowMapper<RulesetRecord> RULESET_RECORD = (rs, rowNum) -> ImmutableRulesetRecord.builder()
         .id(rs.getLong("id"))
         .publicId(rs.getString("public_id"))
-        .ownerId(rs.getLong("owner_id"))
         .identifyingName(rs.getString("identifying_name"))
         .description(rs.getString("description"))
         .category(Category.forField(rs.getString("category")))

@@ -22,6 +22,7 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
+import fi.digitraffic.tis.vaco.ruleset.RulesetAccessService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
@@ -49,6 +50,9 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private RulesetRepository rulesetRepository;
+
+    @Autowired
+    private RulesetAccessService rulesetAccessService;
 
     @Autowired
     private TaskService taskService;
@@ -124,6 +128,46 @@ class EntryServiceIntegrationTests extends SpringBootIntegrationTestBase {
                 ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
                 ImmutableTask.of("bananas", 200)
             )));
+    }
+
+    /**
+     * A company can get tasks generated for a ruleset it has been granted access to, even though it wasn't
+     * the company that created it and has no partnership hierarchy path to it.
+     */
+    @Test
+    void entryGetsTasksForRulesetGrantedByAnotherCompany() {
+        CompanyRecord granteeCompany = companyRepository.create(TestObjects.aCompany().build()).get();
+        try {
+            Optional<CompanyRecord> fintraffic = companyRepository.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID);
+            String grantedRuleName = "mango";
+            Ruleset ruleset = ImmutableRuleset.of(
+                    grantedRuleName,
+                    "Ruleset created by one company, granted to another",
+                    Category.SPECIFIC,
+                    RulesetType.CONVERSION_SYNTAX,
+                    TransitDataFormat.forField(entry.format()))
+                .withBeforeDependencies(DownloadRule.PREPARE_DOWNLOAD_TASK);
+            // created by Fintraffic (auto-granted access to the ruleset); granteeCompany has no partnership
+            // with Fintraffic and initially no grant either
+            RulesetRecord rule = rulesetRepository.createRuleset(fintraffic.get(), ruleset);
+            try {
+                boolean granted = rulesetAccessService.grantAccess(granteeCompany.businessId(), rule.identifyingName());
+                assertThat(granted, equalTo(true));
+
+                Entry result = entryService.create(entry.withBusinessId(granteeCompany.businessId()).withConversions(ImmutableConversionInput.of(grantedRuleName))).get();
+
+                assertThat(
+                    Streams.map(taskService.findTasks(result), this::withoutGeneratedValues).toList(),
+                    equalTo(List.of(
+                        ImmutableTask.of(DownloadRule.PREPARE_DOWNLOAD_TASK, 100),
+                        ImmutableTask.of(grantedRuleName, 200)
+                    )));
+            } finally {
+                rulesetRepository.deleteRuleset(rule);
+            }
+        } finally {
+            companyRepository.deleteByBusinessId(granteeCompany.businessId());
+        }
     }
 
     @NotNull
