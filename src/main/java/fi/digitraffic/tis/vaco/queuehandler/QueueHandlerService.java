@@ -168,6 +168,9 @@ public class QueueHandlerService {
 
             String callerName = caller.asString();
             if ("FINAP".equals(callerName)) {
+                // Marker log line for FINAP entry volume monitoring
+                logger.info("FINAP entry received businessId={}", businessId);
+
                 String finapOperator = operatorName.asString();
                 ImmutableCompany operatorCompany = ImmutableCompany.of(businessId, finapOperator, true);
                 if (metadata.has("contact-email")) {
