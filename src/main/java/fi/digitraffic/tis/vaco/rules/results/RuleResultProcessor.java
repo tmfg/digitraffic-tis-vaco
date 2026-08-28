@@ -168,19 +168,24 @@ public abstract class RuleResultProcessor implements ResultProcessor {
         Map<String, Long> severities = findingService.summarizeFindingsSeverities(task);
         logger.debug("{}/{} ({}) produced findings {}", entry.publicId(), task.name(), task.publicId(), severities);
 
+        Status status;
         if (override.isPresent()) {
-            taskService.markStatus(entry, task, override.get());
+            status = override.get();
+        } else if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
+            || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
+            status = Status.ERRORS;
+        } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
+            status = Status.WARNINGS;
+        } else if (severities.getOrDefault(FindingSeverity.FAILURE, 0L) > 0) {
+            status = Status.FAILED;
         } else {
-            if (severities.getOrDefault(FindingSeverity.ERROR, 0L) > 0
-                || severities.getOrDefault(FindingSeverity.CRITICAL, 0L) > 0) {
-                taskService.markStatus(entry, task, Status.ERRORS);
-            } else if (severities.getOrDefault(FindingSeverity.WARNING, 0L) > 0) {
-                taskService.markStatus(entry, task, Status.WARNINGS);
-            } else if (severities.getOrDefault(FindingSeverity.FAILURE, 0L) > 0) {
-                taskService.markStatus(entry, task, Status.FAILED);
-            } else {
-                taskService.markStatus(entry, task, Status.SUCCESS);
-            }
+            status = Status.SUCCESS;
+        }
+
+        taskService.markStatus(entry, task, status);
+        // marker log line for validation/conversion failure volume monitoring, see DPO-4866
+        if (logger.isInfoEnabled()) {
+            logger.info("Task {} for rule {} resolved to status {}", task.publicId(), task.name(), status);
         }
 
         taskService.trackTask(entry, task, ProcessingState.COMPLETE);
