@@ -1,5 +1,8 @@
 package fi.digitraffic.tis.vaco.queuehandler;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -18,6 +21,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Optional;
@@ -90,6 +94,23 @@ class QueueHandlerServiceTests extends SpringBootIntegrationTestBase {
         Company operator = createdCompany.get();
         assertThat(operator.businessId(), equalTo(operatorBusinessId));
         assertThat(operator.name(), equalTo(operatorName));
+    }
+
+    @Test
+    void logsFinapEntryReceivedForMonitoring() {
+        Logger queueHandlerLogger = (Logger) LoggerFactory.getLogger(QueueHandlerService.class);
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        queueHandlerLogger.addAppender(logAppender);
+
+        try {
+            queueHandlerService.processQueueEntry(entryRequest).get();
+        } finally {
+            queueHandlerLogger.detachAppender(logAppender);
+        }
+
+        assertThat(logAppender.list, Matchers.hasItem(Matchers.hasProperty("formattedMessage",
+            equalTo("FINAP entry received businessId=" + operatorBusinessId))));
     }
 
     @Test

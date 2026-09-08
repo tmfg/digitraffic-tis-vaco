@@ -1,10 +1,15 @@
 package fi.digitraffic.tis.vaco.rules.results;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.S3Client;
+import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
@@ -28,6 +33,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,10 +45,14 @@ import java.util.Optional;
 import static fi.digitraffic.tis.vaco.rules.ResultProcessorTestHelpers.entryWithTask;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -198,5 +208,28 @@ class RuleResultProcessorTests {
         List<ImmutableFinding> findings = processor.scanErrorLog(entry, task, RuleName.NETEX2GTFS_ENTUR, logFile, "Error");
 
         assertThat(findings, hasSize(1));
+    }
+
+    // --- resolveTaskStatus tests ---
+
+    @Test
+    void resolveTaskStatus_logsResolvedStatus_forFailureVolumeMonitoring() {
+        given(findingService.summarizeFindingsSeverities(task)).willReturn(Map.of());
+
+        Logger processorLogger = (Logger) LoggerFactory.getLogger(processor.getClass());
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        processorLogger.addAppender(logAppender);
+
+        try {
+            processor.resolveTaskStatus(entry, task, Optional.of(Status.FAILED));
+        } finally {
+            processorLogger.detachAppender(logAppender);
+        }
+
+        verify(taskService).markStatus(entry, task, Status.FAILED);
+        verify(taskService).trackTask(entry, task, ProcessingState.COMPLETE);
+        assertThat(logAppender.list, hasItem(hasProperty("formattedMessage",
+            equalTo("Task " + task.publicId() + " for rule " + task.name() + " resolved to status FAILED"))));
     }
 }
