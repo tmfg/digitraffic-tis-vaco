@@ -47,10 +47,12 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
@@ -170,7 +172,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
      * rule via the full {@code submit()} entry point, not just {@code submitTask()}.
      */
     @Test
-    void publicValidationTestEntryCanSelectRulesetOnSubmit() throws InterruptedException {
+    void publicValidationTestEntryCanSelectRulesetOnSubmit() {
         Entry entry = entryService.create(
             TestObjects.anEntry(TransitDataFormat.Name.NETEX)
                 .businessId(Constants.PUBLIC_VALIDATION_TEST_ID)
@@ -186,16 +188,17 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
             .configuration(ImmutableRulesetSubmissionConfiguration.of(RulesetType.VALIDATION_SYNTAX, task.publicId()))
             .build());
 
-        Thread.sleep(10);
-        Entry completedEntry = entryService.findEntry(entry.publicId()).get();
-        Task netexEnturTask = Streams.filter(completedEntry.tasks(), t -> RuleName.NETEX_ENTUR.equals(t.name())).findFirst().orElseThrow();
-        // task ends up cancelled since its dependencies were never actually run, but it must not be
-        // short-circuited to FAILED by the ruleset access check itself
-        assertThat(netexEnturTask.status(), equalTo(Status.CANCELLED));
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            Entry completedEntry = entryService.findEntry(entry.publicId()).get();
+            Task netexEnturTask = Streams.filter(completedEntry.tasks(), t -> RuleName.NETEX_ENTUR.equals(t.name())).findFirst().orElseThrow();
+            // task ends up cancelled since its dependencies were never actually run, but it must not be
+            // short-circuited to FAILED by the ruleset access check itself
+            assertThat(netexEnturTask.status(), equalTo(Status.CANCELLED));
+        });
     }
 
     @Test
-    void sendsMessageToJobQueueForTaskWithFailedDependencies() throws InterruptedException {
+    void sendsMessageToJobQueueForTaskWithFailedDependencies() {
         Entry entry = createEntryForTesting();
         when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), eq(entry)))
             .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.empty()).result(DownloadResponse.Result.OK).build()));
@@ -217,13 +220,14 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         List<Message> ruleMessages = messagingService.readMessages(testQueueName).toList();
 
         assertThat(ruleMessages.size(), equalTo(0));
-        Thread.sleep(10);
-        Entry completedEntry = entryService.findEntry(entry.publicId()).get();
-        Task dlTask = completedEntry.tasks().get(0);
-        Task gtfsTask = completedEntry.tasks().get(1);
-        assertThat(dlTask.status(), equalTo(Status.CANCELLED));
-        assertThat(gtfsTask.status(), equalTo(Status.CANCELLED));
-        assertThat(completedEntry.status(), equalTo(Status.CANCELLED));
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            Entry completedEntry = entryService.findEntry(entry.publicId()).get();
+            Task dlTask = completedEntry.tasks().get(0);
+            Task gtfsTask = completedEntry.tasks().get(1);
+            assertThat(dlTask.status(), equalTo(Status.CANCELLED));
+            assertThat(gtfsTask.status(), equalTo(Status.CANCELLED));
+            assertThat(completedEntry.status(), equalTo(Status.CANCELLED));
+        });
     }
 
     @NotNull
