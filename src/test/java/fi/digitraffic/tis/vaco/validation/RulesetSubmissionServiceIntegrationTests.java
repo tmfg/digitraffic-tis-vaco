@@ -2,7 +2,9 @@ package fi.digitraffic.tis.vaco.validation;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.EntryService;
@@ -11,6 +13,7 @@ import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -23,7 +26,10 @@ import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableRulesetSubmissionConfiguration;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -157,6 +163,35 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         assertThat(message.inputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL + "/rules/" + RuleName.GTFS_CANONICAL + "/input"));
         assertThat(message.outputs(), equalTo("s3://digitraffic-tis-processing-itest/entries/" + entry.publicId() + "/tasks/" + RuleName.GTFS_CANONICAL + "/rules/" + RuleName.GTFS_CANONICAL + "/output"));
         assertThat(message.source(), equalTo(RuleName.GTFS_CANONICAL));
+    }
+
+    /**
+     * public-validation-test entries must be able to select a generic externally-registered
+     * rule via the full {@code submit()} entry point, not just {@code submitTask()}.
+     */
+    @Test
+    void publicValidationTestEntryCanSelectRulesetOnSubmit() throws InterruptedException {
+        Entry entry = entryService.create(
+            TestObjects.anEntry(TransitDataFormat.Name.NETEX)
+                .businessId(Constants.PUBLIC_VALIDATION_TEST_ID)
+                .addValidations(ImmutableValidationInput.of(RuleName.NETEX_ENTUR))
+                .build())
+            .get();
+
+        Task task = taskService.findTask(entry.publicId(), RuleName.NETEX_ENTUR).get();
+
+        rulesetSubmissionService.submit(ImmutableValidationJobMessage.builder()
+            .entry(entry)
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .configuration(ImmutableRulesetSubmissionConfiguration.of(RulesetType.VALIDATION_SYNTAX, task.publicId()))
+            .build());
+
+        Thread.sleep(10);
+        Entry completedEntry = entryService.findEntry(entry.publicId()).get();
+        Task netexEnturTask = Streams.filter(completedEntry.tasks(), t -> RuleName.NETEX_ENTUR.equals(t.name())).findFirst().orElseThrow();
+        // task ends up cancelled since its dependencies were never actually run, but it must not be
+        // short-circuited to FAILED by the ruleset access check itself
+        assertThat(netexEnturTask.status(), equalTo(Status.CANCELLED));
     }
 
     @Test

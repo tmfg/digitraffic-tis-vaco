@@ -35,25 +35,32 @@ public class RulesetService {
     }
 
     public Set<Ruleset> findCompanyRulesets(String businessId) {
-        // For Public validation test, we don't want to have an actual "cooperation" with Fintraffic as a company,
-        // but we still want to re-use same rulesets
-        String actualBusinessId = Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId)
-            ? Constants.FINTRAFFIC_BUSINESS_ID
-            : businessId;
+        String actualBusinessId = resolveActualBusinessId(businessId);
         return Streams.collect(rulesetRepository.findRulesets(actualBusinessId), recordMapper::toRuleset);
     }
 
     public Set<Ruleset> findCompanyRulesets(String businessId, RulesetType type, TransitDataFormat format, Set<String> names) {
+        String actualBusinessId = resolveActualBusinessId(businessId);
         Set<Ruleset> rulesets;
         if (names.isEmpty()) {
-            rulesets = Streams.collect(rulesetRepository.findRulesets(businessId, format, type), recordMapper::toRuleset);
+            rulesets = Streams.collect(rulesetRepository.findRulesets(actualBusinessId, format, type), recordMapper::toRuleset);
         } else {
-            rulesets = Streams.collect(rulesetRepository.findRulesets(businessId, type, format, names), recordMapper::toRuleset);
+            rulesets = Streams.collect(rulesetRepository.findRulesets(actualBusinessId, type, format, names), recordMapper::toRuleset);
         }
 
         logger.info("Selected {} {} rulesets for {} are {}, requested {}", format, type, businessId, Streams.collect(rulesets, Ruleset::identifyingName), names);
 
         return rulesets;
+    }
+
+    /**
+     * For Public validation test, we don't want to have an actual "cooperation" with Fintraffic as a company,
+     * but we still want to re-use same rulesets.
+     */
+    private static String resolveActualBusinessId(String businessId) {
+        return Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId)
+            ? Constants.FINTRAFFIC_BUSINESS_ID
+            : businessId;
     }
 
     public Optional<Ruleset> findByName(String rulesetName) {

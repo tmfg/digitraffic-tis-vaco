@@ -141,6 +141,18 @@ class RulesetServiceIntegrationTests extends SpringBootIntegrationTestBase {
         Assertions.assertFalse(publicValidationTestRules.isEmpty());
     }
 
+    /**
+     * The 4-arg overload (used at task submission time) must apply the same public-validation-test
+     * substitution as the 1-arg overload (used at task generation time), otherwise anonymous entries
+     * can never be granted access to any externally-registered rule.
+     */
+    @Test
+    void publicValidationTestHasRulesForFourArgOverload() {
+        Set<Ruleset> publicValidationTestRules = rulesetService.findCompanyRulesets(
+            Constants.PUBLIC_VALIDATION_TEST_ID, RulesetType.VALIDATION_SYNTAX, TransitDataFormat.NETEX, Set.of(RuleName.NETEX_ENTUR));
+        Assertions.assertFalse(publicValidationTestRules.isEmpty());
+    }
+
     @Test
     void rulesetsAreChosenBasedOnGrants() {
         assertRulesets(rulesetService.findCompanyRulesets(parentOrg.businessId(), RulesetType.VALIDATION_SYNTAX, testFormat, Set.of()), parentRuleA, parentRuleB);
