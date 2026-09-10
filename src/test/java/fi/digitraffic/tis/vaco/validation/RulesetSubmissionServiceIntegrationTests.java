@@ -2,7 +2,9 @@ package fi.digitraffic.tis.vaco.validation;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.entries.EntryService;
@@ -11,6 +13,7 @@ import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
 import fi.digitraffic.tis.vaco.messaging.MessagingService;
+import fi.digitraffic.tis.vaco.messaging.model.ImmutableRetryStatistics;
 import fi.digitraffic.tis.vaco.messaging.model.MessageQueue;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.Task;
@@ -23,7 +26,10 @@ import fi.digitraffic.tis.vaco.rules.model.ValidationRuleJobMessage;
 import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Category;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableRulesetSubmissionConfiguration;
+import fi.digitraffic.tis.vaco.validation.model.ImmutableValidationJobMessage;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,10 +47,12 @@ import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
@@ -159,8 +167,38 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         assertThat(message.source(), equalTo(RuleName.GTFS_CANONICAL));
     }
 
+    /**
+     * public-validation-test entries must be able to select a generic externally-registered
+     * rule via the full {@code submit()} entry point, not just {@code submitTask()}.
+     */
     @Test
-    void sendsMessageToJobQueueForTaskWithFailedDependencies() throws InterruptedException {
+    void publicValidationTestEntryCanSelectRulesetOnSubmit() {
+        Entry entry = entryService.create(
+            TestObjects.anEntry(TransitDataFormat.Name.NETEX)
+                .businessId(Constants.PUBLIC_VALIDATION_TEST_ID)
+                .addValidations(ImmutableValidationInput.of(RuleName.NETEX_ENTUR))
+                .build())
+            .get();
+
+        Task task = taskService.findTask(entry.publicId(), RuleName.NETEX_ENTUR).get();
+
+        rulesetSubmissionService.submit(ImmutableValidationJobMessage.builder()
+            .entry(entry)
+            .retryStatistics(ImmutableRetryStatistics.of(5))
+            .configuration(ImmutableRulesetSubmissionConfiguration.of(RulesetType.VALIDATION_SYNTAX, task.publicId()))
+            .build());
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            Entry completedEntry = entryService.findEntry(entry.publicId()).get();
+            Task netexEnturTask = Streams.filter(completedEntry.tasks(), t -> RuleName.NETEX_ENTUR.equals(t.name())).findFirst().orElseThrow();
+            // task ends up cancelled since its dependencies were never actually run, but it must not be
+            // short-circuited to FAILED by the ruleset access check itself
+            assertThat(netexEnturTask.status(), equalTo(Status.CANCELLED));
+        });
+    }
+
+    @Test
+    void sendsMessageToJobQueueForTaskWithFailedDependencies() {
         Entry entry = createEntryForTesting();
         when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), eq(entry)))
             .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.empty()).result(DownloadResponse.Result.OK).build()));
@@ -182,13 +220,14 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
         List<Message> ruleMessages = messagingService.readMessages(testQueueName).toList();
 
         assertThat(ruleMessages.size(), equalTo(0));
-        Thread.sleep(10);
-        Entry completedEntry = entryService.findEntry(entry.publicId()).get();
-        Task dlTask = completedEntry.tasks().get(0);
-        Task gtfsTask = completedEntry.tasks().get(1);
-        assertThat(dlTask.status(), equalTo(Status.CANCELLED));
-        assertThat(gtfsTask.status(), equalTo(Status.CANCELLED));
-        assertThat(completedEntry.status(), equalTo(Status.CANCELLED));
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            Entry completedEntry = entryService.findEntry(entry.publicId()).get();
+            Task dlTask = completedEntry.tasks().get(0);
+            Task gtfsTask = completedEntry.tasks().get(1);
+            assertThat(dlTask.status(), equalTo(Status.CANCELLED));
+            assertThat(gtfsTask.status(), equalTo(Status.CANCELLED));
+            assertThat(completedEntry.status(), equalTo(Status.CANCELLED));
+        });
     }
 
     @NotNull
