@@ -67,6 +67,9 @@ public class VacoHttpClient {
 
             requestHeaders.put("Accept", "*/*");
 
+            requestHeaders.put("Cache-Control", "no-cache");
+            requestHeaders.put("Pragma", "no-cache");
+
             if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
                 logger.debug("Skipping If-None-Match header setting for {}/{} due to feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' being disabled", entry.publicId(), uri);
             } else if (entry.etag() != null && !entry.etag().isEmpty()) {

@@ -15,6 +15,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -57,6 +59,8 @@ class VacoHttpClientTests {
     private EntryService entryService;
     @Mock
     private FeatureFlagsService featureFlagsService;
+    @Captor
+    private ArgumentCaptor<Map<String, String>> headersCaptor;
     private Map<String, String> requestHeaders = new HashMap<>();
     private ImmutableCredentials credentials;
     private ImmutableEntry entry;
@@ -86,6 +90,19 @@ class VacoHttpClientTests {
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().body().isEmpty(), equalTo(true));
+    }
+
+    @Test
+    void addsCacheRevalidationHeadersToDownloads() throws IOException {
+        given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(false);
+        when(httpClient.get(any(String.class), headersCaptor.capture())).thenThrow(new HttpClientException("simulated http client error"));
+
+        Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
+
+        vacoClient.downloadFile(targetFilePath, "https://example.org", entry);
+
+        assertThat(headersCaptor.getValue().get("Cache-Control"), equalTo("no-cache"));
+        assertThat(headersCaptor.getValue().get("Pragma"), equalTo("no-cache"));
     }
 
     @Test
