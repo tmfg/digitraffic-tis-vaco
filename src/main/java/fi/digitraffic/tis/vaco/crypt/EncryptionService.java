@@ -75,6 +75,9 @@ public class EncryptionService {
         try {
             var decoder = Base64.getUrlDecoder();
             var split = new String(decoder.decode(cypher), StandardCharsets.UTF_8).split("\\.");
+            if (split.length != 2) {
+                throw new VacoException("Malformed encrypted payload: expected cyphertext and IV separated by '.'");
+            }
             var cypherText = decoder.decode(split[0]);
             var iv = decoder.decode(split[1]);
             var paraSpec = new GCMParameterSpec(128, iv);
@@ -86,6 +89,8 @@ public class EncryptionService {
             throw new VacoException("Failed to initialize cipher for encryption", e);
         } catch (JacksonException e) {
             throw new VacoException("Failed to deserialize decrypted result", e);
+        } catch (VacoException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new VacoException("Failed to parse given value as a valid encrypted payload", e);
         }

@@ -121,7 +121,23 @@ class EncryptionServiceTests {
         EncryptionService service = new EncryptionService(TestObjects.vacoProperties(), new ObjectMapper(), kmsAsyncClient);
         String noSeparator = new String(Base64.getUrlEncoder().encode("no-dot-here".getBytes()));
 
-        assertThrows(VacoException.class, () -> service.decrypt(noSeparator, String.class));
+        VacoException thrown = assertThrows(VacoException.class, () -> service.decrypt(noSeparator, String.class));
+        assertThat("the specific validation message must surface directly, not be re-wrapped generically",
+            thrown.getMessage(), equalTo("Malformed encrypted payload: expected cyphertext and IV separated by '.'"));
+    }
+
+    /**
+     * Same as above, but for a payload with more than one "." separator -- previously silently
+     * truncated to the first two segments via array indexing, now explicitly rejected.
+     */
+    @Test
+    void decryptRejectsPayloadWithTooManySeparators() {
+        EncryptionService service = new EncryptionService(TestObjects.vacoProperties(), new ObjectMapper(), kmsAsyncClient);
+        String tooManySeparators = new String(Base64.getUrlEncoder().encode("a.b.c".getBytes()));
+
+        VacoException thrown = assertThrows(VacoException.class, () -> service.decrypt(tooManySeparators, String.class));
+        assertThat("must be rejected by the same explicit validation as the missing-separator case",
+            thrown.getMessage(), equalTo("Malformed encrypted payload: expected cyphertext and IV separated by '.'"));
     }
 
     private record TaskOutcome(String input, String decrypted, Exception exception) {}
