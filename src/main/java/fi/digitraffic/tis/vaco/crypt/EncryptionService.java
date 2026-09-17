@@ -86,6 +86,8 @@ public class EncryptionService {
             throw new VacoException("Failed to initialize cipher for encryption", e);
         } catch (JacksonException e) {
             throw new VacoException("Failed to deserialize decrypted result", e);
+        } catch (RuntimeException e) {
+            throw new VacoException("Failed to parse given value as a valid encrypted payload", e);
         }
     }
 

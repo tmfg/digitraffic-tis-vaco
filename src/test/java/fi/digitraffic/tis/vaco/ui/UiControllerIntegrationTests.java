@@ -86,6 +86,28 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
             .andReturn();
     }
 
+    // A `magic` value that isn't even valid base64 must also degrade to 404, not 500.
+    @Test
+    void fetchEntryStateDoesNotReturn500WhenMagicTokenIsGarbage() throws Exception {
+        CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
+        String oid = "Joh Rnado";
+        JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken(oid);
+        SecurityContextHolder.getContext().setAuthentication(johRnado);
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId(request.businessId()).get()));
+
+        MvcResult response = apiCall(post("/queue").content(toJson(request)))
+            .andExpect(status().isOk())
+            .andReturn();
+        JsonNode createResult = apiResponse(response);
+        String entryPublicId = createResult.get("data").get("publicId").stringValue();
+
+        SecurityContextHolder.clearContext();
+
+        apiCall(get("/ui/entries/" + entryPublicId + "/state?magic=not-a-valid-token-at-all!!!"))
+            .andExpect(status().isNotFound())
+            .andReturn();
+    }
+
     /**
      * Encrypts a magic token, then flips a byte in its raw ciphertext (not the IV) so decrypting
      * it fails the GCM authentication tag check.

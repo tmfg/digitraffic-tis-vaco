@@ -2,6 +2,7 @@ package fi.digitraffic.tis.vaco.crypt;
 
 import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.vaco.TestObjects;
+import fi.digitraffic.tis.vaco.VacoException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -11,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.kms.KmsAsyncClient;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
@@ -22,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,6 +99,29 @@ class EncryptionServiceTests {
 
         assertThat("No concurrent encrypt/decrypt task should throw or return a corrupted/mismatched result, but found: " + failures,
             failures, empty());
+    }
+
+    /**
+     * decrypt() must wrap all parsing failures as VacoException, not just security/serialization
+     * ones -- malformed base64 previously threw an uncaught IllegalArgumentException.
+     */
+    @Test
+    void decryptWrapsMalformedBase64AsVacoException() {
+        EncryptionService service = new EncryptionService(TestObjects.vacoProperties(), new ObjectMapper(), kmsAsyncClient);
+
+        assertThrows(VacoException.class, () -> service.decrypt("not valid base64!!!", String.class));
+    }
+
+    /**
+     * Same as above, but for a token missing the "." cyphertext/IV separator, which previously
+     * threw an uncaught ArrayIndexOutOfBoundsException.
+     */
+    @Test
+    void decryptWrapsMissingSeparatorAsVacoException() {
+        EncryptionService service = new EncryptionService(TestObjects.vacoProperties(), new ObjectMapper(), kmsAsyncClient);
+        String noSeparator = new String(Base64.getUrlEncoder().encode("no-dot-here".getBytes()));
+
+        assertThrows(VacoException.class, () -> service.decrypt(noSeparator, String.class));
     }
 
     private record TaskOutcome(String input, String decrypted, Exception exception) {}
