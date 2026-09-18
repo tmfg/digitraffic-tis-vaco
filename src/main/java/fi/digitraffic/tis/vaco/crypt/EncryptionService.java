@@ -38,7 +38,6 @@ public class EncryptionService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ObjectMapper objectMapper;
     private final SecretKey secretKey;
-    private final Cipher cipher;
     private final VacoProperties vacoProperties;
     private final KmsAsyncClient kmsAsyncClient;
 
@@ -48,11 +47,6 @@ public class EncryptionService {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         byte[] keyBytes = vacoProperties.encryptionKeys().magicLink().getBytes(StandardCharsets.UTF_8);
         this.secretKey = new SecretKeySpec(keyBytes, "AES");
-        try {
-            this.cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        } catch (GeneralSecurityException e) {
-            throw new VacoException("Failed to initialize cipher", e);
-        }
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.kmsAsyncClient = Objects.requireNonNull(kmsAsyncClient);
     }
@@ -62,6 +56,7 @@ public class EncryptionService {
             byte[] iv = new byte[16]; // Initialization Vector
             SecureRandom random = new SecureRandom();
             random.nextBytes(iv); // Generate a random IV
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
             byte[] encryptedData = cipher.doFinal(objectMapper.writeValueAsString(original).getBytes());
             var encoder = Base64.getUrlEncoder();
@@ -80,9 +75,13 @@ public class EncryptionService {
         try {
             var decoder = Base64.getUrlDecoder();
             var split = new String(decoder.decode(cypher), StandardCharsets.UTF_8).split("\\.");
+            if (split.length != 2) {
+                throw new VacoException("Malformed encrypted payload: expected cyphertext and IV separated by '.'");
+            }
             var cypherText = decoder.decode(split[0]);
             var iv = decoder.decode(split[1]);
             var paraSpec = new GCMParameterSpec(128, iv);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, secretKey, paraSpec);
             byte[] decryptedData = cipher.doFinal(cypherText);
             return objectMapper.readValue(decryptedData, clz);
@@ -90,6 +89,10 @@ public class EncryptionService {
             throw new VacoException("Failed to initialize cipher for encryption", e);
         } catch (JacksonException e) {
             throw new VacoException("Failed to deserialize decrypted result", e);
+        } catch (VacoException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new VacoException("Failed to parse given value as a valid encrypted payload", e);
         }
     }
 

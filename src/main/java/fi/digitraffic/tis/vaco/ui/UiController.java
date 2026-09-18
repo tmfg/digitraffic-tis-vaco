@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
@@ -295,8 +296,12 @@ public class UiController {
     private boolean magicTokenMatches(String magicToken, String publicId) {
         boolean success = false;
         if (magicToken != null) {
-            MagicToken decrypted = encryptionService.decrypt(magicToken, MagicToken.class);
-            success = decrypted.token().equals(publicId);
+            try {
+                MagicToken decrypted = encryptionService.decrypt(magicToken, MagicToken.class);
+                success = decrypted.token().equals(publicId);
+            } catch (VacoException e) {
+                logger.warn("{} failed to decrypt magic link for {}", meService.alertText(), publicId, e);
+            }
         }
         logger.info("{} access to {} with magic link {}", meService.alertText(), publicId, success ? "allowed" : "denied");
         return success;
