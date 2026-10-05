@@ -17,6 +17,7 @@ import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.EncryptionKeys;
 import fi.digitraffic.tis.vaco.configuration.MsGraph;
 import fi.digitraffic.tis.vaco.configuration.S3;
+import fi.digitraffic.tis.vaco.configuration.StopsAndQuays;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
@@ -157,13 +158,13 @@ public class TestObjects {
     }
 
     public static VacoProperties vacoProperties() {
-        return vacoProperties(null, null, null, null, null, null);
+        return vacoProperties(null, null, null, null, null, null, null);
     }
 
     /**
      * Override specific configuration subtypes. Provide nulls for those values which should use defaults.
      */
-    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, Cleanup cleanup, MsGraph msGraph, EncryptionKeys encryptionKeys) {
+    public static VacoProperties vacoProperties(Aws aws, AzureAd azureAd, Email email, Cleanup cleanup, MsGraph msGraph, EncryptionKeys encryptionKeys, StopsAndQuays stopsAndQuays) {
         String randomSeed = NanoIdUtils.randomNanoId().replaceAll("[-_]", "").toLowerCase();
 
         return new VacoProperties(
@@ -179,7 +180,8 @@ public class TestObjects {
             email != null ? email : new Email("king@commonwealth", null),
             cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), Duration.parse("P90D"), 10, 100),
             msGraph != null ? msGraph : new MsGraph("tenantId", "clientId", "clientSecret", "schemaExtension"),
-            encryptionKeys != null ? encryptionKeys : new EncryptionKeys("credentials", "C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3")
+            encryptionKeys != null ? encryptionKeys : new EncryptionKeys("credentials", "C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"),
+            stopsAndQuays != null ? stopsAndQuays : new StopsAndQuays("https://stops-and-quays.invalid/export.zip")
         );
 
     }
