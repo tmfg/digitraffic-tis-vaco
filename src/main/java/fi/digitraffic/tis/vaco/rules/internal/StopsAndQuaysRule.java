@@ -15,7 +15,6 @@ import fi.digitraffic.tis.vaco.rules.model.ImmutableResultMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import org.springframework.stereotype.Component;
 
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Serve the static Stops and Quays file from app resources.
+ * Serve the Stops and Quays file from the dynamic cache maintained by {@link StopsAndQuaysCacheService}.
  */
 @Component
 public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
@@ -32,13 +31,16 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
     private final TaskService taskService;
     private final VacoProperties vacoProperties;
     private final S3Client s3Client;
+    private final StopsAndQuaysCacheService stopsAndQuaysCacheService;
 
     public StopsAndQuaysRule(TaskService taskService,
                              VacoProperties vacoProperties,
-                             S3Client s3Client) {
+                             S3Client s3Client,
+                             StopsAndQuaysCacheService stopsAndQuaysCacheService) {
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.s3Client = Objects.requireNonNull(s3Client);
+        this.stopsAndQuaysCacheService = Objects.requireNonNull(stopsAndQuaysCacheService);
     }
 
     @Override
@@ -48,29 +50,25 @@ public class StopsAndQuaysRule implements Rule<Entry, ResultMessage> {
             return task.map(t -> {
                 Task tracked = taskService.trackTask(entry, t, ProcessingState.START);
 
-                try {
-                    S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), PREPARE_STOPS_AND_QUAYS_TASK, PREPARE_STOPS_AND_QUAYS_TASK);
-                    S3Path ruleS3Input = ruleBasePath.resolve("input");
-                    S3Path ruleS3Output = ruleBasePath.resolve("output");
+                S3Path ruleBasePath = S3Artifact.getRuleDirectory(entry.publicId(), PREPARE_STOPS_AND_QUAYS_TASK, PREPARE_STOPS_AND_QUAYS_TASK);
+                S3Path ruleS3Input = ruleBasePath.resolve("input");
+                S3Path ruleS3Output = ruleBasePath.resolve("output");
 
-                    Path stopsAndQuays = Path.of(Thread.currentThread().getContextClassLoader().getResource("private/static/stops.zip").toURI());
+                Path stopsAndQuays = stopsAndQuaysCacheService.currentCacheFile()
+                    .orElseThrow(() -> new RuleExecutionException("Stops and quays data not yet available in cache"));
 
-                    S3Path s3TargetPath = ImmutableS3Path.of(List.of(entry.publicId(), Objects.requireNonNull(t.publicId()),"stopsAndQuays.zip"));
+                S3Path s3TargetPath = ImmutableS3Path.of(List.of(entry.publicId(), Objects.requireNonNull(t.publicId()),"stopsAndQuays.zip"));
 
-                    s3Client.uploadFile(vacoProperties.s3PackagesBucket(), s3TargetPath, stopsAndQuays).join();
+                s3Client.uploadFile(vacoProperties.s3PackagesBucket(), s3TargetPath, stopsAndQuays).join();
 
-                    return ImmutableResultMessage.builder()
-                        .entryId(entry.publicId())
-                        .taskId(tracked.id())
-                        .ruleName(PREPARE_STOPS_AND_QUAYS_TASK)
-                        .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
-                        .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
-                        .uploadedFiles(Map.of(s3TargetPath.asUri(vacoProperties.s3PackagesBucket()), List.of("result")))
-                        .build();
-                } catch (URISyntaxException e) {
-                    // thrown if static file is unavailable
-                    throw new RuleExecutionException("Static file 'stopsAndQuays.zip' unavailable", e);
-                }
+                return ImmutableResultMessage.builder()
+                    .entryId(entry.publicId())
+                    .taskId(tracked.id())
+                    .ruleName(PREPARE_STOPS_AND_QUAYS_TASK)
+                    .inputs(ruleS3Input.asUri(vacoProperties.s3ProcessingBucket()))
+                    .outputs(ruleS3Output.asUri(vacoProperties.s3ProcessingBucket()))
+                    .uploadedFiles(Map.of(s3TargetPath.asUri(vacoProperties.s3PackagesBucket()), List.of("result")))
+                    .build();
             }).orElseThrow();
         });
     }
