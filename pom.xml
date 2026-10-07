@@ -54,6 +54,7 @@
         <msgraph.version>6.65.0</msgraph.version>
         <httpclient5.version>5.6.4</httpclient5.version>
         <httpcore5.version>5.4.3</httpcore5.version>
+        <tomcat.version>11.0.26</tomcat.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
