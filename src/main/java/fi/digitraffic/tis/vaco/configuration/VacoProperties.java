@@ -20,7 +20,8 @@ public record VacoProperties(@DefaultValue("local") String environment,
                              @NestedConfigurationProperty Email email,
                              @NestedConfigurationProperty Cleanup cleanup,
                              @NestedConfigurationProperty MsGraph msGraph,
-                             @NestedConfigurationProperty EncryptionKeys encryptionKeys) {
+                             @NestedConfigurationProperty EncryptionKeys encryptionKeys,
+                             @NestedConfigurationProperty StopsAndQuays stopsAndQuays) {
     @Override
     public String temporaryDirectory() {
         return temporaryDirectory != null ? temporaryDirectory : System.getProperty("java.io.tmpdir");

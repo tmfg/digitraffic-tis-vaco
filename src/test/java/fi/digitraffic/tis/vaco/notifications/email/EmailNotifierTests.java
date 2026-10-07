@@ -69,7 +69,7 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
     @BeforeEach
     void setUp() {
         objectMapper = JsonMapper.builder().build();
-        vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null), null, null, null);
+        vacoProperties = TestObjects.vacoProperties(null, null, new Email("king@commonwealth", null), null, null, null, null);
         clock = Clock.systemDefaultZone();
         emailNotifier = createEmailNotifier(clock);
     }
