@@ -333,7 +333,7 @@ public class CompanyRepository {
      * Counts the rows that refer to the company, by kind. Kinds without rows are omitted.
      */
     public Map<String, Long> countReferences(String businessId) {
-        Map<String, Long> counts = jdbc.queryForObject(
+        return jdbc.queryForObject(
             """
             SELECT (SELECT count(*) FROM entry e WHERE e.business_id = c.business_id) AS entries,
                    (SELECT count(*) FROM partnership p WHERE p.partner_a_id = c.id OR p.partner_b_id = c.id) AS partnerships,
@@ -356,7 +356,6 @@ public class CompanyRepository {
                 return result;
             },
             businessId);
-        return counts == null ? Map.of() : counts;
     }
 
     /**

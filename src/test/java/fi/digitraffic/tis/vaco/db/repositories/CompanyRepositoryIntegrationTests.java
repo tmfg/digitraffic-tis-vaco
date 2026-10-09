@@ -185,7 +185,7 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         return companyRepository.create(ImmutableCompany.of(businessId, name, true)).get();
     }
 
-    private static Company toCompany(CompanyRecord record) {
-        return ImmutableCompany.of(record.businessId(), record.name(), true);
+    private static Company toCompany(CompanyRecord companyRecord) {
+        return ImmutableCompany.of(companyRecord.businessId(), companyRecord.name(), true);
     }
 }

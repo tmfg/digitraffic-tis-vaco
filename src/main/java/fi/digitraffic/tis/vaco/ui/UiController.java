@@ -478,7 +478,7 @@ public class UiController {
             return companyHierarchyService.createCompany(company)
                 .map(created -> ResponseEntity.ok(Resource.resource(created)))
                 .orElseGet(() -> Responses.conflict(String.format("Company with business id %s already exists", company.businessId())));
-        } catch (DuplicateKeyException e) {
+        } catch (DuplicateKeyException _) {
             return Responses.conflict(String.format("Company with business id %s already exists", company.businessId()));
         }
     }
