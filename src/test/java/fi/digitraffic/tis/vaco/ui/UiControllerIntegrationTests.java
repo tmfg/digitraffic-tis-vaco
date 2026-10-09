@@ -41,7 +41,18 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     private static String newBusinessId() {
-        return String.format("%07d-%d", java.util.concurrent.ThreadLocalRandom.current().nextInt(1_000_000, 9_999_999), 1);
+        int[] weights = {7, 9, 10, 5, 8, 4, 2};
+        while (true) {
+            String base = String.format("%07d", java.util.concurrent.ThreadLocalRandom.current().nextInt(1_000_000, 9_999_999));
+            int sum = 0;
+            for (int i = 0; i < 7; i++) {
+                sum += (base.charAt(i) - '0') * weights[i];
+            }
+            int remainder = sum % 11;
+            if (remainder != 1) {
+                return base + "-" + (remainder == 0 ? 0 : 11 - remainder);
+            }
+        }
     }
 
     @Test
@@ -69,6 +80,8 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         signInAsAdmin();
 
         apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of("1234567", "No check digit", true))))
+            .andExpect(status().isBadRequest());
+        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of("2499374-9", "Wrong check digit", true))))
             .andExpect(status().isBadRequest());
         apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(newBusinessId(), " ", true))))
             .andExpect(status().isBadRequest());

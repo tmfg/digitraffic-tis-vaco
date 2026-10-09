@@ -97,6 +97,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 public class UiController {
 
     private static final Pattern BUSINESS_ID_FORMAT = Pattern.compile("\\d{7}-\\d");
+    private static final int[] BUSINESS_ID_WEIGHTS = {7, 9, 10, 5, 8, 4, 2};
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -447,12 +448,28 @@ public class UiController {
                 Responses.notFound((String.format("Company with business id %s either does not exist or not authorized to be accessed", businessId))));
     }
 
+    static boolean isValidBusinessId(String businessId) {
+        if (!BUSINESS_ID_FORMAT.matcher(businessId).matches()) {
+            return false;
+        }
+        int sum = 0;
+        for (int i = 0; i < BUSINESS_ID_WEIGHTS.length; i++) {
+            sum += Character.digit(businessId.charAt(i), 10) * BUSINESS_ID_WEIGHTS[i];
+        }
+        int remainder = sum % 11;
+        if (remainder == 1) {
+            return false;
+        }
+        int expected = remainder == 0 ? 0 : 11 - remainder;
+        return Character.digit(businessId.charAt(8), 10) == expected;
+    }
+
     @PostMapping(path = "/admin/companies")
     @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAuthority('vaco.admin')")
     public ResponseEntity<Resource<Company>> createCompany(@Valid @RequestBody Company company) {
-        if (!BUSINESS_ID_FORMAT.matcher(company.businessId()).matches()) {
-            return Responses.badRequest("Business id must be in the format 1234567-8");
+        if (!isValidBusinessId(company.businessId())) {
+            return Responses.badRequest("Business id must be in the format 1234567-8 with a valid check digit");
         }
         if (company.name() == null || company.name().isBlank()) {
             return Responses.badRequest("Company name is required");
