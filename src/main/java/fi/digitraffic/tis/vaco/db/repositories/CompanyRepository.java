@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
 import fi.digitraffic.tis.vaco.company.model.IntermediateHierarchyLink;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyDeletionResult;
 import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
 import fi.digitraffic.tis.vaco.db.ArraySqlValue;
 import fi.digitraffic.tis.vaco.db.RowMappers;
@@ -20,8 +21,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +37,9 @@ import java.util.stream.Collectors;
 
 @Repository
 public class CompanyRepository {
+
+    private static final List<String> REFERENCE_KINDS = List.of(
+        "entries", "partnerships", "ruleset_grants", "contexts", "subscriptions", "feeds", "credentials");
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -319,6 +327,66 @@ public class CompanyRepository {
             logger.warn("Failed to delete company by businessId {}", businessId);
             return false;
         }
+    }
+
+    /**
+     * Counts the rows that refer to the company, by kind. Kinds without rows are omitted.
+     */
+    public Map<String, Long> countReferences(String businessId) {
+        Map<String, Long> counts = jdbc.queryForObject(
+            """
+            SELECT (SELECT count(*) FROM entry e WHERE e.business_id = c.business_id) AS entries,
+                   (SELECT count(*) FROM partnership p WHERE p.partner_a_id = c.id OR p.partner_b_id = c.id) AS partnerships,
+                   (SELECT count(*) FROM ruleset_access ra WHERE ra.company_id = c.id) AS ruleset_grants,
+                   (SELECT count(*) FROM context ctx WHERE ctx.company_id = c.id) AS contexts,
+                   (SELECT count(*) FROM subscription s WHERE s.subscriber_id = c.id OR s.resource_id = c.id) AS subscriptions,
+                   (SELECT count(*) FROM feed f WHERE f.owner_id = c.id) AS feeds,
+                   (SELECT count(*) FROM credentials cr WHERE cr.owner_id = c.id) AS credentials
+              FROM company c
+             WHERE c.business_id = ?
+            """,
+            (rs, rowNum) -> {
+                Map<String, Long> result = new LinkedHashMap<>();
+                for (String kind : REFERENCE_KINDS) {
+                    long count = rs.getLong(kind);
+                    if (count > 0) {
+                        result.put(kind, count);
+                    }
+                }
+                return result;
+            },
+            businessId);
+        return counts == null ? Map.of() : counts;
+    }
+
+    /**
+     * Deletes the company only when no row refers to it. The company row is locked first, so a concurrent insert into
+     * a referencing table waits for its foreign key check, and no row is lost to an {@code ON DELETE CASCADE}.
+     */
+    @Transactional
+    public CompanyDeletionResult deleteIfUnreferenced(String businessId) {
+        List<Long> locked = jdbc.queryForList(
+            "SELECT id FROM company WHERE business_id = ? FOR UPDATE",
+            Long.class,
+            businessId);
+        if (locked.isEmpty()) {
+            return CompanyDeletionResult.of(CompanyDeletionResult.Status.NOT_FOUND);
+        }
+
+        Map<String, Long> references = countReferences(businessId);
+        if (!references.isEmpty()) {
+            return CompanyDeletionResult.referenced(references);
+        }
+
+        jdbc.update("DELETE FROM company WHERE business_id = ?", businessId);
+        // Invalidate after commit: a concurrent reader may still see the row before that and would re-cache it
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                cachingService.invalidateCompanyRecord(businessId);
+            }
+        });
+        return CompanyDeletionResult.of(CompanyDeletionResult.Status.DELETED);
     }
 
     public CompanyRecord findById(long id) {

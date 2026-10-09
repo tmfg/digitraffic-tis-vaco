@@ -6,8 +6,11 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
+import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.servlet.MvcResult;
@@ -18,6 +21,7 @@ import java.util.Base64;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -26,6 +30,86 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
     @Autowired
     private EncryptionService encryptionService;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    private void signInAsAdmin() {
+        String oid = "Admin Adminson";
+        SecurityContextHolder.getContext().setAuthentication(TestObjects.jwtAdminAuthenticationToken(oid));
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId("2942108-7").get()));
+    }
+
+    private static String newBusinessId() {
+        return String.format("%07d-%d", java.util.concurrent.ThreadLocalRandom.current().nextInt(1_000_000, 9_999_999), 1);
+    }
+
+    @Test
+    void adminCanAddCompany() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+
+        MvcResult result = apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Kuljetus Lakkapää Oy", true))))
+            .andExpect(status().isOk()).andReturn();
+
+        assertThat(apiResponse(result).get("data").get("businessId").stringValue(), equalTo(id));
+    }
+
+    @Test
+    void addingDuplicateCompanyIsConflict() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isOk());
+
+        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isConflict());
+    }
+
+    @Test
+    void addingCompanyWithBadBusinessIdOrBlankNameIsBadRequest() throws Exception {
+        signInAsAdmin();
+
+        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of("1234567", "No check digit", true))))
+            .andExpect(status().isBadRequest());
+        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(newBusinessId(), " ", true))))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void adminCanDeleteUnreferencedCompany() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Short lived", true)))).andExpect(status().isOk());
+
+        apiCall(delete("/ui/admin/companies/" + id)).andExpect(status().isNoContent());
+
+        assertThat(companyHierarchyService.findByBusinessId(id).isPresent(), equalTo(false));
+    }
+
+    @Test
+    void deletingMissingCompanyIsNotFound() throws Exception {
+        signInAsAdmin();
+
+        apiCall(delete("/ui/admin/companies/" + newBusinessId())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deletingCompanyWithLinkedDataIsConflictWithCounts() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Has data", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id) VALUES ('gtfs', 'http://x', ?)", id);
+
+        MvcResult result = apiCall(delete("/ui/admin/companies/" + id)).andExpect(status().isConflict()).andReturn();
+
+        assertThat(apiResponse(result).get("data").get("entries").asLong(), equalTo(1L));
+    }
+
+    @Test
+    void deletingProtectedCompanyIsConflict() throws Exception {
+        signInAsAdmin();
+
+        apiCall(delete("/ui/admin/companies/" + Constants.FINTRAFFIC_BUSINESS_ID)).andExpect(status().isConflict());
+    }
 
     @Test
     void canFetchEntryStateWithPublicId() throws Exception {
