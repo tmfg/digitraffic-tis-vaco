@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyDeletionResult;
 import fi.digitraffic.tis.vaco.company.service.model.LightweightHierarchy;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
@@ -69,6 +70,21 @@ public class CompanyHierarchyService {
             return Optional.empty();
         }
         return companyRepository.create(company).map(recordMapper::toCompany);
+    }
+
+    /**
+     * Deletes a company that has no linked data. The Fintraffic company and the public validation test company are
+     * never deleted.
+     */
+    public CompanyDeletionResult deleteCompany(String businessId) {
+        if (Constants.FINTRAFFIC_BUSINESS_ID.equals(businessId) || Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId)) {
+            return CompanyDeletionResult.of(CompanyDeletionResult.Status.PROTECTED);
+        }
+        CompanyDeletionResult result = companyRepository.deleteIfUnreferenced(businessId);
+        if (result.status() == CompanyDeletionResult.Status.DELETED) {
+            reloadRootHierarchies();
+        }
+        return result;
     }
 
     public Company editCompany(String businessId, Company company) {

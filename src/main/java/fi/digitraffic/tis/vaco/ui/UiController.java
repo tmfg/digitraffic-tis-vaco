@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.Partnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
+import fi.digitraffic.tis.vaco.company.service.model.CompanyDeletionResult;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.credentials.CredentialsService;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
@@ -54,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -84,6 +86,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
@@ -92,6 +95,9 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 @RequestMapping("/ui")
 @Hidden
 public class UiController {
+
+    private static final Pattern BUSINESS_ID_FORMAT = Pattern.compile("\\d{7}-\\d");
+    private static final int[] BUSINESS_ID_WEIGHTS = {7, 9, 10, 5, 8, 4, 2};
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -440,6 +446,57 @@ public class UiController {
                         null, Map.of())); })
             .orElseGet(() ->
                 Responses.notFound((String.format("Company with business id %s either does not exist or not authorized to be accessed", businessId))));
+    }
+
+    static boolean isValidBusinessId(String businessId) {
+        if (!BUSINESS_ID_FORMAT.matcher(businessId).matches()) {
+            return false;
+        }
+        int sum = 0;
+        for (int i = 0; i < BUSINESS_ID_WEIGHTS.length; i++) {
+            sum += Character.digit(businessId.charAt(i), 10) * BUSINESS_ID_WEIGHTS[i];
+        }
+        int remainder = sum % 11;
+        if (remainder == 1) {
+            return false;
+        }
+        int expected = remainder == 0 ? 0 : 11 - remainder;
+        return Character.digit(businessId.charAt(8), 10) == expected;
+    }
+
+    @PostMapping(path = "/admin/companies")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<Company>> createCompany(@Valid @RequestBody Company company) {
+        if (!isValidBusinessId(company.businessId())) {
+            return Responses.badRequest("Business id must be in the format 1234567-8 with a valid check digit");
+        }
+        if (company.name() == null || company.name().isBlank()) {
+            return Responses.badRequest("Company name is required");
+        }
+        try {
+            return companyHierarchyService.createCompany(company)
+                .map(created -> ResponseEntity.ok(Resource.resource(created)))
+                .orElseGet(() -> Responses.conflict(String.format("Company with business id %s already exists", company.businessId())));
+        } catch (DuplicateKeyException _) {
+            return Responses.conflict(String.format("Company with business id %s already exists", company.businessId()));
+        }
+    }
+
+    @DeleteMapping(path = "/admin/companies/{businessId}")
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<Map<String, Long>>> deleteCompany(@PathVariable("businessId") String businessId) {
+        CompanyDeletionResult result = companyHierarchyService.deleteCompany(businessId);
+        return switch (result.status()) {
+            case DELETED -> ResponseEntity.noContent().build();
+            case NOT_FOUND -> Responses.notFound(String.format("Company with business id %s does not exist", businessId));
+            case PROTECTED -> new ResponseEntity<>(
+                new Resource<>(null, String.format("Company with business id %s cannot be deleted", businessId), null),
+                HttpStatus.CONFLICT);
+            case REFERENCED -> new ResponseEntity<>(
+                new Resource<>(result.references(), String.format("Company with business id %s has linked data", businessId), null),
+                HttpStatus.CONFLICT);
+        };
     }
 
     @PostMapping(path = "/admin/partnership")
