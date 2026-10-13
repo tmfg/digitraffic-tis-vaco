@@ -167,6 +167,7 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
     void serviceRefusesProtectedCompanies() {
         assertThat(companyHierarchyService.deleteCompany(Constants.FINTRAFFIC_BUSINESS_ID).status(), is(CompanyDeletionResult.Status.PROTECTED));
         assertThat(companyHierarchyService.deleteCompany(Constants.PUBLIC_VALIDATION_TEST_ID).status(), is(CompanyDeletionResult.Status.PROTECTED));
+        assertThat(companyHierarchyService.deleteCompany(Constants.TRAFICOM_BUSINESS_ID).status(), is(CompanyDeletionResult.Status.PROTECTED));
         assertThat(companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).isPresent(), is(true));
     }
 

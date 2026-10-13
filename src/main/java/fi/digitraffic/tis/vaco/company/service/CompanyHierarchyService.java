@@ -28,6 +28,11 @@ import java.util.Set;
 @Service
 public class CompanyHierarchyService {
 
+    private static final Set<String> PROTECTED_BUSINESS_IDS = Set.of(
+        Constants.FINTRAFFIC_BUSINESS_ID,
+        Constants.TRAFICOM_BUSINESS_ID,
+        Constants.PUBLIC_VALIDATION_TEST_ID);
+
     private final CompanyRepository companyRepository;
 
     private final PartnershipRepository partnershipRepository;
@@ -73,11 +78,11 @@ public class CompanyHierarchyService {
     }
 
     /**
-     * Deletes a company that has no linked data. The Fintraffic company and the public validation test company are
-     * never deleted.
+     * Deletes a company that has no linked data. This method never deletes the Fintraffic, Traficom or public
+     * validation test company.
      */
     public CompanyDeletionResult deleteCompany(String businessId) {
-        if (Constants.FINTRAFFIC_BUSINESS_ID.equals(businessId) || Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId)) {
+        if (PROTECTED_BUSINESS_IDS.contains(businessId)) {
             return CompanyDeletionResult.of(CompanyDeletionResult.Status.PROTECTED);
         }
         CompanyDeletionResult result = companyRepository.deleteIfUnreferenced(businessId);
