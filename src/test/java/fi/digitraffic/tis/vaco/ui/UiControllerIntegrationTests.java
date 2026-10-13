@@ -20,10 +20,12 @@ import java.util.Base64;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
@@ -80,11 +82,14 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         signInAsAdmin();
 
         apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of("1234567", "No check digit", true))))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'businessId'")));
         apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of("2499374-9", "Wrong check digit", true))))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'businessId'")));
         apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(newBusinessId(), " ", true))))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'name'")));
     }
 
     @Test

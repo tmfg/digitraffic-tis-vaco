@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.company.service.model;
+package fi.digitraffic.tis.vaco.company.dto;
 
 import java.util.Map;
 
