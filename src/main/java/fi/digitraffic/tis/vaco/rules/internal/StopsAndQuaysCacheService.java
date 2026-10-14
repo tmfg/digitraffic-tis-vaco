@@ -9,8 +9,10 @@ import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +51,7 @@ public class StopsAndQuaysCacheService {
     private final VacoHttpClient vacoHttpClient;
     private final S3Client s3Client;
     private final Clock clock;
+    private final TaskExecutor taskExecutor;
 
     private final AtomicReference<Path> cachedFile = new AtomicReference<>();
     private final AtomicReference<Instant> lastSuccessfulRefresh = new AtomicReference<>();
@@ -56,11 +59,13 @@ public class StopsAndQuaysCacheService {
     public StopsAndQuaysCacheService(VacoProperties vacoProperties,
                                      VacoHttpClient vacoHttpClient,
                                      S3Client s3Client,
-                                     Clock clock) {
+                                     Clock clock,
+                                     @Qualifier("applicationTaskExecutor") TaskExecutor taskExecutor) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.vacoHttpClient = Objects.requireNonNull(vacoHttpClient);
         this.s3Client = Objects.requireNonNull(s3Client);
         this.clock = Objects.requireNonNull(clock);
+        this.taskExecutor = Objects.requireNonNull(taskExecutor);
     }
 
     public Optional<Path> currentCacheFile() {
@@ -90,10 +95,26 @@ public class StopsAndQuaysCacheService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void warmUpOnStartup() {
+        taskExecutor.execute(this::initializeCacheSafely);
+    }
+
+    private void initializeCacheSafely() {
+        try {
+            initializeCache();
+        } catch (Exception e) {
+            logger.warn("Stops and quays cache is unavailable; rules needing it will fail until the next successful refresh", e);
+        }
+    }
+
+    private void initializeCache() {
         String bucket = vacoProperties.s3PackagesBucket();
         try {
             if (s3Client.keyExists(bucket, CACHE_S3_KEY.toString()) && restoreFromS3(bucket)) {
-                return;
+                if (!isStale()) {
+                    return;
+                }
+                logger.warn("Restored stops and quays cache from S3 is stale (last modified {}), fetching fresh copy from Kooste",
+                    lastSuccessfulRefresh.get());
             }
         } catch (Exception e) {
             logger.warn("Failed to restore stops and quays cache from S3, falling back to eager fetch", e);
@@ -101,6 +122,10 @@ public class StopsAndQuaysCacheService {
         eagerFetchWithRetries();
     }
 
+    /**
+     * @return true when the restore is handled: the S3 copy was published, or skipped because a newer copy is already loaded.
+     * False when the S3 copy failed validation, so the caller falls back to fetching from Kooste.
+     */
     private boolean restoreFromS3(String bucket) throws IOException {
         Path tempFile = tempDownloadPath();
         try {
@@ -108,6 +133,12 @@ public class StopsAndQuaysCacheService {
             if (!isValidZip(tempFile)) {
                 logger.warn("Cached stops and quays copy restored from S3 failed validation, falling back to eager fetch");
                 return false;
+            }
+            // A refresh may have published a newer copy while the download was in flight.
+            // A tiny window between this check and the move remains and is accepted.
+            if (cachedFile.get() != null) {
+                logger.info("Skipping restore of stops and quays cache from S3, a newer copy is already loaded");
+                return true;
             }
             Path stableFile = stableCacheFile();
             Files.move(tempFile, stableFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -126,18 +157,17 @@ public class StopsAndQuaysCacheService {
                 return;
             }
             try {
-                refresh();
+                if (refresh()) {
+                    return;
+                }
             } catch (Exception e) {
                 logger.warn("Eager fetch attempt {} of stops and quays cache failed", attempt, e);
-            }
-            if (cachedFile.get() != null) {
-                return;
             }
             if (attempt < STARTUP_FETCH_ATTEMPTS) {
                 sleepBeforeRetry();
             }
         }
-        logger.warn("Failed to warm up stops and quays cache after {} attempts; cache remains empty until next scheduled refresh", STARTUP_FETCH_ATTEMPTS);
+        logger.warn("Failed to warm up stops and quays cache after {} attempts; no fresh copy obtained, keeping any previously loaded copy until the next scheduled refresh", STARTUP_FETCH_ATTEMPTS);
     }
 
     private void sleepBeforeRetry() {
@@ -148,25 +178,34 @@ public class StopsAndQuaysCacheService {
         }
     }
 
-    private void refresh() {
+    /**
+     * @return true only when a new copy was downloaded, validated and published locally.
+     */
+    private boolean refresh() {
         Path tempFile = tempDownloadPath();
         try {
             DownloadResponse response = vacoHttpClient.downloadFile(tempFile, vacoProperties.stopsAndQuays().sourceUrl()).join();
             if (response == null || response.result() != DownloadResponse.Result.OK || response.body().isEmpty()) {
                 logger.warn("Failed to download stops and quays data, result was {}", response == null ? null : response.result());
-                return;
+                return false;
             }
             if (!isValidZip(tempFile)) {
                 logger.warn("Downloaded stops and quays data at {} is not a valid zip archive, discarding", tempFile);
-                return;
+                return false;
             }
             Path stableFile = stableCacheFile();
             Files.move(tempFile, stableFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             cachedFile.set(stableFile);
             lastSuccessfulRefresh.set(clock.instant());
-            s3Client.uploadFile(vacoProperties.s3PackagesBucket(), CACHE_S3_KEY, stableFile).join();
+            try {
+                s3Client.uploadFile(vacoProperties.s3PackagesBucket(), CACHE_S3_KEY, stableFile).join();
+            } catch (RuntimeException e) {
+                logger.warn("Failed to upload stops and quays cache to S3", e);
+            }
+            return true;
         } catch (IOException e) {
             logger.warn("Failed to refresh stops and quays cache", e);
+            return false;
         } finally {
             deleteIfExistsQuietly(tempFile);
         }

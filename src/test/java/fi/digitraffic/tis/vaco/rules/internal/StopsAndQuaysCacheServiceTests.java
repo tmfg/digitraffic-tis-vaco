@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.task.SyncTaskExecutor;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
@@ -22,29 +23,37 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class StopsAndQuaysCacheServiceTests {
 
     private static final Instant FIXED_INSTANT = Instant.parse("2026-01-01T00:00:00Z");
     private static final int ZIP_BOMB_ENTRY_COUNT = 10_001;
+    private static final String KOOSTE_ENTRY_NAME = "stops.txt";
+    private static final String S3_ENTRY_NAME = "s3-copy.txt";
 
     private StopsAndQuaysCacheService service;
     private VacoProperties vacoProperties;
@@ -59,7 +68,32 @@ class StopsAndQuaysCacheServiceTests {
     void setUp() {
         vacoProperties = TestObjects.vacoProperties();
         clock = MutableClock.startingAt(FIXED_INSTANT);
-        service = new StopsAndQuaysCacheService(vacoProperties, vacoHttpClient, s3Client, clock);
+        service = new StopsAndQuaysCacheService(vacoProperties, vacoHttpClient, s3Client, clock, new SyncTaskExecutor());
+    }
+
+    @Test
+    void warmUpOnStartupReturnsImmediatelyAndSubmitsOneTaskToExecutor() {
+        List<Runnable> submitted = new ArrayList<>();
+        StopsAndQuaysCacheService asyncService =
+            new StopsAndQuaysCacheService(vacoProperties, vacoHttpClient, s3Client, clock, submitted::add);
+
+        asyncService.warmUpOnStartup();
+
+        assertThat(submitted.size(), equalTo(1));
+        assertThat(asyncService.currentCacheFile().isPresent(), equalTo(false));
+        verifyNoInteractions(s3Client, vacoHttpClient);
+    }
+
+    @Test
+    void warmUpOnStartupDoesNotPropagateUnexpectedExceptionFromExecutedTask() {
+        VacoProperties failingProperties = mock(VacoProperties.class);
+        given(failingProperties.s3PackagesBucket()).willThrow(new IllegalStateException("boom"));
+        StopsAndQuaysCacheService failingService =
+            new StopsAndQuaysCacheService(failingProperties, vacoHttpClient, s3Client, clock, new SyncTaskExecutor());
+
+        assertDoesNotThrow(failingService::warmUpOnStartup);
+
+        assertThat(failingService.currentCacheFile().isPresent(), equalTo(false));
     }
 
     @Test
@@ -128,15 +162,75 @@ class StopsAndQuaysCacheServiceTests {
     }
 
     @Test
-    void warmUpOnStartupUsesS3LastModifiedAndReportsStaleWhenCopyIsOlderThanThreshold() throws IOException {
+    void warmUpOnStartupKeepsStaleRestoredCopyAsFallbackWhenFetchFails() throws IOException {
         given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(true);
         Instant lastModified = FIXED_INSTANT.minus(Duration.ofHours(31));
         stubS3RestoreValidZip(lastModified);
+        // Interrupting the worker after the failed attempt makes the retry loop abort instead of sleeping between attempts.
+        given(vacoHttpClient.downloadFile(any(Path.class), anyString())).willAnswer(invocation -> {
+            Thread.currentThread().interrupt();
+            return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.FAILED_DOWNLOAD).build());
+        });
+
+        try {
+            service.warmUpOnStartup();
+        } finally {
+            Thread.interrupted();
+        }
+
+        verify(vacoHttpClient, times(1)).downloadFile(any(Path.class), anyString());
+        assertThat(entryName(service.currentCacheFile().orElseThrow()), equalTo(S3_ENTRY_NAME));
+        assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(lastModified));
+        assertThat(service.isStale(), equalTo(true));
+    }
+
+    @Test
+    void warmUpOnStartupFetchesFreshCopyWhenRestoredCopyIsStale() throws IOException {
+        given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(true);
+        stubS3RestoreValidZip(FIXED_INSTANT.minus(Duration.ofHours(31)));
+        stubEagerFetchSuccess();
+        stubUploadSuccess();
 
         service.warmUpOnStartup();
 
-        assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(lastModified));
-        assertThat(service.isStale(), equalTo(true));
+        verify(vacoHttpClient, times(1)).downloadFile(any(Path.class), anyString());
+        assertThat(entryName(service.currentCacheFile().orElseThrow()), equalTo(KOOSTE_ENTRY_NAME));
+        assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(clock.instant()));
+        assertThat(service.isStale(), equalTo(false));
+    }
+
+    @Test
+    void warmUpOnStartupDoesNotOverwriteCacheRefreshedWhileS3DownloadWasInFlight() throws IOException {
+        given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(true);
+        stubEagerFetchSuccess();
+        stubUploadSuccess();
+        Instant oldLastModified = FIXED_INSTANT.minus(Duration.ofHours(2));
+        given(s3Client.downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class))).willAnswer(invocation -> {
+            Path target = invocation.getArgument(2);
+            service.scheduledRefresh();
+            writeValidZip(target, S3_ENTRY_NAME);
+            return new S3Client.DownloadedFile(Files.size(target), oldLastModified);
+        });
+
+        service.warmUpOnStartup();
+
+        verify(vacoHttpClient, times(1)).downloadFile(any(Path.class), anyString());
+        assertThat(entryName(service.currentCacheFile().orElseThrow()), equalTo(KOOSTE_ENTRY_NAME));
+        assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(clock.instant()));
+    }
+
+    @Test
+    void warmUpOnStartupDoesNotRetryWhenFetchSucceededButS3UploadFailed() {
+        given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(false);
+        stubEagerFetchSuccess();
+        given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class)))
+            .willReturn(CompletableFuture.failedFuture(new IllegalStateException("upload failed")));
+
+        service.warmUpOnStartup();
+
+        verify(vacoHttpClient, times(1)).downloadFile(any(Path.class), anyString());
+        assertThat(service.currentCacheFile().isPresent(), equalTo(true));
+        assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(clock.instant()));
     }
 
     @Test
@@ -149,6 +243,7 @@ class StopsAndQuaysCacheServiceTests {
 
         assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(lastModified));
         assertThat(service.isStale(), equalTo(false));
+        verify(vacoHttpClient, never()).downloadFile(any(Path.class), anyString());
     }
 
     @Test
@@ -306,7 +401,7 @@ class StopsAndQuaysCacheServiceTests {
     private void stubS3RestoreValidZip(Instant lastModified) {
         given(s3Client.downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class))).willAnswer(invocation -> {
             Path target = invocation.getArgument(2);
-            writeValidZip(target);
+            writeValidZip(target, S3_ENTRY_NAME);
             return new S3Client.DownloadedFile(Files.size(target), lastModified);
         });
     }
@@ -317,8 +412,18 @@ class StopsAndQuaysCacheServiceTests {
     }
 
     private static void writeValidZip(Path target) throws IOException {
+        writeValidZip(target, KOOSTE_ENTRY_NAME);
+    }
+
+    private static String entryName(Path zip) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
+            return zis.getNextEntry().getName();
+        }
+    }
+
+    private static void writeValidZip(Path target, String entryName) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(target))) {
-            zos.putNextEntry(new ZipEntry("stops.txt"));
+            zos.putNextEntry(new ZipEntry(entryName));
             zos.write("stop_id,stop_name\n1,Test Stop".getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
         }
