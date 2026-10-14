@@ -98,7 +98,8 @@ public class CompanyHierarchyService {
         }
         CompanyDeletionResult result = companyRepository.deleteWithLinkedData(businessId);
         if (result.status() == CompanyDeletionResult.Status.DELETED) {
-            logger.info("Deleted company {} with linked data {}", businessId, result.deleted());
+            String safeBusinessId = businessId.replaceAll("[\r\n]", "_");
+            logger.info("Deleted company {} with linked data {}", safeBusinessId, result.deleted());
             reloadRootHierarchies();
         }
         return result;
