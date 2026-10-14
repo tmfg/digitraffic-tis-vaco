@@ -14,6 +14,8 @@ import fi.digitraffic.tis.vaco.db.model.CompanyRecord;
 import fi.digitraffic.tis.vaco.db.model.PartnershipRecord;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
 import fi.digitraffic.tis.vaco.db.repositories.PartnershipRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,8 @@ public class CompanyHierarchyService {
         Constants.FINTRAFFIC_BUSINESS_ID,
         Constants.TRAFICOM_BUSINESS_ID,
         Constants.PUBLIC_VALIDATION_TEST_ID);
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final CompanyRepository companyRepository;
 
@@ -78,15 +82,23 @@ public class CompanyHierarchyService {
     }
 
     /**
-     * Deletes a company that has no linked data. This method never deletes the Fintraffic, Traficom or public
+     * Counts the rows that refer to the company, by kind. Empty when the company does not exist.
+     */
+    public Optional<Map<String, Long>> countLinkedData(String businessId) {
+        return companyRepository.countReferences(businessId);
+    }
+
+    /**
+     * Deletes a company and all its linked data. This method never deletes the Fintraffic, Traficom or public
      * validation test company.
      */
     public CompanyDeletionResult deleteCompany(String businessId) {
         if (PROTECTED_BUSINESS_IDS.contains(businessId)) {
             return CompanyDeletionResult.of(CompanyDeletionResult.Status.PROTECTED);
         }
-        CompanyDeletionResult result = companyRepository.deleteIfUnreferenced(businessId);
+        CompanyDeletionResult result = companyRepository.deleteWithLinkedData(businessId);
         if (result.status() == CompanyDeletionResult.Status.DELETED) {
+            logger.info("Deleted company {} with linked data {}", businessId, result.deleted());
             reloadRootHierarchies();
         }
         return result;

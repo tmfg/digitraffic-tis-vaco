@@ -101,6 +101,15 @@ public class CachingService {
         invalidateStatus(publicId);
     }
 
+    /**
+     * Invalidates the entry and the statuses of the entry and all its tasks.
+     */
+    public void invalidateEntryAndTaskStatuses(String publicId) {
+        entryCache.invalidate(publicId);
+        String taskPrefix = publicId + "/";
+        statusCache.asMap().keySet().removeIf(key -> key.equals(publicId) || key.startsWith(taskPrefix));
+    }
+
     public void invalidateEntry(Entry entry) {
         entryCache.invalidate(entry.publicId());
         invalidateStatus(entry);
@@ -187,6 +196,14 @@ public class CachingService {
 
     public Optional<ContextRecord> cacheContextRecord(String key, Function<String, ContextRecord> loader) {
         return Optional.ofNullable(contextRecordCache.get(key, loader));
+    }
+
+    /**
+     * Invalidates every cached context of the company.
+     */
+    public void invalidateContextRecords(String businessId) {
+        String prefix = businessId + "/";
+        contextRecordCache.asMap().keySet().removeIf(key -> key.startsWith(prefix));
     }
 
     public Optional<CompanyRecord> cacheCompanyRecord(String key, Function<String, CompanyRecord> loader) {

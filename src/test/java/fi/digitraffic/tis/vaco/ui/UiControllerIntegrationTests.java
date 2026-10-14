@@ -30,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
+    private static final String COMPANIES_PATH = "/ui/admin/companies";
+
     @Autowired
     private EncryptionService encryptionService;
 
@@ -62,7 +64,7 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         signInAsAdmin();
         String id = newBusinessId();
 
-        MvcResult result = apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Kuljetus Lakkapää Oy", true))))
+        MvcResult result = apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Kuljetus Lakkapää Oy", true))))
             .andExpect(status().isOk()).andReturn();
 
         assertThat(apiResponse(result).get("data").get("businessId").stringValue(), equalTo(id));
@@ -72,61 +74,80 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     void addingDuplicateCompanyIsConflict() throws Exception {
         signInAsAdmin();
         String id = newBusinessId();
-        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isOk());
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isOk());
 
-        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isConflict());
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isConflict());
     }
 
     @Test
     void addingCompanyWithBadBusinessIdOrBlankNameIsBadRequest() throws Exception {
         signInAsAdmin();
 
-        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of("1234567", "No check digit", true))))
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of("1234567", "No check digit", true))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0]", startsWith("Field 'businessId'")));
-        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of("2499374-9", "Wrong check digit", true))))
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of("2499374-9", "Wrong check digit", true))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0]", startsWith("Field 'businessId'")));
-        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(newBusinessId(), " ", true))))
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(newBusinessId(), " ", true))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0]", startsWith("Field 'name'")));
     }
 
     @Test
-    void adminCanDeleteUnreferencedCompany() throws Exception {
+    void adminCanDeleteCompanyWithLinkedData() throws Exception {
         signInAsAdmin();
         String id = newBusinessId();
-        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Short lived", true)))).andExpect(status().isOk());
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Short lived", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'success')", id);
 
-        apiCall(delete("/ui/admin/companies/" + id)).andExpect(status().isNoContent());
+        apiCall(delete(COMPANIES_PATH + "/" + id)).andExpect(status().isNoContent());
 
         assertThat(companyHierarchyService.findByBusinessId(id).isPresent(), equalTo(false));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM entry WHERE business_id = ?", Long.class, id), equalTo(0L));
+    }
+
+    @Test
+    void adminCanCountLinkedData() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Has data", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'success')", id);
+
+        apiCall(get(COMPANIES_PATH + "/" + id + "/references"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.entries").value(1));
+        apiCall(get(COMPANIES_PATH + "/" + newBusinessId() + "/references")).andExpect(status().isNotFound());
     }
 
     @Test
     void deletingMissingCompanyIsNotFound() throws Exception {
         signInAsAdmin();
 
-        apiCall(delete("/ui/admin/companies/" + newBusinessId())).andExpect(status().isNotFound());
+        apiCall(delete(COMPANIES_PATH + "/" + newBusinessId())).andExpect(status().isNotFound());
     }
 
     @Test
-    void deletingCompanyWithLinkedDataIsConflictWithCounts() throws Exception {
+    void deletingCompanyWithUnfinishedEntryIsConflictWithReason() throws Exception {
         signInAsAdmin();
         String id = newBusinessId();
-        apiCall(post("/ui/admin/companies").content(toJson(ImmutableCompany.of(id, "Has data", true)))).andExpect(status().isOk());
-        jdbc.update("INSERT INTO entry(format, url, business_id) VALUES ('gtfs', 'http://x', ?)", id);
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Busy", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'processing')", id);
 
-        MvcResult result = apiCall(delete("/ui/admin/companies/" + id)).andExpect(status().isConflict()).andReturn();
+        apiCall(delete(COMPANIES_PATH + "/" + id))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.data").value("IN_PROGRESS"));
 
-        assertThat(apiResponse(result).get("data").get("entries").asLong(), equalTo(1L));
+        assertThat(companyHierarchyService.findByBusinessId(id).isPresent(), equalTo(true));
     }
 
     @Test
-    void deletingProtectedCompanyIsConflict() throws Exception {
+    void deletingProtectedCompanyIsConflictWithReason() throws Exception {
         signInAsAdmin();
 
-        apiCall(delete("/ui/admin/companies/" + Constants.FINTRAFFIC_BUSINESS_ID)).andExpect(status().isConflict());
+        apiCall(delete(COMPANIES_PATH + "/" + Constants.FINTRAFFIC_BUSINESS_ID))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.data").value("PROTECTED"));
     }
 
     @Test

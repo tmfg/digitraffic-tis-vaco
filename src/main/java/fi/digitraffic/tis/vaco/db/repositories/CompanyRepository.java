@@ -330,10 +330,11 @@ public class CompanyRepository {
     }
 
     /**
-     * Counts the rows that refer to the company, by kind. Kinds without rows are omitted.
+     * Counts the rows that refer to the company, by kind. The map leaves out a kind that has no rows. The result is
+     * empty when the company does not exist.
      */
-    public Map<String, Long> countReferences(String businessId) {
-        return jdbc.queryForObject(
+    public Optional<Map<String, Long>> countReferences(String businessId) {
+        return jdbc.query(
             """
             SELECT (SELECT count(*) FROM entry e WHERE e.business_id = c.business_id) AS entries,
                    (SELECT count(*) FROM partnership p WHERE p.partner_a_id = c.id OR p.partner_b_id = c.id) AS partnerships,
@@ -355,15 +356,21 @@ public class CompanyRepository {
                 }
                 return result;
             },
-            businessId);
+            businessId).stream().findFirst();
     }
 
     /**
-     * Deletes the company only when no row refers to it. The company row is locked first, so a concurrent insert into
-     * a referencing table waits for its foreign key check, and no row is lost to an {@code ON DELETE CASCADE}.
+     * Deletes the company and every row that refers to it. Refuses when the company has an entry that is still
+     * received or processing, because a worker may still write results for it.
+     * <p>
+     * The method locks the company row first. A concurrent insert into a referencing table then waits for its foreign
+     * key check, and fails after this transaction commits. The deletes run in foreign key order. An entry may refer to
+     * the company's credentials without a cascade, so the entries go before the credentials. The database cascades the
+     * entry children, the partnerships and the ruleset grants. Files in S3 stay until the bucket lifecycle rules
+     * delete them.
      */
     @Transactional
-    public CompanyDeletionResult deleteIfUnreferenced(String businessId) {
+    public CompanyDeletionResult deleteWithLinkedData(String businessId) {
         List<Long> locked = jdbc.queryForList(
             "SELECT id FROM company WHERE business_id = ? FOR UPDATE",
             Long.class,
@@ -371,21 +378,38 @@ public class CompanyRepository {
         if (locked.isEmpty()) {
             return CompanyDeletionResult.of(CompanyDeletionResult.Status.NOT_FOUND);
         }
+        long companyId = locked.getFirst();
 
-        Map<String, Long> references = countReferences(businessId);
-        if (!references.isEmpty()) {
-            return CompanyDeletionResult.referenced(references);
+        Boolean inProgress = jdbc.queryForObject(
+            "SELECT EXISTS (SELECT 1 FROM entry WHERE business_id = ? AND status IN ('received', 'processing'))",
+            Boolean.class,
+            businessId);
+        if (Boolean.TRUE.equals(inProgress)) {
+            return CompanyDeletionResult.of(CompanyDeletionResult.Status.IN_PROGRESS);
         }
 
-        jdbc.update("DELETE FROM company WHERE business_id = ?", businessId);
-        // Invalidate after commit: a concurrent reader may still see the row before that and would re-cache it
+        Map<String, Long> deleted = countReferences(businessId).orElseGet(Map::of);
+        List<String> entryPublicIds = jdbc.queryForList(
+            "DELETE FROM entry WHERE business_id = ? RETURNING public_id",
+            String.class,
+            businessId);
+        jdbc.update("DELETE FROM subscription WHERE subscriber_id = ? OR resource_id = ?", companyId, companyId);
+        jdbc.update("DELETE FROM feed WHERE owner_id = ?", companyId);
+        jdbc.update("DELETE FROM credentials WHERE owner_id = ?", companyId);
+        jdbc.update("DELETE FROM context WHERE company_id = ?", companyId);
+        jdbc.update("DELETE FROM company WHERE id = ?", companyId);
+
+        // Invalidate after commit: a concurrent reader may still see the rows before that and would re-cache them
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 cachingService.invalidateCompanyRecord(businessId);
+                cachingService.invalidateContextRecords(businessId);
+                cachingService.invalidateEntrySummaries(businessId);
+                entryPublicIds.forEach(cachingService::invalidateEntryAndTaskStatuses);
             }
         });
-        return CompanyDeletionResult.of(CompanyDeletionResult.Status.DELETED);
+        return CompanyDeletionResult.deleted(deleted);
     }
 
     public CompanyRecord findById(long id) {

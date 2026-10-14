@@ -459,18 +459,30 @@ public class UiController {
         }
     }
 
+    @GetMapping(path = "/admin/companies/{businessId}/references")
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<Map<String, Long>>> getCompanyReferences(@PathVariable("businessId") String businessId) {
+        return companyHierarchyService.countLinkedData(businessId)
+            .map(Responses::ok)
+            .orElseGet(() -> Responses.notFound(String.format("Company with business id %s does not exist", businessId)));
+    }
+
+    /**
+     * Removes the company and all its linked data. A refusal returns {@code 409} with the reason code
+     * {@code PROTECTED} or {@code IN_PROGRESS} as data.
+     */
     @DeleteMapping(path = "/admin/companies/{businessId}")
     @PreAuthorize("hasAuthority('vaco.admin')")
-    public ResponseEntity<Resource<Map<String, Long>>> deleteCompany(@PathVariable("businessId") String businessId) {
+    public ResponseEntity<Resource<String>> deleteCompany(@PathVariable("businessId") String businessId) {
         CompanyDeletionResult result = companyHierarchyService.deleteCompany(businessId);
         return switch (result.status()) {
             case DELETED -> ResponseEntity.noContent().build();
             case NOT_FOUND -> Responses.notFound(String.format("Company with business id %s does not exist", businessId));
             case PROTECTED -> new ResponseEntity<>(
-                new Resource<>(null, String.format("Company with business id %s cannot be deleted", businessId), null),
+                new Resource<>(result.status().name(), String.format("Company with business id %s cannot be deleted", businessId), null),
                 HttpStatus.CONFLICT);
-            case REFERENCED -> new ResponseEntity<>(
-                new Resource<>(result.references(), String.format("Company with business id %s has linked data", businessId), null),
+            case IN_PROGRESS -> new ResponseEntity<>(
+                new Resource<>(result.status().name(), String.format("Company with business id %s has entries in processing", businessId), null),
                 HttpStatus.CONFLICT);
         };
     }

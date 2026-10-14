@@ -17,14 +17,12 @@ import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -89,78 +87,91 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(updatedCompany.roles(), equalTo(companyToUpdate.roles()));
     }
 
-    static Stream<Arguments> referencingRows() {
-        return Stream.of(
-            Arguments.of("entries", "INSERT INTO entry(format, url, business_id) VALUES ('gtfs', 'http://x', (SELECT business_id FROM company WHERE id = ?))"),
-            Arguments.of("contexts", "INSERT INTO context(context, company_id) VALUES ('ctx', ?)"),
-            Arguments.of("feeds", "INSERT INTO feed(owner_id, format, uri) VALUES (?, 'gtfs', 'http://x')"),
-            Arguments.of("credentials", "INSERT INTO credentials(owner_id, name, type) VALUES (?, 'n', 'HTTP Basic')"),
-            Arguments.of("subscriptions", "INSERT INTO subscription(type, subscriber_id, resource_id) VALUES ('webhook', ?, ?)"));
+    @Test
+    void deleteWithLinkedDataRemovesEveryKindOfLinkedRow() {
+        CompanyRecord company = createCompany("Deleted");
+        CompanyRecord other = createCompany("Other");
+        long credentialsId = insertOwnData(company);
+        linkCompanies(company, other);
+        long entryWithTask = insertEntry(company, "success", null);
+        jdbc.update("INSERT INTO task(entry_id, name, priority) VALUES (?, 'prepare.download', 100)", entryWithTask);
+        insertEntry(company, "errors", credentialsId);
+
+        CompanyDeletionResult result = companyRepository.deleteWithLinkedData(company.businessId());
+
+        assertThat(result.status(), is(CompanyDeletionResult.Status.DELETED));
+        assertThat(result.deleted(), equalTo(Map.of(
+            "entries", 3L,
+            "partnerships", 1L,
+            "ruleset_grants", 2L,
+            "contexts", 1L,
+            "subscriptions", 2L,
+            "feeds", 1L,
+            "credentials", 1L)));
+        assertThat(companyRepository.findByBusinessId(company.businessId()).isPresent(), is(false));
+        assertThat(countEntries(company), is(0L));
+        assertThat(count("SELECT count(*) FROM task WHERE entry_id = ?", entryWithTask), is(0L));
+        assertThat(countContexts(company), is(0L));
+        assertThat(count("SELECT count(*) FROM feed WHERE owner_id = ?", company.id()), is(0L));
+        assertThat(count("SELECT count(*) FROM credentials WHERE owner_id = ?", company.id()), is(0L));
+        assertThat(count("SELECT count(*) FROM subscription WHERE subscriber_id = ? OR resource_id = ?", company.id(), company.id()), is(0L));
+        assertThat(count("SELECT count(*) FROM partnership WHERE partner_a_id = ? OR partner_b_id = ?", company.id(), company.id()), is(0L));
+        assertThat(count("SELECT count(*) FROM ruleset_access WHERE company_id = ?", company.id()), is(0L));
+    }
+
+    @Test
+    void deleteWithLinkedDataKeepsTheOtherCompanysOwnData() {
+        CompanyRecord company = createCompany("Deleted");
+        CompanyRecord other = createCompany("Other");
+        insertOwnData(company);
+        insertOwnData(other);
+        insertEntry(other, "success", null);
+        linkCompanies(company, other);
+
+        companyRepository.deleteWithLinkedData(company.businessId());
+
+        assertThat(companyRepository.findByBusinessId(other.businessId()).isPresent(), is(true));
+        assertThat(countEntries(other), is(2L));
+        assertThat(countContexts(other), is(1L));
+        assertThat(count("SELECT count(*) FROM feed WHERE owner_id = ?", other.id()), is(1L));
+        assertThat(count("SELECT count(*) FROM credentials WHERE owner_id = ?", other.id()), is(1L));
+        assertThat(count("SELECT count(*) FROM ruleset_access WHERE company_id = ?", other.id()), is(2L));
     }
 
     @ParameterizedTest
-    @MethodSource("referencingRows")
-    void deleteIfUnreferencedRefusesWhenLinkedDataExists(String kind, String insertSql) {
-        CompanyRecord company = createCompany("Linked " + kind);
-        jdbc.update(insertSql, insertSql.contains("subscriber_id") ? new Object[] {company.id(), company.id()} : new Object[] {company.id()});
+    @ValueSource(strings = {"received", "processing"})
+    void deleteWithLinkedDataRefusesWhileAnEntryIsUnfinished(String status) {
+        CompanyRecord company = createCompany("Busy");
+        insertOwnData(company);
+        insertEntry(company, status, null);
 
-        CompanyDeletionResult result = companyRepository.deleteIfUnreferenced(company.businessId());
+        CompanyDeletionResult result = companyRepository.deleteWithLinkedData(company.businessId());
 
-        assertThat(result.status(), is(CompanyDeletionResult.Status.REFERENCED));
-        assertThat(result.references(), equalTo(Map.of(kind, 1L)));
+        assertThat(result.status(), is(CompanyDeletionResult.Status.IN_PROGRESS));
         assertThat(companyRepository.findByBusinessId(company.businessId()).isPresent(), is(true));
+        assertThat(countEntries(company), is(2L));
+        assertThat(countContexts(company), is(1L));
     }
 
     @Test
-    void deleteIfUnreferencedRefusesWhenPartnershipExists() {
-        CompanyRecord company = createCompany("Partner");
-        CompanyRecord other = createCompany("Other partner");
-        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, toCompany(company), toCompany(other));
-
-        CompanyDeletionResult result = companyRepository.deleteIfUnreferenced(company.businessId());
-
-        assertThat(result.status(), is(CompanyDeletionResult.Status.REFERENCED));
-        assertThat(result.references(), equalTo(Map.of("partnerships", 1L)));
-    }
-
-    @Test
-    void deleteIfUnreferencedRefusesWhenRulesetGrantExists() {
-        CompanyRecord owner = createCompany("Ruleset owner");
-        CompanyRecord grantee = createCompany("Ruleset grantee");
-        var ruleset = rulesetRepository.createRuleset(
-            owner,
-            ImmutableRuleset.of("GRANT_GUARD_" + owner.businessId(), "Grant guard", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, TransitDataFormat.GTFS));
-        jdbc.update("INSERT INTO ruleset_access(company_id, ruleset_id) VALUES (?, ?)", grantee.id(), ruleset.id());
-
-        CompanyDeletionResult result = companyRepository.deleteIfUnreferenced(grantee.businessId());
-
-        assertThat(result.status(), is(CompanyDeletionResult.Status.REFERENCED));
-        assertThat(result.references(), equalTo(Map.of("ruleset_grants", 1L)));
-    }
-
-    @Test
-    void deleteIfUnreferencedKeepsEntriesThatWouldCascade() {
-        CompanyRecord company = createCompany("With entry");
-        jdbc.update("INSERT INTO entry(format, url, business_id) VALUES ('gtfs', 'http://x', ?)", company.businessId());
-
-        companyRepository.deleteIfUnreferenced(company.businessId());
-
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM entry WHERE business_id = ?", Long.class, company.businessId()), is(1L));
-    }
-
-    @Test
-    void deleteIfUnreferencedDeletesCompanyWithoutLinkedData() {
+    void deleteWithLinkedDataDeletesCompanyWithoutLinkedData() {
         CompanyRecord company = createCompany("Alone");
 
-        CompanyDeletionResult result = companyRepository.deleteIfUnreferenced(company.businessId());
+        CompanyDeletionResult result = companyRepository.deleteWithLinkedData(company.businessId());
 
         assertThat(result.status(), is(CompanyDeletionResult.Status.DELETED));
+        assertThat(result.deleted(), equalTo(Map.of()));
         assertThat(companyRepository.findByBusinessId(company.businessId()).isPresent(), is(false));
     }
 
     @Test
-    void deleteIfUnreferencedReportsMissingCompany() {
-        assertThat(companyRepository.deleteIfUnreferenced("0000000-0").status(), is(CompanyDeletionResult.Status.NOT_FOUND));
+    void deleteWithLinkedDataReportsMissingCompany() {
+        assertThat(companyRepository.deleteWithLinkedData("0000000-0").status(), is(CompanyDeletionResult.Status.NOT_FOUND));
+    }
+
+    @Test
+    void countReferencesIsEmptyForMissingCompany() {
+        assertThat(companyRepository.countReferences("0000000-0").isPresent(), is(false));
     }
 
     @Test
@@ -179,6 +190,56 @@ class CompanyRepositoryIntegrationTests extends SpringBootIntegrationTestBase {
 
         assertThat(companyHierarchyService.findByBusinessId(company.businessId()).isPresent(), is(false));
         assertThat(companyHierarchyService.getHierarchiesContainingCompany(company.businessId()).isEmpty(), is(true));
+    }
+
+    /**
+     * Gives the company one finished entry, one context, one feed, one set of credentials, and one ruleset with a grant.
+     * Returns the credentials id.
+     */
+    private long insertOwnData(CompanyRecord company) {
+        insertEntry(company, "success", null);
+        jdbc.update("INSERT INTO context(context, company_id) VALUES ('ctx', ?)", company.id());
+        jdbc.update("INSERT INTO feed(owner_id, format, uri) VALUES (?, 'gtfs', 'http://x')", company.id());
+        rulesetRepository.createRuleset(
+            company,
+            ImmutableRuleset.of("OWN_" + company.businessId(), "Own", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, TransitDataFormat.GTFS));
+        return jdbc.queryForObject(
+            "INSERT INTO credentials(owner_id, name, type) VALUES (?, 'n', 'HTTP Basic') RETURNING id",
+            Long.class,
+            company.id());
+    }
+
+    /**
+     * Links the company to the other one with a partnership, a subscription in each direction and a grant to the
+     * other company's ruleset.
+     */
+    private void linkCompanies(CompanyRecord company, CompanyRecord other) {
+        companyHierarchyService.createPartnership(PartnershipType.AUTHORITY_PROVIDER, toCompany(other), toCompany(company));
+        jdbc.update("INSERT INTO subscription(type, subscriber_id, resource_id) VALUES ('webhook', ?, ?)", company.id(), other.id());
+        jdbc.update("INSERT INTO subscription(type, subscriber_id, resource_id) VALUES ('webhook', ?, ?)", other.id(), company.id());
+        var ruleset = rulesetRepository.createRuleset(
+            other,
+            ImmutableRuleset.of("SHARED_" + other.businessId(), "Shared", Category.SPECIFIC, RulesetType.VALIDATION_SYNTAX, TransitDataFormat.GTFS));
+        jdbc.update("INSERT INTO ruleset_access(company_id, ruleset_id) VALUES (?, ?)", company.id(), ruleset.id());
+    }
+
+    private long insertEntry(CompanyRecord company, String status, Long credentialsId) {
+        return jdbc.queryForObject(
+            "INSERT INTO entry(format, url, business_id, status, credentials_id) VALUES ('gtfs', 'http://x', ?, ?::status, ?) RETURNING id",
+            Long.class,
+            company.businessId(), status, credentialsId);
+    }
+
+    private long count(String sql, Object... args) {
+        return jdbc.queryForObject(sql, Long.class, args);
+    }
+
+    private long countEntries(CompanyRecord company) {
+        return count("SELECT count(*) FROM entry WHERE business_id = ?", company.businessId());
+    }
+
+    private long countContexts(CompanyRecord company) {
+        return count("SELECT count(*) FROM context WHERE company_id = ?", company.id());
     }
 
     private CompanyRecord createCompany(String name) {
