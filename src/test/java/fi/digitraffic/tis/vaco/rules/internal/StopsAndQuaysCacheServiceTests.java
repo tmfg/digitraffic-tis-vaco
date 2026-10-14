@@ -117,11 +117,7 @@ class StopsAndQuaysCacheServiceTests {
     @Test
     void warmUpOnStartupDownloadsFromS3WhenKeyExists() throws IOException {
         given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(true);
-        given(s3Client.downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class))).willAnswer(invocation -> {
-            Path target = invocation.getArgument(2);
-            writeValidZip(target);
-            return Files.size(target);
-        });
+        stubS3RestoreValidZip(FIXED_INSTANT);
 
         service.warmUpOnStartup();
 
@@ -132,12 +128,36 @@ class StopsAndQuaysCacheServiceTests {
     }
 
     @Test
+    void warmUpOnStartupUsesS3LastModifiedAndReportsStaleWhenCopyIsOlderThanThreshold() throws IOException {
+        given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(true);
+        Instant lastModified = FIXED_INSTANT.minus(Duration.ofHours(31));
+        stubS3RestoreValidZip(lastModified);
+
+        service.warmUpOnStartup();
+
+        assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(lastModified));
+        assertThat(service.isStale(), equalTo(true));
+    }
+
+    @Test
+    void warmUpOnStartupUsesS3LastModifiedAndIsNotStaleWhenCopyIsRecent() throws IOException {
+        given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(true);
+        Instant lastModified = FIXED_INSTANT.minus(Duration.ofHours(2));
+        stubS3RestoreValidZip(lastModified);
+
+        service.warmUpOnStartup();
+
+        assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(lastModified));
+        assertThat(service.isStale(), equalTo(false));
+    }
+
+    @Test
     void warmUpOnStartupFallsThroughToEagerFetchWhenS3CopyFailsValidation() throws IOException {
         given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(true);
         given(s3Client.downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class))).willAnswer(invocation -> {
             Path target = invocation.getArgument(2);
             writeInvalidZip(target);
-            return Files.size(target);
+            return new S3Client.DownloadedFile(Files.size(target), FIXED_INSTANT);
         });
         stubEagerFetchSuccess();
         stubUploadSuccess();
@@ -147,6 +167,25 @@ class StopsAndQuaysCacheServiceTests {
         assertThat(service.currentCacheFile().isPresent(), equalTo(true));
         assertThat(Files.size(service.currentCacheFile().orElseThrow()), greaterThan(0L));
         verify(s3Client).downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
+        verify(vacoHttpClient).downloadFile(any(Path.class), anyString());
+        verify(s3Client).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
+    }
+
+    @Test
+    void warmUpOnStartupFallsThroughToEagerFetchWhenS3CopyHasNoLastModified() throws IOException {
+        given(s3Client.keyExists(eq(vacoProperties.s3PackagesBucket()), anyString())).willReturn(true);
+        given(s3Client.downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class))).willAnswer(invocation -> {
+            Path target = invocation.getArgument(2);
+            writeValidZip(target);
+            return new S3Client.DownloadedFile(Files.size(target), null);
+        });
+        stubEagerFetchSuccess();
+        stubUploadSuccess();
+
+        service.warmUpOnStartup();
+
+        assertThat(service.currentCacheFile().isPresent(), equalTo(true));
+        assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(clock.instant()));
         verify(vacoHttpClient).downloadFile(any(Path.class), anyString());
         verify(s3Client).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
     }
@@ -261,6 +300,14 @@ class StopsAndQuaysCacheServiceTests {
             Path target = invocation.getArgument(0);
             writeValidZip(target);
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.OK).body(target).build());
+        });
+    }
+
+    private void stubS3RestoreValidZip(Instant lastModified) {
+        given(s3Client.downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class))).willAnswer(invocation -> {
+            Path target = invocation.getArgument(2);
+            writeValidZip(target);
+            return new S3Client.DownloadedFile(Files.size(target), lastModified);
         });
     }
 

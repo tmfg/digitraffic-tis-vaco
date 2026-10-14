@@ -104,7 +104,7 @@ public class StopsAndQuaysCacheService {
     private boolean restoreFromS3(String bucket) throws IOException {
         Path tempFile = tempDownloadPath();
         try {
-            s3Client.downloadFile(bucket, CACHE_S3_KEY, tempFile);
+            S3Client.DownloadedFile downloaded = s3Client.downloadFile(bucket, CACHE_S3_KEY, tempFile);
             if (!isValidZip(tempFile)) {
                 logger.warn("Cached stops and quays copy restored from S3 failed validation, falling back to eager fetch");
                 return false;
@@ -112,7 +112,7 @@ public class StopsAndQuaysCacheService {
             Path stableFile = stableCacheFile();
             Files.move(tempFile, stableFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             cachedFile.set(stableFile);
-            lastSuccessfulRefresh.set(clock.instant());
+            lastSuccessfulRefresh.set(downloaded.lastModified());
             return true;
         } finally {
             deleteIfExistsQuietly(tempFile);
