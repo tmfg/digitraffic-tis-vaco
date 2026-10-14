@@ -23,6 +23,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -181,6 +184,33 @@ class StopsAndQuaysCacheServiceTests {
         assertThat(service.currentCacheFile().orElseThrow(), equalTo(firstCacheFile));
         assertThat(Files.readAllBytes(service.currentCacheFile().orElseThrow()), equalTo(firstContent));
         verify(s3Client, times(1)).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
+    }
+
+    @Test
+    void overlappingRefreshesBothCompleteAndLeaveValidCacheFile() throws Exception {
+        CountDownLatch firstDownloadStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirstDownload = new CountDownLatch(1);
+        AtomicInteger downloads = new AtomicInteger();
+        given(vacoHttpClient.downloadFile(any(Path.class), anyString())).willAnswer(invocation -> {
+            Path target = invocation.getArgument(0);
+            writeValidZip(target);
+            if (downloads.incrementAndGet() == 1) {
+                firstDownloadStarted.countDown();
+                assertThat(releaseFirstDownload.await(10, TimeUnit.SECONDS), equalTo(true));
+            }
+            return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.OK).body(target).build());
+        });
+        stubUploadSuccess();
+
+        CompletableFuture<Void> first = CompletableFuture.runAsync(service::scheduledRefresh);
+        assertThat(firstDownloadStarted.await(10, TimeUnit.SECONDS), equalTo(true));
+        service.scheduledRefresh();
+        releaseFirstDownload.countDown();
+        first.get(10, TimeUnit.SECONDS);
+
+        verify(vacoHttpClient, times(2)).downloadFile(any(Path.class), anyString());
+        verify(s3Client, times(2)).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
+        assertThat(Files.size(service.currentCacheFile().orElseThrow()), greaterThan(0L));
     }
 
     @Test

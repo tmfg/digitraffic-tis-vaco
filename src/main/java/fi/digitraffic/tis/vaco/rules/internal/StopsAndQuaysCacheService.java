@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -53,7 +52,6 @@ public class StopsAndQuaysCacheService {
 
     private final AtomicReference<Path> cachedFile = new AtomicReference<>();
     private final AtomicReference<Instant> lastSuccessfulRefresh = new AtomicReference<>();
-    private final ReentrantLock refreshLock = new ReentrantLock();
 
     public StopsAndQuaysCacheService(VacoProperties vacoProperties,
                                      VacoHttpClient vacoHttpClient,
@@ -151,34 +149,26 @@ public class StopsAndQuaysCacheService {
     }
 
     private void refresh() {
-        if (!refreshLock.tryLock()) {
-            logger.info("Stops and quays cache refresh already in progress, skipping concurrent attempt");
-            return;
-        }
+        Path tempFile = tempDownloadPath();
         try {
-            Path tempFile = tempDownloadPath();
-            try {
-                DownloadResponse response = vacoHttpClient.downloadFile(tempFile, vacoProperties.stopsAndQuays().sourceUrl()).join();
-                if (response == null || response.result() != DownloadResponse.Result.OK || response.body().isEmpty()) {
-                    logger.warn("Failed to download stops and quays data, result was {}", response == null ? null : response.result());
-                    return;
-                }
-                if (!isValidZip(tempFile)) {
-                    logger.warn("Downloaded stops and quays data at {} is not a valid zip archive, discarding", tempFile);
-                    return;
-                }
-                Path stableFile = stableCacheFile();
-                Files.move(tempFile, stableFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                cachedFile.set(stableFile);
-                lastSuccessfulRefresh.set(clock.instant());
-                s3Client.uploadFile(vacoProperties.s3PackagesBucket(), CACHE_S3_KEY, stableFile).join();
-            } catch (IOException e) {
-                logger.warn("Failed to refresh stops and quays cache", e);
-            } finally {
-                deleteIfExistsQuietly(tempFile);
+            DownloadResponse response = vacoHttpClient.downloadFile(tempFile, vacoProperties.stopsAndQuays().sourceUrl()).join();
+            if (response == null || response.result() != DownloadResponse.Result.OK || response.body().isEmpty()) {
+                logger.warn("Failed to download stops and quays data, result was {}", response == null ? null : response.result());
+                return;
             }
+            if (!isValidZip(tempFile)) {
+                logger.warn("Downloaded stops and quays data at {} is not a valid zip archive, discarding", tempFile);
+                return;
+            }
+            Path stableFile = stableCacheFile();
+            Files.move(tempFile, stableFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            cachedFile.set(stableFile);
+            lastSuccessfulRefresh.set(clock.instant());
+            s3Client.uploadFile(vacoProperties.s3PackagesBucket(), CACHE_S3_KEY, stableFile).join();
+        } catch (IOException e) {
+            logger.warn("Failed to refresh stops and quays cache", e);
         } finally {
-            refreshLock.unlock();
+            deleteIfExistsQuietly(tempFile);
         }
     }
 
