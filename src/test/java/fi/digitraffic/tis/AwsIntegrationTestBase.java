@@ -29,6 +29,8 @@ import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
+import java.time.Duration;
+
 @Testcontainers
 public abstract class AwsIntegrationTestBase {
 
@@ -72,6 +74,12 @@ public abstract class AwsIntegrationTestBase {
         AwsCredentialsProvider credentialsProvider = awsConfiguration.localCredentials(vacoProperties);
         ClientOverrideConfiguration overrideConfiguration = awsConfiguration.clientOverrideConfiguration();
         ApacheHttpClient.Builder sdkHttpClientBuilder = awsConfiguration.sdkHttpClientBuilder();
+        // CI runners can stall for many seconds while large files are streamed to LocalStack, so the production
+        // 15s API call timeouts are too tight for S3 uploads and downloads in tests
+        ClientOverrideConfiguration s3OverrideConfiguration = overrideConfiguration.toBuilder()
+            .apiCallAttemptTimeout(Duration.ofMinutes(2))
+            .apiCallTimeout(Duration.ofMinutes(2))
+            .build();
 
         kmsClient = KmsClient.builder()
             .region(region)
@@ -91,14 +99,14 @@ public abstract class AwsIntegrationTestBase {
         awsS3Client = software.amazon.awssdk.services.s3.S3Client.builder()
             .region(region)
             .credentialsProvider(credentialsProvider)
-            .overrideConfiguration(overrideConfiguration)
+            .overrideConfiguration(s3OverrideConfiguration)
             .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.S3))
             .build();
 
         s3AsyncClient = S3AsyncClient.builder()
             .region(region)
             .credentialsProvider(credentialsProvider)
-            .overrideConfiguration(overrideConfiguration)
+            .overrideConfiguration(s3OverrideConfiguration)
             .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.S3))
             .httpClient(sdkAsyncHttpClient)
             .build();
