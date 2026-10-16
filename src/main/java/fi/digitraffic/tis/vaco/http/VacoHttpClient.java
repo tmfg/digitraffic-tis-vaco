@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
@@ -46,6 +47,10 @@ public class VacoHttpClient {
 
     private final FeatureFlagsService featureFlagsService;
 
+    private static final long MAX_DOWNLOAD_BYTES = 200L * 1024 * 1024;
+
+    private static final String NO_CACHE = "no-cache";
+
     public VacoHttpClient(HttpClient httpClient,
                           CredentialsService credentialsService,
                           EntryService entryService,
@@ -61,27 +66,41 @@ public class VacoHttpClient {
                                                             Entry entry) {
         logger.info("Downloading {}/{} to {} (eTag {})", entry.publicId(), uri, targetFilePath, entry.etag());
 
+        Map<String, String> requestHeaders = new HashMap<>();
+
+        requestHeaders.put("Accept", "*/*");
+
+        requestHeaders.put("Cache-Control", NO_CACHE);
+        requestHeaders.put("Pragma", NO_CACHE);
+
+        if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
+            logger.debug("Skipping If-None-Match header setting for {}/{} due to feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' being disabled", entry.publicId(), uri);
+        } else if (entry.etag() != null && !entry.etag().isEmpty()) {
+            requestHeaders.put("If-None-Match", entry.etag());
+        }
+
+        if (entry.credentials() != null) {
+            requestHeaders.putAll(addAuthorizationHeader(entry.credentials()));
+        } else {
+            requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
+        }
+
+        return executeDownload(targetFilePath, uri, requestHeaders);
+    }
+
+    public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath, String uri) {
+        logger.info("Downloading {} to {}", uri, targetFilePath);
+
+        Map<String, String> requestHeaders = new HashMap<>();
+        requestHeaders.put("Accept", "*/*");
+        requestHeaders.put("Cache-Control", NO_CACHE);
+        requestHeaders.put("Pragma", NO_CACHE);
+
+        return executeDownload(targetFilePath, uri, requestHeaders);
+    }
+
+    private CompletableFuture<DownloadResponse> executeDownload(Path targetFilePath, String uri, Map<String, String> requestHeaders) {
         try {
-
-            Map<String, String> requestHeaders = new HashMap<>();
-
-            requestHeaders.put("Accept", "*/*");
-
-            requestHeaders.put("Cache-Control", "no-cache");
-            requestHeaders.put("Pragma", "no-cache");
-
-            if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
-                logger.debug("Skipping If-None-Match header setting for {}/{} due to feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' being disabled", entry.publicId(), uri);
-            } else if (entry.etag() != null && !entry.etag().isEmpty()) {
-                requestHeaders.put("If-None-Match", entry.etag());
-            }
-
-            if (entry.credentials() != null) {
-                requestHeaders.putAll(addAuthorizationHeader(entry.credentials()));
-            } else {
-                requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
-            }
-
             HttpRequest request = httpClient.get(uri, requestHeaders);
             HttpResponse.BodyHandler<InputStream> bodyHandler = HttpResponse.BodyHandlers.ofInputStream();
 
@@ -91,22 +110,38 @@ public class VacoHttpClient {
 
                 response.headers().firstValue("ETag").ifPresent(resp::etag);
 
-                logger.info("Response for {} with ETag {} resulted in HTTP status {}", uri, entry.etag(), response.statusCode());
+                logger.info("Response for {} resulted in HTTP status {}", uri, response.statusCode());
 
-                if (response.statusCode() == 304) {
-                    return resp.result(DownloadResponse.Result.NOT_MODIFIED).build();
-                } else {
-                    try {
-                        Files.copy(response.body(), targetFilePath);
-                    } catch (IOException e) {
-                        throw new RuleExecutionException("Failed to write download stream of " + entry.publicId() + "/" + uri + " into file " + targetFilePath, e);
+                try (InputStream body = response.body()) {
+                    if (response.statusCode() == 304) {
+                        return resp.result(DownloadResponse.Result.NOT_MODIFIED).build();
+                    } else {
+                        copyWithSizeLimit(body, targetFilePath, MAX_DOWNLOAD_BYTES);
+                        return resp.result(DownloadResponse.Result.OK).body(targetFilePath).build();
                     }
-                    return resp.result(DownloadResponse.Result.OK).body(targetFilePath).build();
+                } catch (IOException e) {
+                    throw new RuleExecutionException("Failed to write download stream of " + uri + " into file " + targetFilePath, e);
                 }
             });
         } catch (HttpClientException e) {
             logger.warn("HTTP execution failure for %s".formatted(uri), e);
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.FAILED_DOWNLOAD).build());
+        }
+    }
+
+    @VisibleForTesting
+    static void copyWithSizeLimit(InputStream in, Path target, long maxBytes) throws IOException {
+        try (OutputStream out = Files.newOutputStream(target)) {
+            byte[] buffer = new byte[8192];
+            long total = 0;
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                total += read;
+                if (total > maxBytes) {
+                    throw new IOException("Download of " + target + " exceeded maximum allowed size of " + maxBytes + " bytes");
+                }
+                out.write(buffer, 0, read);
+            }
         }
     }
 

@@ -18,6 +18,7 @@ import java.nio.file.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -57,9 +58,24 @@ class S3ClientTests extends AwsIntegrationTestBase {
 
         S3Path path = ImmutableS3Path.of("hello.txt");
         s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), path, inputContent).join();
-        Long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), path, outputContent);
+        long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), path, outputContent).contentLength();
 
-        assertThat(contentLength.intValue(), equalTo(content.length()));
+        assertThat((int) contentLength, equalTo(content.length()));
+        assertThat(Files.readString(outputContent), equalTo(content));
+    }
+
+    @Test
+    void downloadFileReturnsContentLengthAndLastModified() throws IOException {
+        String content = "Metadata, traveller!";
+        Path inputContent = writeContent(inputs.resolve("metadata.txt"), content);
+        Path outputContent = outputs.resolve("metadata.txt");
+
+        S3Path path = ImmutableS3Path.of("metadata.txt");
+        s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), path, inputContent).join();
+        S3Client.DownloadedFile downloaded = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), path, outputContent);
+
+        assertThat(downloaded.contentLength(), equalTo((long) content.length()));
+        assertThat(downloaded.lastModified(), notNullValue());
         assertThat(Files.readString(outputContent), equalTo(content));
     }
 
@@ -113,7 +129,7 @@ class S3ClientTests extends AwsIntegrationTestBase {
 
         S3Path path = ImmutableS3Path.of(zipName);
         PutObjectResponse r = s3Client.uploadFile(vacoProperties.s3ProcessingBucket(), path, inputContent).join();
-        Long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), path, outputContent);
+        long contentLength = s3Client.downloadFile(vacoProperties.s3ProcessingBucket(), path, outputContent).contentLength();
 
         assertArrayEquals(Files.readAllBytes(inputContent), Files.readAllBytes(outputContent));
         assertThat(contentLength, equalTo(15795732L));

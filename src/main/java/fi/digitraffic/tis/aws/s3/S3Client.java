@@ -4,6 +4,7 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -22,6 +23,7 @@ import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -88,9 +90,9 @@ public class S3Client {
             .completionFuture();
     }
 
-    public Long downloadFile(String bucketName,
-                             S3Path key,
-                             Path downloadTargetPath) {
+    public DownloadedFile downloadFile(String bucketName,
+                                       S3Path key,
+                                       Path downloadTargetPath) {
         try {
             Files.createDirectories(downloadTargetPath.getParent());
         } catch (IOException e) {
@@ -106,9 +108,9 @@ public class S3Client {
 
         FileDownload downloadFile = s3TransferManager.downloadFile(downloadFileRequest);
 
-        CompletedFileDownload downloadResult = downloadFile.completionFuture().join();
-
-        return downloadResult.response().contentLength();
+        CompletedFileDownload completed = downloadFile.completionFuture().join();
+        GetObjectResponse response = completed.response();
+        return new DownloadedFile(response.contentLength(), response.lastModified());
     }
 
     /**
@@ -153,6 +155,12 @@ public class S3Client {
         }
 
         return false;
+    }
+
+    public record DownloadedFile(long contentLength, Instant lastModified) {
+        public DownloadedFile {
+            Objects.requireNonNull(lastModified, "S3 object has no last modified timestamp");
+        }
     }
 }
 

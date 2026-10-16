@@ -20,7 +20,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -36,10 +39,13 @@ import java.util.concurrent.ExecutionException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -103,6 +109,83 @@ class VacoHttpClientTests {
 
         assertThat(headersCaptor.getValue().get("Cache-Control"), equalTo("no-cache"));
         assertThat(headersCaptor.getValue().get("Pragma"), equalTo("no-cache"));
+    }
+
+    @Test
+    void downloadFileWithoutEntryWritesResponseBodyAndReturnsOk() throws IOException, ExecutionException, InterruptedException {
+        // targetFilePath must not already exist, matching how real callers (e.g. TempFiles.getTaskTempFile)
+        // construct it: Files.copy(InputStream, Path) throws FileAlreadyExistsException otherwise.
+        Path targetFilePath = Files.createTempDirectory(getClass().getSimpleName()).resolve("downloaded.ignored");
+        byte[] stubResponseBody = "stops and quays payload".getBytes(StandardCharsets.UTF_8);
+        InputStream spyBody = spy(new ByteArrayInputStream(stubResponseBody));
+
+        when(httpClient.get(eq("https://example.org"), headersCaptor.capture())).thenReturn(mockRequest);
+        when(httpClient.send(eq(mockRequest), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResponse));
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn(spyBody);
+        when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
+
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org");
+
+        assertThat(r.isDone(), equalTo(true));
+        assertThat(r.get().result(), equalTo(DownloadResponse.Result.OK));
+        assertThat(Files.readAllBytes(targetFilePath), equalTo(stubResponseBody));
+        assertThat(headersCaptor.getValue().containsKey("If-None-Match"), equalTo(false));
+        assertThat(headersCaptor.getValue().containsKey("Authorization"), equalTo(false));
+        verify(spyBody).close();
+    }
+
+    @Test
+    void downloadFileWithoutEntryClosesResponseBodyOnNotModified() throws IOException, ExecutionException, InterruptedException {
+        Path targetFilePath = Files.createTempDirectory(getClass().getSimpleName()).resolve("downloaded.ignored");
+        InputStream spyBody = spy(new ByteArrayInputStream(new byte[0]));
+
+        when(httpClient.get(eq("https://example.org"), headersCaptor.capture())).thenReturn(mockRequest);
+        when(httpClient.send(eq(mockRequest), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResponse));
+        when(mockResponse.statusCode()).thenReturn(304);
+        when(mockResponse.body()).thenReturn(spyBody);
+        when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
+
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org");
+
+        assertThat(r.isDone(), equalTo(true));
+        assertThat(r.get().result(), equalTo(DownloadResponse.Result.NOT_MODIFIED));
+        verify(spyBody).close();
+    }
+
+    @Test
+    void copyWithSizeLimitThrowsAndDoesNotWriteFullStreamWhenExceedingCap() throws IOException {
+        byte[] data = new byte[20];
+        long cap = 10L;
+        Path target = Files.createTempDirectory(getClass().getSimpleName()).resolve("capped.ignored");
+
+        assertThrows(IOException.class, () -> VacoHttpClient.copyWithSizeLimit(new ByteArrayInputStream(data), target, cap));
+
+        if (Files.exists(target)) {
+            assertTrue(Files.size(target) <= cap);
+        }
+    }
+
+    @Test
+    void copyWithSizeLimitCopiesStreamWhenUnderCap() throws IOException {
+        byte[] data = "small payload".getBytes(StandardCharsets.UTF_8);
+        Path target = Files.createTempDirectory(getClass().getSimpleName()).resolve("capped.ignored");
+
+        VacoHttpClient.copyWithSizeLimit(new ByteArrayInputStream(data), target, 1024L);
+
+        assertThat(Files.readAllBytes(target), equalTo(data));
+    }
+
+    @Test
+    void downloadFileWithoutEntryHandlesHttpClientExceptionsGracefully() throws IOException, ExecutionException, InterruptedException {
+        when(httpClient.get(any(String.class), any(Map.class))).thenThrow(new HttpClientException("simulated http client error"));
+
+        Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
+
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org");
+
+        assertThat(r.isDone(), equalTo(true));
+        assertThat(r.get().result(), equalTo(DownloadResponse.Result.FAILED_DOWNLOAD));
     }
 
     @Test
