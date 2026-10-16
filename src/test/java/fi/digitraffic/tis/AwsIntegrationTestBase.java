@@ -101,6 +101,7 @@ public abstract class AwsIntegrationTestBase {
             .credentialsProvider(credentialsProvider)
             .overrideConfiguration(s3OverrideConfiguration)
             .endpointOverride(localstack.getEndpointOverride(LocalStackContainer.Service.S3))
+            .httpClientBuilder(sdkHttpClientBuilder)
             .build();
 
         s3AsyncClient = S3AsyncClient.builder()

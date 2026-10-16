@@ -9,6 +9,8 @@ import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
+import fi.digitraffic.tis.vaco.company.dto.CompanyDeletionResult;
+import fi.digitraffic.tis.vaco.company.dto.CreateCompanyRequest;
 import fi.digitraffic.tis.vaco.company.dto.PartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
@@ -54,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -440,6 +443,48 @@ public class UiController {
                         null, Map.of())); })
             .orElseGet(() ->
                 Responses.notFound((String.format("Company with business id %s either does not exist or not authorized to be accessed", businessId))));
+    }
+
+    @PostMapping(path = "/admin/companies")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<Company>> createCompany(@Valid @RequestBody CreateCompanyRequest request) {
+        Company company = request.toCompany();
+        try {
+            return companyHierarchyService.createCompany(company)
+                .map(created -> ResponseEntity.ok(Resource.resource(created)))
+                .orElseGet(() -> Responses.conflict(String.format("Company with business id %s already exists", company.businessId())));
+        } catch (DuplicateKeyException _) {
+            return Responses.conflict(String.format("Company with business id %s already exists", company.businessId()));
+        }
+    }
+
+    @GetMapping(path = "/admin/companies/{businessId}/references")
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<Map<String, Long>>> getCompanyReferences(@PathVariable("businessId") String businessId) {
+        return companyHierarchyService.countLinkedData(businessId)
+            .map(Responses::ok)
+            .orElseGet(() -> Responses.notFound(String.format("Company with business id %s does not exist", businessId)));
+    }
+
+    /**
+     * Removes the company and all its linked data. A refusal returns {@code 409} with the reason code
+     * {@code PROTECTED} or {@code IN_PROGRESS} as data.
+     */
+    @DeleteMapping(path = "/admin/companies/{businessId}")
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<String>> deleteCompany(@PathVariable("businessId") String businessId) {
+        CompanyDeletionResult result = companyHierarchyService.deleteCompany(businessId);
+        return switch (result.status()) {
+            case DELETED -> ResponseEntity.noContent().build();
+            case NOT_FOUND -> Responses.notFound(String.format("Company with business id %s does not exist", businessId));
+            case PROTECTED -> new ResponseEntity<>(
+                new Resource<>(result.status().name(), String.format("Company with business id %s cannot be deleted", businessId), null),
+                HttpStatus.CONFLICT);
+            case IN_PROGRESS -> new ResponseEntity<>(
+                new Resource<>(result.status().name(), String.format("Company with business id %s has entries in processing", businessId), null),
+                HttpStatus.CONFLICT);
+        };
     }
 
     @PostMapping(path = "/admin/partnership")

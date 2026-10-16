@@ -6,8 +6,11 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
+import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.servlet.MvcResult;
@@ -17,15 +20,135 @@ import java.util.Base64;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
+    private static final String COMPANIES_PATH = "/ui/admin/companies";
+
     @Autowired
     private EncryptionService encryptionService;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    private void signInAsAdmin() {
+        String oid = "Admin Adminson";
+        SecurityContextHolder.getContext().setAuthentication(TestObjects.jwtAdminAuthenticationToken(oid));
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId("2942108-7").get()));
+    }
+
+    private static String newBusinessId() {
+        int[] weights = {7, 9, 10, 5, 8, 4, 2};
+        while (true) {
+            String base = String.format("%07d", java.util.concurrent.ThreadLocalRandom.current().nextInt(1_000_000, 9_999_999));
+            int sum = 0;
+            for (int i = 0; i < 7; i++) {
+                sum += (base.charAt(i) - '0') * weights[i];
+            }
+            int remainder = sum % 11;
+            if (remainder != 1) {
+                return base + "-" + (remainder == 0 ? 0 : 11 - remainder);
+            }
+        }
+    }
+
+    @Test
+    void adminCanAddCompany() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+
+        MvcResult result = apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Kuljetus Lakkapää Oy", true))))
+            .andExpect(status().isOk()).andReturn();
+
+        assertThat(apiResponse(result).get("data").get("businessId").stringValue(), equalTo(id));
+    }
+
+    @Test
+    void addingDuplicateCompanyIsConflict() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isOk());
+
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isConflict());
+    }
+
+    @Test
+    void addingCompanyWithBadBusinessIdOrBlankNameIsBadRequest() throws Exception {
+        signInAsAdmin();
+
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of("1234567", "No check digit", true))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'businessId'")));
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of("2499374-9", "Wrong check digit", true))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'businessId'")));
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(newBusinessId(), " ", true))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'name'")));
+    }
+
+    @Test
+    void adminCanDeleteCompanyWithLinkedData() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Short lived", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'success')", id);
+
+        apiCall(delete(COMPANIES_PATH + "/" + id)).andExpect(status().isNoContent());
+
+        assertThat(companyHierarchyService.findByBusinessId(id).isPresent(), equalTo(false));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM entry WHERE business_id = ?", Long.class, id), equalTo(0L));
+    }
+
+    @Test
+    void adminCanCountLinkedData() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Has data", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'success')", id);
+
+        apiCall(get(COMPANIES_PATH + "/" + id + "/references"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.entries").value(1));
+        apiCall(get(COMPANIES_PATH + "/" + newBusinessId() + "/references")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deletingMissingCompanyIsNotFound() throws Exception {
+        signInAsAdmin();
+
+        apiCall(delete(COMPANIES_PATH + "/" + newBusinessId())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deletingCompanyWithUnfinishedEntryIsConflictWithReason() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Busy", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'processing')", id);
+
+        apiCall(delete(COMPANIES_PATH + "/" + id))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.data").value("IN_PROGRESS"));
+
+        assertThat(companyHierarchyService.findByBusinessId(id).isPresent(), equalTo(true));
+    }
+
+    @Test
+    void deletingProtectedCompanyIsConflictWithReason() throws Exception {
+        signInAsAdmin();
+
+        apiCall(delete(COMPANIES_PATH + "/" + Constants.FINTRAFFIC_BUSINESS_ID))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.data").value("PROTECTED"));
+    }
 
     @Test
     void canFetchEntryStateWithPublicId() throws Exception {
