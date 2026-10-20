@@ -85,10 +85,15 @@ public class VacoHttpClient {
             requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
         }
 
-        return executeDownload(targetFilePath, uri, requestHeaders);
+        return executeDownload(targetFilePath, uri, requestHeaders, MAX_DOWNLOAD_BYTES);
     }
 
-    public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath, String uri) {
+    /**
+     * Downloads a file without entry credentials or ETag handling, limited to {@code maxBytes} (inclusive). If the
+     * body is larger, the returned future completes exceptionally with a {@link RuleExecutionException} and the target
+     * file may be left partly written, so the caller must clean it up.
+     */
+    public CompletableFuture<DownloadResponse> downloadWithLimit(Path targetFilePath, String uri, long maxBytes) {
         logger.info("Downloading {} to {}", uri, targetFilePath);
 
         Map<String, String> requestHeaders = new HashMap<>();
@@ -96,10 +101,13 @@ public class VacoHttpClient {
         requestHeaders.put("Cache-Control", NO_CACHE);
         requestHeaders.put("Pragma", NO_CACHE);
 
-        return executeDownload(targetFilePath, uri, requestHeaders);
+        return executeDownload(targetFilePath, uri, requestHeaders, maxBytes);
     }
 
-    private CompletableFuture<DownloadResponse> executeDownload(Path targetFilePath, String uri, Map<String, String> requestHeaders) {
+    private CompletableFuture<DownloadResponse> executeDownload(Path targetFilePath,
+                                                                 String uri,
+                                                                 Map<String, String> requestHeaders,
+                                                                 long maxBytes) {
         try {
             HttpRequest request = httpClient.get(uri, requestHeaders);
             HttpResponse.BodyHandler<InputStream> bodyHandler = HttpResponse.BodyHandlers.ofInputStream();
@@ -116,7 +124,7 @@ public class VacoHttpClient {
                     if (response.statusCode() == 304) {
                         return resp.result(DownloadResponse.Result.NOT_MODIFIED).build();
                     } else {
-                        copyWithSizeLimit(body, targetFilePath, MAX_DOWNLOAD_BYTES);
+                        copyWithSizeLimit(body, targetFilePath, maxBytes);
                         return resp.result(DownloadResponse.Result.OK).body(targetFilePath).build();
                     }
                 } catch (IOException e) {
