@@ -61,6 +61,9 @@ public class VacoHttpClient {
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
+    /**
+     * Downloads an entry feed (used by DownloadRule), applying the entry's credentials and ETag (see {@link #downloadWithLimit} for plain downloads).
+     */
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
                                                             Entry entry) {
