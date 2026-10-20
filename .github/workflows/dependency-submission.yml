@@ -1,0 +1,35 @@
+name: Submit dependency graph
+
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+
+permissions:
+  # Required to submit the dependency snapshot through the Dependency Submission API.
+  contents: write
+
+jobs:
+  submit:
+    name: Submit Maven dependency graph
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          # Maven runs in this job, so do not leave the write-capable token in .git/config.
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version-file: '.java-version'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Submit Maven dependency graph
+        uses: advanced-security/maven-dependency-submission-action@a64327a7329c9939cf675e458452febe1894a70c # v6.0.1
+        with:
+          # The wrapper pins Maven 3.8.7, while CI uses the runner's mvn.
+          ignore-maven-wrapper: true
