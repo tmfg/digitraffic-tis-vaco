@@ -43,6 +43,7 @@ public class StopsAndQuaysCacheService {
     private static final int STARTUP_FETCH_ATTEMPTS = 3;
     private static final Duration STARTUP_RETRY_DELAY = Duration.ofSeconds(3);
     private static final int MAX_ZIP_ENTRIES = 10_000;
+    private static final long MAX_DOWNLOAD_BYTES = 200L * 1024 * 1024;
     private static final Duration STALE_AFTER = Duration.ofHours(30);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -184,7 +185,7 @@ public class StopsAndQuaysCacheService {
     private boolean refresh() {
         Path tempFile = tempDownloadPath();
         try {
-            DownloadResponse response = vacoHttpClient.downloadFile(tempFile, vacoProperties.stopsAndQuays().sourceUrl()).join();
+            DownloadResponse response = vacoHttpClient.downloadWithLimit(tempFile, vacoProperties.stopsAndQuays().sourceUrl(), MAX_DOWNLOAD_BYTES).join();
             if (response == null || response.result() != DownloadResponse.Result.OK || response.body().isEmpty()) {
                 logger.warn("Failed to download stops and quays data, result was {}", response == null ? null : response.result());
                 return false;

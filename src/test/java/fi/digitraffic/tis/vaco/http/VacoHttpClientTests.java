@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.NotificationResponse;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -112,7 +114,24 @@ class VacoHttpClientTests {
     }
 
     @Test
-    void downloadFileWithoutEntryWritesResponseBodyAndReturnsOk() throws IOException, ExecutionException, InterruptedException {
+    void downloadFileWithEntryDoesNotLimitBodySize() throws ExecutionException, InterruptedException {
+        given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
+        given(credentialsService.findMatchingCredentials(entry.businessId(), "https://example.org")).willReturn(Optional.empty());
+
+        when(httpClient.get(eq("https://example.org"), headersCaptor.capture())).thenReturn(mockRequest);
+        when(httpClient.send(eq(mockRequest), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResponse));
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn(new VirtualInputStream(200L * 1024 * 1024 + 1));
+        when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
+
+        // /dev/null avoids writing 200 MiB to disk; this assumes a Unix-like system (Linux or macOS).
+        CompletableFuture<DownloadResponse> result = vacoClient.downloadFile(Path.of("/dev/null"), "https://example.org", entry);
+
+        assertThat(result.get().result(), equalTo(DownloadResponse.Result.OK));
+    }
+
+    @Test
+    void downloadWithLimitWritesResponseBodyAndReturnsOk() throws IOException, ExecutionException, InterruptedException {
         // targetFilePath must not already exist, matching how real callers (e.g. TempFiles.getTaskTempFile)
         // construct it: Files.copy(InputStream, Path) throws FileAlreadyExistsException otherwise.
         Path targetFilePath = Files.createTempDirectory(getClass().getSimpleName()).resolve("downloaded.ignored");
@@ -125,7 +144,7 @@ class VacoHttpClientTests {
         when(mockResponse.body()).thenReturn(spyBody);
         when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
 
-        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org");
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadWithLimit(targetFilePath, "https://example.org", 1024L);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().result(), equalTo(DownloadResponse.Result.OK));
@@ -136,7 +155,7 @@ class VacoHttpClientTests {
     }
 
     @Test
-    void downloadFileWithoutEntryClosesResponseBodyOnNotModified() throws IOException, ExecutionException, InterruptedException {
+    void downloadWithLimitClosesResponseBodyOnNotModified() throws IOException, ExecutionException, InterruptedException {
         Path targetFilePath = Files.createTempDirectory(getClass().getSimpleName()).resolve("downloaded.ignored");
         InputStream spyBody = spy(new ByteArrayInputStream(new byte[0]));
 
@@ -146,7 +165,7 @@ class VacoHttpClientTests {
         when(mockResponse.body()).thenReturn(spyBody);
         when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
 
-        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org");
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadWithLimit(targetFilePath, "https://example.org", 1024L);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().result(), equalTo(DownloadResponse.Result.NOT_MODIFIED));
@@ -177,12 +196,50 @@ class VacoHttpClientTests {
     }
 
     @Test
-    void downloadFileWithoutEntryHandlesHttpClientExceptionsGracefully() throws IOException, ExecutionException, InterruptedException {
+    void downloadWithLimitFailsWhenBodyExceedsLimit() throws IOException {
+        Path targetFilePath = Files.createTempDirectory(getClass().getSimpleName()).resolve("downloaded.ignored");
+        byte[] stubResponseBody = new byte[20];
+        InputStream spyBody = spy(new ByteArrayInputStream(stubResponseBody));
+
+        when(httpClient.get(eq("https://example.org"), headersCaptor.capture())).thenReturn(mockRequest);
+        when(httpClient.send(eq(mockRequest), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResponse));
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn(spyBody);
+        when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
+
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadWithLimit(targetFilePath, "https://example.org", 10L);
+
+        CompletionException exception = assertThrows(CompletionException.class, r::join);
+        assertTrue(exception.getCause() instanceof RuleExecutionException);
+        verify(spyBody).close();
+    }
+
+    @Test
+    void downloadWithLimitWritesFullBodyWhenWithinLimit() throws IOException, ExecutionException, InterruptedException {
+        Path targetFilePath = Files.createTempDirectory(getClass().getSimpleName()).resolve("downloaded.ignored");
+        byte[] stubResponseBody = new byte[20];
+        InputStream spyBody = spy(new ByteArrayInputStream(stubResponseBody));
+
+        when(httpClient.get(eq("https://example.org"), headersCaptor.capture())).thenReturn(mockRequest);
+        when(httpClient.send(eq(mockRequest), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResponse));
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn(spyBody);
+        when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
+
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadWithLimit(targetFilePath, "https://example.org", 20L);
+
+        assertThat(r.get().result(), equalTo(DownloadResponse.Result.OK));
+        assertThat(Files.readAllBytes(targetFilePath), equalTo(stubResponseBody));
+        verify(spyBody).close();
+    }
+
+    @Test
+    void downloadWithLimitHandlesHttpClientExceptionsGracefully() throws IOException, ExecutionException, InterruptedException {
         when(httpClient.get(any(String.class), any(Map.class))).thenThrow(new HttpClientException("simulated http client error"));
 
         Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
 
-        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org");
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadWithLimit(targetFilePath, "https://example.org", 1024L);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().result(), equalTo(DownloadResponse.Result.FAILED_DOWNLOAD));
@@ -234,6 +291,34 @@ class VacoHttpClientTests {
     private void stubResponse(int stubStatusCode, byte[] stubResponseBody) {
         when(mockResponse.statusCode()).thenReturn(stubStatusCode);
         when(mockResponse.body()).thenReturn(stubResponseBody);
+    }
+
+    private static final class VirtualInputStream extends InputStream {
+
+        private long remaining;
+
+        private VirtualInputStream(long size) {
+            this.remaining = size;
+        }
+
+        @Override
+        public int read() {
+            if (remaining == 0) {
+                return -1;
+            }
+            remaining--;
+            return 0;
+        }
+
+        @Override
+        public int read(byte[] bytes, int offset, int length) {
+            if (remaining == 0) {
+                return -1;
+            }
+            int read = (int) Math.min(length, remaining);
+            remaining -= read;
+            return read;
+        }
     }
 
 }

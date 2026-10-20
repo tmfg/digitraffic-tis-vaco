@@ -7,6 +7,7 @@ import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.http.VacoHttpClient;
 import fi.digitraffic.tis.vaco.http.model.DownloadResponse;
 import fi.digitraffic.tis.vaco.http.model.ImmutableDownloadResponse;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +39,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -110,6 +112,16 @@ class StopsAndQuaysCacheServiceTests {
     }
 
     @Test
+    void refreshDownloadsWithTwoHundredMebibyteLimit() {
+        stubEagerFetchSuccess();
+        stubUploadSuccess();
+
+        service.scheduledRefresh();
+
+        verify(vacoHttpClient).downloadWithLimit(any(Path.class), anyString(), eq(200L * 1024 * 1024));
+    }
+
+    @Test
     void scheduledRefreshFailedDownloadLeavesCacheUntouched() throws IOException {
         stubEagerFetchSuccess();
         stubUploadSuccess();
@@ -117,10 +129,28 @@ class StopsAndQuaysCacheServiceTests {
         Path firstCacheFile = service.currentCacheFile().orElseThrow();
         byte[] firstContent = Files.readAllBytes(firstCacheFile);
 
-        given(vacoHttpClient.downloadFile(any(Path.class), anyString()))
+        given(vacoHttpClient.downloadWithLimit(any(Path.class), anyString(), anyLong()))
             .willReturn(CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.FAILED_DOWNLOAD).build()));
 
         service.scheduledRefresh();
+
+        assertThat(service.currentCacheFile().orElseThrow(), equalTo(firstCacheFile));
+        assertThat(Files.readAllBytes(service.currentCacheFile().orElseThrow()), equalTo(firstContent));
+        verify(s3Client, times(1)).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
+    }
+
+    @Test
+    void refreshKeepsPreviousCacheWhenDownloadExceedsSizeLimit() throws IOException {
+        stubEagerFetchSuccess();
+        stubUploadSuccess();
+        service.scheduledRefresh();
+        Path firstCacheFile = service.currentCacheFile().orElseThrow();
+        byte[] firstContent = Files.readAllBytes(firstCacheFile);
+
+        given(vacoHttpClient.downloadWithLimit(any(Path.class), anyString(), anyLong()))
+            .willReturn(CompletableFuture.failedFuture(new RuleExecutionException("too large", new IOException("exceeded maximum allowed size"))));
+
+        assertDoesNotThrow(service::scheduledRefresh);
 
         assertThat(service.currentCacheFile().orElseThrow(), equalTo(firstCacheFile));
         assertThat(Files.readAllBytes(service.currentCacheFile().orElseThrow()), equalTo(firstContent));
@@ -135,7 +165,7 @@ class StopsAndQuaysCacheServiceTests {
         Path firstCacheFile = service.currentCacheFile().orElseThrow();
         byte[] firstContent = Files.readAllBytes(firstCacheFile);
 
-        given(vacoHttpClient.downloadFile(any(Path.class), anyString())).willAnswer(invocation -> {
+        given(vacoHttpClient.downloadWithLimit(any(Path.class), anyString(), anyLong())).willAnswer(invocation -> {
             Path target = invocation.getArgument(0);
             writeInvalidZip(target);
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.OK).body(target).build());
@@ -158,7 +188,7 @@ class StopsAndQuaysCacheServiceTests {
         assertThat(service.currentCacheFile().isPresent(), equalTo(true));
         assertThat(Files.size(service.currentCacheFile().orElseThrow()), greaterThan(0L));
         verify(s3Client).downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
-        verify(vacoHttpClient, never()).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient, never()).downloadWithLimit(any(Path.class), anyString(), anyLong());
     }
 
     @Test
@@ -167,7 +197,7 @@ class StopsAndQuaysCacheServiceTests {
         Instant lastModified = FIXED_INSTANT.minus(Duration.ofHours(31));
         stubS3RestoreValidZip(lastModified);
         // Interrupting the worker after the failed attempt makes the retry loop abort instead of sleeping between attempts.
-        given(vacoHttpClient.downloadFile(any(Path.class), anyString())).willAnswer(invocation -> {
+        given(vacoHttpClient.downloadWithLimit(any(Path.class), anyString(), anyLong())).willAnswer(invocation -> {
             Thread.currentThread().interrupt();
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.FAILED_DOWNLOAD).build());
         });
@@ -178,7 +208,7 @@ class StopsAndQuaysCacheServiceTests {
             Thread.interrupted();
         }
 
-        verify(vacoHttpClient, times(1)).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient, times(1)).downloadWithLimit(any(Path.class), anyString(), anyLong());
         assertThat(entryName(service.currentCacheFile().orElseThrow()), equalTo(S3_ENTRY_NAME));
         assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(lastModified));
         assertThat(service.isStale(), equalTo(true));
@@ -193,7 +223,7 @@ class StopsAndQuaysCacheServiceTests {
 
         service.warmUpOnStartup();
 
-        verify(vacoHttpClient, times(1)).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient, times(1)).downloadWithLimit(any(Path.class), anyString(), anyLong());
         assertThat(entryName(service.currentCacheFile().orElseThrow()), equalTo(KOOSTE_ENTRY_NAME));
         assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(clock.instant()));
         assertThat(service.isStale(), equalTo(false));
@@ -214,7 +244,7 @@ class StopsAndQuaysCacheServiceTests {
 
         service.warmUpOnStartup();
 
-        verify(vacoHttpClient, times(1)).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient, times(1)).downloadWithLimit(any(Path.class), anyString(), anyLong());
         assertThat(entryName(service.currentCacheFile().orElseThrow()), equalTo(KOOSTE_ENTRY_NAME));
         assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(clock.instant()));
     }
@@ -228,7 +258,7 @@ class StopsAndQuaysCacheServiceTests {
 
         service.warmUpOnStartup();
 
-        verify(vacoHttpClient, times(1)).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient, times(1)).downloadWithLimit(any(Path.class), anyString(), anyLong());
         assertThat(service.currentCacheFile().isPresent(), equalTo(true));
         assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(clock.instant()));
     }
@@ -243,7 +273,7 @@ class StopsAndQuaysCacheServiceTests {
 
         assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(lastModified));
         assertThat(service.isStale(), equalTo(false));
-        verify(vacoHttpClient, never()).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient, never()).downloadWithLimit(any(Path.class), anyString(), anyLong());
     }
 
     @Test
@@ -262,7 +292,7 @@ class StopsAndQuaysCacheServiceTests {
         assertThat(service.currentCacheFile().isPresent(), equalTo(true));
         assertThat(Files.size(service.currentCacheFile().orElseThrow()), greaterThan(0L));
         verify(s3Client).downloadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
-        verify(vacoHttpClient).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient).downloadWithLimit(any(Path.class), anyString(), anyLong());
         verify(s3Client).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
     }
 
@@ -281,7 +311,7 @@ class StopsAndQuaysCacheServiceTests {
 
         assertThat(service.currentCacheFile().isPresent(), equalTo(true));
         assertThat(service.lastSuccessfulRefreshAt().orElseThrow(), equalTo(clock.instant()));
-        verify(vacoHttpClient).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient).downloadWithLimit(any(Path.class), anyString(), anyLong());
         verify(s3Client).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
     }
 
@@ -294,7 +324,7 @@ class StopsAndQuaysCacheServiceTests {
         service.warmUpOnStartup();
 
         assertThat(service.currentCacheFile().isPresent(), equalTo(true));
-        verify(vacoHttpClient).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient).downloadWithLimit(any(Path.class), anyString(), anyLong());
         verify(s3Client).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
         verify(s3Client, never()).downloadFile(anyString(), any(S3Path.class), any(Path.class));
     }
@@ -307,7 +337,7 @@ class StopsAndQuaysCacheServiceTests {
         Path firstCacheFile = service.currentCacheFile().orElseThrow();
         byte[] firstContent = Files.readAllBytes(firstCacheFile);
 
-        given(vacoHttpClient.downloadFile(any(Path.class), anyString())).willAnswer(invocation -> {
+        given(vacoHttpClient.downloadWithLimit(any(Path.class), anyString(), anyLong())).willAnswer(invocation -> {
             Path target = invocation.getArgument(0);
             writeZipExceedingEntryLimit(target);
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.OK).body(target).build());
@@ -325,7 +355,7 @@ class StopsAndQuaysCacheServiceTests {
         CountDownLatch firstDownloadStarted = new CountDownLatch(1);
         CountDownLatch releaseFirstDownload = new CountDownLatch(1);
         AtomicInteger downloads = new AtomicInteger();
-        given(vacoHttpClient.downloadFile(any(Path.class), anyString())).willAnswer(invocation -> {
+        given(vacoHttpClient.downloadWithLimit(any(Path.class), anyString(), anyLong())).willAnswer(invocation -> {
             Path target = invocation.getArgument(0);
             writeValidZip(target);
             if (downloads.incrementAndGet() == 1) {
@@ -342,7 +372,7 @@ class StopsAndQuaysCacheServiceTests {
         releaseFirstDownload.countDown();
         first.get(10, TimeUnit.SECONDS);
 
-        verify(vacoHttpClient, times(2)).downloadFile(any(Path.class), anyString());
+        verify(vacoHttpClient, times(2)).downloadWithLimit(any(Path.class), anyString(), anyLong());
         verify(s3Client, times(2)).uploadFile(eq(vacoProperties.s3PackagesBucket()), any(S3Path.class), any(Path.class));
         assertThat(Files.size(service.currentCacheFile().orElseThrow()), greaterThan(0L));
     }
@@ -391,7 +421,7 @@ class StopsAndQuaysCacheServiceTests {
     }
 
     private void stubEagerFetchSuccess() {
-        given(vacoHttpClient.downloadFile(any(Path.class), anyString())).willAnswer(invocation -> {
+        given(vacoHttpClient.downloadWithLimit(any(Path.class), anyString(), anyLong())).willAnswer(invocation -> {
             Path target = invocation.getArgument(0);
             writeValidZip(target);
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.OK).body(target).build());

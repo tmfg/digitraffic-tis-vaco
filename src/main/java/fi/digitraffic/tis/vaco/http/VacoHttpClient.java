@@ -47,9 +47,9 @@ public class VacoHttpClient {
 
     private final FeatureFlagsService featureFlagsService;
 
-    private static final long MAX_DOWNLOAD_BYTES = 200L * 1024 * 1024;
-
     private static final String NO_CACHE = "no-cache";
+
+    private static final long NO_SIZE_LIMIT = Long.MAX_VALUE;
 
     public VacoHttpClient(HttpClient httpClient,
                           CredentialsService credentialsService,
@@ -61,6 +61,10 @@ public class VacoHttpClient {
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
+    /**
+     * Downloads an entry feed, applying the entry's credentials and ETag handling. The body size is not limited; see
+     * {@link #downloadWithLimit} for a capped download without entry handling.
+     */
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
                                                             Entry entry) {
@@ -85,10 +89,15 @@ public class VacoHttpClient {
             requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
         }
 
-        return executeDownload(targetFilePath, uri, requestHeaders);
+        return executeDownload(targetFilePath, uri, requestHeaders, NO_SIZE_LIMIT);
     }
 
-    public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath, String uri) {
+    /**
+     * Downloads a file without entry credentials or ETag handling, limited to {@code maxBytes} (inclusive). If the
+     * body is larger, the returned future completes exceptionally with a {@link RuleExecutionException} and the target
+     * file may be left partly written, so the caller must clean it up.
+     */
+    public CompletableFuture<DownloadResponse> downloadWithLimit(Path targetFilePath, String uri, long maxBytes) {
         logger.info("Downloading {} to {}", uri, targetFilePath);
 
         Map<String, String> requestHeaders = new HashMap<>();
@@ -96,10 +105,13 @@ public class VacoHttpClient {
         requestHeaders.put("Cache-Control", NO_CACHE);
         requestHeaders.put("Pragma", NO_CACHE);
 
-        return executeDownload(targetFilePath, uri, requestHeaders);
+        return executeDownload(targetFilePath, uri, requestHeaders, maxBytes);
     }
 
-    private CompletableFuture<DownloadResponse> executeDownload(Path targetFilePath, String uri, Map<String, String> requestHeaders) {
+    private CompletableFuture<DownloadResponse> executeDownload(Path targetFilePath,
+                                                                 String uri,
+                                                                 Map<String, String> requestHeaders,
+                                                                 long maxBytes) {
         try {
             HttpRequest request = httpClient.get(uri, requestHeaders);
             HttpResponse.BodyHandler<InputStream> bodyHandler = HttpResponse.BodyHandlers.ofInputStream();
@@ -116,7 +128,7 @@ public class VacoHttpClient {
                     if (response.statusCode() == 304) {
                         return resp.result(DownloadResponse.Result.NOT_MODIFIED).build();
                     } else {
-                        copyWithSizeLimit(body, targetFilePath, MAX_DOWNLOAD_BYTES);
+                        copyWithSizeLimit(body, targetFilePath, maxBytes);
                         return resp.result(DownloadResponse.Result.OK).body(targetFilePath).build();
                     }
                 } catch (IOException e) {
