@@ -47,9 +47,9 @@ public class VacoHttpClient {
 
     private final FeatureFlagsService featureFlagsService;
 
-    private static final long MAX_DOWNLOAD_BYTES = 200L * 1024 * 1024;
-
     private static final String NO_CACHE = "no-cache";
+
+    private static final long NO_SIZE_LIMIT = Long.MAX_VALUE;
 
     public VacoHttpClient(HttpClient httpClient,
                           CredentialsService credentialsService,
@@ -62,7 +62,8 @@ public class VacoHttpClient {
     }
 
     /**
-     * Downloads an entry feed (used by DownloadRule), applying the entry's credentials and ETag (see {@link #downloadWithLimit} for plain downloads).
+     * Downloads an entry feed, applying the entry's credentials and ETag handling. The body size is not limited; see
+     * {@link #downloadWithLimit} for a capped download without entry handling.
      */
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
@@ -88,7 +89,7 @@ public class VacoHttpClient {
             requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
         }
 
-        return executeDownload(targetFilePath, uri, requestHeaders, MAX_DOWNLOAD_BYTES);
+        return executeDownload(targetFilePath, uri, requestHeaders, NO_SIZE_LIMIT);
     }
 
     /**

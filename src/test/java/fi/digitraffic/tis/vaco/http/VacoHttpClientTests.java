@@ -114,6 +114,23 @@ class VacoHttpClientTests {
     }
 
     @Test
+    void downloadFileWithEntryDoesNotLimitBodySize() throws ExecutionException, InterruptedException {
+        given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
+        given(credentialsService.findMatchingCredentials(entry.businessId(), "https://example.org")).willReturn(Optional.empty());
+
+        when(httpClient.get(eq("https://example.org"), headersCaptor.capture())).thenReturn(mockRequest);
+        when(httpClient.send(eq(mockRequest), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResponse));
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn(new VirtualInputStream(200L * 1024 * 1024 + 1));
+        when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
+
+        // /dev/null avoids writing 200 MiB to disk; this assumes a Unix-like system (Linux or macOS).
+        CompletableFuture<DownloadResponse> result = vacoClient.downloadFile(Path.of("/dev/null"), "https://example.org", entry);
+
+        assertThat(result.get().result(), equalTo(DownloadResponse.Result.OK));
+    }
+
+    @Test
     void downloadWithLimitWritesResponseBodyAndReturnsOk() throws IOException, ExecutionException, InterruptedException {
         // targetFilePath must not already exist, matching how real callers (e.g. TempFiles.getTaskTempFile)
         // construct it: Files.copy(InputStream, Path) throws FileAlreadyExistsException otherwise.
@@ -274,6 +291,34 @@ class VacoHttpClientTests {
     private void stubResponse(int stubStatusCode, byte[] stubResponseBody) {
         when(mockResponse.statusCode()).thenReturn(stubStatusCode);
         when(mockResponse.body()).thenReturn(stubResponseBody);
+    }
+
+    private static final class VirtualInputStream extends InputStream {
+
+        private long remaining;
+
+        private VirtualInputStream(long size) {
+            this.remaining = size;
+        }
+
+        @Override
+        public int read() {
+            if (remaining == 0) {
+                return -1;
+            }
+            remaining--;
+            return 0;
+        }
+
+        @Override
+        public int read(byte[] bytes, int offset, int length) {
+            if (remaining == 0) {
+                return -1;
+            }
+            int read = (int) Math.min(length, remaining);
+            remaining -= read;
+            return read;
+        }
     }
 
 }
