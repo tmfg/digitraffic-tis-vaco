@@ -49,7 +49,7 @@
         <awspringcloud.version>4.1.1</awspringcloud.version>
         <azurespring.version>7.4.0</azurespring.version>
         <immutables.version>2.12.2</immutables.version>
-        <mockito.version>5.23.0</mockito.version>
+        <mockito.version>5.24.0</mockito.version>
         <guava.version>33.6.0-jre</guava.version>
         <msgraph.version>6.65.0</msgraph.version>
         <httpclient5.version>5.6.4</httpclient5.version>
@@ -57,8 +57,8 @@
         <tomcat.version>11.0.26</tomcat.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
         <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
         <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
         <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
