@@ -46,7 +46,7 @@
         <java.version>25</java.version>
         <awssdk.version>2.55.1</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
-        <awspringcloud.version>4.1.1</awspringcloud.version>
+        <awspringcloud.version>4.2.0</awspringcloud.version>
         <azurespring.version>7.4.0</azurespring.version>
         <immutables.version>2.12.2</immutables.version>
         <mockito.version>5.23.0</mockito.version>
