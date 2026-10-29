@@ -54,7 +54,8 @@ public class AadOAuth2LoginSecurityConfig {
                 "/ui/processing-results/**", // Entry processing result page may be accessed with magic link
                 "/ui/entries/*/state",       // entry state checks its own permissions internally
                 "/static/**",                // allow unauthenticated access to static resources for testing
-                "/v1/webhooks"               // webhooks endpoint is open to all for now TODO: add shared secret
+                "/v1/webhooks",              // webhooks endpoint is open to all for now TODO: add shared secret
+                "/public/**"                 // explicitly public data, e.g. organisations loaded by RAE at startup
                 ).permitAll()
                 // private endpoints (=everything else)
                 .anyRequest().authenticated())
