@@ -2,10 +2,17 @@ package fi.digitraffic.tis.vaco.exports;
 
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
+import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.company.service.model.CompanyRole;
 import fi.digitraffic.tis.vaco.db.repositories.CompanyRepository;
+import fi.digitraffic.tis.vaco.fintrafficid.model.FintrafficIdGroup;
+import fi.digitraffic.tis.vaco.fintrafficid.model.ImmutableFintrafficIdGroup;
+import fi.digitraffic.tis.vaco.fintrafficid.model.ImmutableOrganizationData;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,12 +28,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 class ExportsServiceTests extends SpringBootIntegrationTestBase {
 
@@ -235,6 +248,106 @@ class ExportsServiceTests extends SpringBootIntegrationTestBase {
         } finally {
             companyRepository.deleteByBusinessId(testBusinessId);
         }
+    }
+
+    @Test
+    void publicNetexOrganisationsHasSameOrganisationsAndIdsAsNetexOrganisations() {
+        String noWebsiteBusinessId = "555666-7";
+        companyHierarchyService.createCompany(ImmutableCompany.of(noWebsiteBusinessId, "No Website Oy", true)).orElseThrow();
+        companyHierarchyService.editCompany(noWebsiteBusinessId,
+            ImmutableCompany.of(noWebsiteBusinessId, "No Website Oy", true)
+                .withRoles(List.of(CompanyRole.AUTHORITY, CompanyRole.OPERATOR)));
+
+        try {
+            List<Organisation_VersionStructure> allOrganisations = extractOrganisations(exportsService.netexOrganisations().getValue());
+            List<Organisation_VersionStructure> publicOrganisations = extractOrganisations(exportsService.publicNetexOrganisations().getValue());
+
+            assertThat(Streams.collect(publicOrganisations, Organisation_VersionStructure::getId),
+                equalTo(Streams.collect(allOrganisations, Organisation_VersionStructure::getId)));
+            assertThat(Streams.collect(publicOrganisations, o -> o.getName().getValue()),
+                equalTo(Streams.collect(allOrganisations, o -> o.getName().getValue())));
+            // company with both roles is present as both operator and authority
+            assertThat(getOperator(publicOrganisations, TEST_COMPANY_BUSINESS_ID).getCompanyNumber(), equalTo(TEST_COMPANY_BUSINESS_ID));
+            assertThat(getAuthority(publicOrganisations, TEST_COMPANY_BUSINESS_ID).getCompanyNumber(), equalTo(TEST_COMPANY_BUSINESS_ID));
+            // company without a website is excluded
+            assertThat(Streams.collect(publicOrganisations, Organisation_VersionStructure::getCompanyNumber),
+                not(hasItem(noWebsiteBusinessId)));
+        } finally {
+            companyRepository.deleteByBusinessId(noWebsiteBusinessId);
+        }
+    }
+
+    @Test
+    void publicNetexOrganisationsCarriesOnlyUrlAsContactDetails() {
+        List<Organisation_VersionStructure> organisations = extractOrganisations(exportsService.publicNetexOrganisations().getValue());
+
+        Authority_VersionStructure authority = getAuthority(organisations, TEST_COMPANY_BUSINESS_ID);
+        assertThat(authority.getContactDetails().getUrl(), equalTo("https://example.com"));
+        assertUrlOnly(authority.getContactDetails());
+        assertThat(authority.getValidityConditions(), notNullValue());
+
+        Operator_VersionStructure operator = getOperator(organisations, TEST_COMPANY_BUSINESS_ID);
+        assertThat(operator.getCustomerServiceContactDetails().getUrl(), equalTo("https://example.com"));
+        assertUrlOnly(operator.getCustomerServiceContactDetails());
+        assertThat(operator.getContactDetails(), nullValue());
+    }
+
+    @Test
+    void publicNetexOrganisationsDoesNotExposePersonalData() throws JAXBException {
+        String businessId = "777888-9";
+        String email = "secret.person@example.org";
+        String contactName = "Secret Contact Person";
+        String phone = "+358401234567";
+        FintrafficIdGroup group = ImmutableFintrafficIdGroup.builder()
+            .id("ad-group-" + businessId)
+            .displayName("Personal Data Oy")
+            .organizationData(ImmutableOrganizationData.builder()
+                .businessId(businessId)
+                .phoneNumber(phone)
+                .contactName(contactName)
+                .build())
+            .build();
+        injectAuthOverrides("oid-" + businessId, group);
+        companyHierarchyService.createCompany(ImmutableCompany.of(businessId, "Personal Data Oy", true)).orElseThrow();
+        companyHierarchyService.editCompany(businessId,
+            ImmutableCompany.of(businessId, "Personal Data Oy", true)
+                .withAdGroupId(group.id())
+                .withContactEmails(List.of(email))
+                .withWebsite("https://personal.example.com")
+                .withRoles(List.of(CompanyRole.AUTHORITY, CompanyRole.OPERATOR)));
+
+        try {
+            // the existing export does include the personal data, so the checks below are meaningful
+            Authority_VersionStructure fullAuthority = getAuthority(
+                extractOrganisations(exportsService.netexOrganisations().getValue()), businessId);
+            assertThat(fullAuthority.getContactDetails().getPhone(), equalTo(phone));
+            assertThat(fullAuthority.getContactDetails().getContactPerson().getValue(), equalTo(contactName));
+
+            JAXBElement<PublicationDeliveryStructure> document = exportsService.publicNetexOrganisations();
+            List<Organisation_VersionStructure> organisations = extractOrganisations(document.getValue());
+            assertThat(Streams.collect(organisations, Organisation_VersionStructure::getCompanyNumber), hasItem(businessId));
+            assertUrlOnly(getAuthority(organisations, businessId).getContactDetails());
+            assertUrlOnly(getOperator(organisations, businessId).getCustomerServiceContactDetails());
+
+            StringWriter xml = new StringWriter();
+            JAXBContext.newInstance(PublicationDeliveryStructure.class).createMarshaller().marshal(document, xml);
+            String output = xml.toString();
+            assertThat(output, not(containsString("ContactPerson")));
+            assertThat(output, not(containsString("Phone")));
+            assertThat(output, not(containsString(email)));
+            assertThat(output, not(containsString(contactName)));
+            assertThat(output, not(containsString(phone)));
+        } finally {
+            companyRepository.deleteByBusinessId(businessId);
+        }
+    }
+
+    private static void assertUrlOnly(ContactStructure contactStructure) {
+        assertThat(contactStructure.getContactPerson(), nullValue());
+        assertThat(contactStructure.getPhone(), nullValue());
+        assertThat(contactStructure.getEmail(), nullValue());
+        assertThat(contactStructure.getFax(), nullValue());
+        assertThat(contactStructure.getFurtherDetails(), nullValue());
     }
 
     private List<Organisation_VersionStructure> extractOrganisations(PublicationDeliveryStructure structure) {
