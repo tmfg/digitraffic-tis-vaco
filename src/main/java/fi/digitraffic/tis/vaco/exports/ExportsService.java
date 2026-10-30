@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Service
@@ -53,13 +54,30 @@ public class ExportsService {
         this.fintrafficIdService = Objects.requireNonNull(fintrafficIdService);
     }
 
+    /**
+     * Organisations with contact details enriched from {@link FintrafficIdService}, includes personal data.
+     * Not for public consumption, see {@link #publicNetexOrganisations()}.
+     */
     public JAXBElement<PublicationDeliveryStructure> netexOrganisations() {
+        return buildNetexOrganisations(this::createContactStructure);
+    }
+
+    /**
+     * Same organisations and ids as {@link #netexOrganisations()}, but the website URL is the only contact detail.
+     * This document is served without authentication so it must never contain personal data.
+     */
+    public JAXBElement<PublicationDeliveryStructure> publicNetexOrganisations() {
+        return buildNetexOrganisations(ExportsService::createPublicContactStructure);
+    }
+
+    private JAXBElement<PublicationDeliveryStructure> buildNetexOrganisations(
+        Function<CompanyRecord, Optional<ContactStructure>> contactStructureFactory) {
         AtomicInteger availabilityConditionCounter = new AtomicInteger(1);
         List<Organisation_VersionStructure> organisations = new ArrayList<>();
         companyRepository.listAll().forEach(companyRecord -> companyRecord.roles().forEach(role -> {
             Optional<Organisation_VersionStructure> organisation = switch (role) {
-                case OPERATOR -> asOperator(availabilityConditionCounter, companyRecord);
-                case AUTHORITY -> asAuthority(availabilityConditionCounter, companyRecord);
+                case OPERATOR -> asOperator(availabilityConditionCounter, companyRecord, contactStructureFactory);
+                case AUTHORITY -> asAuthority(availabilityConditionCounter, companyRecord, contactStructureFactory);
             };
             organisation.ifPresent(organisations::add);
         }));
@@ -114,8 +132,10 @@ public class ExportsService {
         return org;
     }
 
-    private Optional<Organisation_VersionStructure> asAuthority(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
-        return createContactStructure(companyRecord)
+    private Optional<Organisation_VersionStructure> asAuthority(AtomicInteger availabilityConditionCounter,
+                                                                CompanyRecord companyRecord,
+                                                                Function<CompanyRecord, Optional<ContactStructure>> contactStructureFactory) {
+        return contactStructureFactory.apply(companyRecord)
             .map(contactStructure -> {
                 Authority authority = createOrganisation(Authority::new, companyRecord);
                 return authority.withValidityConditions(createValidityConditions(availabilityConditionCounter))
@@ -123,8 +143,10 @@ public class ExportsService {
             });
     }
 
-    private Optional<Organisation_VersionStructure> asOperator(AtomicInteger availabilityConditionCounter, CompanyRecord companyRecord) {
-        return createContactStructure(companyRecord)
+    private Optional<Organisation_VersionStructure> asOperator(AtomicInteger availabilityConditionCounter,
+                                                               CompanyRecord companyRecord,
+                                                               Function<CompanyRecord, Optional<ContactStructure>> contactStructureFactory) {
+        return contactStructureFactory.apply(companyRecord)
             .map(contactStructure -> {
                 Operator operator = createOrganisation(Operator::new, companyRecord);
                 return operator.withValidityConditions(createValidityConditions(availabilityConditionCounter))
@@ -139,19 +161,26 @@ public class ExportsService {
                 .withFromDate(LocalDateTime.of(2020, 1, 1, 0, 0)));
     }
 
-    private Optional<ContactStructure> createContactStructure(CompanyRecord companyRecord) {
-        if (companyRecord.website() == null || Objects.requireNonNull(companyRecord.website()).isBlank()) {
+    private static Optional<ContactStructure> createPublicContactStructure(CompanyRecord companyRecord) {
+        if (companyRecord.website() == null || companyRecord.website().isBlank()) {
             return Optional.empty();
         }
-        ContactStructure contactStructure = new ContactStructure()
-            .withUrl(companyRecord.website());
+        return Optional.of(new ContactStructure().withUrl(companyRecord.website()));
+    }
+
+    private Optional<ContactStructure> createContactStructure(CompanyRecord companyRecord) {
+        return createPublicContactStructure(companyRecord).map(contactStructure -> withOrganizationData(contactStructure, companyRecord));
+    }
+
+    // Only place where personal data (FintrafficIdService contact person and phone) enters the document; never use for the public document.
+    private ContactStructure withOrganizationData(ContactStructure contactStructure, CompanyRecord companyRecord) {
         Optional.ofNullable(companyRecord.adGroupId())
             .flatMap(fintrafficIdService::getGroup)
             .flatMap(FintrafficIdGroup::organizationData)
             .ifPresent(organizationData ->
                 contactStructure.withPhone(organizationData.phoneNumber())
                     .withContactPerson(multilingualString(organizationData.contactName(), companyRecord.language())));
-        return Optional.of(contactStructure);
+        return contactStructure;
     }
 
     private static MultilingualString multilingualString(String organizationData, String language) {
