@@ -1,5 +1,9 @@
 package fi.digitraffic.tis.vaco.http;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import fi.digitraffic.http.HttpClient;
 import fi.digitraffic.http.HttpClientException;
 import fi.digitraffic.tis.vaco.TestObjects;
@@ -16,10 +20,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -27,11 +34,13 @@ import java.io.InputStream;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -54,6 +63,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class VacoHttpClientTests {
 
+    private static final String WEBHOOK_URI = "http://example.fi/webhook/abcdef123456";
+    private static final byte[] WEBHOOK_PAYLOAD = "hello".getBytes(StandardCharsets.UTF_8);
+
     private VacoHttpClient vacoClient;
     @Mock
     private CredentialsService credentialsService;
@@ -72,9 +84,15 @@ class VacoHttpClientTests {
     private Map<String, String> requestHeaders = new HashMap<>();
     private ImmutableCredentials credentials;
     private ImmutableEntry entry;
+    private ListAppender<ILoggingEvent> logAppender;
+    private Logger clientLogger;
 
     @BeforeEach
     void setUp() {
+        clientLogger = (Logger) LoggerFactory.getLogger(VacoHttpClient.class);
+        logAppender = new ListAppender<>();
+        logAppender.start();
+        clientLogger.addAppender(logAppender);
 
         this.vacoClient = new VacoHttpClient(httpClient, credentialsService, entryService, featureFlagsService);
         credentials = ImmutableCredentials.copyOf(TestObjects.aCredentials().build());
@@ -84,6 +102,7 @@ class VacoHttpClientTests {
 
     @AfterEach
     void tearDown() {
+        clientLogger.detachAppender(logAppender);
         verifyNoMoreInteractions(httpClient, mockRequest, mockResponse, entryService, featureFlagsService);
     }
 
@@ -247,18 +266,92 @@ class VacoHttpClientTests {
 
     @Test
     void webhook() throws ExecutionException, InterruptedException {
-        Map<String, String> emptyHeaders = Map.of();
-        when(httpClient.headers(any(String[].class))).thenReturn(emptyHeaders);
-        when(httpClient.post(any(String.class), eq(emptyHeaders), any(byte[].class))).thenReturn(mockRequest);
-        when(httpClient.send(eq(mockRequest), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResponse));
+        stubWebhookSend(CompletableFuture.completedFuture(mockResponse));
 
         byte[] stubResponseBody = "fake response for webhook".getBytes(StandardCharsets.UTF_8);
         stubResponse(200, stubResponseBody);
 
-        CompletableFuture<NotificationResponse> r = vacoClient.sendWebhook("http://example.fi/webhook/abcdef123456", "hello".getBytes(StandardCharsets.UTF_8));
+        CompletableFuture<NotificationResponse> r = vacoClient.sendWebhook(WEBHOOK_URI, WEBHOOK_PAYLOAD);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().response().get(), equalTo(stubResponseBody));
+    }
+
+    @Test
+    void webhookLogsSendingMessageOncePerCall() {
+        stubWebhookSend(CompletableFuture.completedFuture(mockResponse));
+        stubResponse(204, new byte[0]);
+
+        vacoClient.sendWebhook(WEBHOOK_URI, WEBHOOK_PAYLOAD);
+
+        List<ILoggingEvent> events = logAppender.list.stream()
+            .filter(e -> e.getFormattedMessage().startsWith("Sending webhook to "))
+            .toList();
+        assertThat(events.size(), equalTo(1));
+        assertThat(events.getFirst().getLevel(), equalTo(Level.INFO));
+        assertThat(events.getFirst().getFormattedMessage(), equalTo("Sending webhook to " + WEBHOOK_URI));
+    }
+
+    @Test
+    void webhookSuccessLogsNoDeliveryFailure() {
+        stubWebhookSend(CompletableFuture.completedFuture(mockResponse));
+        stubResponse(204, new byte[0]);
+
+        CompletableFuture<NotificationResponse> r = vacoClient.sendWebhook(WEBHOOK_URI, WEBHOOK_PAYLOAD);
+
+        assertThat(r.isDone(), equalTo(true));
+        assertThat(deliveryFailureEvents(), equalTo(List.of()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {301, 400, 404, 500, 503})
+    void webhookNon2xxResponseLogsOneDeliveryFailureWithStatus(int status) throws ExecutionException, InterruptedException {
+        stubWebhookSend(CompletableFuture.completedFuture(mockResponse));
+        byte[] body = "receiver error".getBytes(StandardCharsets.UTF_8);
+        stubResponse(status, body);
+
+        CompletableFuture<NotificationResponse> r = vacoClient.sendWebhook(WEBHOOK_URI, WEBHOOK_PAYLOAD);
+
+        assertThat(r.get().response().get(), equalTo(body));
+        assertSingleDeliveryFailure("Webhook delivery failed for " + WEBHOOK_URI + ": HTTP status " + status);
+    }
+
+    @Test
+    void webhookExceptionalCompletionLogsOneDeliveryFailureAndKeepsException() {
+        HttpTimeoutException timeout = new HttpTimeoutException("simulated headers timeout");
+        stubWebhookSend(CompletableFuture.failedFuture(timeout));
+
+        CompletableFuture<NotificationResponse> r = vacoClient.sendWebhook(WEBHOOK_URI, WEBHOOK_PAYLOAD);
+
+        CompletionException exception = assertThrows(CompletionException.class, r::join);
+        assertThat(exception.getCause(), equalTo(timeout));
+        ILoggingEvent event = assertSingleDeliveryFailure("Webhook delivery failed for " + WEBHOOK_URI);
+        assertThat(event.getThrowableProxy().getMessage(), equalTo("simulated headers timeout"));
+    }
+
+    @Test
+    void webhookHttpClientExceptionLogsOneDeliveryFailureAndNotDownloadMessage() throws ExecutionException, InterruptedException {
+        Map<String, String> emptyHeaders = stubWebhookHeaders();
+        when(httpClient.post(any(String.class), eq(emptyHeaders), any(byte[].class)))
+            .thenThrow(new HttpClientException("simulated http client error"));
+
+        CompletableFuture<NotificationResponse> r = vacoClient.sendWebhook(WEBHOOK_URI, WEBHOOK_PAYLOAD);
+
+        assertThat(r.isDone(), equalTo(true));
+        assertThat(r.get().response().isEmpty(), equalTo(true));
+        ILoggingEvent event = assertSingleDeliveryFailure("Webhook delivery failed for " + WEBHOOK_URI);
+        assertThat(event.getThrowableProxy().getMessage(), equalTo("simulated http client error"));
+        assertThat(logMessages().stream().anyMatch(m -> m.startsWith("HTTP execution failure for")), equalTo(false));
+    }
+
+    @Test
+    void downloadFailureDoesNotLogWebhookDeliveryFailure() {
+        when(httpClient.get(any(String.class), any(Map.class))).thenThrow(new HttpClientException("simulated http client error"));
+
+        vacoClient.downloadWithLimit(Path.of("unused.ignored"), "https://example.org", 1024L);
+
+        assertThat(logMessages().stream().filter(m -> m.startsWith("HTTP execution failure for https://example.org")).count(), equalTo(1L));
+        assertThat(deliveryFailureEvents(), equalTo(List.of()));
     }
 
     @Test
@@ -286,6 +379,38 @@ class VacoHttpClientTests {
         requestHeaders = vacoClient.addAuthorizationHeader(null);
         assertTrue(requestHeaders.isEmpty());
 
+    }
+
+    private Map<String, String> stubWebhookHeaders() {
+        Map<String, String> emptyHeaders = Map.of();
+        when(httpClient.headers(any(String[].class))).thenReturn(emptyHeaders);
+        return emptyHeaders;
+    }
+
+    // The raw cast is needed because send(...) is stubbed with an untyped BodyHandler matcher
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void stubWebhookSend(CompletableFuture<HttpResponse<byte[]>> sendResult) {
+        Map<String, String> emptyHeaders = stubWebhookHeaders();
+        when(httpClient.post(any(String.class), eq(emptyHeaders), any(byte[].class))).thenReturn(mockRequest);
+        when(httpClient.send(eq(mockRequest), any(HttpResponse.BodyHandler.class))).thenReturn((CompletableFuture) sendResult);
+    }
+
+    private ILoggingEvent assertSingleDeliveryFailure(String expectedMessage) {
+        List<ILoggingEvent> events = deliveryFailureEvents();
+        assertThat(events.size(), equalTo(1));
+        assertThat(events.getFirst().getLevel(), equalTo(Level.WARN));
+        assertThat(events.getFirst().getFormattedMessage(), equalTo(expectedMessage));
+        return events.getFirst();
+    }
+
+    private List<String> logMessages() {
+        return logAppender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+    }
+
+    private List<ILoggingEvent> deliveryFailureEvents() {
+        return logAppender.list.stream()
+            .filter(e -> e.getFormattedMessage().startsWith("Webhook delivery failed"))
+            .toList();
     }
 
     private void stubResponse(int stubStatusCode, byte[] stubResponseBody) {
