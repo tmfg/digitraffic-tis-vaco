@@ -14,10 +14,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -33,6 +38,8 @@ import java.util.List;
 @EnableMethodSecurity
 @ConditionalOnProperty(value = "spring.cloud.azure.active-directory.enabled", havingValue = "true")
 public class AadOAuth2LoginSecurityConfig {
+
+    private static final Logger REJECTION_LOGGER = LoggerFactory.getLogger(AadOAuth2LoginSecurityConfig.class);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -104,10 +111,31 @@ public class AadOAuth2LoginSecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String jwkIssuerUri,
-                          List<OAuth2TokenValidator<Jwt>> validators) {
+                          @Value("${vaco.azure-ad.client-id}") String clientId) {
         NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(jwkIssuerUri);
-        OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(validators);
-        jwtDecoder.setJwtValidator(withAudience);
+        // Replaces the default validators, so expiry, not-before, issuer and audience are all listed here.
+        OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
+            JwtValidators.createDefaultWithIssuer(jwkIssuerUri),
+            new JwtClaimValidator<List<String>>(JwtClaimNames.AUD, aud -> aud != null && aud.contains(clientId)));
+        jwtDecoder.setJwtValidator(logRejections(validator));
         return jwtDecoder;
+    }
+
+    /**
+     * Logs each rejected token with its failed checks and a fixed set of claims. The token itself is never logged.
+     */
+    private static OAuth2TokenValidator<Jwt> logRejections(OAuth2TokenValidator<Jwt> delegate) {
+        return token -> {
+            OAuth2TokenValidatorResult result = delegate.validate(token);
+            if (result.hasErrors()) {
+                REJECTION_LOGGER.info("Rejected JWT: errors={}, iss={}, aud={}, azp={}, exp={}",
+                    result.getErrors().stream().map(OAuth2Error::getDescription).toList(),
+                    token.getClaims().get(JwtClaimNames.ISS),
+                    token.getClaims().get(JwtClaimNames.AUD),
+                    token.getClaims().get("azp"),
+                    token.getClaims().get(JwtClaimNames.EXP));
+            }
+            return result;
+        };
     }
 }
