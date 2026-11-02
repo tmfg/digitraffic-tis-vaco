@@ -102,7 +102,20 @@ public class ApiAccessLogFilter extends OncePerRequestFilter {
             return;
         }
         ACCESS_LOG.info("{} {} {} {}ms issuer={} client={} ver={}",
-            request.getMethod(), request.getRequestURI(), status, millis, issuer, client, version);
+            clean(request.getMethod()), clean(request.getRequestURI()), status, millis,
+            issuer, clean(client), clean(version));
+    }
+
+    /**
+     * Replaces each ISO control character with an underscore, so that one request writes one line.
+     */
+    private static String clean(String value) {
+        if (value == null) {
+            return NONE;
+        }
+        StringBuilder out = new StringBuilder(value.length());
+        value.codePoints().forEach(cp -> out.appendCodePoint(Character.isISOControl(cp) ? '_' : cp));
+        return out.toString();
     }
 
     private static String firstPresent(String first, String fallback) {
@@ -110,7 +123,7 @@ public class ApiAccessLogFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Chooses a label from a fixed set. The unverified issuer is compared and never written.
+     * Chooses a label from a fixed set. The method compares the unverified issuer and never writes it.
      */
     private String unverifiedIssuerLabel(HttpServletRequest request) {
         try {
@@ -132,7 +145,7 @@ public class ApiAccessLogFilter extends OncePerRequestFilter {
                 return "trivore";
             }
             return "unknown";
-        } catch (Exception e) {
+        } catch (Exception _) {
             // the line must never change the response, whatever the token looks like
             return ISSUER_NONE;
         }

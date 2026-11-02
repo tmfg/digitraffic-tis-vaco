@@ -328,6 +328,18 @@ class IssuerRoutingAuthenticationTests {
     }
 
     @Test
+    void controlCharactersInClaimsDoNotSplitTheLine() throws Exception {
+        String token = sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(),
+            Map.of("roles", List.of("vaco.apiuser"), "azp", "evil\r\nFAKE line", "ver", "2\n0"));
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token))).andExpect(status().isOk());
+        assertThat(accessLines(), hasSize(1));
+        String line = accessLines().getFirst();
+        assertThat(line, not(containsString("\r")));
+        assertThat(line, not(containsString("\n")));
+        assertThat(line, endsWith(" issuer=entra client=evil__FAKE line ver=2_0"));
+    }
+
+    @Test
     void lineHasNoQueryStringAndShowsStatus403And404() throws Exception {
         String token = entraToken(List.of());
         mockMvc.perform(get("/v1/queue/abc?secret=query-sentinel").header("Authorization", bearer(token)))
