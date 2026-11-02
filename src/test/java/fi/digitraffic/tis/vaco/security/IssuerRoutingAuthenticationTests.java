@@ -1,5 +1,9 @@
 package fi.digitraffic.tis.vaco.security;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -15,13 +19,20 @@ import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.Trivore;
 import fi.digitraffic.tis.vaco.configuration.TrivoreClient;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ResolvableType;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -37,6 +48,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.io.IOException;
@@ -45,15 +57,23 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -148,6 +168,21 @@ class IssuerRoutingAuthenticationTests {
             return publicId;
         }
 
+        @GetMapping("/v1/unauthorized")
+        String unauthorized() {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+        @GetMapping("/v1/boom")
+        String boom() {
+            throw new IllegalStateException("boom");
+        }
+
+        @GetMapping("/badge/{publicId}/{taskName}")
+        String badge(@PathVariable String publicId, @PathVariable String taskName) {
+            return publicId + taskName;
+        }
+
         @PostMapping("/ui/admin/companies")
         @PreAuthorize("hasAuthority('vaco.admin')")
         String createCompany() {
@@ -165,10 +200,149 @@ class IssuerRoutingAuthenticationTests {
     private WebApplicationContext context;
 
     private MockMvc mockMvc;
+    private ListAppender<ILoggingEvent> accessLog;
+    private Logger accessLogger;
 
     @BeforeEach
     void setUpMockMvc() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+        accessLogger = (Logger) LoggerFactory.getLogger(ApiAccessLogFilter.LOGGER_NAME);
+        accessLogger.setLevel(Level.INFO);
+        accessLog = new ListAppender<>();
+        accessLog.start();
+        accessLogger.addAppender(accessLog);
+    }
+
+    @AfterEach
+    void detachAccessLog() {
+        accessLogger.detachAppender(accessLog);
+    }
+
+    private List<String> accessLines() {
+        return accessLog.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+    }
+
+    @Test
+    void trivoreApplicationTokenWritesOneFullAccessLine() throws Exception {
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(ALLOWLISTED_CATALOG))))
+            .andExpect(status().isOk());
+        assertThat(accessLines(), hasSize(1));
+        assertThat(accessLines().getFirst(), matchesPattern(
+            "^GET (/api)?/v1/queue/\\S+ \\d{3} \\d+ms issuer=trivore client=" + ALLOWLISTED_CATALOG + " ver=-$"));
+    }
+
+    static Stream<Arguments> entraApplicationClaims() {
+        return Stream.of(
+            Arguments.of(Map.of("azp", "azp-client", "appid", "app-id-client", "ver", "2.0"), "azp-client", "2.0"),
+            Arguments.of(Map.of("appid", "app-id-client", "ver", "1.0"), "app-id-client", "1.0"),
+            Arguments.of(Map.of("ver", "2.0"), "-", "2.0"),
+            Arguments.of(Map.of("azp", "azp-client"), "azp-client", "-"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("entraApplicationClaims")
+    void entraApplicationTokenWritesClientAndVersionFallbacks(Map<String, Object> claims,
+                                                              String expectedClient,
+                                                              String expectedVersion) throws Exception {
+        Map<String, Object> all = new HashMap<>(claims);
+        all.put("roles", List.of("vaco.apiuser"));
+        String token = sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(), all);
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token))).andExpect(status().isOk());
+        assertThat(accessLines(), hasSize(1));
+        assertThat(accessLines().getFirst(), endsWith(
+            " issuer=entra client=" + expectedClient + " ver=" + expectedVersion));
+    }
+
+    @Test
+    void userTokenWith200AndAnonymousBadgeWriteNoLine() throws Exception {
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(entraUserToken())))
+            .andExpect(status().isOk());
+        mockMvc.perform(get("/badge/abc/prepare.download")).andExpect(status().isOk());
+        assertThat(accessLines(), empty());
+    }
+
+    @Test
+    void entraV1IssuerTokenIsRejectedAndLoggedWithoutClaimValues() throws Exception {
+        String token = sign("entra", "https://sts.windows.net/tenantId/", "v1-subject-sentinel",
+            List.of("api-audience"), inOneHour(), Map.of("roles", List.of("vaco.apiuser")));
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
+            .andExpect(status().isUnauthorized());
+        assertThat(accessLines(), hasSize(1));
+        assertThat(accessLines().getFirst(), matchesPattern(
+            "^GET \\S+ 401 \\d+ms issuer=entra-v1 client=- ver=-$"));
+        assertThat(accessLines().getFirst(), not(containsString("v1-subject-sentinel")));
+    }
+
+    @Test
+    void unknownIssuerWritesUnknownLabelWithoutRawIssuer() throws Exception {
+        String token = sign("foreign", BASE + "/foreign", ALLOWLISTED_E2E, List.of(ALLOWLISTED_E2E), inOneHour(), Map.of());
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
+            .andExpect(status().isUnauthorized());
+        assertThat(accessLines(), hasSize(1));
+        assertThat(accessLines().getFirst(), endsWith(" issuer=unknown client=- ver=-"));
+        assertThat(accessLines().getFirst(), not(containsString("/foreign")));
+    }
+
+    @Test
+    void missingAndMalformedBearerTokensWriteNoneLabel() throws Exception {
+        mockMvc.perform(get("/v1/queue/abc")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", "Bearer not-a-jwt"))
+            .andExpect(status().isUnauthorized());
+        assertThat(accessLines(), hasSize(2));
+        accessLines().forEach(line -> assertThat(line, endsWith(" issuer=none client=- ver=-")));
+    }
+
+    @Test
+    void trivoreClientNotOnAllowlistWritesTrivoreLabelWithoutSubject() throws Exception {
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(NOT_ALLOWLISTED))))
+            .andExpect(status().isUnauthorized());
+        assertThat(accessLines(), hasSize(1));
+        assertThat(accessLines().getFirst(), endsWith(" issuer=trivore client=- ver=-"));
+        assertThat(accessLines().getFirst(), not(containsString(NOT_ALLOWLISTED)));
+    }
+
+    @Test
+    void userTokenThat401sAfterAuthenticationWritesNoUserClaim() throws Exception {
+        String token = sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(), Map.of(
+            "scp", "access_as_user",
+            "oid", "user-oid-sentinel",
+            "name", "User Name Sentinel",
+            "preferred_username", "user.sentinel@example.com"));
+        mockMvc.perform(get("/v1/unauthorized").header("Authorization", bearer(token)))
+            .andExpect(status().isUnauthorized());
+        assertThat(accessLines(), hasSize(1));
+        String line = accessLines().getFirst();
+        assertThat(line, endsWith(" issuer=entra client=- ver=-"));
+        assertThat(line, not(containsString("user-oid-sentinel")));
+        assertThat(line, not(containsString("User Name Sentinel")));
+        assertThat(line, not(containsString("user.sentinel@example.com")));
+    }
+
+    @Test
+    void exceptionWritesStatus500AndIsRethrown() throws Exception {
+        String token = trivoreToken(ALLOWLISTED_E2E);
+        assertThrows(ServletException.class,
+            () -> mockMvc.perform(get("/v1/boom").header("Authorization", bearer(token))));
+        assertThat(accessLines(), hasSize(1));
+        assertThat(accessLines().getFirst(), matchesPattern("^GET \\S+ 500 \\d+ms issuer=trivore client=\\d+ ver=-$"));
+    }
+
+    @Test
+    void lineHasNoQueryStringAndShowsStatus403And404() throws Exception {
+        String token = entraToken(List.of());
+        mockMvc.perform(get("/v1/queue/abc?secret=query-sentinel").header("Authorization", bearer(token)))
+            .andExpect(status().isForbidden());
+        mockMvc.perform(get("/v1/missing").header("Authorization", bearer(token)))
+            .andExpect(status().isNotFound());
+        assertThat(accessLines(), hasSize(2));
+        assertThat(accessLines().get(0), matchesPattern("^GET (/api)?/v1/queue/abc 403 \\d+ms .*"));
+        assertThat(accessLines().get(0), not(containsString("query-sentinel")));
+        assertThat(accessLines().get(1), matchesPattern("^GET (/api)?/v1/missing 404 \\d+ms .*"));
+    }
+
+    private static String entraUserToken() throws JOSEException {
+        return sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(),
+            Map.of("scp", "access_as_user", "roles", List.of("vaco.apiuser")));
     }
 
     @Test
