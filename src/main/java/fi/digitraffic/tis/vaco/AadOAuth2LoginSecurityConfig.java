@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco;
 
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.security.IssuerRoutingAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,7 +39,10 @@ public class AadOAuth2LoginSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                           @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource,
+                                           JwtDecoder entraJwtDecoder,
+                                           @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String entraIssuerUri,
+                                           VacoProperties vacoProperties) throws Exception {
         // session management is set to stateless as JWT tokens themselves are stateless
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -59,8 +63,11 @@ public class AadOAuth2LoginSecurityConfig {
                 // private endpoints (=everything else)
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 ->
-                oauth2.jwt(customizer ->
-                    customizer.jwtAuthenticationConverter(overridingGrantedAuthoritiesConverter())));
+                oauth2.authenticationManagerResolver(IssuerRoutingAuthentication.create(
+                    entraIssuerUri,
+                    entraJwtDecoder,
+                    overridingGrantedAuthoritiesConverter(),
+                    vacoProperties.trivore())));
 
         // enable CORS
         http.cors(cors -> cors.configurationSource(corsConfigurationSource));

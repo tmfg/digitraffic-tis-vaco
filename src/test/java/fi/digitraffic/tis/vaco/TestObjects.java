@@ -32,6 +32,7 @@ import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableContext;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
@@ -177,6 +178,7 @@ public class TestObjects {
             "biz",
             aws != null ? aws : new Aws("eu-north-1", null, null, null, new S3(null)),
             azureAd != null ? azureAd : new AzureAd("tenantId", "clientId"),
+            null,
             email != null ? email : new Email("king@commonwealth", null),
             cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), Duration.parse("P90D"), 10, 100),
             msGraph != null ? msGraph : new MsGraph("tenantId", "clientId", "clientSecret", "schemaExtension"),
@@ -196,14 +198,14 @@ public class TestObjects {
         String fakeGroupId = UUID.randomUUID().toString();
         Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("groups", List.of(fakeGroupId), "oid", oid, "roles", List.of("vaco.admin")));
 
-        return new JwtAuthenticationToken(jwt);
+        return new JwtAuthenticationToken(jwt, AuthorityUtils.createAuthorityList("vaco.admin"));
     }
 
     public static JwtAuthenticationToken jwtCompanyAdminAuthenticationToken(String oid) {
         String fakeGroupId = UUID.randomUUID().toString();
         Jwt jwt = new Jwt("ignored", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS), Map.of("headers", "cannot be empty"), Map.of("groups", List.of(fakeGroupId), "oid", oid, "roles", List.of("vaco.company_admin")));
 
-        return new JwtAuthenticationToken(jwt);
+        return new JwtAuthenticationToken(jwt, AuthorityUtils.createAuthorityList("vaco.company_admin"));
     }
 
     public static JwtAuthenticationToken jwtNoGroupsToken(String oid) {
