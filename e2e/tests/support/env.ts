@@ -5,7 +5,7 @@ const BASE_URLS: Record<VacoEnv, string> = {
   dev: 'https://digitraffic-tis-dev.aws.fintraffic.cloud/api',
 };
 
-/** Environment under test. `bin/e2e-vaco` sets it and rejects prd and tst. */
+/** Environment under test. `VACO_ENV` selects it. Only `local` and `dev` are allowed. */
 export function vacoEnv(): VacoEnv {
   const env = process.env.VACO_ENV ?? 'local';
   if (env !== 'local' && env !== 'dev') {

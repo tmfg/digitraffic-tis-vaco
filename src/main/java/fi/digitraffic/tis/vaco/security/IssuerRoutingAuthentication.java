@@ -14,11 +14,11 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.SupplierJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerAuthenticationManagerResolver;
 
+import java.time.Clock;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,10 +45,18 @@ public final class IssuerRoutingAuthentication {
                                                                           JwtDecoder entraDecoder,
                                                                           JwtAuthenticationConverter entraConverter,
                                                                           Trivore trivore) {
+        return create(entraIssuer, entraDecoder, entraConverter, trivore, Clock.systemUTC());
+    }
+
+    static AuthenticationManagerResolver<HttpServletRequest> create(String entraIssuer,
+                                                                    JwtDecoder entraDecoder,
+                                                                    JwtAuthenticationConverter entraConverter,
+                                                                    Trivore trivore,
+                                                                    Clock clock) {
         Map<String, AuthenticationManager> managers = new HashMap<>();
         managers.put(entraIssuer, manager(entraDecoder, entraConverter));
         if (trivore != null && trivore.enabled()) {
-            managers.put(trivore.issuerUri(), manager(trivoreDecoder(trivore), trivoreConverter(trivore)));
+            managers.put(trivore.issuerUri(), manager(trivoreDecoder(trivore, clock), trivoreConverter(trivore)));
         }
         return new JwtIssuerAuthenticationManagerResolver(managers::get);
     }
@@ -62,15 +70,15 @@ public final class IssuerRoutingAuthentication {
     /**
      * Lazy, so that an unreachable Trivore ID does not prevent VACO from starting.
      */
-    private static JwtDecoder trivoreDecoder(Trivore trivore) {
+    private static JwtDecoder trivoreDecoder(Trivore trivore, Clock clock) {
         Set<String> clientIds = trivore.clients().stream().map(TrivoreClient::clientId).collect(Collectors.toSet());
-        return new SupplierJwtDecoder(() -> {
+        return new LazyTrivoreDecoder(trivore.issuerUri(), () -> {
             NimbusJwtDecoder decoder = JwtDecoders.fromIssuerLocation(trivore.issuerUri());
             decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<Jwt>(
                 JwtValidators.createDefaultWithIssuer(trivore.issuerUri()),
                 new TrivoreTokenValidator(clientIds)));
             return decoder;
-        });
+        }, clock);
     }
 
     private static JwtAuthenticationConverter trivoreConverter(Trivore trivore) {
