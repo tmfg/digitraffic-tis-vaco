@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,30 +27,36 @@ import static org.mockito.Mockito.when;
 
 class LazyTrivoreDecoderTests {
 
+    private static final String ISSUER = "issuer";
+    private static final String TOKEN = "t";
+
     @Test
     void concurrentFirstRequestsRunDiscoveryOnce() throws Exception {
+        int threads = 8;
         AtomicInteger discoveries = new AtomicInteger();
+        CountDownLatch allCalling = new CountDownLatch(threads);
         Jwt jwt = mock(Jwt.class);
         JwtDecoder delegate = mock(JwtDecoder.class);
-        when(delegate.decode("t")).thenReturn(jwt);
-        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder("issuer", () -> {
+        when(delegate.decode(TOKEN)).thenReturn(jwt);
+        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder(ISSUER, () -> {
             discoveries.incrementAndGet();
             try {
-                Thread.sleep(100);
+                // discovery stays open until every thread is about to call the decoder
+                allCalling.await(5, TimeUnit.SECONDS);
             } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
             return delegate;
         }, Clock.systemUTC());
 
-        int threads = 8;
         CountDownLatch start = new CountDownLatch(1);
         try (ExecutorService pool = Executors.newFixedThreadPool(threads)) {
             List<Future<Jwt>> results = new ArrayList<>();
             for (int i = 0; i < threads; i++) {
                 results.add(pool.submit(() -> {
                     start.await();
-                    return decoder.decode("t");
+                    allCalling.countDown();
+                    return decoder.decode(TOKEN);
                 }));
             }
             start.countDown();
@@ -66,15 +73,15 @@ class LazyTrivoreDecoderTests {
         AtomicInteger discoveries = new AtomicInteger();
         Jwt jwt = mock(Jwt.class);
         JwtDecoder delegate = mock(JwtDecoder.class);
-        when(delegate.decode("t")).thenReturn(jwt);
-        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder("issuer", () -> {
+        when(delegate.decode(TOKEN)).thenReturn(jwt);
+        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder(ISSUER, () -> {
             if (discoveries.incrementAndGet() == 1) {
                 throw new IllegalStateException("connection reset");
             }
             return delegate;
         }, Clock.systemUTC());
 
-        assertThat(decoder.decode("t"), equalTo(jwt));
+        assertThat(decoder.decode(TOKEN), equalTo(jwt));
         assertThat(discoveries.get(), equalTo(2));
     }
 
@@ -82,7 +89,7 @@ class LazyTrivoreDecoderTests {
     void delayDoublesAfterEachFailedRequestAndStopsAtFiveMinutes() {
         AtomicInteger discoveries = new AtomicInteger();
         MutableClock clock = new MutableClock();
-        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder("issuer", () -> {
+        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder(ISSUER, () -> {
             discoveries.incrementAndGet();
             throw new IllegalStateException("down");
         }, clock);
@@ -90,12 +97,12 @@ class LazyTrivoreDecoderTests {
         long[] delaysInSeconds = {1, 2, 4, 8, 16, 32, 64, 128, 256, 300, 300};
         int expected = 0;
         for (long delay : delaysInSeconds) {
-            assertThrows(BadJwtException.class, () -> decoder.decode("t"));
+            assertThrows(BadJwtException.class, () -> decoder.decode(TOKEN));
             expected += 2;
             assertThat(discoveries.get(), equalTo(expected));
 
             clock.advance(Duration.ofSeconds(delay).minusMillis(1));
-            assertThrows(BadJwtException.class, () -> decoder.decode("t"));
+            assertThrows(BadJwtException.class, () -> decoder.decode(TOKEN));
             assertThat(discoveries.get(), equalTo(expected));
 
             clock.advance(Duration.ofMillis(1));
@@ -105,13 +112,13 @@ class LazyTrivoreDecoderTests {
     @Test
     void requestsInsideTheDelayGetSeparateExceptionsWithTheLastCause() {
         IllegalStateException cause = new IllegalStateException("down");
-        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder("issuer", () -> {
+        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder(ISSUER, () -> {
             throw cause;
         }, new MutableClock());
 
-        assertThrows(BadJwtException.class, () -> decoder.decode("t"));
-        BadJwtException first = assertThrows(BadJwtException.class, () -> decoder.decode("t"));
-        BadJwtException second = assertThrows(BadJwtException.class, () -> decoder.decode("t"));
+        assertThrows(BadJwtException.class, () -> decoder.decode(TOKEN));
+        BadJwtException first = assertThrows(BadJwtException.class, () -> decoder.decode(TOKEN));
+        BadJwtException second = assertThrows(BadJwtException.class, () -> decoder.decode(TOKEN));
 
         assertThat(first == second, equalTo(false));
         assertThat(first.getCause(), equalTo(cause));
@@ -144,7 +151,7 @@ class LazyTrivoreDecoderTests {
     @Test
     void failureCarriesTheCauseAndAMessageWithoutTheToken() {
         IllegalStateException cause = new IllegalStateException("unreachable");
-        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder("issuer", () -> {
+        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder(ISSUER, () -> {
             throw cause;
         }, Clock.systemUTC());
 

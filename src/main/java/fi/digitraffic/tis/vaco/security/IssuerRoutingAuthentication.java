@@ -51,18 +51,20 @@ public final class IssuerRoutingAuthentication {
                                                                           JwtDecoder entraDecoder,
                                                                           JwtAuthenticationConverter entraConverter,
                                                                           Trivore trivore) {
-        return create(entraIssuer, entraDecoder, entraConverter, trivore, Clock.systemUTC());
+        return create(entraIssuer, entraDecoder, entraConverter, trivore, Clock.systemUTC(), DISCOVERY_TIMEOUT);
     }
 
     static AuthenticationManagerResolver<HttpServletRequest> create(String entraIssuer,
                                                                     JwtDecoder entraDecoder,
                                                                     JwtAuthenticationConverter entraConverter,
                                                                     Trivore trivore,
-                                                                    Clock clock) {
+                                                                    Clock clock,
+                                                                    Duration discoveryTimeout) {
         Map<String, AuthenticationManager> managers = new HashMap<>();
         managers.put(entraIssuer, manager(entraDecoder, entraConverter));
         if (trivore != null && trivore.enabled()) {
-            managers.put(trivore.issuerUri(), manager(trivoreDecoder(trivore, clock), trivoreConverter(trivore)));
+            managers.put(trivore.issuerUri(),
+                manager(trivoreDecoder(trivore, clock, discoveryTimeout), trivoreConverter(trivore)));
         }
         return new JwtIssuerAuthenticationManagerResolver(managers::get);
     }
@@ -76,11 +78,11 @@ public final class IssuerRoutingAuthentication {
     /**
      * Lazy, so that an unreachable Trivore ID does not prevent VACO from starting.
      */
-    private static JwtDecoder trivoreDecoder(Trivore trivore, Clock clock) {
+    private static JwtDecoder trivoreDecoder(Trivore trivore, Clock clock, Duration discoveryTimeout) {
         Set<String> clientIds = trivore.clients().stream().map(TrivoreClient::clientId).collect(Collectors.toSet());
         return new LazyTrivoreDecoder(trivore.issuerUri(), () -> {
             NimbusJwtDecoder decoder = NimbusJwtDecoder.withIssuerLocation(trivore.issuerUri())
-                .restOperations(discoveryRestOperations())
+                .restOperations(discoveryRestOperations(discoveryTimeout))
                 .build();
             decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<Jwt>(
                 JwtValidators.createDefaultWithIssuer(trivore.issuerUri()),
@@ -90,12 +92,13 @@ public final class IssuerRoutingAuthentication {
     }
 
     /**
-     * Used for the discovery document and for the key set. Both timeouts are 5 s.
+     * Used for the discovery document and for the key set. The connect timeout and the read timeout are both the
+     * given timeout.
      */
-    private static RestOperations discoveryRestOperations() {
+    private static RestOperations discoveryRestOperations(Duration timeout) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout((int) DISCOVERY_TIMEOUT.toMillis());
-        factory.setReadTimeout((int) DISCOVERY_TIMEOUT.toMillis());
+        factory.setConnectTimeout((int) timeout.toMillis());
+        factory.setReadTimeout((int) timeout.toMillis());
         return new RestTemplate(factory);
     }
 

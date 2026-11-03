@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.server.resource.web.DefaultBearerToke
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -75,35 +76,46 @@ public class ApiAccessLogFilter extends OncePerRequestFilter {
             return;
         }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String issuer;
-        String client = NONE;
-        String version = NONE;
-        if (authentication instanceof JwtAuthenticationToken jwtAuthentication && jwtAuthentication.isAuthenticated()) {
-            Jwt jwt = jwtAuthentication.getToken();
-            if (trivoreIssuer != null && trivoreIssuer.equals(jwt.getIssuer().toString())) {
-                issuer = "trivore";
-                client = jwt.getSubject();
-            } else {
-                issuer = ISSUER_ENTRA;
-                if (jwt.hasClaim("scp")) {
-                    // user token: only a 401 is logged, and no claim of the user is read
-                    if (status != HttpStatus.UNAUTHORIZED.value()) {
-                        return;
-                    }
-                } else {
-                    client = firstPresent(
-                        jwt.getClaimAsString("azp"), firstPresent(jwt.getClaimAsString("appid"), NONE));
-                    version = firstPresent(jwt.getClaimAsString("ver"), NONE);
-                }
-            }
-        } else if (status == HttpStatus.UNAUTHORIZED.value()) {
-            issuer = unverifiedIssuerLabel(request);
-        } else {
+        Optional<Labels> labels = labelsFor(request, authentication, status);
+        if (labels.isEmpty()) {
             return;
         }
         ACCESS_LOG.info("{} {} {} {}ms issuer={} client={} ver={}",
             clean(request.getMethod()), clean(request.getRequestURI()), status, millis,
-            issuer, clean(client), clean(version));
+            labels.get().issuer(), clean(labels.get().client()), clean(labels.get().version()));
+    }
+
+    /**
+     * The issuer, client and version columns of one line.
+     */
+    private record Labels(String issuer, String client, String version) {
+    }
+
+    /**
+     * Returns the labels of the line, or empty when the request writes no line.
+     */
+    private Optional<Labels> labelsFor(HttpServletRequest request, Authentication authentication, int status) {
+        if (authentication instanceof JwtAuthenticationToken jwtAuthentication && jwtAuthentication.isAuthenticated()) {
+            return jwtLabels(jwtAuthentication.getToken(), status);
+        }
+        if (status == HttpStatus.UNAUTHORIZED.value()) {
+            return Optional.of(new Labels(unverifiedIssuerLabel(request), NONE, NONE));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Labels> jwtLabels(Jwt jwt, int status) {
+        if (trivoreIssuer != null && trivoreIssuer.equals(jwt.getIssuer().toString())) {
+            return Optional.of(new Labels("trivore", jwt.getSubject(), NONE));
+        }
+        if (jwt.hasClaim("scp")) {
+            // user token: only a 401 is logged, and no claim of the user is read
+            return status == HttpStatus.UNAUTHORIZED.value()
+                ? Optional.of(new Labels(ISSUER_ENTRA, NONE, NONE))
+                : Optional.empty();
+        }
+        String client = firstPresent(jwt.getClaimAsString("azp"), firstPresent(jwt.getClaimAsString("appid"), NONE));
+        return Optional.of(new Labels(ISSUER_ENTRA, client, firstPresent(jwt.getClaimAsString("ver"), NONE)));
     }
 
     /**

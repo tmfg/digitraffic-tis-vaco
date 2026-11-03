@@ -45,7 +45,7 @@ public class AadOAuth2LoginSecurityConfig {
                                            @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource,
                                            JwtDecoder entraJwtDecoder,
                                            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String entraIssuerUri,
-                                           VacoProperties vacoProperties) throws Exception {
+                                           VacoProperties vacoProperties) {
         // session management is set to stateless as JWT tokens themselves are stateless
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

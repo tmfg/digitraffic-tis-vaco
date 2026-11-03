@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /**
@@ -33,7 +34,7 @@ final class LazyTrivoreDecoder implements JwtDecoder {
     private final Supplier<JwtDecoder> discovery;
     private final Clock clock;
 
-    private volatile JwtDecoder decoder;
+    private final AtomicReference<JwtDecoder> decoder = new AtomicReference<>();
     private RuntimeException lastCause;
     private Duration nextDelay = INITIAL_DELAY;
     private Instant retryAt = Instant.MIN;
@@ -46,25 +47,28 @@ final class LazyTrivoreDecoder implements JwtDecoder {
 
     @Override
     public Jwt decode(String token) throws JwtException {
-        JwtDecoder ready = decoder;
+        JwtDecoder ready = decoder.get();
         return (ready != null ? ready : discover()).decode(token);
     }
 
     private synchronized JwtDecoder discover() {
-        if (decoder != null) {
-            return decoder;
+        JwtDecoder existing = decoder.get();
+        if (existing != null) {
+            return existing;
         }
         if (Instant.now(clock).isBefore(retryAt)) {
             throw new BadJwtException(UNAVAILABLE, lastCause);
         }
         try {
             return attempt();
-        } catch (RuntimeException _) {
+        } catch (RuntimeException e) {
             // a typical failure is a connection reset, so the second attempt runs at once
+            logFailure(e);
         }
         try {
             return attempt();
         } catch (RuntimeException e) {
+            logFailure(e);
             lastCause = e;
             retryAt = Instant.now(clock).plus(nextDelay);
             nextDelay = nextDelay.multipliedBy(2).compareTo(MAXIMUM_DELAY) > 0 ? MAXIMUM_DELAY : nextDelay.multipliedBy(2);
@@ -73,14 +77,14 @@ final class LazyTrivoreDecoder implements JwtDecoder {
     }
 
     private JwtDecoder attempt() {
-        try {
-            decoder = discovery.get();
-            lastCause = null;
-            nextDelay = INITIAL_DELAY;
-            return decoder;
-        } catch (RuntimeException e) {
-            LOGGER.warn("Discovery of Trivore ID issuer {} failed: {}", issuer, e.getMessage());
-            throw e;
-        }
+        JwtDecoder created = discovery.get();
+        decoder.set(created);
+        lastCause = null;
+        nextDelay = INITIAL_DELAY;
+        return created;
+    }
+
+    private void logFailure(RuntimeException e) {
+        LOGGER.warn("Discovery of Trivore ID issuer {} failed: {}", issuer, e.getMessage());
     }
 }

@@ -36,7 +36,11 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,6 +59,11 @@ class TrivoreDiscoveryFailureTests {
 
     private static final String CLIENT = "0374686053962913";
     private static final String ENTRA_ISSUER = "https://entra.example.test/v2.0";
+    private static final String PING = "/v1/ping";
+    private static final String AUTHORIZATION = "Authorization";
+    private static final String BEARER = "Bearer ";
+    private static final Clock SYSTEM_CLOCK = Clock.systemUTC();
+    private static final Duration DISCOVERY_TIMEOUT = Duration.ofSeconds(5);
 
     private HttpServer server;
     private String issuer;
@@ -93,7 +102,7 @@ class TrivoreDiscoveryFailureTests {
 
         Trivore trivore = new Trivore(issuer, List.of(new TrivoreClient(CLIENT, Set.of("vaco.apiuser"))));
         AuthenticationManagerResolver<HttpServletRequest> resolver = IssuerRoutingAuthentication.create(
-            ENTRA_ISSUER, mock(JwtDecoder.class), new JwtAuthenticationConverter(), trivore, clock);
+            ENTRA_ISSUER, mock(JwtDecoder.class), new JwtAuthenticationConverter(), trivore, clock, DISCOVERY_TIMEOUT);
         mockMvc = MockMvcBuilders.standaloneSetup(new Endpoint())
             .addFilters(new BearerTokenAuthenticationFilter(resolver))
             .build();
@@ -106,7 +115,7 @@ class TrivoreDiscoveryFailureTests {
 
     @RestController
     static class Endpoint {
-        @GetMapping("/v1/ping")
+        @GetMapping(PING)
         String ping() {
             return "pong";
         }
@@ -114,7 +123,7 @@ class TrivoreDiscoveryFailureTests {
 
     @Test
     void unreachableTrivoreIdAnswers401() throws Exception {
-        mockMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + token()))
+        mockMvc.perform(get(PING).header(AUTHORIZATION, BEARER + token()))
             .andExpect(status().isUnauthorized());
     }
 
@@ -133,7 +142,7 @@ class TrivoreDiscoveryFailureTests {
 
     private void callIgnoringFailure(String token) throws Exception {
         try {
-            mockMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + token));
+            mockMvc.perform(get(PING).header(AUTHORIZATION, BEARER + token));
         } catch (ServletException | RuntimeException _) {
             // the status is asserted by another test, this one counts discovery requests
         }
@@ -142,16 +151,16 @@ class TrivoreDiscoveryFailureTests {
     @Test
     void discoveryRunsAgainAfterTheRetryDelayAndTheDecoderIsKept() throws Exception {
         String token = token();
-        mockMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + token))
+        mockMvc.perform(get(PING).header(AUTHORIZATION, BEARER + token))
             .andExpect(status().isUnauthorized());
 
         available.set(true);
         clock.advance(Duration.ofMillis(1001));
-        mockMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + token))
+        mockMvc.perform(get(PING).header(AUTHORIZATION, BEARER + token))
             .andExpect(status().isOk());
 
         int afterRecovery = discoveryHits.get();
-        mockMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + token))
+        mockMvc.perform(get(PING).header(AUTHORIZATION, BEARER + token))
             .andExpect(status().isOk());
         assertThat(discoveryHits.get(), equalTo(afterRecovery));
     }
@@ -159,11 +168,14 @@ class TrivoreDiscoveryFailureTests {
     @Test
     void discoveryThatAnswersAfterTheReadTimeoutAnswers401() throws Exception {
         HttpServer slow = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
-        slow.setExecutor(Executors.newCachedThreadPool());
+        ExecutorService slowExecutor = Executors.newCachedThreadPool();
+        CountDownLatch release = new CountDownLatch(1);
+        slow.setExecutor(slowExecutor);
         String slowIssuer = "http://localhost:" + slow.getAddress().getPort() + "/trivore";
         slow.createContext("/", exchange -> {
             try {
-                Thread.sleep(6000);
+                // answers only after the client read timeout, or when the test releases the latch
+                release.await(1, TimeUnit.SECONDS);
                 String body = exchange.getRequestURI().getPath().contains(".well-known")
                     ? "{\"issuer\":\"" + slowIssuer + "\",\"jwks_uri\":\"" + slowIssuer + "/jwks\"}"
                     : new JWKSet(key.toPublicJWK()).toString();
@@ -183,16 +195,19 @@ class TrivoreDiscoveryFailureTests {
         try {
             Trivore trivore = new Trivore(slowIssuer, List.of(new TrivoreClient(CLIENT, Set.of("vaco.apiuser"))));
             AuthenticationManagerResolver<HttpServletRequest> resolver = IssuerRoutingAuthentication.create(
-                ENTRA_ISSUER, mock(JwtDecoder.class), new JwtAuthenticationConverter(), trivore, clock);
+                ENTRA_ISSUER, mock(JwtDecoder.class), new JwtAuthenticationConverter(), trivore, clock,
+                Duration.ofMillis(200));
             MockMvc slowMvc = MockMvcBuilders.standaloneSetup(new Endpoint())
                 .addFilters(new BearerTokenAuthenticationFilter(resolver))
                 .build();
             String slowToken = token(slowIssuer);
 
-            slowMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + slowToken))
+            slowMvc.perform(get(PING).header(AUTHORIZATION, BEARER + slowToken))
                 .andExpect(status().isUnauthorized());
         } finally {
+            release.countDown();
             slow.stop(0);
+            slowExecutor.shutdownNow();
         }
     }
 
@@ -201,7 +216,7 @@ class TrivoreDiscoveryFailureTests {
     }
 
     private String token(String tokenIssuer) throws JOSEException {
-        Instant now = Instant.now();
+        Instant now = Instant.now(SYSTEM_CLOCK);
         SignedJWT jwt = new SignedJWT(
             new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(key.getKeyID()).build(),
             new JWTClaimsSet.Builder()
