@@ -15,14 +15,18 @@ import java.util.function.Supplier;
 /**
  * Creates the Trivore ID decoder on the first token and keeps it for the life of the process.
  * <p>
- * A failed discovery becomes a {@link BadJwtException}, so the caller answers 401. After a failure, the decoder throws
- * the same exception for {@link #RETRY_DELAY} without running discovery again. Discovery runs on the request thread,
- * and it may wait for a long time when Trivore ID is unreachable.
+ * A failed discovery runs once more at once, because a typical failure is a connection reset. When the second attempt
+ * also fails, the request gets a {@link BadJwtException}, so the caller answers 401. The decoder then runs no
+ * discovery for a delay. The delay starts at {@link #INITIAL_DELAY}, doubles after each failed request, and stops
+ * at {@link #MAXIMUM_DELAY}. During the delay, each request gets a new exception with the last cause. Discovery runs
+ * on the request thread, and requests that arrive meanwhile wait for it.
  */
 final class LazyTrivoreDecoder implements JwtDecoder {
 
-    static final Duration RETRY_DELAY = Duration.ofSeconds(30);
+    static final Duration INITIAL_DELAY = Duration.ofSeconds(1);
+    static final Duration MAXIMUM_DELAY = Duration.ofMinutes(5);
 
+    private static final String UNAVAILABLE = "Trivore ID is not available";
     private static final Logger LOGGER = LoggerFactory.getLogger(LazyTrivoreDecoder.class);
 
     private final String issuer;
@@ -30,7 +34,8 @@ final class LazyTrivoreDecoder implements JwtDecoder {
     private final Clock clock;
 
     private volatile JwtDecoder decoder;
-    private BadJwtException lastFailure;
+    private RuntimeException lastCause;
+    private Duration nextDelay = INITIAL_DELAY;
     private Instant retryAt = Instant.MIN;
 
     LazyTrivoreDecoder(String issuer, Supplier<JwtDecoder> discovery, Clock clock) {
@@ -50,17 +55,32 @@ final class LazyTrivoreDecoder implements JwtDecoder {
             return decoder;
         }
         if (Instant.now(clock).isBefore(retryAt)) {
-            throw lastFailure;
+            throw new BadJwtException(UNAVAILABLE, lastCause);
         }
         try {
+            return attempt();
+        } catch (RuntimeException _) {
+            // a typical failure is a connection reset, so the second attempt runs at once
+        }
+        try {
+            return attempt();
+        } catch (RuntimeException e) {
+            lastCause = e;
+            retryAt = Instant.now(clock).plus(nextDelay);
+            nextDelay = nextDelay.multipliedBy(2).compareTo(MAXIMUM_DELAY) > 0 ? MAXIMUM_DELAY : nextDelay.multipliedBy(2);
+            throw new BadJwtException(UNAVAILABLE, e);
+        }
+    }
+
+    private JwtDecoder attempt() {
+        try {
             decoder = discovery.get();
-            lastFailure = null;
+            lastCause = null;
+            nextDelay = INITIAL_DELAY;
             return decoder;
         } catch (RuntimeException e) {
             LOGGER.warn("Discovery of Trivore ID issuer {} failed: {}", issuer, e.getMessage());
-            lastFailure = new BadJwtException("Trivore ID is not available", e);
-            retryAt = Instant.now(clock).plus(RETRY_DELAY);
-            throw lastFailure;
+            throw e;
         }
     }
 }

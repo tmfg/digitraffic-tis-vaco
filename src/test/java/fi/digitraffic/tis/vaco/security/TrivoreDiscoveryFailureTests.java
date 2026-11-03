@@ -36,7 +36,7 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Executors;import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -119,13 +119,13 @@ class TrivoreDiscoveryFailureTests {
     }
 
     @Test
-    void failedDiscoveryIsNotRepeatedInsideTheRetryWindow() throws Exception {
+    void failedDiscoveryIsNotRepeatedInsideTheRetryDelay() throws Exception {
         String token = token();
         callIgnoringFailure(token);
         int afterFirst = discoveryHits.get();
         assertThat(afterFirst, greaterThan(0));
 
-        clock.advance(Duration.ofSeconds(29));
+        clock.advance(Duration.ofMillis(900));
         callIgnoringFailure(token);
 
         assertThat(discoveryHits.get(), equalTo(afterFirst));
@@ -140,13 +140,13 @@ class TrivoreDiscoveryFailureTests {
     }
 
     @Test
-    void discoveryRunsAgainAfterTheRetryWindowAndTheDecoderIsKept() throws Exception {
+    void discoveryRunsAgainAfterTheRetryDelayAndTheDecoderIsKept() throws Exception {
         String token = token();
         mockMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + token))
             .andExpect(status().isUnauthorized());
 
         available.set(true);
-        clock.advance(Duration.ofSeconds(31));
+        clock.advance(Duration.ofMillis(1001));
         mockMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + token))
             .andExpect(status().isOk());
 
@@ -156,12 +156,56 @@ class TrivoreDiscoveryFailureTests {
         assertThat(discoveryHits.get(), equalTo(afterRecovery));
     }
 
+    @Test
+    void discoveryThatAnswersAfterTheReadTimeoutAnswers401() throws Exception {
+        HttpServer slow = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        slow.setExecutor(Executors.newCachedThreadPool());
+        String slowIssuer = "http://localhost:" + slow.getAddress().getPort() + "/trivore";
+        slow.createContext("/", exchange -> {
+            try {
+                Thread.sleep(6000);
+                String body = exchange.getRequestURI().getPath().contains(".well-known")
+                    ? "{\"issuer\":\"" + slowIssuer + "\",\"jwks_uri\":\"" + slowIssuer + "/jwks\"}"
+                    : new JWKSet(key.toPublicJWK()).toString();
+                byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, bytes.length);
+                exchange.getResponseBody().write(bytes);
+            } catch (InterruptedException _) {
+                Thread.currentThread().interrupt();
+            } catch (IOException _) {
+                // the client has given up
+            } finally {
+                exchange.close();
+            }
+        });
+        slow.start();
+        try {
+            Trivore trivore = new Trivore(slowIssuer, List.of(new TrivoreClient(CLIENT, Set.of("vaco.apiuser"))));
+            AuthenticationManagerResolver<HttpServletRequest> resolver = IssuerRoutingAuthentication.create(
+                ENTRA_ISSUER, mock(JwtDecoder.class), new JwtAuthenticationConverter(), trivore, clock);
+            MockMvc slowMvc = MockMvcBuilders.standaloneSetup(new Endpoint())
+                .addFilters(new BearerTokenAuthenticationFilter(resolver))
+                .build();
+            String slowToken = token(slowIssuer);
+
+            slowMvc.perform(get("/v1/ping").header("Authorization", "Bearer " + slowToken))
+                .andExpect(status().isUnauthorized());
+        } finally {
+            slow.stop(0);
+        }
+    }
+
     private String token() throws JOSEException {
+        return token(issuer);
+    }
+
+    private String token(String tokenIssuer) throws JOSEException {
         Instant now = Instant.now();
         SignedJWT jwt = new SignedJWT(
             new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(key.getKeyID()).build(),
             new JWTClaimsSet.Builder()
-                .issuer(issuer)
+                .issuer(tokenIssuer)
                 .subject(CLIENT)
                 .audience(List.of(CLIENT))
                 .issueTime(Date.from(now))

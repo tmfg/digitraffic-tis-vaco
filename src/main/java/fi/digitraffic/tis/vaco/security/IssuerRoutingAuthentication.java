@@ -11,14 +11,18 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerAuthenticationManagerResolver;
 
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestOperations;
+import org.springframework.web.client.RestTemplate;
+
 import java.time.Clock;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +35,8 @@ import java.util.stream.Collectors;
  * other issuer are never fetched.
  */
 public final class IssuerRoutingAuthentication {
+
+    private static final Duration DISCOVERY_TIMEOUT = Duration.ofSeconds(5);
 
     private IssuerRoutingAuthentication() {
     }
@@ -73,12 +79,24 @@ public final class IssuerRoutingAuthentication {
     private static JwtDecoder trivoreDecoder(Trivore trivore, Clock clock) {
         Set<String> clientIds = trivore.clients().stream().map(TrivoreClient::clientId).collect(Collectors.toSet());
         return new LazyTrivoreDecoder(trivore.issuerUri(), () -> {
-            NimbusJwtDecoder decoder = JwtDecoders.fromIssuerLocation(trivore.issuerUri());
+            NimbusJwtDecoder decoder = NimbusJwtDecoder.withIssuerLocation(trivore.issuerUri())
+                .restOperations(discoveryRestOperations())
+                .build();
             decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<Jwt>(
                 JwtValidators.createDefaultWithIssuer(trivore.issuerUri()),
                 new TrivoreTokenValidator(clientIds)));
             return decoder;
         }, clock);
+    }
+
+    /**
+     * Used for the discovery document and for the key set. Both timeouts are 5 s.
+     */
+    private static RestOperations discoveryRestOperations() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout((int) DISCOVERY_TIMEOUT.toMillis());
+        factory.setReadTimeout((int) DISCOVERY_TIMEOUT.toMillis());
+        return new RestTemplate(factory);
     }
 
     private static JwtAuthenticationConverter trivoreConverter(Trivore trivore) {

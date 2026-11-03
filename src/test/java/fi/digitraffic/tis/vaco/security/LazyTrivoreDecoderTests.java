@@ -6,6 +6,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -55,6 +59,86 @@ class LazyTrivoreDecoderTests {
         }
 
         assertThat(discoveries.get(), equalTo(1));
+    }
+
+    @Test
+    void secondAttemptRunsAtOnceWhenTheFirstFails() {
+        AtomicInteger discoveries = new AtomicInteger();
+        Jwt jwt = mock(Jwt.class);
+        JwtDecoder delegate = mock(JwtDecoder.class);
+        when(delegate.decode("t")).thenReturn(jwt);
+        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder("issuer", () -> {
+            if (discoveries.incrementAndGet() == 1) {
+                throw new IllegalStateException("connection reset");
+            }
+            return delegate;
+        }, Clock.systemUTC());
+
+        assertThat(decoder.decode("t"), equalTo(jwt));
+        assertThat(discoveries.get(), equalTo(2));
+    }
+
+    @Test
+    void delayDoublesAfterEachFailedRequestAndStopsAtFiveMinutes() {
+        AtomicInteger discoveries = new AtomicInteger();
+        MutableClock clock = new MutableClock();
+        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder("issuer", () -> {
+            discoveries.incrementAndGet();
+            throw new IllegalStateException("down");
+        }, clock);
+
+        long[] delaysInSeconds = {1, 2, 4, 8, 16, 32, 64, 128, 256, 300, 300};
+        int expected = 0;
+        for (long delay : delaysInSeconds) {
+            assertThrows(BadJwtException.class, () -> decoder.decode("t"));
+            expected += 2;
+            assertThat(discoveries.get(), equalTo(expected));
+
+            clock.advance(Duration.ofSeconds(delay).minusMillis(1));
+            assertThrows(BadJwtException.class, () -> decoder.decode("t"));
+            assertThat(discoveries.get(), equalTo(expected));
+
+            clock.advance(Duration.ofMillis(1));
+        }
+    }
+
+    @Test
+    void requestsInsideTheDelayGetSeparateExceptionsWithTheLastCause() {
+        IllegalStateException cause = new IllegalStateException("down");
+        LazyTrivoreDecoder decoder = new LazyTrivoreDecoder("issuer", () -> {
+            throw cause;
+        }, new MutableClock());
+
+        assertThrows(BadJwtException.class, () -> decoder.decode("t"));
+        BadJwtException first = assertThrows(BadJwtException.class, () -> decoder.decode("t"));
+        BadJwtException second = assertThrows(BadJwtException.class, () -> decoder.decode("t"));
+
+        assertThat(first == second, equalTo(false));
+        assertThat(first.getCause(), equalTo(cause));
+        assertThat(second.getCause(), equalTo(cause));
+    }
+
+    private static final class MutableClock extends Clock {
+        private Instant now = Instant.parse("2026-01-01T00:00:00Z");
+
+        void advance(Duration duration) {
+            now = now.plus(duration);
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
+        }
     }
 
     @Test
