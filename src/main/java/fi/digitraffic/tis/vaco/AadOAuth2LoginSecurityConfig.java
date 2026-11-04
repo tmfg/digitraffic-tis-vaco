@@ -1,6 +1,9 @@
 package fi.digitraffic.tis.vaco;
 
+import fi.digitraffic.tis.vaco.configuration.Trivore;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.security.ApiAccessLogFilter;
+import fi.digitraffic.tis.vaco.security.IssuerRoutingAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,6 +29,7 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -45,7 +49,10 @@ public class AadOAuth2LoginSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                           @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource,
+                                           JwtDecoder entraJwtDecoder,
+                                           @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String entraIssuerUri,
+                                           VacoProperties vacoProperties) {
         // session management is set to stateless as JWT tokens themselves are stateless
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -66,14 +73,25 @@ public class AadOAuth2LoginSecurityConfig {
                 // private endpoints (=everything else)
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 ->
-                oauth2.jwt(customizer ->
-                    customizer.jwtAuthenticationConverter(overridingGrantedAuthoritiesConverter())));
+                oauth2.authenticationManagerResolver(IssuerRoutingAuthentication.create(
+                    entraIssuerUri,
+                    entraJwtDecoder,
+                    overridingGrantedAuthoritiesConverter(),
+                    vacoProperties.trivore())));
 
         // enable CORS
         http.cors(cors -> cors.configurationSource(corsConfigurationSource));
         // and disable CSRF
         http.csrf(AbstractHttpConfigurer::disable);
 
+        // Also sees the 401 that the bearer filter writes. Created here and not a bean on purpose, see the class.
+        Trivore trivore = vacoProperties.trivore();
+        http.addFilterBefore(
+            new ApiAccessLogFilter(
+                entraIssuerUri,
+                vacoProperties.azureAd().tenantId(),
+                trivore != null && trivore.enabled() ? trivore.issuerUri() : null),
+            BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 
