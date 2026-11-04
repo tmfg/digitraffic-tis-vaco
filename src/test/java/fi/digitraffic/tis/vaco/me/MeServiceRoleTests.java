@@ -16,7 +16,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -86,22 +85,19 @@ class MeServiceRoleTests {
     }
 
     @Test
-    void trivoreAllowlistBindsRolesFromCommaSeparatedValue() {
+    void trivoreIsEnabledByTheIssuerUriAlone() {
         Binder binder = new Binder(new MapConfigurationPropertySource(Map.of(
-            "vaco.trivore.issuer-uri", "https://issuer.example",
-            "vaco.trivore.clients[0].client-id", "client-1",
-            "vaco.trivore.clients[0].roles", "vaco.apiuser,vaco.admin")));
+            "vaco.trivore.issuer-uri", "https://issuer.example")));
 
         Trivore trivore = binder.bind("vaco.trivore", Trivore.class).get();
 
+        assertThat(trivore.issuerUri(), equalTo("https://issuer.example"));
         assertThat(trivore.enabled(), equalTo(true));
-        assertThat(trivore.clients().get(0).clientId(), equalTo("client-1"));
-        assertThat(trivore.clients().get(0).roles(), equalTo(Set.of("vaco.apiuser", "vaco.admin")));
     }
 
     @Test
-    void trivoreWithoutClientsIsDisabled() {
-        assertThat(new Trivore("https://issuer.example", null).enabled(), equalTo(false));
-        assertThat(new Trivore(null, null).enabled(), equalTo(false));
+    void trivoreWithoutIssuerIsDisabled() {
+        assertThat(new Trivore(null).enabled(), equalTo(false));
+        assertThat(new Trivore(" ").enabled(), equalTo(false));
     }
 }

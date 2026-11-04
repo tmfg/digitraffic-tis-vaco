@@ -97,7 +97,7 @@ test.describe.serial('VACO API with Trivore ID client credentials', () => {
     expect(body.subarray(0, 2).toString('latin1')).toBe('PK');
   });
 
-  test('spec 2: a client that is not on the allowlist gets 401', async () => {
+  test('spec 2: a client without a VACO scope gets 401', async () => {
     const token = await getNotAllowlistedToken();
     const response = await api.get(`queue/${publicId ?? 'unknown'}`, {
       headers: { Authorization: `Bearer ${token}` },

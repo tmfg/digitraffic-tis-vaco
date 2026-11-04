@@ -17,7 +17,6 @@ import com.sun.net.httpserver.HttpServer;
 import fi.digitraffic.tis.vaco.AadOAuth2LoginSecurityConfig;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.configuration.Trivore;
-import fi.digitraffic.tis.vaco.configuration.TrivoreClient;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.AfterAll;
@@ -60,7 +59,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -89,9 +87,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = "spring.cloud.azure.active-directory.enabled=true")
 class IssuerRoutingAuthenticationTests {
 
-    private static final String ALLOWLISTED_E2E = "0374686053962913";
-    private static final String ALLOWLISTED_CATALOG = "1111111111111111";
-    private static final String NOT_ALLOWLISTED = "5946364502883352";
+    private static final String E2E_CLIENT = "0374686053962913";
+    private static final String CATALOG_CLIENT = "1111111111111111";
+    private static final String OTHER_CLIENT = "5946364502883352";
+    private static final String APIUSER_SCOPES = "openid vaco.apiuser";
+    private static final String ADMIN_SCOPES = "openid vaco.apiuser vaco.admin";
+    private static final Map<String, Object> APIUSER_CLAIMS = Map.of("scope", APIUSER_SCOPES);
     private static final String ENTRA_AUDIENCE = "api-audience";
 
     private static final Map<String, RSAKey> KEYS = new ConcurrentHashMap<>();
@@ -147,9 +148,7 @@ class IssuerRoutingAuthenticationTests {
         @Bean
         VacoProperties vacoProperties() {
             VacoProperties base = TestObjects.vacoProperties();
-            Trivore trivore = new Trivore(BASE + "/trivore", List.of(
-                new TrivoreClient(ALLOWLISTED_E2E, Set.of("vaco.apiuser", "vaco.admin")),
-                new TrivoreClient(ALLOWLISTED_CATALOG, Set.of("vaco.apiuser"))));
+            Trivore trivore = new Trivore(BASE + "/trivore");
             return new VacoProperties(base.environment(), base.temporaryDirectory(), base.s3ProcessingBucket(),
                 base.s3PackagesBucket(), base.baseUrl(), base.contextUrl(), base.companyNameClaim(), base.aws(),
                 base.azureAd(), trivore, base.email(), base.cleanup(), base.msGraph(), base.encryptionKeys(),
@@ -168,6 +167,11 @@ class IssuerRoutingAuthenticationTests {
         @PreAuthorize("hasAuthority('vaco.apiuser')")
         String entry(@PathVariable String publicId) {
             return publicId;
+        }
+
+        @GetMapping("/me")
+        String me() {
+            return "me";
         }
 
         @GetMapping("/v1/unauthorized")
@@ -226,11 +230,11 @@ class IssuerRoutingAuthenticationTests {
 
     @Test
     void trivoreApplicationTokenWritesOneFullAccessLine() throws Exception {
-        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(ALLOWLISTED_CATALOG))))
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(CATALOG_CLIENT, APIUSER_SCOPES))))
             .andExpect(status().isOk());
         assertThat(accessLines(), hasSize(1));
         assertThat(accessLines().getFirst(), matchesPattern(
-            "^GET (/api)?/v1/queue/\\S+ \\d{3} \\d+ms issuer=trivore client=" + ALLOWLISTED_CATALOG + " ver=-$"));
+            "^GET (/api)?/v1/queue/\\S+ \\d{3} \\d+ms issuer=trivore client=" + CATALOG_CLIENT + " ver=-$"));
     }
 
     static Stream<Arguments> entraApplicationClaims() {
@@ -277,7 +281,7 @@ class IssuerRoutingAuthenticationTests {
 
     @Test
     void unknownIssuerWritesUnknownLabelWithoutRawIssuer() throws Exception {
-        String token = sign("foreign", BASE + "/foreign", ALLOWLISTED_E2E, List.of(ALLOWLISTED_E2E), inOneHour(), Map.of());
+        String token = sign("foreign", BASE + "/foreign", E2E_CLIENT, List.of(E2E_CLIENT), inOneHour(), APIUSER_CLAIMS);
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
             .andExpect(status().isUnauthorized());
         assertThat(accessLines(), hasSize(1));
@@ -295,12 +299,12 @@ class IssuerRoutingAuthenticationTests {
     }
 
     @Test
-    void trivoreClientNotOnAllowlistWritesTrivoreLabelWithoutSubject() throws Exception {
-        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(NOT_ALLOWLISTED))))
+    void trivoreTokenWithoutVacoScopeWritesTrivoreLabelWithoutSubject() throws Exception {
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(E2E_CLIENT, "openid"))))
             .andExpect(status().isUnauthorized());
         assertThat(accessLines(), hasSize(1));
         assertThat(accessLines().getFirst(), endsWith(" issuer=trivore client=- ver=-"));
-        assertThat(accessLines().getFirst(), not(containsString(NOT_ALLOWLISTED)));
+        assertThat(accessLines().getFirst(), not(containsString(E2E_CLIENT)));
     }
 
     @Test
@@ -322,7 +326,7 @@ class IssuerRoutingAuthenticationTests {
 
     @Test
     void exceptionWritesStatus500AndIsRethrown() throws Exception {
-        String token = trivoreToken(ALLOWLISTED_E2E);
+        String token = trivoreToken(E2E_CLIENT, ADMIN_SCOPES);
         assertThrows(ServletException.class,
             () -> mockMvc.perform(get("/v1/boom").header("Authorization", bearer(token))));
         assertThat(accessLines(), hasSize(1));
@@ -360,47 +364,75 @@ class IssuerRoutingAuthenticationTests {
     }
 
     @Test
-    void allowlistedTrivoreClientIsAccepted() throws Exception {
-        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(ALLOWLISTED_CATALOG))))
+    void trivoreClientWithApiUserScopeIsAccepted() throws Exception {
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(CATALOG_CLIENT, APIUSER_SCOPES))))
             .andExpect(status().isOk());
     }
 
     @Test
-    void trivoreClientNotOnAllowlistIsRejected() throws Exception {
-        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(NOT_ALLOWLISTED))))
-            .andExpect(status().isUnauthorized());
+    void trivoreClientNotKnownToVacoGetsItsRoleFromTheScope() throws Exception {
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(trivoreToken(OTHER_CLIENT, APIUSER_SCOPES))))
+            .andExpect(status().isOk());
     }
 
     @Test
-    void allowlistedClientWithoutAdminRoleGetsForbiddenOnAdminEndpoint() throws Exception {
-        mockMvc.perform(post("/ui/admin/companies").header("Authorization", bearer(trivoreToken(ALLOWLISTED_CATALOG))))
+    void apiUserScopeGetsForbiddenOnAdminEndpoint() throws Exception {
+        mockMvc.perform(post("/ui/admin/companies").header("Authorization", bearer(trivoreToken(OTHER_CLIENT, APIUSER_SCOPES))))
             .andExpect(status().isForbidden());
     }
 
     @Test
-    void allowlistedClientWithAdminRoleReachesAdminEndpoint() throws Exception {
-        mockMvc.perform(post("/ui/admin/companies").header("Authorization", bearer(trivoreToken(ALLOWLISTED_E2E))))
+    void adminScopeReachesAdminEndpoint() throws Exception {
+        mockMvc.perform(post("/ui/admin/companies").header("Authorization", bearer(trivoreToken(OTHER_CLIENT, ADMIN_SCOPES))))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    void trivoreTokenWithOnlyOpenidScopeIsRejected() throws Exception {
+        mockMvc.perform(get("/me").header("Authorization", bearer(trivoreToken(E2E_CLIENT, "openid"))))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void trivoreTokenWithoutScopeClaimIsRejected() throws Exception {
+        String token = sign("trivore", BASE + "/trivore", E2E_CLIENT, List.of(E2E_CLIENT), inOneHour(), Map.of());
+        mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void trivoreTokenWithOnlyAForeignVacoScopeIsRejected() throws Exception {
+        mockMvc.perform(get("/v1/queue/abc")
+                .header("Authorization", bearer(trivoreToken(E2E_CLIENT, "openid vaco.company_admin"))))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void trivoreRolesClaimGivesNoRole() throws Exception {
+        String token = sign("trivore", BASE + "/trivore", E2E_CLIENT, List.of(E2E_CLIENT), inOneHour(),
+            Map.of("scope", APIUSER_SCOPES, "roles", List.of("vaco.admin")));
+        mockMvc.perform(post("/ui/admin/companies").header("Authorization", bearer(token)))
+            .andExpect(status().isForbidden());
     }
 
     @Test
     void expiredTrivoreTokenIsRejected() throws Exception {
         Instant past = Instant.now().minus(2, ChronoUnit.HOURS);
-        String token = sign("trivore", BASE + "/trivore", ALLOWLISTED_E2E, List.of(ALLOWLISTED_E2E), past, Map.of());
+        String token = sign("trivore", BASE + "/trivore", E2E_CLIENT, List.of(E2E_CLIENT), past, APIUSER_CLAIMS);
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
             .andExpect(status().isUnauthorized());
     }
 
     @Test
     void trivoreTokenWithoutAudienceIsRejected() throws Exception {
-        String token = sign("trivore", BASE + "/trivore", ALLOWLISTED_E2E, null, inOneHour(), Map.of());
+        String token = sign("trivore", BASE + "/trivore", E2E_CLIENT, null, inOneHour(), APIUSER_CLAIMS);
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
             .andExpect(status().isUnauthorized());
     }
 
     @Test
     void trivoreTokenWhoseAudienceDoesNotContainSubjectIsRejected() throws Exception {
-        String token = sign("trivore", BASE + "/trivore", ALLOWLISTED_E2E, List.of(NOT_ALLOWLISTED), inOneHour(), Map.of());
+        String token = sign("trivore", BASE + "/trivore", E2E_CLIENT, List.of(OTHER_CLIENT), inOneHour(), APIUSER_CLAIMS);
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
             .andExpect(status().isUnauthorized());
     }
@@ -408,7 +440,7 @@ class IssuerRoutingAuthenticationTests {
     @Test
     void tokenFromUnknownIssuerIsRejectedWithoutFetchingItsKeys() throws Exception {
         int before = HITS.get("foreign").get();
-        String token = sign("foreign", BASE + "/foreign", ALLOWLISTED_E2E, List.of(ALLOWLISTED_E2E), inOneHour(), Map.of());
+        String token = sign("foreign", BASE + "/foreign", E2E_CLIENT, List.of(E2E_CLIENT), inOneHour(), APIUSER_CLAIMS);
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
             .andExpect(status().isUnauthorized());
         assertThat(HITS.get("foreign").get(), equalTo(before));
@@ -416,7 +448,7 @@ class IssuerRoutingAuthenticationTests {
 
     @Test
     void trivoreTokenSignedWithAnotherKeyIsRejected() throws Exception {
-        String token = sign("foreign", BASE + "/trivore", ALLOWLISTED_E2E, List.of(ALLOWLISTED_E2E), inOneHour(), Map.of());
+        String token = sign("foreign", BASE + "/trivore", E2E_CLIENT, List.of(E2E_CLIENT), inOneHour(), APIUSER_CLAIMS);
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
             .andExpect(status().isUnauthorized());
     }
@@ -457,8 +489,8 @@ class IssuerRoutingAuthenticationTests {
         return "Bearer " + token;
     }
 
-    private static String trivoreToken(String clientId) throws JOSEException {
-        return sign("trivore", BASE + "/trivore", clientId, List.of(clientId), inOneHour(), Map.of());
+    private static String trivoreToken(String clientId, String scope) throws JOSEException {
+        return sign("trivore", BASE + "/trivore", clientId, List.of(clientId), inOneHour(), Map.of("scope", scope));
     }
 
     private static String entraToken(List<String> roles) throws JOSEException {

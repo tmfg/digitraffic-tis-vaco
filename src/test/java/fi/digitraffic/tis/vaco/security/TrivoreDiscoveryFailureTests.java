@@ -11,7 +11,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.sun.net.httpserver.HttpServer;
 import fi.digitraffic.tis.vaco.configuration.Trivore;
-import fi.digitraffic.tis.vaco.configuration.TrivoreClient;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
@@ -35,7 +34,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -100,7 +98,7 @@ class TrivoreDiscoveryFailureTests {
         });
         server.start();
 
-        Trivore trivore = new Trivore(issuer, List.of(new TrivoreClient(CLIENT, Set.of("vaco.apiuser"))));
+        Trivore trivore = new Trivore(issuer);
         AuthenticationManagerResolver<HttpServletRequest> resolver = IssuerRoutingAuthentication.create(
             ENTRA_ISSUER, mock(JwtDecoder.class), new JwtAuthenticationConverter(), trivore, clock, DISCOVERY_TIMEOUT);
         mockMvc = MockMvcBuilders.standaloneSetup(new Endpoint())
@@ -193,7 +191,7 @@ class TrivoreDiscoveryFailureTests {
         });
         slow.start();
         try {
-            Trivore trivore = new Trivore(slowIssuer, List.of(new TrivoreClient(CLIENT, Set.of("vaco.apiuser"))));
+            Trivore trivore = new Trivore(slowIssuer);
             AuthenticationManagerResolver<HttpServletRequest> resolver = IssuerRoutingAuthentication.create(
                 ENTRA_ISSUER, mock(JwtDecoder.class), new JwtAuthenticationConverter(), trivore, clock,
                 Duration.ofMillis(200));
@@ -223,6 +221,7 @@ class TrivoreDiscoveryFailureTests {
                 .issuer(tokenIssuer)
                 .subject(CLIENT)
                 .audience(List.of(CLIENT))
+                .claim("scope", "openid vaco.apiuser")
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(now.plusSeconds(3600)))
                 .build());
