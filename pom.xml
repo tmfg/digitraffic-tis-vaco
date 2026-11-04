@@ -50,7 +50,7 @@
         <azurespring.version>7.4.0</azurespring.version>
         <immutables.version>2.12.2</immutables.version>
         <mockito.version>5.23.0</mockito.version>
-        <guava.version>33.6.0-jre</guava.version>
+        <guava.version>33.7.1-jre</guava.version>
         <msgraph.version>6.65.0</msgraph.version>
         <httpclient5.version>5.6.4</httpclient5.version>
         <httpcore5.version>5.4.3</httpcore5.version>
