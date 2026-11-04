@@ -39,11 +39,14 @@ test.describe.serial('VACO API with Trivore ID client credentials', () => {
     // A company gets the generic rulesets only through a partnership with the company that owns them.
     // Fintraffic owns them, so it is partner A (parent) and the test company is partner B (child).
     // The company delete removes the partnership too.
-    const partnership = await api.post('ui/admin/partnership', {
-      headers: authHeaders,
-      data: { partnerABusinessId: FINTRAFFIC_BUSINESS_ID, partnerBBusinessId: BUSINESS_ID },
-    });
-    expect(partnership.status()).toBe(200);
+    // A local VACO has no rule runner, so the test company must get no rulesets there.
+    if (vacoEnv() !== 'local') {
+      const partnership = await api.post('ui/admin/partnership', {
+        headers: authHeaders,
+        data: { partnerABusinessId: FINTRAFFIC_BUSINESS_ID, partnerBBusinessId: BUSINESS_ID },
+      });
+      expect(partnership.status()).toBe(200);
+    }
   });
 
   test.afterAll(async () => {
@@ -93,8 +96,8 @@ test.describe.serial('VACO API with Trivore ID client credentials', () => {
     }
     expect(FINAL_STATES).toContain(status);
     if (vacoEnv() === 'local') {
-      // A local VACO has no rule runner, so the entry does not finish as success or warnings.
-      // There is therefore no package to download.
+      // A local VACO has no rule runner and the test company has no rulesets there.
+      // The entry therefore does not finish as success or warnings, and there is no package to download.
       // The processing result is asserted in dev only.
       return;
     }
