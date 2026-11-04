@@ -53,7 +53,7 @@ test.describe.serial('VACO API with Trivore ID client credentials', () => {
     await api.dispose();
   });
 
-  test('spec 1: an allowlisted client submits an entry, reads it and downloads a package', async () => {
+  test('spec 1: a client with vaco.apiuser submits an entry, reads it and downloads a package', async () => {
     test.setTimeout(POLL_LIMIT_MS + 120_000);
 
     const created = await api.post('queue', {
