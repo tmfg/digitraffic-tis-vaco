@@ -42,7 +42,7 @@ public final class IssuerRoutingAuthentication {
      * @param entraIssuer Issuer of the Entra ID tokens
      * @param entraConverter Existing Entra ID converter, which maps the {@code roles} claim to authorities
      * @param entraDecoder Existing Entra ID decoder, reused as is
-     * @param trivore Trivore settings. The Trivore issuer is trusted only when it has an issuer URI. The roles of a Trivore
+     * @param trivore Trivore settings. VACO trusts the Trivore issuer only when it has an issuer URI. The roles of a Trivore
      *                client come from the VACO client scopes in its token.
      */
     public static AuthenticationManagerResolver<HttpServletRequest> create(String entraIssuer,

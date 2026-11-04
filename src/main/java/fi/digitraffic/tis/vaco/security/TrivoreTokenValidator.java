@@ -10,10 +10,11 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Accepts a Trivore ID token only when it was issued for its own client and carries at least one VACO client scope.
+ * VACO accepts a Trivore ID token only when Trivore issued it for its own client.
+ * The token must also carry at least one VACO client scope.
  * <p>
- * Trivore client scopes {@code vaco.apiuser} and {@code vaco.admin} map to the VACO roles of the same name. Every
- * other scope value is ignored.
+ * Trivore client scopes {@code vaco.apiuser} and {@code vaco.admin} map to the VACO roles of the same name.
+ * VACO ignores every other scope value.
  * <p>
  * This is deliberately not a Spring bean. A bean of type {@link OAuth2TokenValidator} would be injected into the
  * decoder of the Entra ID path and change its behavior.
