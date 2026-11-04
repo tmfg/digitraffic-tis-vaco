@@ -137,6 +137,7 @@ class IssuerRoutingAuthenticationTests {
     static void properties(DynamicPropertyRegistry registry) {
         registry.add("spring.cloud.azure.active-directory.enabled", () -> "true");
         registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", () -> BASE + "/entra");
+        registry.add("vaco.azure-ad.client-id", () -> "api-audience");
     }
 
     @Configuration
