@@ -92,6 +92,7 @@ class IssuerRoutingAuthenticationTests {
     private static final String ALLOWLISTED_E2E = "0374686053962913";
     private static final String ALLOWLISTED_CATALOG = "1111111111111111";
     private static final String NOT_ALLOWLISTED = "5946364502883352";
+    private static final String ENTRA_AUDIENCE = "api-audience";
 
     private static final Map<String, RSAKey> KEYS = new ConcurrentHashMap<>();
     private static final Map<String, AtomicInteger> HITS = new ConcurrentHashMap<>();
@@ -137,7 +138,7 @@ class IssuerRoutingAuthenticationTests {
     static void properties(DynamicPropertyRegistry registry) {
         registry.add("spring.cloud.azure.active-directory.enabled", () -> "true");
         registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", () -> BASE + "/entra");
-        registry.add("vaco.azure-ad.client-id", () -> "api-audience");
+        registry.add("vaco.azure-ad.client-id", () -> ENTRA_AUDIENCE);
     }
 
     @Configuration
@@ -247,7 +248,7 @@ class IssuerRoutingAuthenticationTests {
                                                               String expectedVersion) throws Exception {
         Map<String, Object> all = new HashMap<>(claims);
         all.put("roles", List.of("vaco.apiuser"));
-        String token = sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(), all);
+        String token = sign("entra", BASE + "/entra", "entra-subject", List.of(ENTRA_AUDIENCE), inOneHour(), all);
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token))).andExpect(status().isOk());
         assertThat(accessLines(), hasSize(1));
         assertThat(accessLines().getFirst(), endsWith(
@@ -265,7 +266,7 @@ class IssuerRoutingAuthenticationTests {
     @Test
     void entraV1IssuerTokenIsRejectedAndLoggedWithoutClaimValues() throws Exception {
         String token = sign("entra", "https://sts.windows.net/tenantId/", "v1-subject-sentinel",
-            List.of("api-audience"), inOneHour(), Map.of("roles", List.of("vaco.apiuser")));
+            List.of(ENTRA_AUDIENCE), inOneHour(), Map.of("roles", List.of("vaco.apiuser")));
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token)))
             .andExpect(status().isUnauthorized());
         assertThat(accessLines(), hasSize(1));
@@ -304,7 +305,7 @@ class IssuerRoutingAuthenticationTests {
 
     @Test
     void userTokenThat401sAfterAuthenticationWritesNoUserClaim() throws Exception {
-        String token = sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(), Map.of(
+        String token = sign("entra", BASE + "/entra", "entra-subject", List.of(ENTRA_AUDIENCE), inOneHour(), Map.of(
             "scp", "access_as_user",
             "oid", "user-oid-sentinel",
             "name", "User Name Sentinel",
@@ -330,7 +331,7 @@ class IssuerRoutingAuthenticationTests {
 
     @Test
     void controlCharactersInClaimsDoNotSplitTheLine() throws Exception {
-        String token = sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(),
+        String token = sign("entra", BASE + "/entra", "entra-subject", List.of(ENTRA_AUDIENCE), inOneHour(),
             Map.of("roles", List.of("vaco.apiuser"), "azp", "evil\r\nFAKE line", "ver", "2\n0"));
         mockMvc.perform(get("/v1/queue/abc").header("Authorization", bearer(token))).andExpect(status().isOk());
         assertThat(accessLines(), hasSize(1));
@@ -354,7 +355,7 @@ class IssuerRoutingAuthenticationTests {
     }
 
     private static String entraUserToken() throws JOSEException {
-        return sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(),
+        return sign("entra", BASE + "/entra", "entra-subject", List.of(ENTRA_AUDIENCE), inOneHour(),
             Map.of("scp", "access_as_user", "roles", List.of("vaco.apiuser")));
     }
 
@@ -461,7 +462,7 @@ class IssuerRoutingAuthenticationTests {
     }
 
     private static String entraToken(List<String> roles) throws JOSEException {
-        return sign("entra", BASE + "/entra", "entra-subject", List.of("api-audience"), inOneHour(), Map.of("roles", roles));
+        return sign("entra", BASE + "/entra", "entra-subject", List.of(ENTRA_AUDIENCE), inOneHour(), Map.of("roles", roles));
     }
 
     private static String sign(String keyName,
