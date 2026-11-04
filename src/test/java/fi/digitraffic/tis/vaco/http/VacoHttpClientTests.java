@@ -264,17 +264,20 @@ class VacoHttpClientTests {
         assertThat(r.get().result(), equalTo(DownloadResponse.Result.FAILED_DOWNLOAD));
     }
 
-    @Test
-    void webhook() throws ExecutionException, InterruptedException {
+    @ParameterizedTest
+    @ValueSource(ints = {200, 204, 299})
+    void webhook(int status) throws ExecutionException, InterruptedException {
         stubWebhookSend(CompletableFuture.completedFuture(mockResponse));
 
         byte[] stubResponseBody = "fake response for webhook".getBytes(StandardCharsets.UTF_8);
-        stubResponse(200, stubResponseBody);
+        stubResponse(status, stubResponseBody);
 
         CompletableFuture<NotificationResponse> r = vacoClient.sendWebhook(WEBHOOK_URI, WEBHOOK_PAYLOAD);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().response().get(), equalTo(stubResponseBody));
+        assertThat(r.get().statusCode(), equalTo(Optional.of(status)));
+        assertThat(r.get().delivered(), equalTo(true));
     }
 
     @Test
@@ -313,6 +316,8 @@ class VacoHttpClientTests {
         CompletableFuture<NotificationResponse> r = vacoClient.sendWebhook(WEBHOOK_URI, WEBHOOK_PAYLOAD);
 
         assertThat(r.get().response().get(), equalTo(body));
+        assertThat(r.get().statusCode(), equalTo(Optional.of(status)));
+        assertThat(r.get().delivered(), equalTo(false));
         assertSingleDeliveryFailure("Webhook delivery failed for " + WEBHOOK_URI + ": HTTP status " + status);
     }
 
@@ -339,6 +344,8 @@ class VacoHttpClientTests {
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().response().isEmpty(), equalTo(true));
+        assertThat(r.get().statusCode(), equalTo(Optional.empty()));
+        assertThat(r.get().delivered(), equalTo(false));
         ILoggingEvent event = assertSingleDeliveryFailure("Webhook delivery failed for " + WEBHOOK_URI);
         assertThat(event.getThrowableProxy().getMessage(), equalTo("simulated http client error"));
         assertThat(logMessages().stream().anyMatch(m -> m.startsWith("HTTP execution failure for")), equalTo(false));

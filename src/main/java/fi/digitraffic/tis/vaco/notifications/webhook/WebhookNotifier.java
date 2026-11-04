@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 
@@ -107,16 +106,27 @@ public class WebhookNotifier implements Notifier {
                     if (subscriber.notificationWebhookUri() != null) {
                         String webhookUri = subscriber.notificationWebhookUri();
                         try {
-                            CompletableFuture<NotificationResponse> value = httpClient.sendWebhook(webhookUri, objectMapper
+                            NotificationResponse notificationResponse = httpClient.sendWebhook(webhookUri, objectMapper
                                 .writerWithView(DataVisibility.Webhook.class)
-                                .writeValueAsBytes(entryCompleteNotification));
-                            value.join();
-                            logger.info(
-                                "Webhook {} notification sent for entry {} to subscriber {} of resource {}",
-                                entryCompleteNotification.name(),
-                                entry.publicId(),
-                                subscriber.businessId(),
-                                resource.businessId());
+                                .writeValueAsBytes(entryCompleteNotification))
+                                .join();
+                            if (notificationResponse.delivered()) {
+                                logger.info(
+                                    "Webhook {} notification sent for entry {} to subscriber {} of resource {}",
+                                    entryCompleteNotification.name(),
+                                    entry.publicId(),
+                                    subscriber.businessId(),
+                                    resource.businessId());
+                            } else {
+                                // must not contain 'Webhook delivery failed' — counted by a CloudWatch metric filter, see VacoHttpClient.sendWebhook
+                                logger.warn(
+                                    "Webhook {} notification for entry {} to subscriber {} of resource {} was not delivered ({})",
+                                    entryCompleteNotification.name(),
+                                    entry.publicId(),
+                                    subscriber.businessId(),
+                                    resource.businessId(),
+                                    notificationResponse.statusCode().map(status -> "HTTP status " + status).orElse("no response"));
+                            }
                         } catch (JacksonException e) {
                             logger.warn(
                                 "Failed to map WebHook payload to JSON when trying to send {} for entry {} to subscriber {} of resource {}",

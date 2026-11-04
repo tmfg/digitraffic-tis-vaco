@@ -212,6 +212,7 @@ public class VacoHttpClient {
 
     public CompletableFuture<NotificationResponse> sendWebhook(String uri, byte[] eventPayload) {
         // "Sending webhook to" and "Webhook delivery failed" are matched by CloudWatch metric filters, keep the prefixes stable
+        // and do not reuse these phrases in other log messages
         logger.info("Sending webhook to {}", uri);
 
         try {
@@ -222,12 +223,13 @@ public class VacoHttpClient {
             return httpClient.send(request, bodyHandler).whenComplete((response, error) -> {
                 if (error != null) {
                     logger.warn("Webhook delivery failed for {}", uri, error);
-                } else if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                } else if (!NotificationResponse.isSuccess(response.statusCode())) {
                     logger.warn("Webhook delivery failed for {}: HTTP status {}", uri, response.statusCode());
                 }
             }).thenApply(response -> {
                 ImmutableNotificationResponse.Builder resp = ImmutableNotificationResponse.builder();
                 resp.response(response.body());
+                resp.statusCode(response.statusCode());
 
                 logger.info("Response for {} resulted in HTTP status {}", uri, response.statusCode());
 
