@@ -53,7 +53,7 @@ test.describe.serial('VACO API with Trivore ID client credentials', () => {
     await api.dispose();
   });
 
-  test('spec 1: an allowlisted client submits an entry, reads it and downloads a package', async () => {
+  test('spec 1: a client with vaco.apiuser submits an entry, reads it and downloads a package', async () => {
     test.setTimeout(POLL_LIMIT_MS + 120_000);
 
     const created = await api.post('queue', {
@@ -97,7 +97,7 @@ test.describe.serial('VACO API with Trivore ID client credentials', () => {
     expect(body.subarray(0, 2).toString('latin1')).toBe('PK');
   });
 
-  test('spec 2: a client that is not on the allowlist gets 401', async () => {
+  test('spec 2: a client without a VACO scope gets 401', async () => {
     const token = await getNotAllowlistedToken();
     const response = await api.get(`queue/${publicId ?? 'unknown'}`, {
       headers: { Authorization: `Bearer ${token}` },
