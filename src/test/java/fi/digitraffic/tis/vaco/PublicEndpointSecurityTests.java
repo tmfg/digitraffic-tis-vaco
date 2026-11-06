@@ -38,10 +38,15 @@ class PublicEndpointSecurityTests extends SpringBootIntegrationTestBase {
      */
     @TestConfiguration(proxyBeanMethods = false)
     static class RealFilterChain {
+        // the base class does not set the Entra issuer; no token is sent in these tests, so any issuer will do
+        private static final String TEST_ENTRA_ISSUER_URI = "https://login.microsoftonline.com/test-tenant/v2.0";
+
         @Bean
-        SecurityFilterChain realFilterChain(HttpSecurity http, VacoProperties vacoProperties) throws Exception {
+        SecurityFilterChain realFilterChain(HttpSecurity http,
+                                            JwtDecoder jwtDecoder,
+                                            VacoProperties vacoProperties) throws Exception {
             AadOAuth2LoginSecurityConfig config = new AadOAuth2LoginSecurityConfig();
-            return config.filterChain(http, config.corsConfigurationSource(vacoProperties));
+            return config.filterChain(http, config.corsConfigurationSource(vacoProperties), jwtDecoder, TEST_ENTRA_ISSUER_URI, vacoProperties);
         }
     }
 
