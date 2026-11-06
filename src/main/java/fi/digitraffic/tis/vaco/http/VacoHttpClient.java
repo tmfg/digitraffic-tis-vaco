@@ -211,6 +211,8 @@ public class VacoHttpClient {
     }
 
     public CompletableFuture<NotificationResponse> sendWebhook(String uri, byte[] eventPayload) {
+        // "Sending webhook to" and "Webhook delivery failed" are matched by CloudWatch metric filters, keep the prefixes stable
+        // and do not reuse these phrases in other log messages
         logger.info("Sending webhook to {}", uri);
 
         try {
@@ -218,16 +220,23 @@ public class VacoHttpClient {
             HttpRequest request = httpClient.post(uri, requestHeaders, eventPayload);
             HttpResponse.BodyHandler<byte[]> bodyHandler = HttpResponse.BodyHandlers.ofByteArray();
 
-            return httpClient.send(request, bodyHandler).thenApply(response -> {
+            return httpClient.send(request, bodyHandler).whenComplete((response, error) -> {
+                if (error != null) {
+                    logger.warn("Webhook delivery failed for {}", uri, error);
+                } else if (!NotificationResponse.isSuccess(response.statusCode())) {
+                    logger.warn("Webhook delivery failed for {}: HTTP status {}", uri, response.statusCode());
+                }
+            }).thenApply(response -> {
                 ImmutableNotificationResponse.Builder resp = ImmutableNotificationResponse.builder();
                 resp.response(response.body());
+                resp.statusCode(response.statusCode());
 
                 logger.info("Response for {} resulted in HTTP status {}", uri, response.statusCode());
 
                 return resp.build();
             });
         } catch (HttpClientException e) {
-            logger.warn("HTTP execution failure for {}", uri, e);
+            logger.warn("Webhook delivery failed for {}", uri, e);
             return CompletableFuture.completedFuture(ImmutableNotificationResponse.builder().build());
         }
     }
