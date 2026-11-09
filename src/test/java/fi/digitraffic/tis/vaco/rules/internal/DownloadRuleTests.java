@@ -37,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -104,7 +105,7 @@ class DownloadRuleTests {
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
-        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry))).willAnswer(a -> CompletableFuture.completedFuture(response));
+        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry), eq(null))).willAnswer(a -> CompletableFuture.completedFuture(response));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
 
@@ -135,7 +136,7 @@ class DownloadRuleTests {
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
-        given(httpClient.downloadFile(feedFiles.capture(), any(String.class), eq(entry)))
+        given(httpClient.downloadFile(feedFiles.capture(), any(String.class), eq(entry), eq(null)))
             // 1) rule downloads the discovery file
             .willAnswer(a -> CompletableFuture.completedFuture(response))
             // 2) rule downloads all the other files as well
@@ -194,7 +195,7 @@ class DownloadRuleTests {
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
-        given(httpClient.downloadFile(any(Path.class), eq(entry.url()), eq(entry)))
+        given(httpClient.downloadFile(any(Path.class), eq(entry.url()), eq(entry), eq(null)))
             .willReturn(CompletableFuture.failedFuture(new RuntimeException("connection refused")));
         given(taskService.markStatus(entry, dlTask, Status.FAILED)).willReturn(dlTask);
 

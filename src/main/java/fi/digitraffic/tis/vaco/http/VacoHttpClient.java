@@ -58,7 +58,8 @@ public class VacoHttpClient {
 
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
-                                                            Entry entry) {
+                                                            Entry entry,
+                                                            Map<String, String> extraRequestHeaders) {
         logger.info("Downloading {}/{} to {} (eTag {})", entry.publicId(), uri, targetFilePath, entry.etag());
 
         try {
@@ -77,6 +78,12 @@ public class VacoHttpClient {
                 requestHeaders.putAll(addAuthorizationHeader(entry.credentials()));
             } else {
                 requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
+            }
+
+            if (extraRequestHeaders != null) {
+                extraRequestHeaders.keySet().forEach(key -> {
+                    requestHeaders.put(key, extraRequestHeaders.get(key));
+                });
             }
 
             HttpRequest request = httpClient.get(uri, requestHeaders);

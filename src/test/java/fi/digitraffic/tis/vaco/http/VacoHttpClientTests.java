@@ -82,7 +82,7 @@ class VacoHttpClientTests {
 
         Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
 
-        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org", entry);
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org", entry, null);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().body().isEmpty(), equalTo(true));
