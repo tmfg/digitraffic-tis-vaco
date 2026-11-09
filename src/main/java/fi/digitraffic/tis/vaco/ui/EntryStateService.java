@@ -18,6 +18,11 @@ import fi.digitraffic.tis.vaco.summary.model.Summary;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableResultsPageEntry;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableResultsPageRule;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableResultsPageTask;
+import fi.digitraffic.tis.vaco.ui.model.ResultsPageEntry;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableResultsPageFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableTaskReport;
 import fi.digitraffic.tis.vaco.ui.model.ItemCounter;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
@@ -91,7 +96,9 @@ public class EntryStateService {
                 .code(code)
                 .severity(findings.getFirst().severity())
                 .total(findings.size())
-                .findings(Streams.collect(findings, recordMapper::toFinding))
+                .findings(Streams.collect(findings, f -> ImmutableResultsPageFinding.builder()
+                    .raw(recordMapper.toFinding(f).raw())
+                    .build()))
             .build()));
         // aggregatedWithFindings should also be ordered from highest to lowest severity:
         aggregatedWithFindings.sort(new SortFindingsBySeverity());
@@ -108,6 +115,38 @@ public class EntryStateService {
             .findingCounters(counters)
             .packages(Streams.map(taskPackages, p -> asPackageResource(p, task, entry)).toList())
             .findings(aggregatedWithFindings).build();
+    }
+
+    /**
+     * Reduces the entry to the fields that the results page shows.
+     *
+     * @param entry Stored entry
+     * @return Entry with only the shown fields
+     */
+    public ResultsPageEntry toResultsPageEntry(Entry entry) {
+        ImmutableResultsPageEntry.Builder builder = ImmutableResultsPageEntry.builder()
+            .publicId(entry.publicId())
+            .name(entry.name())
+            .format(entry.format())
+            .url(entry.url())
+            .etag(entry.etag())
+            .context(entry.context())
+            .created(entry.created())
+            .completed(entry.completed());
+        if (entry.tasks() != null) {
+            entry.tasks().forEach(t -> builder.addTasks(ImmutableResultsPageTask.builder()
+                .name(t.name())
+                .status(t.status())
+                .completed(t.completed())
+                .build()));
+        }
+        if (entry.validations() != null) {
+            entry.validations().forEach(v -> builder.addValidations(ImmutableResultsPageRule.builder().name(v.name()).build()));
+        }
+        if (entry.conversions() != null) {
+            entry.conversions().forEach(c -> builder.addConversions(ImmutableResultsPageRule.builder().name(c.name()).build()));
+        }
+        return builder.build();
     }
 
     private Resource<Package> asPackageResource(Package taskPackage, Task task, Entry entry) {

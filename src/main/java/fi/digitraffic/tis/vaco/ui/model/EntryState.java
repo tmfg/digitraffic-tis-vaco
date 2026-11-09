@@ -3,8 +3,6 @@ package fi.digitraffic.tis.vaco.ui.model;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 import fi.digitraffic.tis.vaco.api.model.Resource;
-import fi.digitraffic.tis.vaco.credentials.model.Credentials;
-import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
 import jakarta.annotation.Nullable;
 import org.immutables.value.Value;
@@ -16,7 +14,7 @@ import java.util.List;
 @JsonDeserialize(as = ImmutableEntryState.class)
 public interface EntryState {
 
-    Resource<Entry> entry();
+    Resource<ResultsPageEntry> entry();
 
     @Value.Default
     default List<Summary> summaries() {
@@ -31,5 +29,5 @@ public interface EntryState {
     String company();
 
     @Nullable
-    Credentials credentials();
+    ResultsPageCredentials credentials();
 }
