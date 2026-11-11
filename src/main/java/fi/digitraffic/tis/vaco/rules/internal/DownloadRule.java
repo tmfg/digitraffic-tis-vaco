@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
 import fi.digitraffic.tis.vaco.rules.model.ssim.FinaviaApiHeaders;
-import org.springframework.beans.factory.annotation.Value;
 import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;

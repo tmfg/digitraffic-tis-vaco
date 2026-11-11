@@ -31,7 +31,7 @@ public class SsimSummaryService {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public void generateSsimInputSummaries(Entry entry, Task task, Path downloadedSummaryFilePath) throws IOException {
+    public void generateSsimInputSummaries(Entry entry, Task task, Path downloadedSummaryFilePath) {
         logger.info("Starting SSIM input summary generation for entry {} task {}", entry.publicId(), task.name());
         try {
             SsimSummary ssimSummary = objectMapper.readValue(downloadedSummaryFilePath.toFile(), SsimSummary.class);
