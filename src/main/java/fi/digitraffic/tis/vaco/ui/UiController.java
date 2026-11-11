@@ -4,10 +4,13 @@ import com.fasterxml.jackson.annotation.JsonView;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.DataVisibility;
+import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.badges.BadgeController;
+import fi.digitraffic.tis.vaco.company.dto.CompanyDeletionResult;
+import fi.digitraffic.tis.vaco.company.dto.CreateCompanyRequest;
 import fi.digitraffic.tis.vaco.company.dto.PartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
@@ -53,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -180,7 +184,7 @@ public class UiController {
     public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
-                Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));
+                Streams.collect(rulesetService.findCompanyRulesets(businessId), Resource::resource));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -265,7 +269,7 @@ public class UiController {
         return entryService.findEntry(publicId)
             .filter(e -> magicTokenMatches(magicToken, publicId) || meService.isAllowedToAccess(e))
             .map(entry -> {
-                Map<String, Ruleset> rulesets = Streams.collect(rulesetService.selectRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
+                Map<String, Ruleset> rulesets = Streams.collect(rulesetService.findCompanyRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
                 List<TaskReport> reports =  new ArrayList<>();
                 entry.tasks().forEach(task -> {
                     TaskReport report = null;
@@ -295,8 +299,12 @@ public class UiController {
     private boolean magicTokenMatches(String magicToken, String publicId) {
         boolean success = false;
         if (magicToken != null) {
-            MagicToken decrypted = encryptionService.decrypt(magicToken, MagicToken.class);
-            success = decrypted.token().equals(publicId);
+            try {
+                MagicToken decrypted = encryptionService.decrypt(magicToken, MagicToken.class);
+                success = decrypted.token().equals(publicId);
+            } catch (VacoException e) {
+                logger.warn("{} failed to decrypt magic link for {}", meService.alertText(), publicId, e);
+            }
         }
         logger.info("{} access to {} with magic link {}", meService.alertText(), publicId, success ? "allowed" : "denied");
         return success;
@@ -402,7 +410,7 @@ public class UiController {
                 .company(company)
                 .contexts(contextService.findByBusinessId(businessId))
                 .hierarchies(companyHierarchyService.getHierarchiesContainingCompany(businessId))
-                .rulesets(rulesetService.selectRulesets(businessId))
+                .rulesets(rulesetService.findCompanyRulesets(businessId))
                 .build(), null, Map.of()))
             ).orElseGet(() ->
                 Responses.notFound((String.format("Company with business id %s either does not exist or not authorized to be accessed", businessId))));
@@ -430,11 +438,53 @@ public class UiController {
                         ImmutableCompanyInfo.builder()
                             .company(updatedCompany)
                             .hierarchies(companyHierarchyService.getHierarchiesContainingCompany(updatedCompany.businessId()))
-                            .rulesets(rulesetService.selectRulesets(updatedCompany.businessId()))
+                            .rulesets(rulesetService.findCompanyRulesets(updatedCompany.businessId()))
                             .build(),
                         null, Map.of())); })
             .orElseGet(() ->
                 Responses.notFound((String.format("Company with business id %s either does not exist or not authorized to be accessed", businessId))));
+    }
+
+    @PostMapping(path = "/admin/companies")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<Company>> createCompany(@Valid @RequestBody CreateCompanyRequest request) {
+        Company company = request.toCompany();
+        try {
+            return companyHierarchyService.createCompany(company)
+                .map(created -> ResponseEntity.ok(Resource.resource(created)))
+                .orElseGet(() -> Responses.conflict(String.format("Company with business id %s already exists", company.businessId())));
+        } catch (DuplicateKeyException _) {
+            return Responses.conflict(String.format("Company with business id %s already exists", company.businessId()));
+        }
+    }
+
+    @GetMapping(path = "/admin/companies/{businessId}/references")
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<Map<String, Long>>> getCompanyReferences(@PathVariable("businessId") String businessId) {
+        return companyHierarchyService.countLinkedData(businessId)
+            .map(Responses::ok)
+            .orElseGet(() -> Responses.notFound(String.format("Company with business id %s does not exist", businessId)));
+    }
+
+    /**
+     * Removes the company and all its linked data. A refusal returns {@code 409} with the reason code
+     * {@code PROTECTED} or {@code IN_PROGRESS} as data.
+     */
+    @DeleteMapping(path = "/admin/companies/{businessId}")
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<String>> deleteCompany(@PathVariable("businessId") String businessId) {
+        CompanyDeletionResult result = companyHierarchyService.deleteCompany(businessId);
+        return switch (result.status()) {
+            case DELETED -> ResponseEntity.noContent().build();
+            case NOT_FOUND -> Responses.notFound(String.format("Company with business id %s does not exist", businessId));
+            case PROTECTED -> new ResponseEntity<>(
+                new Resource<>(result.status().name(), String.format("Company with business id %s cannot be deleted", businessId), null),
+                HttpStatus.CONFLICT);
+            case IN_PROGRESS -> new ResponseEntity<>(
+                new Resource<>(result.status().name(), String.format("Company with business id %s has entries in processing", businessId), null),
+                HttpStatus.CONFLICT);
+        };
     }
 
     @PostMapping(path = "/admin/partnership")

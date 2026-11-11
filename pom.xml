@@ -38,20 +38,23 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.7</version>
+        <version>4.0.9</version>
     </parent>
 
     <properties>
         <!-- versions for all dependencies which support BOMs, see also dependencyManagement -->
         <java.version>25</java.version>
-        <awssdk.version>2.46.11</awssdk.version>
+        <awssdk.version>2.55.1</awssdk.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
-        <awspringcloud.version>4.0.2</awspringcloud.version>
-        <azurespring.version>7.3.0</azurespring.version>
+        <awspringcloud.version>4.1.1</awspringcloud.version>
+        <azurespring.version>7.4.0</azurespring.version>
         <immutables.version>2.12.2</immutables.version>
         <mockito.version>5.23.0</mockito.version>
         <guava.version>33.6.0-jre</guava.version>
         <msgraph.version>6.65.0</msgraph.version>
+        <httpclient5.version>5.6.4</httpclient5.version>
+        <httpcore5.version>5.4.3</httpcore5.version>
+        <tomcat.version>11.0.26</tomcat.version>
         <!-- tooling parameters -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
@@ -71,6 +74,22 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Imported first so the Jackson versions managed by Spring Boot win over the older
+                 versions pinned by the other imported BOMs. -->
+            <dependency>
+                <groupId>tools.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-2-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!-- Workaround for https://github.com/immutables/immutables/issues/1659:
                  org.immutables:bom uses org.immutables:immutables as parent, which hardcodes
                  junit5.version=5.9.1 and imports junit-bom at that version. Importing junit-bom
@@ -190,7 +209,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>3.0.3</version>
+            <version>3.1.1</version>
         </dependency>
 
         <!-- AWS integration -->

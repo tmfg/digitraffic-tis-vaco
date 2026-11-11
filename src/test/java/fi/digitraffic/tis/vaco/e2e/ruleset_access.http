@@ -1,0 +1,38 @@
+# To run this file, you'll need private http client environment file. Ask from your team mates.
+#
+# Assumes companies '1111111-1' and '2222222-2' already exist (see company_api.http).
+
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{clientId}}&grant_type=client_credentials&scope={{clientId}}/.default&client_secret={{clientSecret}}
+
+
+> {%
+  client.global.set("tis_token", response.body.access_token)
+%}
+
+###
+
+# Grant '1111111-1' direct access to the canonical GTFS validator ruleset
+POST {{serviceRootUri}}/api/admin/rulesets/gtfs.canonical/grants
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+{
+    "businessId": "1111111-1"
+}
+
+###
+
+# List all companies granted access to the ruleset
+GET {{serviceRootUri}}/api/admin/rulesets/gtfs.canonical/grants
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+###
+
+# Revoke grant
+DELETE {{serviceRootUri}}/api/admin/rulesets/gtfs.canonical/grants/1111111-1
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}

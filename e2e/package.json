@@ -1,0 +1,21 @@
+{
+  "name": "vaco-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E tests for the VACO API against a running local or dev VACO",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^24.19.2",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.685.0"
+  }
+}

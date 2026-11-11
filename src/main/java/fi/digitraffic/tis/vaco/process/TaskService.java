@@ -288,7 +288,7 @@ public class TaskService {
 
     private List<ImmutableTask> resolveRuleTasks(EntryRecord entry,
                                                  List<String> requestedRuleTasks) {
-        Set<Ruleset> allAccessibleRulesets = rulesetService.selectRulesets(entry.businessId());
+        Set<Ruleset> allAccessibleRulesets = rulesetService.findCompanyRulesets(entry.businessId());
         Map<String, Ruleset> rulesetsByName = Streams
             .collect(allAccessibleRulesets, Ruleset::identifyingName, Function.identity());
 

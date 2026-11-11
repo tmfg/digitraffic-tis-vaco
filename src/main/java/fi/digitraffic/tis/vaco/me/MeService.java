@@ -97,7 +97,7 @@ public class MeService {
      */
     public String alertText() {
         return currentToken()
-            .map(token -> token.getToken().getClaimAsString("oid"))
+            .map(token -> Optional.ofNullable(token.getToken().getClaimAsString("oid")).orElse(token.getName()))
             .orElse("unauthenticated");
     }
 
@@ -137,10 +137,9 @@ public class MeService {
     }
 
     private boolean hasRole(String role) {
-        return currentToken().map(t -> {
-            List<String> roles = t.getToken().getClaimAsStringList("roles");
-            return roles != null && Set.copyOf(roles).contains(role);
-        }).orElse(false);
+        return currentToken()
+            .map(t -> t.getAuthorities().stream().anyMatch(a -> role.equals(a.getAuthority())))
+            .orElse(false);
     }
 
     private static boolean hasDirectAccess(Set<Company> directMemberCompanies, String businessId) {

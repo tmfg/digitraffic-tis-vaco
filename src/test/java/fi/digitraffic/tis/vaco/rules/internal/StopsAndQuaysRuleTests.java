@@ -11,6 +11,7 @@ import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
 import fi.digitraffic.tis.vaco.process.model.Task;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.rules.RuleExecutionException;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,9 +25,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -43,6 +47,8 @@ class StopsAndQuaysRuleTests {
     private TaskService taskService;
     @Mock
     private S3Client s3Client;
+    @Mock
+    private StopsAndQuaysCacheService stopsAndQuaysCacheService;
 
     @Captor
     private ArgumentCaptor<S3Path> targetPath;
@@ -52,12 +58,12 @@ class StopsAndQuaysRuleTests {
     @BeforeEach
     void setUp() {
         vacoProperties = TestObjects.vacoProperties();
-        rule = new StopsAndQuaysRule(taskService, vacoProperties, s3Client);
+        rule = new StopsAndQuaysRule(taskService, vacoProperties, s3Client, stopsAndQuaysCacheService);
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(taskService, s3Client);
+        verifyNoMoreInteractions(taskService, s3Client, stopsAndQuaysCacheService);
     }
 
     @Test
@@ -68,6 +74,7 @@ class StopsAndQuaysRuleTests {
 
         given(taskService.findTask(entry.publicId(), StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));
         given(taskService.trackTask(entry, saqTask, ProcessingState.START)).willReturn(saqTask);
+        given(stopsAndQuaysCacheService.currentCacheFile()).willReturn(Optional.of(Path.of("stopsAndQuays-cache.zip")));
         given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
 
         ResultMessage result = rule.execute(entry).join();
@@ -85,10 +92,27 @@ class StopsAndQuaysRuleTests {
 
         given(taskService.findTask(entry.publicId(), StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));
         given(taskService.trackTask(entry, saqTask, ProcessingState.START)).willReturn(saqTask);
+        given(stopsAndQuaysCacheService.currentCacheFile()).willReturn(Optional.of(Path.of("stopsAndQuays-cache.zip")));
         given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
 
         rule.execute(entry).join();
 
         verify(taskService, never()).trackTask(entry, saqTask, ProcessingState.COMPLETE);
+    }
+
+    @Test
+    void throwsRuleExecutionExceptionWhenCacheIsEmpty() {
+        ImmutableEntry.Builder entryBuilder = TestObjects.anEntry("gtfs");
+        Task saqTask = ImmutableTask.of(StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK, -1).withId(5000000L).withPublicId(NanoIdUtils.randomNanoId());
+        Entry entry = entryBuilder.addTasks(saqTask).build();
+
+        given(taskService.findTask(entry.publicId(), StopsAndQuaysRule.PREPARE_STOPS_AND_QUAYS_TASK)).willReturn(Optional.of(saqTask));
+        given(taskService.trackTask(entry, saqTask, ProcessingState.START)).willReturn(saqTask);
+        given(stopsAndQuaysCacheService.currentCacheFile()).willReturn(Optional.empty());
+
+        CompletableFuture<ResultMessage> result = rule.execute(entry);
+        CompletionException exception = assertThrows(CompletionException.class, result::join);
+
+        assertThat(exception.getCause(), instanceOf(RuleExecutionException.class));
     }
 }

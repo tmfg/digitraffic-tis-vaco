@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.db.repositories;
 import fi.digitraffic.tis.exceptions.PersistenceException;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.caching.CachingService;
+import fi.digitraffic.tis.vaco.company.dto.CompanyDeletionResult;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.model.Hierarchy;
 import fi.digitraffic.tis.vaco.company.model.ImmutableHierarchy;
@@ -20,8 +21,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +37,9 @@ import java.util.stream.Collectors;
 
 @Repository
 public class CompanyRepository {
+
+    private static final List<String> REFERENCE_KINDS = List.of(
+        "entries", "partnerships", "ruleset_grants", "contexts", "subscriptions", "feeds", "credentials");
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -319,6 +327,89 @@ public class CompanyRepository {
             logger.warn("Failed to delete company by businessId {}", businessId);
             return false;
         }
+    }
+
+    /**
+     * Counts the rows that refer to the company, by kind. The map leaves out a kind that has no rows. The result is
+     * empty when the company does not exist.
+     */
+    public Optional<Map<String, Long>> countReferences(String businessId) {
+        return jdbc.query(
+            """
+            SELECT (SELECT count(*) FROM entry e WHERE e.business_id = c.business_id) AS entries,
+                   (SELECT count(*) FROM partnership p WHERE p.partner_a_id = c.id OR p.partner_b_id = c.id) AS partnerships,
+                   (SELECT count(*) FROM ruleset_access ra WHERE ra.company_id = c.id) AS ruleset_grants,
+                   (SELECT count(*) FROM context ctx WHERE ctx.company_id = c.id) AS contexts,
+                   (SELECT count(*) FROM subscription s WHERE s.subscriber_id = c.id OR s.resource_id = c.id) AS subscriptions,
+                   (SELECT count(*) FROM feed f WHERE f.owner_id = c.id) AS feeds,
+                   (SELECT count(*) FROM credentials cr WHERE cr.owner_id = c.id) AS credentials
+              FROM company c
+             WHERE c.business_id = ?
+            """,
+            (rs, rowNum) -> {
+                Map<String, Long> result = new LinkedHashMap<>();
+                for (String kind : REFERENCE_KINDS) {
+                    long count = rs.getLong(kind);
+                    if (count > 0) {
+                        result.put(kind, count);
+                    }
+                }
+                return result;
+            },
+            businessId).stream().findFirst();
+    }
+
+    /**
+     * Deletes the company and every row that refers to it. Refuses when the company has an entry that is still
+     * received or processing, because a worker may still write results for it.
+     * <p>
+     * The method locks the company row first. A concurrent insert into a referencing table then waits for its foreign
+     * key check, and fails after this transaction commits. The deletes run in foreign key order. An entry may refer to
+     * the company's credentials without a cascade, so the entries go before the credentials. The database cascades the
+     * entry children, the partnerships and the ruleset grants. Files in S3 stay until the bucket lifecycle rules
+     * delete them.
+     */
+    @Transactional
+    public CompanyDeletionResult deleteWithLinkedData(String businessId) {
+        List<Long> locked = jdbc.queryForList(
+            "SELECT id FROM company WHERE business_id = ? FOR UPDATE",
+            Long.class,
+            businessId);
+        if (locked.isEmpty()) {
+            return CompanyDeletionResult.of(CompanyDeletionResult.Status.NOT_FOUND);
+        }
+        long companyId = locked.getFirst();
+
+        Boolean inProgress = jdbc.queryForObject(
+            "SELECT EXISTS (SELECT 1 FROM entry WHERE business_id = ? AND status IN ('received', 'processing'))",
+            Boolean.class,
+            businessId);
+        if (Boolean.TRUE.equals(inProgress)) {
+            return CompanyDeletionResult.of(CompanyDeletionResult.Status.IN_PROGRESS);
+        }
+
+        Map<String, Long> deleted = countReferences(businessId).orElseGet(Map::of);
+        List<String> entryPublicIds = jdbc.queryForList(
+            "DELETE FROM entry WHERE business_id = ? RETURNING public_id",
+            String.class,
+            businessId);
+        jdbc.update("DELETE FROM subscription WHERE subscriber_id = ? OR resource_id = ?", companyId, companyId);
+        jdbc.update("DELETE FROM feed WHERE owner_id = ?", companyId);
+        jdbc.update("DELETE FROM credentials WHERE owner_id = ?", companyId);
+        jdbc.update("DELETE FROM context WHERE company_id = ?", companyId);
+        jdbc.update("DELETE FROM company WHERE id = ?", companyId);
+
+        // Invalidate after commit: a concurrent reader may still see the rows before that and would re-cache them
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                cachingService.invalidateCompanyRecord(businessId);
+                cachingService.invalidateContextRecords(businessId);
+                cachingService.invalidateEntrySummaries(businessId);
+                entryPublicIds.forEach(cachingService::invalidateEntryAndTaskStatuses);
+            }
+        });
+        return CompanyDeletionResult.deleted(deleted);
     }
 
     public CompanyRecord findById(long id) {

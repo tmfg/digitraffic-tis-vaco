@@ -35,7 +35,7 @@ public class RulesetController {
     public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
-                Streams.collect(rulesetService.selectRulesets(businessId), Resource::resource));
+                Streams.collect(rulesetService.findCompanyRulesets(businessId), Resource::resource));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

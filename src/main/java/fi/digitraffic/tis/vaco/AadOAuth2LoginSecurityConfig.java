@@ -1,6 +1,9 @@
 package fi.digitraffic.tis.vaco;
 
+import fi.digitraffic.tis.vaco.configuration.Trivore;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.security.ApiAccessLogFilter;
+import fi.digitraffic.tis.vaco.security.IssuerRoutingAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,13 +17,19 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -34,11 +43,16 @@ import java.util.List;
 @ConditionalOnProperty(value = "spring.cloud.azure.active-directory.enabled", havingValue = "true")
 public class AadOAuth2LoginSecurityConfig {
 
+    private static final Logger REJECTION_LOGGER = LoggerFactory.getLogger(AadOAuth2LoginSecurityConfig.class);
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                           @Qualifier("appCorsConfiguration") CorsConfigurationSource corsConfigurationSource,
+                                           JwtDecoder entraJwtDecoder,
+                                           @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String entraIssuerUri,
+                                           VacoProperties vacoProperties) {
         // session management is set to stateless as JWT tokens themselves are stateless
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -54,19 +68,31 @@ public class AadOAuth2LoginSecurityConfig {
                 "/ui/processing-results/**", // Entry processing result page may be accessed with magic link
                 "/ui/entries/*/state",       // entry state checks its own permissions internally
                 "/static/**",                // allow unauthenticated access to static resources for testing
-                "/v1/webhooks"               // webhooks endpoint is open to all for now TODO: add shared secret
+                "/v1/webhooks",              // webhooks endpoint is open to all for now TODO: add shared secret
+                "/public/**"                 // explicitly public data, e.g. organisations loaded by RAE at startup
                 ).permitAll()
                 // private endpoints (=everything else)
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 ->
-                oauth2.jwt(customizer ->
-                    customizer.jwtAuthenticationConverter(overridingGrantedAuthoritiesConverter())));
+                oauth2.authenticationManagerResolver(IssuerRoutingAuthentication.create(
+                    entraIssuerUri,
+                    entraJwtDecoder,
+                    overridingGrantedAuthoritiesConverter(),
+                    vacoProperties.trivore())));
 
         // enable CORS
         http.cors(cors -> cors.configurationSource(corsConfigurationSource));
         // and disable CSRF
         http.csrf(AbstractHttpConfigurer::disable);
 
+        // Also sees the 401 that the bearer filter writes. Created here and not a bean on purpose, see the class.
+        Trivore trivore = vacoProperties.trivore();
+        http.addFilterBefore(
+            new ApiAccessLogFilter(
+                entraIssuerUri,
+                vacoProperties.azureAd().tenantId(),
+                trivore != null && trivore.enabled() ? trivore.issuerUri() : null),
+            BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 
@@ -104,10 +130,31 @@ public class AadOAuth2LoginSecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String jwkIssuerUri,
-                          List<OAuth2TokenValidator<Jwt>> validators) {
+                          @Value("${vaco.azure-ad.client-id}") String clientId) {
         NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(jwkIssuerUri);
-        OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(validators);
-        jwtDecoder.setJwtValidator(withAudience);
+        // Replaces the default validators, so expiry, not-before, issuer and audience are all listed here.
+        OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
+            JwtValidators.createDefaultWithIssuer(jwkIssuerUri),
+            new JwtClaimValidator<List<String>>(JwtClaimNames.AUD, aud -> aud != null && aud.contains(clientId)));
+        jwtDecoder.setJwtValidator(logRejections(validator));
         return jwtDecoder;
+    }
+
+    /**
+     * Logs each rejected token with its failed checks and a fixed set of claims. The token itself is never logged.
+     */
+    private static OAuth2TokenValidator<Jwt> logRejections(OAuth2TokenValidator<Jwt> delegate) {
+        return token -> {
+            OAuth2TokenValidatorResult result = delegate.validate(token);
+            if (result.hasErrors()) {
+                REJECTION_LOGGER.info("Rejected JWT: errors={}, iss={}, aud={}, azp={}, exp={}",
+                    result.getErrors().stream().map(OAuth2Error::getDescription).toList(),
+                    token.getClaims().get(JwtClaimNames.ISS),
+                    token.getClaims().get(JwtClaimNames.AUD),
+                    token.getClaims().get("azp"),
+                    token.getClaims().get(JwtClaimNames.EXP));
+            }
+            return result;
+        };
     }
 }

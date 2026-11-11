@@ -4,19 +4,151 @@ import tools.jackson.databind.JsonNode;
 import fi.digitraffic.tis.SpringBootIntegrationTestBase;
 import fi.digitraffic.tis.vaco.TestObjects;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
+import fi.digitraffic.tis.vaco.crypt.EncryptionService;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
+import fi.digitraffic.tis.Constants;
+import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
+
+    private static final String COMPANIES_PATH = "/ui/admin/companies";
+
+    @Autowired
+    private EncryptionService encryptionService;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    private void signInAsAdmin() {
+        String oid = "Admin Adminson";
+        SecurityContextHolder.getContext().setAuthentication(TestObjects.jwtAdminAuthenticationToken(oid));
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId("2942108-7").get()));
+    }
+
+    private static String newBusinessId() {
+        int[] weights = {7, 9, 10, 5, 8, 4, 2};
+        while (true) {
+            String base = String.format("%07d", java.util.concurrent.ThreadLocalRandom.current().nextInt(1_000_000, 9_999_999));
+            int sum = 0;
+            for (int i = 0; i < 7; i++) {
+                sum += (base.charAt(i) - '0') * weights[i];
+            }
+            int remainder = sum % 11;
+            if (remainder != 1) {
+                return base + "-" + (remainder == 0 ? 0 : 11 - remainder);
+            }
+        }
+    }
+
+    @Test
+    void adminCanAddCompany() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+
+        MvcResult result = apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Kuljetus Lakkapää Oy", true))))
+            .andExpect(status().isOk()).andReturn();
+
+        assertThat(apiResponse(result).get("data").get("businessId").stringValue(), equalTo(id));
+    }
+
+    @Test
+    void addingDuplicateCompanyIsConflict() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isOk());
+
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Twin", true)))).andExpect(status().isConflict());
+    }
+
+    @Test
+    void addingCompanyWithBadBusinessIdOrBlankNameIsBadRequest() throws Exception {
+        signInAsAdmin();
+
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of("1234567", "No check digit", true))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'businessId'")));
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of("2499374-9", "Wrong check digit", true))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'businessId'")));
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(newBusinessId(), " ", true))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0]", startsWith("Field 'name'")));
+    }
+
+    @Test
+    void adminCanDeleteCompanyWithLinkedData() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Short lived", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'success')", id);
+
+        apiCall(delete(COMPANIES_PATH + "/" + id)).andExpect(status().isNoContent());
+
+        assertThat(companyHierarchyService.findByBusinessId(id).isPresent(), equalTo(false));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM entry WHERE business_id = ?", Long.class, id), equalTo(0L));
+    }
+
+    @Test
+    void adminCanCountLinkedData() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Has data", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'success')", id);
+
+        apiCall(get(COMPANIES_PATH + "/" + id + "/references"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.entries").value(1));
+        apiCall(get(COMPANIES_PATH + "/" + newBusinessId() + "/references")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deletingMissingCompanyIsNotFound() throws Exception {
+        signInAsAdmin();
+
+        apiCall(delete(COMPANIES_PATH + "/" + newBusinessId())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deletingCompanyWithUnfinishedEntryIsConflictWithReason() throws Exception {
+        signInAsAdmin();
+        String id = newBusinessId();
+        apiCall(post(COMPANIES_PATH).content(toJson(ImmutableCompany.of(id, "Busy", true)))).andExpect(status().isOk());
+        jdbc.update("INSERT INTO entry(format, url, business_id, status) VALUES ('gtfs', 'http://x', ?, 'processing')", id);
+
+        apiCall(delete(COMPANIES_PATH + "/" + id))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.data").value("IN_PROGRESS"));
+
+        assertThat(companyHierarchyService.findByBusinessId(id).isPresent(), equalTo(true));
+    }
+
+    @Test
+    void deletingProtectedCompanyIsConflictWithReason() throws Exception {
+        signInAsAdmin();
+
+        apiCall(delete(COMPANIES_PATH + "/" + Constants.FINTRAFFIC_BUSINESS_ID))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.data").value("PROTECTED"));
+    }
 
     @Test
     void canFetchEntryStateWithPublicId() throws Exception {
@@ -49,5 +181,74 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         apiCall(get("/ui/entries/smth/state"))
             .andExpect(status().isNotFound())
             .andReturn();
+    }
+
+    // A corrupted magic token must degrade to a 404 like a denied/absent magic link, not crash
+    // the request with an uncaught decrypt() exception (500).
+    @Test
+    void fetchEntryStateDoesNotReturn500WhenMagicTokenDecryptFails() throws Exception {
+        CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
+        String oid = "Joh Rnado";
+        JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken(oid);
+        SecurityContextHolder.getContext().setAuthentication(johRnado);
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId(request.businessId()).get()));
+
+        MvcResult response = apiCall(post("/queue").content(toJson(request)))
+            .andExpect(status().isOk())
+            .andReturn();
+        JsonNode createResult = apiResponse(response);
+        String entryPublicId = createResult.get("data").get("publicId").stringValue();
+
+        String corruptedMagicToken = corruptMagicToken(entryPublicId);
+
+        // requester is otherwise unauthenticated -- only the magic-link path is under test
+        SecurityContextHolder.clearContext();
+
+        apiCall(get("/ui/entries/" + entryPublicId + "/state?magic=" + corruptedMagicToken))
+            .andExpect(status().isNotFound())
+            .andReturn();
+    }
+
+    // A `magic` value that isn't even valid base64 must also degrade to 404, not 500.
+    @Test
+    void fetchEntryStateDoesNotReturn500WhenMagicTokenIsGarbage() throws Exception {
+        CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
+        String oid = "Joh Rnado";
+        JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken(oid);
+        SecurityContextHolder.getContext().setAuthentication(johRnado);
+        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId(request.businessId()).get()));
+
+        MvcResult response = apiCall(post("/queue").content(toJson(request)))
+            .andExpect(status().isOk())
+            .andReturn();
+        JsonNode createResult = apiResponse(response);
+        String entryPublicId = createResult.get("data").get("publicId").stringValue();
+
+        SecurityContextHolder.clearContext();
+
+        apiCall(get("/ui/entries/" + entryPublicId + "/state?magic=not-a-valid-token-at-all!!!"))
+            .andExpect(status().isNotFound())
+            .andReturn();
+    }
+
+    /**
+     * Encrypts a magic token, then flips a byte in its raw ciphertext (not the IV) so decrypting
+     * it fails the GCM authentication tag check.
+     */
+    private String corruptMagicToken(String entryPublicId) {
+        String token = encryptionService.encrypt(ImmutableMagicToken.of(entryPublicId));
+
+        var decoder = Base64.getUrlDecoder();
+        var encoder = Base64.getUrlEncoder();
+
+        String combined = new String(decoder.decode(token), StandardCharsets.UTF_8);
+        String[] split = combined.split("\\.");
+        byte[] cypherText = decoder.decode(split[0]);
+        String iv64 = split[1];
+
+        cypherText[cypherText.length / 2] ^= (byte) 0xFF;
+
+        String corruptedCombined = new String(encoder.encode(cypherText), StandardCharsets.UTF_8) + "." + iv64;
+        return new String(encoder.encode(corruptedCombined.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
     }
 }

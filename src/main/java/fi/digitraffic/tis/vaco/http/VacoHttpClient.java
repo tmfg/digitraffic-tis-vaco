@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
@@ -46,6 +47,10 @@ public class VacoHttpClient {
 
     private final FeatureFlagsService featureFlagsService;
 
+    private static final String NO_CACHE = "no-cache";
+
+    private static final long NO_SIZE_LIMIT = Long.MAX_VALUE;
+
     public VacoHttpClient(HttpClient httpClient,
                           CredentialsService credentialsService,
                           EntryService entryService,
@@ -56,36 +61,65 @@ public class VacoHttpClient {
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
     }
 
+    /**
+     * Downloads an entry feed, applying the entry's credentials and ETag handling. The body size is not limited; see
+     * {@link #downloadWithLimit} for a capped download without entry handling.
+     */
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
                                                             Entry entry,
                                                             Map<String, String> extraRequestHeaders) {
         logger.info("Downloading {}/{} to {} (eTag {})", entry.publicId(), uri, targetFilePath, entry.etag());
 
+        Map<String, String> requestHeaders = new HashMap<>();
+
+        requestHeaders.put("Accept", "*/*");
+
+        requestHeaders.put("Cache-Control", NO_CACHE);
+        requestHeaders.put("Pragma", NO_CACHE);
+
+        if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
+            logger.debug("Skipping If-None-Match header setting for {}/{} due to feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' being disabled", entry.publicId(), uri);
+        } else if (entry.etag() != null && !entry.etag().isEmpty()) {
+            requestHeaders.put("If-None-Match", entry.etag());
+        }
+
+        if (extraRequestHeaders != null) {
+            extraRequestHeaders.keySet().forEach(key -> {
+                requestHeaders.put(key, extraRequestHeaders.get(key));
+            });
+        }
+
+        if (entry.credentials() != null) {
+            requestHeaders.putAll(addAuthorizationHeader(entry.credentials()));
+        } else {
+            requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
+        }
+
+        return executeDownload(targetFilePath, uri, requestHeaders, NO_SIZE_LIMIT);
+    }
+
+    /**
+     * Downloads a file without entry credentials or ETag handling, limited to {@code maxBytes} (inclusive). If the
+     * body is larger, the returned future completes exceptionally with a {@link RuleExecutionException} and the target
+     * file may be left partly written, so the caller must clean it up.
+     */
+    public CompletableFuture<DownloadResponse> downloadWithLimit(Path targetFilePath, String uri, long maxBytes) {
+        logger.info("Downloading {} to {}", uri, targetFilePath);
+
+        Map<String, String> requestHeaders = new HashMap<>();
+        requestHeaders.put("Accept", "*/*");
+        requestHeaders.put("Cache-Control", NO_CACHE);
+        requestHeaders.put("Pragma", NO_CACHE);
+
+        return executeDownload(targetFilePath, uri, requestHeaders, maxBytes);
+    }
+
+    private CompletableFuture<DownloadResponse> executeDownload(Path targetFilePath,
+                                                                 String uri,
+                                                                 Map<String, String> requestHeaders,
+                                                                 long maxBytes) {
         try {
-
-            Map<String, String> requestHeaders = new HashMap<>();
-
-            requestHeaders.put("Accept", "*/*");
-
-            if (!featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")) {
-                logger.debug("Skipping If-None-Match header setting for {}/{} due to feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' being disabled", entry.publicId(), uri);
-            } else if (entry.etag() != null && !entry.etag().isEmpty()) {
-                requestHeaders.put("If-None-Match", entry.etag());
-            }
-
-            if (entry.credentials() != null) {
-                requestHeaders.putAll(addAuthorizationHeader(entry.credentials()));
-            } else {
-                requestHeaders.putAll(addAuthorizationHeaderAutomatically(entry.businessId(), uri, entry));
-            }
-
-            if (extraRequestHeaders != null) {
-                extraRequestHeaders.keySet().forEach(key -> {
-                    requestHeaders.put(key, extraRequestHeaders.get(key));
-                });
-            }
-
             HttpRequest request = httpClient.get(uri, requestHeaders);
             HttpResponse.BodyHandler<InputStream> bodyHandler = HttpResponse.BodyHandlers.ofInputStream();
 
@@ -95,22 +129,38 @@ public class VacoHttpClient {
 
                 response.headers().firstValue("ETag").ifPresent(resp::etag);
 
-                logger.info("Response for {} with ETag {} resulted in HTTP status {}", uri, entry.etag(), response.statusCode());
+                logger.info("Response for {} resulted in HTTP status {}", uri, response.statusCode());
 
-                if (response.statusCode() == 304) {
-                    return resp.result(DownloadResponse.Result.NOT_MODIFIED).build();
-                } else {
-                    try {
-                        Files.copy(response.body(), targetFilePath);
-                    } catch (IOException e) {
-                        throw new RuleExecutionException("Failed to write download stream of " + entry.publicId() + "/" + uri + " into file " + targetFilePath, e);
+                try (InputStream body = response.body()) {
+                    if (response.statusCode() == 304) {
+                        return resp.result(DownloadResponse.Result.NOT_MODIFIED).build();
+                    } else {
+                        copyWithSizeLimit(body, targetFilePath, maxBytes);
+                        return resp.result(DownloadResponse.Result.OK).body(targetFilePath).build();
                     }
-                    return resp.result(DownloadResponse.Result.OK).body(targetFilePath).build();
+                } catch (IOException e) {
+                    throw new RuleExecutionException("Failed to write download stream of " + uri + " into file " + targetFilePath, e);
                 }
             });
         } catch (HttpClientException e) {
             logger.warn("HTTP execution failure for %s".formatted(uri), e);
             return CompletableFuture.completedFuture(ImmutableDownloadResponse.builder().result(DownloadResponse.Result.FAILED_DOWNLOAD).build());
+        }
+    }
+
+    @VisibleForTesting
+    static void copyWithSizeLimit(InputStream in, Path target, long maxBytes) throws IOException {
+        try (OutputStream out = Files.newOutputStream(target)) {
+            byte[] buffer = new byte[8192];
+            long total = 0;
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                total += read;
+                if (total > maxBytes) {
+                    throw new IOException("Download of " + target + " exceeded maximum allowed size of " + maxBytes + " bytes");
+                }
+                out.write(buffer, 0, read);
+            }
         }
     }
 
@@ -168,6 +218,8 @@ public class VacoHttpClient {
     }
 
     public CompletableFuture<NotificationResponse> sendWebhook(String uri, byte[] eventPayload) {
+        // "Sending webhook to" and "Webhook delivery failed" are matched by CloudWatch metric filters, keep the prefixes stable
+        // and do not reuse these phrases in other log messages
         logger.info("Sending webhook to {}", uri);
 
         try {
@@ -175,16 +227,23 @@ public class VacoHttpClient {
             HttpRequest request = httpClient.post(uri, requestHeaders, eventPayload);
             HttpResponse.BodyHandler<byte[]> bodyHandler = HttpResponse.BodyHandlers.ofByteArray();
 
-            return httpClient.send(request, bodyHandler).thenApply(response -> {
+            return httpClient.send(request, bodyHandler).whenComplete((response, error) -> {
+                if (error != null) {
+                    logger.warn("Webhook delivery failed for {}", uri, error);
+                } else if (!NotificationResponse.isSuccess(response.statusCode())) {
+                    logger.warn("Webhook delivery failed for {}: HTTP status {}", uri, response.statusCode());
+                }
+            }).thenApply(response -> {
                 ImmutableNotificationResponse.Builder resp = ImmutableNotificationResponse.builder();
                 resp.response(response.body());
+                resp.statusCode(response.statusCode());
 
                 logger.info("Response for {} resulted in HTTP status {}", uri, response.statusCode());
 
                 return resp.build();
             });
         } catch (HttpClientException e) {
-            logger.warn("HTTP execution failure for {}", uri, e);
+            logger.warn("Webhook delivery failed for {}", uri, e);
             return CompletableFuture.completedFuture(ImmutableNotificationResponse.builder().build());
         }
     }
