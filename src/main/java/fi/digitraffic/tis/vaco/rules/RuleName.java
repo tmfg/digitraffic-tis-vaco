@@ -13,4 +13,7 @@ public final class RuleName {
 
     public static final String GBFS_ENTUR = "gbfs.entur";
 
+    public static final String SSIM_FINTRAFFIC = "ssim.fintraffic";
+
+    public static final String SSIM2NETEX_FINTRAFFIC = "ssim2netex.fintraffic";
 }
