@@ -1,5 +1,7 @@
 package fi.digitraffic.tis.vaco.db;
 
+import fi.digitraffic.tis.vaco.summary.model.ssim.AirlineSummary;
+import fi.digitraffic.tis.vaco.summary.model.ssim.AirportSummary;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
@@ -204,6 +206,22 @@ public final class RowMappers {
                     try {
                         List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
                         content = EntryStateService.getAgencyCardUiContent(agencies);
+                    } catch (JacksonException e) {
+                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
+                    }
+                }
+                case "airlines"-> {
+                    try {
+                        List<AirlineSummary> airlines = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                        content = EntryStateService.getAirlineCardUiContent(airlines);
+                    } catch (JacksonException e) {
+                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
+                    }
+                }
+                case "airports" -> {
+                    try {
+                        List<AirportSummary> airports = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                        content = EntryStateService.getAirportCardUiContent(airports);
                     } catch (JacksonException e) {
                         LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
                     }
