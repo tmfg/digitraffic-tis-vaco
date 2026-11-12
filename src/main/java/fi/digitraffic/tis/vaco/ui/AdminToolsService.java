@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,11 +119,16 @@ public class AdminToolsService {
     }
 
     /**
-     * A spreadsheet program reads a cell that starts with one of these characters as a formula. A prefix of a
+     * A bare "-" is the placeholder for a missing value, and a plain number is not an expression.
+     * Both stay unchanged. Anything else that starts with a formula character is still neutralized.
+     */
+    private static final Pattern PLAIN_VALUE = Pattern.compile("-|-?\\d+(\\.\\d+)?");
+
+    /** a cell that starts with one of these characters as a formula. A prefix of a
      * single quote makes it plain text. Anonymous callers can name an entry, so every free-text cell needs this.
      */
     private static String neutralizeFormula(@Nullable String cell) {
-        if (cell == null || cell.isEmpty()) {
+        if (cell == null || cell.isEmpty() || PLAIN_VALUE.matcher(cell).matches()) {
             return cell;
         }
         return switch (cell.charAt(0)) {
