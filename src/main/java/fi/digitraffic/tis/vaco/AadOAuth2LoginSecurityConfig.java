@@ -64,9 +64,13 @@ public class AadOAuth2LoginSecurityConfig {
                 "/badge/**",                 // status badges
                 "/v3/api-docs/**",           // Openapi docs
                 "/swagger-ui/**",            // Swagger docs
-                // magic link exceptions:
-                "/ui/processing-results/**", // Entry processing result page may be accessed with magic link
-                "/ui/entries/*/state",       // entry state checks its own permissions internally
+                // public pages: the controller decides what a visitor without sign-in may see
+                "/ui/queue",                 // public validation test
+                "/ui/rules",                 // rulesets of the public validation test
+                "/ui/data-delivery/**",      // data delivery overview and its CSV export
+                "/ui/pages/company-entries/*", // entries of one company
+                "/ui/packages/**",           // package downloads, the controller hides protected ones
+                "/ui/entries/*/state",       // entry results, the controller masks the source URL
                 "/static/**",                // allow unauthenticated access to static resources for testing
                 "/v1/webhooks",              // webhooks endpoint is open to all for now TODO: add shared secret
                 "/public/**"                 // explicitly public data, e.g. organisations loaded by RAE at startup

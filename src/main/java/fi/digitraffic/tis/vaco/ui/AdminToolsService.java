@@ -72,7 +72,14 @@ public class AdminToolsService {
         return adminToolsRepository.getDataDeliveryOverview(businessIds);
     }
 
-    public void exportDataDeliveryToCsv(OutputStream outputStream, String language) {
+    /**
+     * Writes the data delivery overview as CSV.
+     *
+     * @param outputStream Target of the CSV
+     * @param language Language of the headers and of the public test company name
+     * @param maskUrls True hides the query string, the fragment and the user information of each source URL
+     */
+    public void exportDataDeliveryToCsv(OutputStream outputStream, String language, boolean maskUrls) {
         CSVFormat format = CSVFormat.DEFAULT.builder()
             .setHeader(getDataDeliveryCsvHeaders(language))
             .build();
@@ -96,7 +103,7 @@ public class AdminToolsService {
                     putEmptyString ? "" : businessIdToShow,
                     putEmptyString ? "" : companyNameToShow,
                     entry.context(),
-                    entry.url(),
+                    maskUrls ? SourceUrls.forVisitor(entry.url()) : entry.url(),
                     entry.feedName(),
                     entry.format(),
                     entry.convertedFormat(),

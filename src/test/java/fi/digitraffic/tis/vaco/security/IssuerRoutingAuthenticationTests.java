@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +34,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ResolvableType;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -75,6 +78,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -199,6 +203,42 @@ class IssuerRoutingAuthenticationTests {
         @PreAuthorize("hasAuthority('vaco.apiuser')")
         String members(@PathVariable String oid) {
             return oid;
+        }
+
+        @GetMapping({
+            "/ui/data-delivery",
+            "/ui/data-delivery/export",
+            "/ui/pages/company-entries/{businessId}",
+            "/ui/packages/{entryPublicId}/{taskName}/{packageName}",
+            "/ui/entries/{publicId}/state",
+            "/ui/rules"})
+        String publicPage() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean admin = authentication != null
+                && authentication.getAuthorities().stream().anyMatch(a -> "vaco.admin".equals(a.getAuthority()));
+            return admin ? "admin" : "visitor";
+        }
+
+        @PostMapping("/ui/queue")
+        String publicQueue() {
+            return "queued";
+        }
+
+        @GetMapping({
+            "/ui/processing-results/{publicId}",
+            "/ui/entries",
+            "/ui/admin/companies/{businessId}/info",
+            "/ui/entry-statistics",
+            "/ui/task-statistics"})
+        @PreAuthorize("hasAuthority('vaco.admin')")
+        String closedPage() {
+            return "closed";
+        }
+
+        @PostMapping("/v1/queue")
+        @PreAuthorize("hasAuthority('vaco.apiuser')")
+        String apiQueue() {
+            return "queued";
         }
     }
 
@@ -391,6 +431,46 @@ class IssuerRoutingAuthenticationTests {
     void adminScopeReachesAdminEndpoint() throws Exception {
         mockMvc.perform(post("/ui/admin/companies").header("Authorization", bearer(trivoreToken(OTHER_CLIENT, ADMIN_SCOPES))))
             .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "/ui/data-delivery",
+        "/ui/data-delivery/export",
+        "/ui/pages/company-entries/1234567-8",
+        "/ui/packages/abc/prepare.download/result",
+        "/ui/entries/abc/state",
+        "/ui/rules"})
+    void publicPagesOpenWithoutSignIn(String path) throws Exception {
+        mockMvc.perform(get(path)).andExpect(status().isOk()).andExpect(content().string("visitor"));
+    }
+
+    @Test
+    void publicQueueOpensWithoutSignIn() throws Exception {
+        mockMvc.perform(post("/ui/queue")).andExpect(status().isOk());
+    }
+
+    @Test
+    void adminKeepsAuthorityOnPublicPath() throws Exception {
+        mockMvc.perform(get("/ui/data-delivery").header("Authorization", bearer(trivoreToken(OTHER_CLIENT, ADMIN_SCOPES))))
+            .andExpect(status().isOk())
+            .andExpect(content().string("admin"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "/ui/processing-results/abc",
+        "/ui/entries",
+        "/ui/admin/companies/1234567-8/info",
+        "/ui/entry-statistics",
+        "/ui/task-statistics"})
+    void closedPagesStillRequireSignIn(String path) throws Exception {
+        mockMvc.perform(get(path)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void apiQueueStillRequiresSignIn() throws Exception {
+        mockMvc.perform(post("/v1/queue")).andExpect(status().isUnauthorized());
     }
 
     @Test

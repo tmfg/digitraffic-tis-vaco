@@ -8,7 +8,6 @@ import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.db.model.ImmutableEntryRecord;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.notifications.email.mapper.MessageMapper;
@@ -17,8 +16,6 @@ import fi.digitraffic.tis.vaco.notifications.email.model.ImmutableRecipients;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
-import fi.digitraffic.tis.vaco.ui.model.MagicToken;
 import org.jetbrains.annotations.NotNull;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -46,7 +43,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,8 +56,6 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
     private CompanyHierarchyService companyHierarchyService;
     @Mock
     private FeatureFlagsService featureFlagsService;
-    @Mock
-    private EncryptionService encryptionService;
     @Mock
     private AdminToolsRepository adminToolsRepository;
     private Clock clock;
@@ -81,7 +75,6 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
             sesClient,
             companyHierarchyService,
             featureFlagsService,
-            encryptionService,
             adminToolsRepository,
             clock);
     }
@@ -91,7 +84,7 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
         // clear all received messages
         localstack.execInContainer("curl", "-X", "DELETE", "localhost.localstack.cloud:4566/_aws/ses");
 
-        verifyNoMoreInteractions(companyHierarchyService, featureFlagsService, encryptionService, adminToolsRepository);
+        verifyNoMoreInteractions(companyHierarchyService, featureFlagsService, adminToolsRepository);
     }
 
     @BeforeAll
@@ -191,7 +184,6 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
 
         BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(true);
         BDDMockito.given(adminToolsRepository.getDataDeliveryOverview(Set.of(org.businessId()))).willReturn(List.of(entry));
-        BDDMockito.given(encryptionService.encrypt(any(MagicToken.class))).willAnswer(a -> "magic/link/for/" + ((ImmutableMagicToken) a.getArgument(0)).token());
 
         emailNotifier.sendFeedStatusEmail(org);
         JsonNode messages = readReceivedMessages();
@@ -210,9 +202,9 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
             message,
             containsString("<img src=\"" + vacoProperties.baseUrl() + "/api/badge/" + entry.publicId() + "\" />"));
         assertThat(
-            "Generated email should contain magic link to UI",
+            "Generated email should contain a plain link to UI",
             message,
-            containsString("<a href=\"http://localhost:5173/ui/data/" + entry.publicId() + "?magic=magic/link/for/" + entry.publicId() + "\">Tarkastele VACO UI:ssa</a>"));
+            containsString("<a href=\"http://localhost:5173/ui/data/" + entry.publicId() + "\">Tarkastele VACO UI:ssa</a>"));
     }
 
     @Test
@@ -278,7 +270,6 @@ class EmailNotifierTests extends AwsIntegrationTestBase {
         BDDMockito.given(companyHierarchyService.listAllWithEntries()).willReturn(List.of(company));
         BDDMockito.given(adminToolsRepository.getDataDeliveryOverview(Set.of(company.businessId()))).willReturn(List.of(entry));
         BDDMockito.given(featureFlagsService.isFeatureFlagEnabled("emails.feedStatusEmail")).willReturn(true);
-        BDDMockito.given(encryptionService.encrypt(any(MagicToken.class))).willAnswer(a -> "magic/link/for/" + ((ImmutableMagicToken) a.getArgument(0)).token());
 
         emailNotifier.weeklyFeedStatus();
         assertAll(messagesSent(readReceivedMessages(), 1));

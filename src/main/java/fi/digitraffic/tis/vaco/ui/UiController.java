@@ -1,10 +1,10 @@
 package fi.digitraffic.tis.vaco.ui;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.utilities.Responses;
 import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.DataVisibility;
-import fi.digitraffic.tis.vaco.VacoException;
 import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
@@ -19,7 +19,6 @@ import fi.digitraffic.tis.vaco.company.model.PartnershipType;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.credentials.CredentialsService;
-import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
@@ -32,8 +31,10 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
+import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
+import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.statistics.StatisticsService;
 import fi.digitraffic.tis.vaco.statistics.model.Statistics;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
@@ -42,14 +43,11 @@ import fi.digitraffic.tis.vaco.ui.model.CompanyWithFormatSummary;
 import fi.digitraffic.tis.vaco.ui.model.Context;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableBootstrap;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyInfo;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableCompanyLatestEntry;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicTokenResponse;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableProcessingResultsPage;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableResultsPageCredentials;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableTaskReport;
 import fi.digitraffic.tis.vaco.ui.model.ResultsPageCredentials;
-import fi.digitraffic.tis.vaco.ui.model.MagicToken;
-import fi.digitraffic.tis.vaco.ui.model.MagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
@@ -117,7 +115,6 @@ public class UiController {
     private final PackagesService packagesService;
     private final AdminToolsService adminToolsService;
     private final EntryRequestMapper entryRequestMapper;
-    private final EncryptionService encryptionService;
     private final ContextService contextService;
     private final CredentialsService credentialsService;
     private final StatisticsService statisticsService;
@@ -133,7 +130,6 @@ public class UiController {
                         PackagesService packagesService,
                         AdminToolsService adminToolsService,
                         EntryRequestMapper entryRequestMapper,
-                        EncryptionService encryptionService,
                         UiService uiService,
                         ContextService contextService,
                         CredentialsService credentialsService,
@@ -149,7 +145,6 @@ public class UiController {
         this.packagesService = Objects.requireNonNull(packagesService);
         this.adminToolsService = Objects.requireNonNull(adminToolsService);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
-        this.encryptionService = Objects.requireNonNull(encryptionService);
         this.uiService = Objects.requireNonNull(uiService);
         this.contextService = Objects.requireNonNull(contextService);
         this.credentialsService = credentialsService;
@@ -176,10 +171,20 @@ public class UiController {
     }
 
 
+    /**
+     * Creates a public validation test. The caller needs no sign-in, so the server replaces every
+     * company-bound field of the request with the public test values.
+     */
     @PostMapping(path = "/queue")
     @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
-        Entry converted = entryRequestMapper.toEntry(createEntryRequest);
+        Entry converted = ImmutableEntry.copyOf(entryRequestMapper.toEntry(createEntryRequest))
+            .withBusinessId(Constants.PUBLIC_VALIDATION_TEST_ID)
+            .withMetadata(null)
+            .withContext(null)
+            .withCredentials(null)
+            .withNotifications(List.of())
+            .withSendNotifications(false);
         return queueHandlerService.processQueueEntry(converted)
             .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
             .orElse(Responses.badRequest("Failed to create entry from request"));
@@ -188,7 +193,7 @@ public class UiController {
     @GetMapping(path = "/rules")
     @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Set<Resource<Ruleset>>> listRulesets(@RequestParam(name = "businessId") String businessId) {
-        if (meService.isAllowedToAccess(businessId)) {
+        if (Constants.PUBLIC_VALIDATION_TEST_ID.equals(businessId) || meService.isAllowedToAccess(businessId)) {
             return ResponseEntity.ok(
                 Streams.collect(rulesetService.findCompanyRulesets(businessId), Resource::resource));
         } else {
@@ -244,44 +249,20 @@ public class UiController {
         }
     }
 
-    /**
-     * Handler for returning the initial state for Processing Results Page.
-     *
-     * @param publicId Mandatory public id of the page
-     * @return {@link fi.digitraffic.tis.vaco.ui.model.ProcessingResultsPage}
-     */
-    /*
-     * TODO: This same response should also include the entry itself, but as that is now quite a hodge-podge of nested
-     *       things instead of well-defined type structure, this won't be used for that at this time.
-     */
-    @GetMapping(path = "/processing-results/{publicId}")
-    @JsonView(DataVisibility.Public.class)
-    public ResponseEntity<Resource<ImmutableProcessingResultsPage>> processingResultsPage(@PathVariable("publicId") String publicId) {
-        return entryService.findEntry(publicId)
-            .map(entry -> ResponseEntity.ok(
-                Resource.resource(
-                    ImmutableProcessingResultsPage.of(
-                        encryptionService.encrypt(ImmutableMagicToken.of(publicId))
-                    )
-                )
-            ))
-            .orElseGet(() -> Responses.unauthorized(String.format("Not allowed to access %s", publicId)));
-    }
-
     @GetMapping(path = "/entries/{publicId}/state")
     @JsonView(DataVisibility.Public.class)
-    public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId,
-                                                                         @RequestParam(value = "magic", required = false) String magicToken) {
+    public ResponseEntity<Resource<ImmutableEntryState>> fetchEntryState(@PathVariable("publicId") String publicId) {
+        boolean visitor = !meService.isAdmin();
         return entryService.findEntry(publicId)
-            .filter(e -> magicTokenMatches(magicToken, publicId) || meService.isAllowedToAccess(e))
             .map(entry -> {
                 Map<String, Ruleset> rulesets = Streams.collect(rulesetService.findCompanyRulesets(entry.businessId()), Ruleset::identifyingName, Function.identity());
                 List<TaskReport> reports =  new ArrayList<>();
                 entry.tasks().forEach(task -> {
-                    TaskReport report = null;
-                    report = entryStateService.getTaskReport(task, entry, rulesets);
-                    if(report != null) {
-                        reports.add(report);
+                    TaskReport report = entryStateService.getTaskReport(task, entry, rulesets, visitor);
+                    if (report != null) {
+                        reports.add(visitor && isHiddenFromVisitor(entry, task.name())
+                            ? ImmutableTaskReport.copyOf(report).withPackages(List.of())
+                            : report);
                     }
                 });
                 List<Summary> summaries = entryStateService.getTaskSummaries(entry);
@@ -293,7 +274,7 @@ public class UiController {
 
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
-                        .entry(asEntryStateResource(entryStateService.toResultsPageEntry(entry), entry.publicId()))
+                        .entry(asEntryStateResource(entryStateService.toResultsPageEntry(entry, visitor), entry.publicId()))
                         .reports(reports)
                         .addAllSummaries(summaries)
                         .company(company.map(c -> c.name() + " (" +c.businessId() + ")").orElse(entry.businessId()))
@@ -304,18 +285,21 @@ public class UiController {
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));
     }
 
-    private boolean magicTokenMatches(String magicToken, String publicId) {
-        boolean success = false;
-        if (magicToken != null) {
-            try {
-                MagicToken decrypted = encryptionService.decrypt(magicToken, MagicToken.class);
-                success = decrypted.token().equals(publicId);
-            } catch (VacoException e) {
-                logger.warn("{} failed to decrypt magic link for {}", meService.alertText(), publicId, e);
-            }
+    /**
+     * Tells whether the package of a task must stay hidden from a visitor. A package of an entry that uses stored
+     * credentials can hold the data that the credentials protect. The download task and the conversion tasks create
+     * such packages.
+     */
+    private boolean isHiddenFromVisitor(Entry entry, String taskName) {
+        if (entry.credentials() == null) {
+            return false;
         }
-        logger.info("{} access to {} with magic link {}", meService.alertText(), publicId, success ? "allowed" : "denied");
-        return success;
+        if (DownloadRule.PREPARE_DOWNLOAD_TASK.equals(taskName)) {
+            return true;
+        }
+        return rulesetService.findByName(taskName)
+            .map(r -> r.type() == RulesetType.CONVERSION_SYNTAX || r.type() == RulesetType.CONVERSION_LOGIC)
+            .orElse(false);
     }
 
     @GetMapping(path = "/entries")
@@ -332,6 +316,7 @@ public class UiController {
         @PathVariable("packageName") String packageName,
         HttpServletResponse response) {
         return entryService.findEntry(entryPublicId)
+            .filter(e -> meService.isAdmin() || !isHiddenFromVisitor(e, taskName))
             .flatMap(e ->
                 taskService.findTask(entryPublicId, taskName)
                     .flatMap(t -> packagesService.downloadPackage(e, t, packageName)))
@@ -346,11 +331,31 @@ public class UiController {
                 String.format("Unknown package '%s' for entry '%s'", packageName, entryPublicId)));
     }
 
-    @GetMapping(path = "/magiclink/{publicId}")
-    @JsonView(DataVisibility.Public.class)
-    public ResponseEntity<MagicTokenResponse> generateMagicToken(@PathVariable("publicId") String publicId) {
-        String encrypted = encryptionService.encrypt(ImmutableMagicToken.of(publicId));
-        return ResponseEntity.ok(ImmutableMagicTokenResponse.of(encrypted));
+    /**
+     * Data delivery overview for every company. A visitor sees the source URLs without query string, fragment and
+     * user information.
+     */
+    @GetMapping(path = "/data-delivery")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    public ResponseEntity<List<Resource<CompanyLatestEntry>>> publicDataDelivery() {
+        boolean visitor = !meService.isAdmin();
+        List<CompanyLatestEntry> entries = adminToolsService.getDataDeliveryOverview(null).stream()
+            .map(e -> visitor ? ImmutableCompanyLatestEntry.copyOf(e).withUrl(SourceUrls.forVisitor(e.url())) : e)
+            .toList();
+        return ResponseEntity.ok(Streams.collect(entries, this::asCompanyLatestEntryResource));
+    }
+
+    @GetMapping(path = "/data-delivery/export", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @JsonView(DataVisibility.AdminRestricted.class)
+    public ResponseEntity<StreamingResponseBody> publicExportDataDelivery(@RequestParam(name = "language") String language) {
+        boolean visitor = !meService.isAdmin();
+        return csvResponse(language, visitor);
+    }
+
+    @GetMapping(path = "/pages/company-entries/{businessId}")
+    @JsonView(DataVisibility.AdminRestricted.class)
+    public ResponseEntity<Resource<CompanyEntriesPage>> publicCompanyEntriesPage(@PathVariable("businessId") String businessId) {
+        return ResponseEntity.ok(Resource.resource(uiService.companyEntriesPage(businessId)));
     }
 
     @GetMapping(path = "/admin/data-delivery")
@@ -369,9 +374,11 @@ public class UiController {
     @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAuthority('vaco.admin')")
     public ResponseEntity<StreamingResponseBody> exportDataDeliveryOverview(@RequestParam(name = "language") String language) {
-        StreamingResponseBody stream = outputStream -> {
-            adminToolsService.exportDataDeliveryToCsv(outputStream, language);
-        };
+        return csvResponse(language, false);
+    }
+
+    private ResponseEntity<StreamingResponseBody> csvResponse(String language, boolean maskUrls) {
+        StreamingResponseBody stream = outputStream -> adminToolsService.exportDataDeliveryToCsv(outputStream, language, maskUrls);
 
         String filename = "dataDelivery_"+ LocalDateTime.now() +".csv";
         return ResponseEntity.ok()
@@ -659,7 +666,7 @@ public class UiController {
                 Link.to(
                     vacoProperties.baseUrl(),
                     RequestMethod.GET,
-                    ignored -> fromMethodCall(on(UiController.class).fetchEntryState(publicId, null))),
+                    ignored -> fromMethodCall(on(UiController.class).fetchEntryState(publicId))),
                 "badge",
                 Link.to(
                     vacoProperties.baseUrl(),
