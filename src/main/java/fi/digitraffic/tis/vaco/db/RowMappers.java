@@ -199,50 +199,8 @@ public final class RowMappers {
 
     private static RowMapper<Summary> mapSummaryWithContent(ObjectMapper objectMapper) {
         return (rs, rowNum) -> {
-            Object content = null;
-            switch (rs.getString("name")) {
-                case "agencies" -> {
-                    try {
-                        List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
-                        content = EntryStateService.getAgencyCardUiContent(agencies);
-                    } catch (JacksonException e) {
-                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
-                    }
-                }
-                case "airlines"-> {
-                    try {
-                        List<AirlineSummary> airlines = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
-                        content = EntryStateService.getAirlineCardUiContent(airlines);
-                    } catch (JacksonException e) {
-                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
-                    }
-                }
-                case "airports" -> {
-                    try {
-                        List<AirportSummary> airports = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
-                        content = EntryStateService.getAirportCardUiContent(airports);
-                    } catch (JacksonException e) {
-                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
-                    }
-                }
-                // XXX: Only the first line of feedinfo is persisted, if any. This is a bug in UI which is hardcoded
-                //      too deeply to rely on this and would be too much effort to refactor at the moment.
-                case "feedInfo" -> {
-                    try {
-                        Map<String, String> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
-                        content = EntryStateService.getFeedInfoUiContent(feedInfo);
-                    } catch (JacksonException e) {
-                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
-                    }
-                }
-                default -> {
-                    try {
-                        content = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
-                    } catch (JacksonException e) {
-                        LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
-                    }
-                }
-            }
+            Object content = getSummaryContent(objectMapper, rs);
+
             return ImmutableSummary.builder()
                 .id(rs.getLong("id"))
                 .taskId(rs.getLong("task_id"))
@@ -251,6 +209,54 @@ public final class RowMappers {
                 .content(content)
                 .build();
         };
+    }
+
+    private static Object getSummaryContent(ObjectMapper objectMapper, ResultSet rs) throws SQLException {
+        switch (rs.getString("name")) {
+            case "agencies" -> {
+                try {
+                    List<Map<String, String>> agencies = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                    return EntryStateService.getAgencyCardUiContent(agencies);
+                } catch (JacksonException e) {
+                    LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
+                }
+            }
+            case "airlines"-> {
+                try {
+                    List<AirlineSummary> airlines = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                    return EntryStateService.getAirlineCardUiContent(airlines);
+                } catch (JacksonException e) {
+                    LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
+                }
+            }
+            case "airports" -> {
+                try {
+                    List<AirportSummary> airports = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                    return EntryStateService.getAirportCardUiContent(airports);
+                } catch (JacksonException e) {
+                    LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
+                }
+            }
+            // XXX: Only the first line of feedinfo is persisted, if any. This is a bug in UI which is hardcoded
+            //      too deeply to rely on this and would be too much effort to refactor at the moment.
+            case "feedInfo" -> {
+                try {
+                    Map<String, String> feedInfo = objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                    return EntryStateService.getFeedInfoUiContent(feedInfo);
+                } catch (JacksonException e) {
+                    LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
+                }
+            }
+            default -> {
+                try {
+                    return objectMapper.readValue(rs.getBytes("raw"), new TypeReference<>() {});
+                } catch (JacksonException e) {
+                    LOGGER.error("Failed to transform {} bytes into summary content ", rs.getString("raw"), e);
+                }
+            }
+        }
+
+        return new Object();
     }
 
     public static final RowMapper<FeatureFlagRecord> FEATURE_FLAG_RECORD = (rs, rowNum) -> ImmutableFeatureFlagRecord.of(
