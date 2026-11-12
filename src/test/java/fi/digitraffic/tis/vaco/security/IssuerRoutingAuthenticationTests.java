@@ -98,6 +98,8 @@ class IssuerRoutingAuthenticationTests {
     private static final String ADMIN_SCOPES = "openid vaco.apiuser vaco.admin";
     private static final Map<String, Object> APIUSER_CLAIMS = Map.of("scope", APIUSER_SCOPES);
     private static final String ENTRA_AUDIENCE = "api-audience";
+    private static final String API_USER_AUTHORITY = "hasAuthority('vaco.apiuser')";
+    private static final String DATA_DELIVERY_PATH = "/ui/data-delivery";
 
     private static final Map<String, RSAKey> KEYS = new ConcurrentHashMap<>();
     private static final Map<String, AtomicInteger> HITS = new ConcurrentHashMap<>();
@@ -168,7 +170,7 @@ class IssuerRoutingAuthenticationTests {
     @RestController
     static class Endpoints {
         @GetMapping("/v1/queue/{publicId}")
-        @PreAuthorize("hasAuthority('vaco.apiuser')")
+        @PreAuthorize(API_USER_AUTHORITY)
         String entry(@PathVariable String publicId) {
             return publicId;
         }
@@ -200,13 +202,13 @@ class IssuerRoutingAuthenticationTests {
         }
 
         @GetMapping("/v1/companies/members/{oid}")
-        @PreAuthorize("hasAuthority('vaco.apiuser')")
+        @PreAuthorize(API_USER_AUTHORITY)
         String members(@PathVariable String oid) {
             return oid;
         }
 
         @GetMapping({
-            "/ui/data-delivery",
+            DATA_DELIVERY_PATH,
             "/ui/data-delivery/export",
             "/ui/pages/company-entries/{businessId}",
             "/ui/packages/{entryPublicId}/{taskName}/{packageName}",
@@ -236,7 +238,7 @@ class IssuerRoutingAuthenticationTests {
         }
 
         @PostMapping("/v1/queue")
-        @PreAuthorize("hasAuthority('vaco.apiuser')")
+        @PreAuthorize(API_USER_AUTHORITY)
         String apiQueue() {
             return "queued";
         }
@@ -435,7 +437,7 @@ class IssuerRoutingAuthenticationTests {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "/ui/data-delivery",
+        DATA_DELIVERY_PATH,
         "/ui/data-delivery/export",
         "/ui/pages/company-entries/1234567-8",
         "/ui/packages/abc/prepare.download/result",
@@ -452,7 +454,7 @@ class IssuerRoutingAuthenticationTests {
 
     @Test
     void adminKeepsAuthorityOnPublicPath() throws Exception {
-        mockMvc.perform(get("/ui/data-delivery").header("Authorization", bearer(trivoreToken(OTHER_CLIENT, ADMIN_SCOPES))))
+        mockMvc.perform(get(DATA_DELIVERY_PATH).header("Authorization", bearer(trivoreToken(OTHER_CLIENT, ADMIN_SCOPES))))
             .andExpect(status().isOk())
             .andExpect(content().string("admin"));
     }

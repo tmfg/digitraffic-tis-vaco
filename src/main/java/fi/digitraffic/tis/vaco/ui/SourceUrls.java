@@ -20,8 +20,8 @@ public final class SourceUrls {
      * Returns the URL without query string, fragment and user information.
      *
      * @param url Source URL, or null
-     * @return The URL for a visitor. The result is empty when the URL cannot be parsed, so that nothing of a broken
-     *         URL is shown. The {@code NO_DATA} marker and null do not change.
+     * @return The URL for a visitor. The result is empty when the URL cannot be parsed, so that the output holds
+     *         nothing of a broken URL. The {@code NO_DATA} marker and null do not change.
      */
     public static String forVisitor(String url) {
         if (url == null || NO_DATA.equals(url)) {

@@ -61,7 +61,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * The data delivery, company entry, results, package and test data endpoints are open to everyone. These tests run
  * with no authentication unless they sign in as the admin.
  *
- * <p>The URL rules are covered in IssuerRoutingAuthenticationTests, because this context has the filters switched off.
+ * <p>IssuerRoutingAuthenticationTests covers the URL rules, because this context has the filters switched off.
  */
 class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
@@ -72,6 +72,10 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     private static final String RESULT = "result";
 
     private final ObjectMapper plainMapper = new ObjectMapper();
+
+    private static String entryStatePath(String publicId) {
+        return "/ui/entries/" + publicId + "/state";
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -183,7 +187,7 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     private JsonNode entryState(String publicId) throws Exception {
-        MvcResult result = apiCall(get("/ui/entries/" + publicId + "/state"))
+        MvcResult result = apiCall(get(entryStatePath(publicId)))
             .andExpect(status().isOk())
             .andReturn();
         return apiResponse(result).get(DATA);
@@ -284,7 +288,7 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         String url = uniqueUrl();
         String id = createVisibleEntry(url, null);
 
-        MvcResult result = apiCall(get("/ui/entries/" + id + "/state")).andExpect(status().isOk()).andReturn();
+        MvcResult result = apiCall(get(entryStatePath(id))).andExpect(status().isOk()).andReturn();
 
         assertAll(
             () -> assertThat(apiResponse(result).get(DATA).get("entry").get(DATA).get("url").stringValue(), equalTo(url.substring(0, url.indexOf('?')))),
@@ -307,7 +311,7 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     void anonymousStateIgnoresGarbageMagicParameter() throws Exception {
         String id = createVisibleEntry(uniqueUrl(), null);
 
-        apiCall(get("/ui/entries/" + id + "/state").param("magic", "garbage")).andExpect(status().isOk());
+        apiCall(get(entryStatePath(id)).param("magic", "garbage")).andExpect(status().isOk());
     }
 
     // T6
@@ -423,7 +427,7 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
             .source(DownloadRule.PREPARE_DOWNLOAD_TASK)
             .build());
 
-        MvcResult result = apiCall(get("/ui/entries/" + entry.publicId() + "/state")).andExpect(status().isOk()).andReturn();
+        MvcResult result = apiCall(get(entryStatePath(entry.publicId()))).andExpect(status().isOk()).andReturn();
 
         assertThat(result.getResponse().getContentAsString(), not(containsString(SECRET_QUERY)));
     }

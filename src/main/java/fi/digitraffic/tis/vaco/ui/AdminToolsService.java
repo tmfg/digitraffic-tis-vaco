@@ -100,21 +100,35 @@ public class AdminToolsService {
                 }
 
                 printer.printRecord(
-                    putEmptyString ? "" : businessIdToShow,
-                    putEmptyString ? "" : companyNameToShow,
-                    entry.context(),
-                    maskUrls ? SourceUrls.forVisitor(entry.url()) : entry.url(),
-                    entry.feedName(),
-                    entry.format(),
-                    entry.convertedFormat(),
+                    putEmptyString ? "" : neutralizeFormula(businessIdToShow),
+                    putEmptyString ? "" : neutralizeFormula(companyNameToShow),
+                    neutralizeFormula(entry.context()),
+                    neutralizeFormula(maskUrls ? SourceUrls.forVisitor(entry.url()) : entry.url()),
+                    neutralizeFormula(entry.feedName()),
+                    neutralizeFormula(entry.format()),
+                    neutralizeFormula(entry.convertedFormat()),
                     entry.status() != null ? entry.status().fieldName() : "",
                     entry.created() != null ? entry.created().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")) : "",
-                    entry.publicId()
+                    neutralizeFormula(entry.publicId())
                 );
             }
         } catch (IOException e) {
             logger.warn("Failed to generate CSV", e); // TODO: some entry references
         }
+    }
+
+    /**
+     * A spreadsheet program reads a cell that starts with one of these characters as a formula. A prefix of a
+     * single quote makes it plain text. Anonymous callers can name an entry, so every free-text cell needs this.
+     */
+    private static String neutralizeFormula(@Nullable String cell) {
+        if (cell == null || cell.isEmpty()) {
+            return cell;
+        }
+        return switch (cell.charAt(0)) {
+            case '=', '+', '-', '@', '\t', '\r' -> "'" + cell;
+            default -> cell;
+        };
     }
 
     public List<CompanyWithFormatSummary> getCompaniesWithFormatInfos() {

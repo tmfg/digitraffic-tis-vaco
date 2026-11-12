@@ -106,7 +106,7 @@ public class QueueController {
         Map<String, Map<String, Link>> links = new HashMap<>();
 
         /**
-         * NOTE: The link points to the UI side, which is why #baseUrl(), not #contextUrl() is used. The key stays
+         * NOTE: The link points to the UI side, which is why the code uses #baseUrl(), not #contextUrl(). The key stays
          * "magic" so that existing API clients keep working.
          */
         Link magicLink = new Link(vacoProperties.baseUrl() + "/ui/data/" + entry.publicId(), RequestMethod.GET);
