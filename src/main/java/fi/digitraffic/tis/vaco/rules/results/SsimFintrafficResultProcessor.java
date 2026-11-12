@@ -55,13 +55,8 @@ public class  SsimFintrafficResultProcessor extends RuleResultProcessor implemen
 
         if (filesFound.isEmpty()) {
             boolean summaryProcessed = processFile(resultMessage, entry, task, fileNames, "summary.json", summaryPath -> {
-                try {
-                    ssimSummaryService.generateSsimInputSummaries(entry, task, summaryPath);
-                    return true;
-                } catch (IOException e) {
-                    logger.warn("Failed to generate SSIM input data summaries for entry {}", entry.publicId(), e);
-                    return false;
-                }
+                ssimSummaryService.generateSsimInputSummaries(entry, task, summaryPath);
+                return true;
             });
 
             boolean reportProcessed = processFile(resultMessage, entry, task, fileNames, "report.json", reportFile -> {
