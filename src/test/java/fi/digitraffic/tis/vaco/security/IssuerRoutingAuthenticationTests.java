@@ -382,6 +382,12 @@ class IssuerRoutingAuthenticationTests {
     }
 
     @Test
+    void rerunPathRequiresSignIn() throws Exception {
+        mockMvc.perform(post("/ui/admin/entries/abc/rerun"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void adminScopeReachesAdminEndpoint() throws Exception {
         mockMvc.perform(post("/ui/admin/companies").header("Authorization", bearer(trivoreToken(OTHER_CLIENT, ADMIN_SCOPES))))
             .andExpect(status().isOk());
