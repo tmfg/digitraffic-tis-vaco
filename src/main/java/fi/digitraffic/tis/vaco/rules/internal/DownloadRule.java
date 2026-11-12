@@ -1,6 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
-import fi.digitraffic.tis.vaco.rules.model.ssim.FinaviaApiHeaders;
+import fi.digitraffic.tis.vaco.rules.model.ssim.FinaviaApi;
 import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
@@ -59,7 +59,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     private final VacoHttpClient httpClient;
     private final S3Client s3Client;
     private final FindingService findingService;
-    private final FinaviaApiHeaders finaviaApiHeaders;
+    private final FinaviaApi finaviaApi;
 
     public DownloadRule(ObjectMapper objectMapper, TaskService taskService,
                         VacoProperties vacoProperties,
@@ -67,7 +67,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         S3Client s3Client,
                         FindingService findingService, EntryService entryService,
                         FeatureFlagsService featureFlagsService,
-                        FinaviaApiHeaders finaviaApiHeaders) {
+                        FinaviaApi finaviaApi) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
@@ -76,7 +76,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         this.findingService = Objects.requireNonNull(findingService);
         this.entryService = Objects.requireNonNull(entryService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
-        this.finaviaApiHeaders = Objects.requireNonNull(finaviaApiHeaders);
+        this.finaviaApi = Objects.requireNonNull(finaviaApi);
     }
 
     @Override
@@ -154,8 +154,12 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                 feedData = downloadFile(entry, tracked, tempDirPath, "json", null)
                     .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
             } else if (TransitDataFormat.SSIM.fieldName().equalsIgnoreCase(entry.format())) {
-                // SSIM endpoint returns just a textual response, and that's fine
-                feedData = downloadFile(entry, tracked, tempDirPath, "txt", finaviaApiHeaders.getRequestHeaders())
+                // We only support a single SSIM dataset from Finavia:
+                if (!FinaviaApi.isEntryUrlFinaviaSSIMEndpoint(entry.url())) {
+                    return Optional.empty();
+                }
+
+                feedData = downloadFile(entry, tracked, tempDirPath, "txt", finaviaApi.getRequestHeaders())
                     .thenApply(DownloadResponse::body)
                     .thenApply(packageSsimTextIntoZip(entry, tempDirPath));;
             } else {
