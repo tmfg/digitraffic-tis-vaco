@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -72,7 +73,14 @@ public class AdminToolsService {
         return adminToolsRepository.getDataDeliveryOverview(businessIds);
     }
 
-    public void exportDataDeliveryToCsv(OutputStream outputStream, String language) {
+    /**
+     * Writes the data delivery overview as CSV.
+     *
+     * @param outputStream Target of the CSV
+     * @param language Language of the headers and of the public test company name
+     * @param maskUrls True hides the query string, the fragment and the user information of each source URL
+     */
+    public void exportDataDeliveryToCsv(OutputStream outputStream, String language, boolean maskUrls) {
         CSVFormat format = CSVFormat.DEFAULT.builder()
             .setHeader(getDataDeliveryCsvHeaders(language))
             .build();
@@ -93,21 +101,40 @@ public class AdminToolsService {
                 }
 
                 printer.printRecord(
-                    putEmptyString ? "" : businessIdToShow,
-                    putEmptyString ? "" : companyNameToShow,
-                    entry.context(),
-                    entry.url(),
-                    entry.feedName(),
-                    entry.format(),
-                    entry.convertedFormat(),
+                    putEmptyString ? "" : neutralizeFormula(businessIdToShow),
+                    putEmptyString ? "" : neutralizeFormula(companyNameToShow),
+                    neutralizeFormula(entry.context()),
+                    neutralizeFormula(maskUrls ? SourceUrls.forVisitor(entry.url()) : entry.url()),
+                    neutralizeFormula(entry.feedName()),
+                    neutralizeFormula(entry.format()),
+                    neutralizeFormula(entry.convertedFormat()),
                     entry.status() != null ? entry.status().fieldName() : "",
                     entry.created() != null ? entry.created().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")) : "",
-                    entry.publicId()
+                    neutralizeFormula(entry.publicId())
                 );
             }
         } catch (IOException e) {
             logger.warn("Failed to generate CSV", e); // TODO: some entry references
         }
+    }
+
+    /**
+     * A bare "-" is the placeholder for a missing value, and a plain number is not an expression.
+     * Both stay unchanged. Anything else that starts with a formula character is still neutralized.
+     */
+    private static final Pattern PLAIN_VALUE = Pattern.compile("-|-?\\d+(\\.\\d+)?");
+
+    /** a cell that starts with one of these characters as a formula. A prefix of a
+     * single quote makes it plain text. Anonymous callers can name an entry, so every free-text cell needs this.
+     */
+    private static String neutralizeFormula(@Nullable String cell) {
+        if (cell == null || cell.isEmpty() || PLAIN_VALUE.matcher(cell).matches()) {
+            return cell;
+        }
+        return switch (cell.charAt(0)) {
+            case '=', '+', '-', '@', '\t', '\r' -> "'" + cell;
+            default -> cell;
+        };
     }
 
     public List<CompanyWithFormatSummary> getCompaniesWithFormatInfos() {

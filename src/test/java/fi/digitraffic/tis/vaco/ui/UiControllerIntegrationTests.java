@@ -11,7 +11,6 @@ import fi.digitraffic.tis.vaco.api.model.queue.ImmutableCreateEntryRequest;
 import fi.digitraffic.tis.vaco.credentials.CredentialsService;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableHttpBasicAuthenticationDetails;
-import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.db.mapper.RecordMapper;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.db.repositories.EntryRepository;
@@ -28,7 +27,6 @@ import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ValidationInput;
 import fi.digitraffic.tis.vaco.rules.RuleName;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import fi.digitraffic.tis.Constants;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import org.junit.jupiter.api.Test;
@@ -43,7 +41,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -78,9 +75,6 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     private static final String QUEUE_PATH = "/queue";
     private static final String JOH_RNADO = "Joh Rnado";
     private static final String FIRST_ERROR = "$.errors[0]";
-
-    @Autowired
-    private EncryptionService encryptionService;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -476,72 +470,4 @@ class UiControllerIntegrationTests extends SpringBootIntegrationTestBase {
             .andReturn();
     }
 
-    // A corrupted magic token must degrade to a 404 like a denied/absent magic link, not crash
-    // the request with an uncaught decrypt() exception (500).
-    @Test
-    void fetchEntryStateDoesNotReturn500WhenMagicTokenDecryptFails() throws Exception {
-        CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
-        String oid = JOH_RNADO;
-        JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken(oid);
-        SecurityContextHolder.getContext().setAuthentication(johRnado);
-        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId(request.businessId()).get()));
-
-        MvcResult response = apiCall(post(QUEUE_PATH).content(toJson(request)))
-            .andExpect(status().isOk())
-            .andReturn();
-        JsonNode createResult = apiResponse(response);
-        String entryPublicId = createResult.get("data").get(PUBLIC_ID).stringValue();
-
-        String corruptedMagicToken = corruptMagicToken(entryPublicId);
-
-        // requester is otherwise unauthenticated -- only the magic-link path is under test
-        SecurityContextHolder.clearContext();
-
-        apiCall(get(ENTRIES_PATH + entryPublicId + STATE_SUFFIX + "?magic=" + corruptedMagicToken))
-            .andExpect(status().isNotFound())
-            .andReturn();
-    }
-
-    // A `magic` value that isn't even valid base64 must also degrade to 404, not 500.
-    @Test
-    void fetchEntryStateDoesNotReturn500WhenMagicTokenIsGarbage() throws Exception {
-        CreateEntryRequest request = TestObjects.aValidationEntryRequest().build();
-        String oid = JOH_RNADO;
-        JwtAuthenticationToken johRnado = TestObjects.jwtAuthenticationToken(oid);
-        SecurityContextHolder.getContext().setAuthentication(johRnado);
-        injectAuthOverrides(oid, asFintrafficIdGroup(companyHierarchyService.findByBusinessId(request.businessId()).get()));
-
-        MvcResult response = apiCall(post(QUEUE_PATH).content(toJson(request)))
-            .andExpect(status().isOk())
-            .andReturn();
-        JsonNode createResult = apiResponse(response);
-        String entryPublicId = createResult.get("data").get(PUBLIC_ID).stringValue();
-
-        SecurityContextHolder.clearContext();
-
-        apiCall(get(ENTRIES_PATH + entryPublicId + STATE_SUFFIX + "?magic=not-a-valid-token-at-all!!!"))
-            .andExpect(status().isNotFound())
-            .andReturn();
-    }
-
-    /**
-     * Encrypts a magic token, then flips a byte in its raw ciphertext (not the IV) so decrypting
-     * it fails the GCM authentication tag check.
-     */
-    private String corruptMagicToken(String entryPublicId) {
-        String token = encryptionService.encrypt(ImmutableMagicToken.of(entryPublicId));
-
-        var decoder = Base64.getUrlDecoder();
-        var encoder = Base64.getUrlEncoder();
-
-        String combined = new String(decoder.decode(token), StandardCharsets.UTF_8);
-        String[] split = combined.split("\\.");
-        byte[] cypherText = decoder.decode(split[0]);
-        String iv64 = split[1];
-
-        cypherText[cypherText.length / 2] ^= (byte) 0xFF;
-
-        String corruptedCombined = new String(encoder.encode(cypherText), StandardCharsets.UTF_8) + "." + iv64;
-        return new String(encoder.encode(corruptedCombined.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-    }
 }

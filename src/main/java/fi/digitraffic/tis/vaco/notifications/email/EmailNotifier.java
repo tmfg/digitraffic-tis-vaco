@@ -10,7 +10,6 @@ import fi.digitraffic.tis.utilities.Streams;
 import fi.digitraffic.tis.vaco.company.model.Company;
 import fi.digitraffic.tis.vaco.company.service.CompanyHierarchyService;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.db.model.EntryRecord;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
 import fi.digitraffic.tis.vaco.notifications.Notifier;
@@ -21,7 +20,6 @@ import fi.digitraffic.tis.vaco.notifications.email.model.Message;
 import fi.digitraffic.tis.vaco.notifications.email.model.Recipients;
 import fi.digitraffic.tis.vaco.ui.AdminToolsRepository;
 import fi.digitraffic.tis.vaco.ui.model.CompanyLatestEntry;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -46,7 +44,6 @@ public class EmailNotifier implements Notifier {
     private final SesClient sesClient;
     private final CompanyHierarchyService companyHierarchyService;
     private final FeatureFlagsService featureFlagsService;
-    private final EncryptionService encryptionService;
     private final Clock clock;
 
     public EmailNotifier(VacoProperties vacoProperties,
@@ -54,7 +51,6 @@ public class EmailNotifier implements Notifier {
                          SesClient sesClient,
                          CompanyHierarchyService companyHierarchyService,
                          FeatureFlagsService featureFlagsService,
-                         EncryptionService encryptionService,
                          AdminToolsRepository adminToolsRepository,
                          Clock clock) {
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
@@ -62,7 +58,6 @@ public class EmailNotifier implements Notifier {
         this.sesClient = Objects.requireNonNull(sesClient);
         this.companyHierarchyService = Objects.requireNonNull(companyHierarchyService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
-        this.encryptionService = Objects.requireNonNull(encryptionService);
         this.adminToolsRepository = Objects.requireNonNull(adminToolsRepository);
         this.clock = Objects.requireNonNull(clock);
     }
@@ -204,7 +199,7 @@ public class EmailNotifier implements Notifier {
                 c.element("td")
                     .children(
                         link(c,
-                            "/ui/data/" + e.publicId() + "?magic=" + encryptionService.encrypt(ImmutableMagicToken.of(e.publicId())),
+                            "/ui/data/" + e.publicId(),
                             translations.get("message.feeds.entries.link")))));
         return c.element("table")
             .children(headers)
