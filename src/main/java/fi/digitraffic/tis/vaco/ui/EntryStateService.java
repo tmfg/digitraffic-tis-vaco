@@ -15,6 +15,8 @@ import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.ruleset.model.RulesetType;
 import fi.digitraffic.tis.vaco.summary.model.Summary;
+import fi.digitraffic.tis.vaco.summary.model.ssim.AirlineSummary;
+import fi.digitraffic.tis.vaco.summary.model.ssim.AirportSummary;
 import fi.digitraffic.tis.vaco.ui.model.AggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableAggregatedFinding;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableItemCounter;
@@ -171,8 +173,26 @@ public class EntryStateService {
                     .content(getAgencyCard(agency))
                     .build();
             }).toList();
+    }
 
+    public static List<ImmutableCard> getAirlineCardUiContent(List<AirlineSummary> airlines) {
+        return Streams.map(airlines,
+            airline -> {
+                return ImmutableCard.builder()
+                    .title(airline.name())
+                    .content(getAirlineCard(airline))
+                    .build();
+            }).toList();
+    }
 
+    public static List<ImmutableCard> getAirportCardUiContent(List<AirportSummary> airports) {
+        return Streams.map(airports,
+            airport -> {
+                return ImmutableCard.builder()
+                    .title(airport.name())
+                    .content(getAirportCard(airport))
+                    .build();
+            }).toList();
     }
 
     private static List<ImmutableLabelValuePair> getAgencyCard(Map<String, String> agency) {
@@ -180,6 +200,23 @@ public class EntryStateService {
             ImmutableLabelValuePair.of("website", firstNonNull(agency::get, "agency_url", "agencyUrl")),
             ImmutableLabelValuePair.of("email", firstNonNull(agency::get, "agency_email", "agencyEmail")),
             ImmutableLabelValuePair.of("phone", firstNonNull(agency::get, "agency_phone", "agencyPhone")));
+    }
+
+    private static List<ImmutableLabelValuePair> getAirlineCard(AirlineSummary airline) {
+        return List.of(
+            ImmutableLabelValuePair.of("periodFrom", airline.periodFrom()),
+            ImmutableLabelValuePair.of("periodTo", airline.periodTo()),
+            ImmutableLabelValuePair.of("flightCount", String.valueOf(airline.flightCount())),
+            ImmutableLabelValuePair.of("airports", String.join(", ", airline.airports())));
+    }
+
+
+    private static List<ImmutableLabelValuePair> getAirportCard(AirportSummary airport) {
+        return List.of(
+            ImmutableLabelValuePair.of("periodFrom", airport.periodFrom()),
+            ImmutableLabelValuePair.of("periodTo", airport.periodTo()),
+            ImmutableLabelValuePair.of("inboundFlightsCount", String.valueOf(airport.inboundFlightsCount())),
+            ImmutableLabelValuePair.of("outboundFlightsCount",String.valueOf(airport.outboundFlightsCount())));
     }
 
     public static List<ImmutableLabelValuePair> getFeedInfoUiContent(Map<String, String> feedInfo) {

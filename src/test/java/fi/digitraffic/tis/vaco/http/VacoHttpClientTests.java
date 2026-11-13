@@ -113,7 +113,7 @@ class VacoHttpClientTests {
 
         Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
 
-        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org", entry);
+        CompletableFuture<DownloadResponse> r = vacoClient.downloadFile(targetFilePath, "https://example.org", entry, null);
 
         assertThat(r.isDone(), equalTo(true));
         assertThat(r.get().body().isEmpty(), equalTo(true));
@@ -126,7 +126,7 @@ class VacoHttpClientTests {
 
         Path targetFilePath = Files.createTempFile(getClass().getSimpleName(), ".ignored");
 
-        vacoClient.downloadFile(targetFilePath, "https://example.org", entry);
+        vacoClient.downloadFile(targetFilePath, "https://example.org", entry, null);
 
         assertThat(headersCaptor.getValue().get("Cache-Control"), equalTo("no-cache"));
         assertThat(headersCaptor.getValue().get("Pragma"), equalTo("no-cache"));
@@ -144,7 +144,7 @@ class VacoHttpClientTests {
         when(mockResponse.headers()).thenReturn(HttpHeaders.of(Map.of(), (a, b) -> true));
 
         // /dev/null avoids writing 200 MiB to disk; this assumes a Unix-like system (Linux or macOS).
-        CompletableFuture<DownloadResponse> result = vacoClient.downloadFile(Path.of("/dev/null"), "https://example.org", entry);
+        CompletableFuture<DownloadResponse> result = vacoClient.downloadFile(Path.of("/dev/null"), "https://example.org", entry, null);
 
         assertThat(result.get().result(), equalTo(DownloadResponse.Result.OK));
     }

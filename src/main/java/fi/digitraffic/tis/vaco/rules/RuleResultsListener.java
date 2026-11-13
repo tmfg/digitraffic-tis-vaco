@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules;
 
+import fi.digitraffic.tis.vaco.rules.results.*;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -24,14 +25,6 @@ import fi.digitraffic.tis.vaco.rules.internal.DownloadRule;
 import fi.digitraffic.tis.vaco.rules.internal.StopsAndQuaysRule;
 import fi.digitraffic.tis.vaco.rules.model.ErrorMessage;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
-import fi.digitraffic.tis.vaco.rules.results.GbfsEnturResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.GtfsToNetexResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.summary.SummaryService;
@@ -67,6 +60,8 @@ public class RuleResultsListener extends SqsListener {
     private final NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor;
     private final FindingRepository findingRepository;
     private final RulesetService rulesetService;
+    private final SsimFintrafficResultProcessor ssimFintrafficResultProcessor;
+    private final Ssim2NetexFintrafficResultProcessor ssim2NetexFintrafficResultProcessor;
 
     public RuleResultsListener(MessagingService messagingService,
                                FindingService findingService,
@@ -82,7 +77,10 @@ public class RuleResultsListener extends SqsListener {
                                SummaryService summaryService,
                                GtfsToNetexResultProcessor gtfsToNetexResultProcessor,
                                NetexToGtfsRuleResultProcessor netexToGtfsRuleResultProcessor,
-                               FindingRepository findingRepository, RulesetService rulesetService) {
+                               FindingRepository findingRepository,
+                               RulesetService rulesetService,
+                               SsimFintrafficResultProcessor ssimFintrafficResultProcessor,
+                               Ssim2NetexFintrafficResultProcessor ssim2NetexFintrafficResultProcessor) {
         super(messagingService, objectMapper);
         this.findingService = Objects.requireNonNull(findingService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
@@ -98,6 +96,8 @@ public class RuleResultsListener extends SqsListener {
         this.netexToGtfsRuleResultProcessor = Objects.requireNonNull(netexToGtfsRuleResultProcessor);
         this.findingRepository = Objects.requireNonNull(findingRepository);
         this.rulesetService = Objects.requireNonNull(rulesetService);
+        this.ssimFintrafficResultProcessor = Objects.requireNonNull(ssimFintrafficResultProcessor);
+        this.ssim2NetexFintrafficResultProcessor = Objects.requireNonNull(ssim2NetexFintrafficResultProcessor);
     }
 
     @Scheduled(initialDelayString = "${vaco.scheduling.findings.poll-rate}", fixedRateString = "${vaco.scheduling.findings.poll-rate}")
@@ -221,6 +221,8 @@ public class RuleResultsListener extends SqsListener {
                 case RuleName.NETEX2GTFS_ENTUR -> processNetex2GtfsEntur(resultMessage);
                 case RuleName.GTFS2NETEX_FINTRAFFIC -> processGtfs2NetexFintraffic(resultMessage);
                 case RuleName.GBFS_ENTUR -> processGbfsEntur(resultMessage);
+                case RuleName.SSIM_FINTRAFFIC -> processSsimFintraffic(resultMessage);
+                case RuleName.SSIM2NETEX_FINTRAFFIC -> processSsim2NetexFintraffic(resultMessage);
                 default -> {
                     logger.error(
                         "Unexpected rule name detected in queue {}: {}",
@@ -268,6 +270,14 @@ public class RuleResultsListener extends SqsListener {
 
     private boolean processGbfsEntur(ResultMessage resultMessage) {
         return processRule(RuleName.GBFS_ENTUR, resultMessage, gbfsResultProcessor);
+    }
+
+    private boolean processSsimFintraffic(ResultMessage resultMessage) {
+        return processRule(RuleName.SSIM_FINTRAFFIC, resultMessage, ssimFintrafficResultProcessor);
+    }
+
+    private boolean processSsim2NetexFintraffic(ResultMessage resultMessage) {
+        return processRule(RuleName.SSIM2NETEX_FINTRAFFIC, resultMessage, ssim2NetexFintrafficResultProcessor);
     }
 
     private boolean processRule(String ruleName, ResultMessage resultMessage, ResultProcessor resultProcessor) {

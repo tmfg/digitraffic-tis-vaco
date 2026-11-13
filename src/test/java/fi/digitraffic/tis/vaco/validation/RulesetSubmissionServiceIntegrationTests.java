@@ -124,7 +124,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     @Test
     void delegatesRuleProcessingToRuleSpecificQueueBasedOnRuleName() {
         Entry entry = createEntryForTesting();
-        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), eq(entry)))
+        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), eq(entry), eq(null)))
             .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.ofNullable(response)).build()));
 
 
@@ -200,7 +200,7 @@ class RulesetSubmissionServiceIntegrationTests extends SpringBootIntegrationTest
     @Test
     void sendsMessageToJobQueueForTaskWithFailedDependencies() {
         Entry entry = createEntryForTesting();
-        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), eq(entry)))
+        when(httpClient.downloadFile(filePath.capture(), entryUrl.capture(), eq(entry), eq(null)))
             .thenReturn(CompletableFuture.supplyAsync(() -> ImmutableDownloadResponse.builder().body(Optional.empty()).result(DownloadResponse.Result.OK).build()));
 
         String testQueueName = createSqsQueue(MessageQueue.RULE_PROCESSING.munge(RuleName.GTFS_CANONICAL));

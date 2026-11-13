@@ -67,7 +67,9 @@ public class SummaryRepository {
                     WHEN s.name = 'operators' THEN 1
                     WHEN s.name = 'feedInfo' THEN 2
                     WHEN s.name = 'lines' THEN 2
+                    WHEN s.name = 'airlines' THEN 2
                     WHEN s.name = 'files' THEN 3
+                    WHEN s.name = 'airports' THEN 3
                     WHEN s.name = 'counts' THEN 4
                     WHEN s.name = 'components' THEN 5
                     ELSE 6

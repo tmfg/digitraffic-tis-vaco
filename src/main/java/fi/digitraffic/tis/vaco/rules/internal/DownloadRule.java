@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
+import fi.digitraffic.tis.vaco.rules.model.ssim.FinaviaApi;
 import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
@@ -37,12 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -63,13 +59,15 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     private final VacoHttpClient httpClient;
     private final S3Client s3Client;
     private final FindingService findingService;
+    private final FinaviaApi finaviaApi;
 
     public DownloadRule(ObjectMapper objectMapper, TaskService taskService,
                         VacoProperties vacoProperties,
                         VacoHttpClient httpClient,
                         S3Client s3Client,
                         FindingService findingService, EntryService entryService,
-                        FeatureFlagsService featureFlagsService) {
+                        FeatureFlagsService featureFlagsService,
+                        FinaviaApi finaviaApi) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
@@ -78,6 +76,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         this.findingService = Objects.requireNonNull(findingService);
         this.entryService = Objects.requireNonNull(entryService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
+        this.finaviaApi = Objects.requireNonNull(finaviaApi);
     }
 
     @Override
@@ -148,35 +147,44 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
 
     private Optional<S3Path> download(Entry entry, Path tempDirPath, Task tracked) {
         if (shouldDownload(entry)) {
-            CompletableFuture<Optional<Path>> feedArchive;
+            CompletableFuture<Optional<Path>> feedData;
 
             if (TransitDataFormat.GBFS.fieldName().equalsIgnoreCase(entry.format())) {
                 // GBFS feed is a directive pointing out to more files, so need to download them all separately and build a ZIP
-                feedArchive = httpClient.downloadFile(
-                        TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".json"),
-                        entry.url(),
-                        entry)
-                    .thenApply(updateEtag(entry))
-                    .thenApply(reportResult(entry, tracked))
+                feedData = downloadFile(entry, tracked, tempDirPath, "json", null)
                     .thenCompose(downloadGbfsDiscovery(entry, tempDirPath));
+            } else if (TransitDataFormat.SSIM.fieldName().equalsIgnoreCase(entry.format())) {
+                // We only support a single SSIM dataset from Finavia:
+                if (!FinaviaApi.isEntryUrlFinaviaSSIMEndpoint(entry.url())) {
+                    return Optional.empty();
+                }
+
+                feedData = downloadFile(entry, tracked, tempDirPath, "txt", finaviaApi.getRequestHeaders())
+                    .thenApply(DownloadResponse::body)
+                    .thenApply(packageSsimTextIntoZip(entry, tempDirPath));;
             } else {
-                // by default we assume single ZIP files, this applies to e.g. GTFS and NeTEx
-                feedArchive = httpClient.downloadFile(
-                        TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip"),
-                        entry.url(),
-                        entry)
-                    .thenApply(updateEtag(entry))
-                    .thenApply(reportResult(entry, tracked))
+                // by default we assume single ZIP files; VACO UI btw expects a zip package as well
+                feedData = downloadFile(entry, tracked, tempDirPath, "zip", null)
                     .thenApply(DownloadResponse::body);
             }
 
-            return feedArchive.thenCompose(validateZip(tracked))
+            return feedData.thenCompose(validateZip(tracked))
                 .thenApply(track(entry, tracked, ProcessingState.UPDATE))
                 .thenCompose(uploadToS3(entry, tracked))
                 .join();
         } else {
             return Optional.empty();
         }
+    }
+
+    private CompletableFuture<DownloadResponse> downloadFile(Entry entry, Task tracked, Path tempDirPath, String fileExtension, Map<String, String> extraRequestHeaders) {
+        return httpClient.downloadFile(
+                TempFiles.getTaskTempFile(tempDirPath, entry.format() + "." + fileExtension),
+                entry.url(),
+                entry,
+                extraRequestHeaders)
+            .thenApply(updateEtag(entry))
+            .thenApply(reportResult(entry, tracked));
     }
 
     private Function<DownloadResponse, DownloadResponse> reportResult(Entry entry, Task task) {
@@ -242,7 +250,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                         .flatten(Function.identity())
                         .map(feed -> httpClient.downloadFile(
                             TempFiles.getTaskTempFile(discoveryDir, feed.name() + ".json"),
-                            feed.url(), entry))
+                            feed.url(), entry, null))
                         .filter(Objects::nonNull)
                         .toList();
 
@@ -265,6 +273,22 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                 return CompletableFuture.completedFuture(Optional.empty());
             }
         };
+    }
+
+    private Function<Optional<Path>, Optional<Path>> packageSsimTextIntoZip(Entry entry, Path tempDirPath) {
+        return downloadResponse -> downloadResponse.map(txtFile -> {
+            try {
+                Path stagingDir = Files.createDirectories(tempDirPath.resolve("ssim-package"));
+                Path stagedTxt = stagingDir.resolve(entry.format() + ".txt");
+                Files.copy(txtFile, stagedTxt, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                Path zipFile = TempFiles.getTaskTempFile(tempDirPath, entry.format() + ".zip");
+                Archiver.createZip(stagingDir, zipFile);
+                return zipFile;
+            } catch (IOException e) {
+                throw new RuleExecutionException("Could not package SSIM text response into ZIP", e);
+            }
+        });
     }
 
     private <T> Function<T, T> track(Entry entry, Task task, ProcessingState state) {

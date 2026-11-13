@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.rules;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import fi.digitraffic.tis.vaco.rules.results.*;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -29,14 +30,6 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
 import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
 import fi.digitraffic.tis.vaco.rules.model.ResultMessage;
-import fi.digitraffic.tis.vaco.rules.results.GbfsEnturResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.GtfsCanonicalResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.GtfsToNetexResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.InternalRuleResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.NetexEnturValidatorResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.NetexToGtfsRuleResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.ResultProcessor;
-import fi.digitraffic.tis.vaco.rules.results.SimpleResultProcessor;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.ImmutableRuleset;
 import fi.digitraffic.tis.vaco.ruleset.model.TransitDataFormat;
@@ -96,6 +89,8 @@ class RuleResultsListenerTests {
     @Captor private ArgumentCaptor<DelegationJobMessage> submittedProcessingJob;
     @Mock private FindingRepository findingRepository;
     @Mock private RulesetService rulesetService;
+    @Mock private SsimFintrafficResultProcessor ssimFintrafficResultProcessor;
+    @Mock private Ssim2NetexFintrafficResultProcessor ssim2NetexFintrafficResultProcessor;
 
     @BeforeEach
     void setUp() {
@@ -117,7 +112,9 @@ class RuleResultsListenerTests {
             gtfsToNetexResultProcessor,
             netexToGtfsRuleResultProcessor,
             findingRepository,
-            rulesetService);
+            rulesetService,
+            ssimFintrafficResultProcessor,
+            ssim2NetexFintrafficResultProcessor);
     }
 
     @AfterEach

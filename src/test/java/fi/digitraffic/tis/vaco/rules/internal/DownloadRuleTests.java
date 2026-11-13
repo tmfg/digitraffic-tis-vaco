@@ -1,6 +1,7 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import fi.digitraffic.tis.vaco.rules.model.ssim.FinaviaApi;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.datatype.guava.GuavaModule;
@@ -73,6 +74,8 @@ class DownloadRuleTests {
     private EntryService entryService;
     @Mock
     private FeatureFlagsService featureFlagsService;
+    @Mock
+    private FinaviaApi finaviaApi;
 
     @Captor
     private ArgumentCaptor<Path> tempFilePath;
@@ -85,7 +88,7 @@ class DownloadRuleTests {
     void setUp() {
         objectMapper = JsonMapper.builder().addModule(new GuavaModule()).build();
         vacoProperties = TestObjects.vacoProperties();
-        rule = new DownloadRule(objectMapper, taskService, vacoProperties, httpClient, s3Client, findingService, entryService, featureFlagsService);
+        rule = new DownloadRule(objectMapper, taskService, vacoProperties, httpClient, s3Client, findingService, entryService, featureFlagsService, finaviaApi);
     }
 
     @AfterEach
@@ -104,7 +107,7 @@ class DownloadRuleTests {
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
-        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry))).willAnswer(a -> CompletableFuture.completedFuture(response));
+        given(httpClient.downloadFile(tempFilePath.capture(), eq(entry.url()), eq(entry), eq(null))).willAnswer(a -> CompletableFuture.completedFuture(response));
         given(taskService.trackTask(entry, dlTask, ProcessingState.UPDATE)).willReturn(dlTask);
         given(s3Client.uploadFile(eq(vacoProperties.s3PackagesBucket()), targetPath.capture(), sourcePath.capture())).willReturn(CompletableFuture.completedFuture(null));
 
@@ -135,7 +138,7 @@ class DownloadRuleTests {
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
-        given(httpClient.downloadFile(feedFiles.capture(), any(String.class), eq(entry)))
+        given(httpClient.downloadFile(feedFiles.capture(), any(String.class), eq(entry), eq(null)))
             // 1) rule downloads the discovery file
             .willAnswer(a -> CompletableFuture.completedFuture(response))
             // 2) rule downloads all the other files as well
@@ -194,7 +197,7 @@ class DownloadRuleTests {
         given(taskService.findTask(entry.publicId(), DownloadRule.PREPARE_DOWNLOAD_TASK)).willReturn(Optional.of(dlTask));
         given(taskService.trackTask(entry, dlTask, ProcessingState.START)).willReturn(dlTask);
         given(featureFlagsService.isFeatureFlagEnabled("tasks.prepareDownload.skipDownloadOnStaleETag")).willReturn(true);
-        given(httpClient.downloadFile(any(Path.class), eq(entry.url()), eq(entry)))
+        given(httpClient.downloadFile(any(Path.class), eq(entry.url()), eq(entry), eq(null)))
             .willReturn(CompletableFuture.failedFuture(new RuntimeException("connection refused")));
         given(taskService.markStatus(entry, dlTask, Status.FAILED)).willReturn(dlTask);
 
