@@ -101,11 +101,11 @@ class AdminToolsServiceCsvTests {
                 .companyName("=company").businessId("=business").publicId("=public").feedName("=feed")
                 .context("=context").url("=url").format("=format").convertedFormat("=converted").build()));
 
-        CSVRecord record = export().get(0);
+        CSVRecord row = export().get(0);
 
         for (int column : new int[] {0, 1, CONTEXT_COLUMN, URL_COLUMN, FEED_NAME_COLUMN, 5,
                                      CONVERTED_FORMAT_COLUMN, ENTRY_ID_COLUMN}) {
-            assertThat("column " + column, record.get(column), startsWith("'="));
+            assertThat("column " + column, row.get(column), startsWith("'="));
         }
     }
 

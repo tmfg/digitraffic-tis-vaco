@@ -89,33 +89,38 @@ public class AdminToolsService {
             List<CompanyLatestEntry> data = adminToolsRepository.getDataDeliveryOverview(null);
             String currentBusinessId = "";
             for (CompanyLatestEntry entry : data) {
-                boolean isPublicValidationTest = entry.businessId().equals(Constants.PUBLIC_VALIDATION_TEST_ID);
-                String companyNameToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.companyName();
-                String businessIdToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.businessId();
-
-                boolean putEmptyString = false;
-                if (currentBusinessId.equals(entry.businessId())) {
-                    putEmptyString = true;
-                } else {
+                boolean sameCompanyAsPrevious = currentBusinessId.equals(entry.businessId());
+                if (!sameCompanyAsPrevious) {
                     currentBusinessId = entry.businessId();
                 }
-
-                printer.printRecord(
-                    putEmptyString ? "" : neutralizeFormula(businessIdToShow),
-                    putEmptyString ? "" : neutralizeFormula(companyNameToShow),
-                    neutralizeFormula(entry.context()),
-                    neutralizeFormula(maskUrls ? SourceUrls.forVisitor(entry.url()) : entry.url()),
-                    neutralizeFormula(entry.feedName()),
-                    neutralizeFormula(entry.format()),
-                    neutralizeFormula(entry.convertedFormat()),
-                    entry.status() != null ? entry.status().fieldName() : "",
-                    entry.created() != null ? entry.created().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")) : "",
-                    neutralizeFormula(entry.publicId())
-                );
+                printer.printRecord(dataDeliveryCsvRecord(entry, language, maskUrls, sameCompanyAsPrevious));
             }
         } catch (IOException e) {
             logger.warn("Failed to generate CSV", e); // TODO: some entry references
         }
+    }
+
+    /**
+     * Builds the cells of one CSV row. The business id and the company name are empty when the row
+     * belongs to the same company as the row before it.
+     */
+    private Object[] dataDeliveryCsvRecord(CompanyLatestEntry entry, String language, boolean maskUrls, boolean sameCompanyAsPrevious) {
+        boolean isPublicValidationTest = entry.businessId().equals(Constants.PUBLIC_VALIDATION_TEST_ID);
+        String companyNameToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.companyName();
+        String businessIdToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.businessId();
+
+        return new Object[] {
+            sameCompanyAsPrevious ? "" : neutralizeFormula(businessIdToShow),
+            sameCompanyAsPrevious ? "" : neutralizeFormula(companyNameToShow),
+            neutralizeFormula(entry.context()),
+            neutralizeFormula(maskUrls ? SourceUrls.forVisitor(entry.url()) : entry.url()),
+            neutralizeFormula(entry.feedName()),
+            neutralizeFormula(entry.format()),
+            neutralizeFormula(entry.convertedFormat()),
+            entry.status() != null ? entry.status().fieldName() : "",
+            entry.created() != null ? entry.created().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")) : "",
+            neutralizeFormula(entry.publicId())
+        };
     }
 
     /**
@@ -124,8 +129,10 @@ public class AdminToolsService {
      */
     private static final Pattern PLAIN_VALUE = Pattern.compile("-|-?\\d+(\\.\\d+)?");
 
-    /** a cell that starts with one of these characters as a formula. A prefix of a
-     * single quote makes it plain text. Anonymous callers can name an entry, so every free-text cell needs this.
+    /**
+     * A spreadsheet reads a cell that starts with {@code =}, {@code +}, {@code -}, {@code @}, a tab or a
+     * carriage return as a formula. A prefix of a single quote makes it plain text. Anonymous callers can
+     * name an entry, so every free-text cell needs this.
      */
     private static String neutralizeFormula(@Nullable String cell) {
         if (cell == null || cell.isEmpty() || PLAIN_VALUE.matcher(cell).matches()) {
