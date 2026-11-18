@@ -152,7 +152,7 @@ class IssuerRoutingAuthenticationTests {
             return new VacoProperties(base.environment(), base.temporaryDirectory(), base.s3ProcessingBucket(),
                 base.s3PackagesBucket(), base.baseUrl(), base.contextUrl(), base.companyNameClaim(), base.aws(),
                 base.azureAd(), trivore, base.email(), base.cleanup(), base.msGraph(), base.encryptionKeys(),
-                base.stopsAndQuays());
+                base.stopsAndQuays(), base.finavia());
         }
 
         @Bean

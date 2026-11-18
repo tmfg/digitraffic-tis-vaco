@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.vaco.rules.model.ssim;
+package fi.digitraffic.tis.vaco.configuration;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,12 +12,12 @@ class FinaviaApiTests {
 
     @Test
     void providesRequiredHeadersWithConfiguredApiKey() {
-        FinaviaApi finaviaApi = new FinaviaApi("test-api-key");
+        FinaviaApi finavia = new FinaviaApi("test-api-key");
 
         assertEquals(Map.of(
             "Cache-Control", "no-cache",
             "app_key", "test-api-key"
-        ), finaviaApi.getRequestHeaders());
+        ), finavia.requestHeaders());
     }
 
     @Test

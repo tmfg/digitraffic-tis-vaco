@@ -15,6 +15,7 @@ import fi.digitraffic.tis.vaco.configuration.AzureAd;
 import fi.digitraffic.tis.vaco.configuration.Cleanup;
 import fi.digitraffic.tis.vaco.configuration.Email;
 import fi.digitraffic.tis.vaco.configuration.EncryptionKeys;
+import fi.digitraffic.tis.vaco.configuration.FinaviaApi;
 import fi.digitraffic.tis.vaco.configuration.MsGraph;
 import fi.digitraffic.tis.vaco.configuration.S3;
 import fi.digitraffic.tis.vaco.configuration.StopsAndQuays;
@@ -183,7 +184,8 @@ public class TestObjects {
             cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), Duration.parse("P90D"), 10, 100),
             msGraph != null ? msGraph : new MsGraph("tenantId", "clientId", "clientSecret", "schemaExtension"),
             encryptionKeys != null ? encryptionKeys : new EncryptionKeys("credentials", "C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"),
-            stopsAndQuays != null ? stopsAndQuays : new StopsAndQuays("https://stops-and-quays.invalid/export.zip")
+            stopsAndQuays != null ? stopsAndQuays : new StopsAndQuays("https://stops-and-quays.invalid/export.zip"),
+            new FinaviaApi("test-api-key")
         );
 
     }

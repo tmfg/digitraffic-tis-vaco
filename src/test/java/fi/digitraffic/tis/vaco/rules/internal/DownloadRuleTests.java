@@ -1,7 +1,6 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import fi.digitraffic.tis.vaco.rules.model.ssim.FinaviaApi;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.datatype.guava.GuavaModule;
@@ -74,9 +73,6 @@ class DownloadRuleTests {
     private EntryService entryService;
     @Mock
     private FeatureFlagsService featureFlagsService;
-    @Mock
-    private FinaviaApi finaviaApi;
-
     @Captor
     private ArgumentCaptor<Path> tempFilePath;
     @Captor
@@ -88,7 +84,7 @@ class DownloadRuleTests {
     void setUp() {
         objectMapper = JsonMapper.builder().addModule(new GuavaModule()).build();
         vacoProperties = TestObjects.vacoProperties();
-        rule = new DownloadRule(objectMapper, taskService, vacoProperties, httpClient, s3Client, findingService, entryService, featureFlagsService, finaviaApi);
+        rule = new DownloadRule(objectMapper, taskService, vacoProperties, httpClient, s3Client, findingService, entryService, featureFlagsService);
     }
 
     @AfterEach

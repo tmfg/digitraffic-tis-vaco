@@ -1,6 +1,5 @@
 package fi.digitraffic.tis.vaco.rules.internal;
 
-import fi.digitraffic.tis.vaco.rules.model.ssim.FinaviaApi;
 import tools.jackson.databind.ObjectMapper;
 import fi.digitraffic.tis.aws.s3.ImmutableS3Path;
 import fi.digitraffic.tis.aws.s3.S3Client;
@@ -11,6 +10,7 @@ import fi.digitraffic.tis.utilities.TempFiles;
 import fi.digitraffic.tis.utilities.model.ProcessingState;
 import fi.digitraffic.tis.vaco.aws.S3Artifact;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.FinaviaApi;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.featureflags.FeatureFlagsService;
@@ -59,15 +59,13 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
     private final VacoHttpClient httpClient;
     private final S3Client s3Client;
     private final FindingService findingService;
-    private final FinaviaApi finaviaApi;
 
     public DownloadRule(ObjectMapper objectMapper, TaskService taskService,
                         VacoProperties vacoProperties,
                         VacoHttpClient httpClient,
                         S3Client s3Client,
                         FindingService findingService, EntryService entryService,
-                        FeatureFlagsService featureFlagsService,
-                        FinaviaApi finaviaApi) {
+                        FeatureFlagsService featureFlagsService) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.taskService = Objects.requireNonNull(taskService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
@@ -76,7 +74,6 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
         this.findingService = Objects.requireNonNull(findingService);
         this.entryService = Objects.requireNonNull(entryService);
         this.featureFlagsService = Objects.requireNonNull(featureFlagsService);
-        this.finaviaApi = Objects.requireNonNull(finaviaApi);
     }
 
     @Override
@@ -159,7 +156,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
                     return Optional.empty();
                 }
 
-                feedData = downloadFile(entry, tracked, tempDirPath, "txt", finaviaApi.getRequestHeaders())
+                feedData = downloadFile(entry, tracked, tempDirPath, "txt", vacoProperties.finavia().requestHeaders())
                     .thenApply(DownloadResponse::body)
                     .thenApply(packageSsimTextIntoZip(entry, tempDirPath));;
             } else {
