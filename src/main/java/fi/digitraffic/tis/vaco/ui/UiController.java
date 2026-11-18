@@ -172,14 +172,17 @@ public class UiController {
 
 
     /**
-     * Creates a public validation test. The caller needs no sign-in, so the server replaces every
-     * company-bound field of the request with the public test values.
+     * Creates a validation test from the test data form. The caller needs no sign-in. The server clears every
+     * field that the form does not offer. It keeps the business id only when the caller signed in and may access
+     * that company, and otherwise files the entry under the public test company.
      */
     @PostMapping(path = "/queue")
     @JsonView(DataVisibility.Public.class)
     public ResponseEntity<Resource<Entry>> createQueueEntry(@Valid @RequestBody CreateEntryRequest createEntryRequest) {
-        Entry converted = ImmutableEntry.copyOf(entryRequestMapper.toEntry(createEntryRequest))
-            .withBusinessId(Constants.PUBLIC_VALIDATION_TEST_ID)
+        Entry requested = entryRequestMapper.toEntry(createEntryRequest);
+        boolean ownCompany = meService.currentToken().isPresent() && meService.isAllowedToAccess(requested.businessId());
+        Entry converted = ImmutableEntry.copyOf(requested)
+            .withBusinessId(ownCompany ? requested.businessId() : Constants.PUBLIC_VALIDATION_TEST_ID)
             .withMetadata(null)
             .withContext(null)
             .withCredentials(null)
@@ -345,11 +348,18 @@ public class UiController {
         return ResponseEntity.ok(Streams.collect(entries, this::asCompanyLatestEntryResource));
     }
 
-    @GetMapping(path = "/data-delivery/export", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(path = "/data-delivery/test-results")
     @JsonView(DataVisibility.AdminRestricted.class)
-    public ResponseEntity<StreamingResponseBody> publicExportDataDelivery(@RequestParam(name = "language") String language) {
+    public ResponseEntity<List<Resource<CompanyLatestEntry>>> testResultsDataDelivery() {
         boolean visitor = !meService.isAdmin();
-        return csvResponse(language, visitor);
+        Set<Company> companies = meService.findCompanies();
+        Set<Company> shown = companies.isEmpty()
+            ? Set.of(companyHierarchyService.getPublicTestCompany())
+            : companies;
+        List<CompanyLatestEntry> entries = adminToolsService.getDataDeliveryOverview(shown).stream()
+            .map(e -> visitor ? ImmutableCompanyLatestEntry.copyOf(e).withUrl(SourceUrls.forVisitor(e.url())) : e)
+            .toList();
+        return ResponseEntity.ok(Streams.collect(entries, this::asCompanyLatestEntryResource));
     }
 
     @GetMapping(path = "/pages/company-entries/{businessId}")
@@ -374,11 +384,11 @@ public class UiController {
     @JsonView(DataVisibility.AdminRestricted.class)
     @PreAuthorize("hasAuthority('vaco.admin')")
     public ResponseEntity<StreamingResponseBody> exportDataDeliveryOverview(@RequestParam(name = "language") String language) {
-        return csvResponse(language, false);
+        return csvResponse(language);
     }
 
-    private ResponseEntity<StreamingResponseBody> csvResponse(String language, boolean maskUrls) {
-        StreamingResponseBody stream = outputStream -> adminToolsService.exportDataDeliveryToCsv(outputStream, language, maskUrls);
+    private ResponseEntity<StreamingResponseBody> csvResponse(String language) {
+        StreamingResponseBody stream = outputStream -> adminToolsService.exportDataDeliveryToCsv(outputStream, language);
 
         String filename = "dataDelivery_"+ LocalDateTime.now() +".csv";
         return ResponseEntity.ok()

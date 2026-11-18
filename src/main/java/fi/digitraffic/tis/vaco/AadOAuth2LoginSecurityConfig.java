@@ -67,7 +67,8 @@ public class AadOAuth2LoginSecurityConfig {
                 // public pages: the controller decides what a visitor without sign-in may see
                 "/ui/queue",                 // public validation test
                 "/ui/rules",                 // rulesets of the public validation test
-                "/ui/data-delivery/**",      // data delivery overview and its CSV export
+                "/ui/data-delivery",         // data delivery overview
+                "/ui/data-delivery/test-results", // overview of the public test company or of the user's companies
                 "/ui/pages/company-entries/*", // entries of one company
                 "/ui/packages/**",           // package downloads, the controller hides protected ones
                 "/ui/entries/*/state",       // entry results, the controller masks the source URL

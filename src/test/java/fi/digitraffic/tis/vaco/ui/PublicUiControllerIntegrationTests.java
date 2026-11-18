@@ -19,7 +19,9 @@ import fi.digitraffic.tis.vaco.db.repositories.FindingRepository;
 import fi.digitraffic.tis.vaco.db.repositories.RulesetRepository;
 import fi.digitraffic.tis.vaco.db.repositories.TaskRepository;
 import fi.digitraffic.tis.vaco.entries.EntryService;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.model.FindingSeverity;
+import fi.digitraffic.tis.vaco.fintrafficid.model.FintrafficIdGroup;
 import fi.digitraffic.tis.vaco.packages.PackagesService;
 import fi.digitraffic.tis.vaco.process.TaskService;
 import fi.digitraffic.tis.vaco.process.model.ImmutableTask;
@@ -41,6 +43,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,6 +73,9 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     private static final String SECRET_QUERY = "token=secret";
     private static final String ADMIN_OID = "Admin Adminson";
     private static final String RESULT = "result";
+    private static final String ADMIN_EXPORT_PATH = "/ui/admin/data-delivery/export";
+    private static final String PUBLIC_EXPORT_PATH = "/ui/data-delivery/export";
+    private static final String TEST_RESULTS_PATH = "/ui/data-delivery/test-results";
 
     private final ObjectMapper plainMapper = new ObjectMapper();
 
@@ -181,9 +187,70 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     }
 
     private String exportCsv() throws Exception {
-        MvcResult result = mockMvc.perform(get("/ui/data-delivery/export").param("language", "fi")).andReturn();
+        MvcResult result = mockMvc.perform(get(ADMIN_EXPORT_PATH).param("language", "fi")).andReturn();
         result.getAsyncResult(10_000);
         return result.getResponse().getContentAsString(StandardCharsets.UTF_8);
+    }
+
+    private Company createCompany(String businessId) {
+        return companyHierarchyService.createCompany(TestObjects.aCompany().name("Company " + businessId).businessId(businessId).build())
+            .or(() -> companyHierarchyService.findByBusinessId(businessId))
+            .orElseThrow();
+    }
+
+    private static String uniqueBusinessId() {
+        return "pub-" + UUID.randomUUID().toString().substring(0, 8);
+    }
+
+    private String createSuccessfulEntryFor(String businessId) {
+        return entryRepository.create(
+                TestObjects.anEntry().url(uniqueUrl()).businessId(businessId).build(), Optional.empty(), Optional.empty())
+            .map(e -> {
+                entryRepository.markStatus(e, Status.SUCCESS);
+                return e.publicId();
+            })
+            .orElseThrow();
+    }
+
+    private void signInAsUserOf(String oid, Company... companies) {
+        SecurityContextHolder.getContext().setAuthentication(TestObjects.jwtAuthenticationToken(oid));
+        injectAuthOverrides(oid, Arrays.stream(companies).map(this::asFintrafficIdGroup).toArray(FintrafficIdGroup[]::new));
+    }
+
+    private void signInAsAdminOf(String oid, Company... companies) {
+        SecurityContextHolder.getContext().setAuthentication(TestObjects.jwtAdminAuthenticationToken(oid));
+        injectAuthOverrides(oid, Arrays.stream(companies).map(this::asFintrafficIdGroup).toArray(FintrafficIdGroup[]::new));
+    }
+
+    private JsonNode testResults() throws Exception {
+        MvcResult result = apiCall(get(TEST_RESULTS_PATH)).andExpect(status().isOk()).andReturn();
+        return apiResponse(result);
+    }
+
+    private static List<String> publicIds(JsonNode body) {
+        List<String> ids = new java.util.ArrayList<>();
+        body.forEach(item -> ids.add(item.get(DATA).get(PUBLIC_ID).stringValue()));
+        return ids;
+    }
+
+    private static List<String> businessIds(JsonNode body) {
+        return java.util.stream.StreamSupport.stream(body.spliterator(), false)
+            .map(item -> item.get(DATA).get("businessId").stringValue())
+            .distinct()
+            .toList();
+    }
+
+    private Entry submitTestData(String businessId) throws Exception {
+        CreateEntryRequest request = richRequest("https://example.fi/" + UUID.randomUUID() + ".zip", createCredentials())
+            .businessId(businessId)
+            .context("some-context")
+            .sendNotifications(true)
+            .notifications(List.of("someone@example.fi"))
+            .build();
+        MvcResult result = apiCall(post("/ui/queue").content(toJson(request)))
+            .andExpect(status().isOk())
+            .andReturn();
+        return entryService.findEntry(apiResponse(result).get(DATA).get(PUBLIC_ID).stringValue()).orElseThrow();
     }
 
     private JsonNode entryState(String publicId) throws Exception {
@@ -236,15 +303,12 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
 
     // T2
     @Test
-    void anonymousExportHasUrlWithoutQueryString() throws Exception {
-        String url = uniqueUrl();
-        createVisibleEntry(url, null);
+    void visitorGetsNoCsvFromPublicExportPath() throws Exception {
+        createVisibleEntry(uniqueUrl(), null);
 
-        String csv = exportCsv();
+        MvcResult result = mockMvc.perform(get(PUBLIC_EXPORT_PATH).param("language", "fi")).andReturn();
 
-        assertAll(
-            () -> assertThat(csv, containsString(url.substring(0, url.indexOf('?')))),
-            () -> assertThat(csv, not(containsString(SECRET_QUERY))));
+        assertThat(result.getResponse().getStatus(), equalTo(404));
     }
 
     // G3
@@ -385,6 +449,103 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
             () -> assertThat(stored.credentials(), nullValue()),
             () -> assertThat(stored.metadata(), nullValue()),
             () -> assertThat(jdbc.queryForObject("SELECT count(*) FROM company", Long.class), equalTo(companiesBefore)));
+    }
+
+    // T17
+    @Test
+    void visitorTestResultsHoldOnlyPublicTestCompanyWithMaskedUrls() throws Exception {
+        Company other = createCompany(uniqueBusinessId());
+        String publicEntry = createSuccessfulEntryFor(Constants.PUBLIC_VALIDATION_TEST_ID);
+        String otherEntry = createSuccessfulEntryFor(other.businessId());
+
+        MvcResult result = apiCall(get(TEST_RESULTS_PATH)).andExpect(status().isOk()).andReturn();
+        JsonNode body = apiResponse(result);
+
+        assertAll(
+            () -> assertThat(publicIds(body).contains(publicEntry), equalTo(true)),
+            () -> assertThat(publicIds(body).contains(otherEntry), equalTo(false)),
+            () -> assertThat(businessIds(body), contains(Constants.PUBLIC_VALIDATION_TEST_ID)),
+            () -> assertThat(result.getResponse().getContentAsString(), not(containsString(SECRET_QUERY))));
+    }
+
+    // T18
+    @Test
+    void userTestResultsHoldRowsOfAllOwnCompaniesInOneList() throws Exception {
+        Company x = createCompany(uniqueBusinessId());
+        Company y = createCompany(uniqueBusinessId());
+        Company z = createCompany(uniqueBusinessId());
+        String entryX = createSuccessfulEntryFor(x.businessId());
+        String entryY = createSuccessfulEntryFor(y.businessId());
+        String entryZ = createSuccessfulEntryFor(z.businessId());
+        String entryPublic = createSuccessfulEntryFor(Constants.PUBLIC_VALIDATION_TEST_ID);
+        signInAsUserOf("results-user-" + UUID.randomUUID(), x, y);
+
+        List<String> ids = publicIds(testResults());
+
+        assertAll(
+            () -> assertThat(ids.contains(entryX), equalTo(true)),
+            () -> assertThat(ids.contains(entryY), equalTo(true)),
+            () -> assertThat(ids.contains(entryZ), equalTo(false)),
+            () -> assertThat(ids.contains(entryPublic), equalTo(false)));
+    }
+
+    // T18
+    @Test
+    void adminTestResultsHoldOnlyRowsOfOwnCompany() throws Exception {
+        Company x = createCompany(uniqueBusinessId());
+        String entryX = createSuccessfulEntryFor(x.businessId());
+        String entryPublic = createSuccessfulEntryFor(Constants.PUBLIC_VALIDATION_TEST_ID);
+        signInAsAdminOf("results-admin-" + UUID.randomUUID(), x);
+
+        JsonNode body = testResults();
+
+        assertAll(
+            () -> assertThat(publicIds(body).contains(entryX), equalTo(true)),
+            () -> assertThat(publicIds(body).contains(entryPublic), equalTo(false)),
+            () -> assertThat(businessIds(body), contains(x.businessId())));
+    }
+
+    // T18
+    @Test
+    void userWithNoCompanyGetsPublicTestCompanyRowsInTestResults() throws Exception {
+        Company other = createCompany(uniqueBusinessId());
+        String entryPublic = createSuccessfulEntryFor(Constants.PUBLIC_VALIDATION_TEST_ID);
+        String entryOther = createSuccessfulEntryFor(other.businessId());
+        signInAsUserOf("results-nobody-" + UUID.randomUUID());
+
+        List<String> ids = publicIds(testResults());
+
+        assertAll(
+            () -> assertThat(ids.contains(entryPublic), equalTo(true)),
+            () -> assertThat(ids.contains(entryOther), equalTo(false)));
+    }
+
+    // T19
+    @Test
+    void loggedInSubmissionToOwnCompanyKeepsTheCompany() throws Exception {
+        Company x = createCompany(uniqueBusinessId());
+        signInAsUserOf("submit-user-" + UUID.randomUUID(), x);
+
+        Entry stored = submitTestData(x.businessId());
+
+        assertAll(
+            () -> assertThat(stored.businessId(), equalTo(x.businessId())),
+            () -> assertThat(stored.context(), nullValue()),
+            () -> assertThat(stored.credentials(), nullValue()),
+            () -> assertThat(stored.sendNotifications(), equalTo(false)),
+            () -> assertThat(stored.notifications(), empty()));
+    }
+
+    // T20
+    @Test
+    void loggedInSubmissionToForeignCompanyGoesToPublicTestCompany() throws Exception {
+        Company x = createCompany(uniqueBusinessId());
+        Company y = createCompany(uniqueBusinessId());
+        signInAsUserOf("submit-foreign-" + UUID.randomUUID(), x);
+
+        Entry stored = submitTestData(y.businessId());
+
+        assertThat(stored.businessId(), equalTo(Constants.PUBLIC_VALIDATION_TEST_ID));
     }
 
     // T16

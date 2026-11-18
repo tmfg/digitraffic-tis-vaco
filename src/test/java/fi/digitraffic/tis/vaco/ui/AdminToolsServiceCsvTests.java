@@ -111,7 +111,7 @@ class AdminToolsServiceCsvTests {
 
     private List<CSVRecord> export() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        service.exportDataDeliveryToCsv(out, "en", false);
+        service.exportDataDeliveryToCsv(out, "en");
         String csv = out.toString(Charset.defaultCharset());
         return CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get()
             .parse(new StringReader(csv)).getRecords();

@@ -78,9 +78,8 @@ public class AdminToolsService {
      *
      * @param outputStream Target of the CSV
      * @param language Language of the headers and of the public test company name
-     * @param maskUrls True hides the query string, the fragment and the user information of each source URL
      */
-    public void exportDataDeliveryToCsv(OutputStream outputStream, String language, boolean maskUrls) {
+    public void exportDataDeliveryToCsv(OutputStream outputStream, String language) {
         CSVFormat format = CSVFormat.DEFAULT.builder()
             .setHeader(getDataDeliveryCsvHeaders(language))
             .build();
@@ -93,7 +92,7 @@ public class AdminToolsService {
                 if (!sameCompanyAsPrevious) {
                     currentBusinessId = entry.businessId();
                 }
-                printer.printRecord(dataDeliveryCsvRecord(entry, language, maskUrls, sameCompanyAsPrevious));
+                printer.printRecord(dataDeliveryCsvRecord(entry, language, sameCompanyAsPrevious));
             }
         } catch (IOException e) {
             logger.warn("Failed to generate CSV", e); // TODO: some entry references
@@ -104,7 +103,7 @@ public class AdminToolsService {
      * Builds the cells of one CSV row. The business id and the company name are empty when the row
      * belongs to the same company as the row before it.
      */
-    private Object[] dataDeliveryCsvRecord(CompanyLatestEntry entry, String language, boolean maskUrls, boolean sameCompanyAsPrevious) {
+    private Object[] dataDeliveryCsvRecord(CompanyLatestEntry entry, String language, boolean sameCompanyAsPrevious) {
         boolean isPublicValidationTest = entry.businessId().equals(Constants.PUBLIC_VALIDATION_TEST_ID);
         String companyNameToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.companyName();
         String businessIdToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.businessId();
@@ -113,7 +112,7 @@ public class AdminToolsService {
             sameCompanyAsPrevious ? "" : neutralizeFormula(businessIdToShow),
             sameCompanyAsPrevious ? "" : neutralizeFormula(companyNameToShow),
             neutralizeFormula(entry.context()),
-            neutralizeFormula(maskUrls ? SourceUrls.forVisitor(entry.url()) : entry.url()),
+            neutralizeFormula(entry.url()),
             neutralizeFormula(entry.feedName()),
             neutralizeFormula(entry.format()),
             neutralizeFormula(entry.convertedFormat()),

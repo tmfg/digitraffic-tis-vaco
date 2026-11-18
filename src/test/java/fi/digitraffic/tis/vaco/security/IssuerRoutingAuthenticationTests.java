@@ -100,6 +100,7 @@ class IssuerRoutingAuthenticationTests {
     private static final String ENTRA_AUDIENCE = "api-audience";
     private static final String API_USER_AUTHORITY = "hasAuthority('vaco.apiuser')";
     private static final String DATA_DELIVERY_PATH = "/ui/data-delivery";
+    private static final String ADMIN_EXPORT_PATH = "/ui/admin/data-delivery/export";
 
     private static final Map<String, RSAKey> KEYS = new ConcurrentHashMap<>();
     private static final Map<String, AtomicInteger> HITS = new ConcurrentHashMap<>();
@@ -209,7 +210,7 @@ class IssuerRoutingAuthenticationTests {
 
         @GetMapping({
             DATA_DELIVERY_PATH,
-            "/ui/data-delivery/export",
+            "/ui/data-delivery/test-results",
             "/ui/pages/company-entries/{businessId}",
             "/ui/packages/{entryPublicId}/{taskName}/{packageName}",
             "/ui/entries/{publicId}/state",
@@ -219,6 +220,12 @@ class IssuerRoutingAuthenticationTests {
             boolean admin = authentication != null
                 && authentication.getAuthorities().stream().anyMatch(a -> "vaco.admin".equals(a.getAuthority()));
             return admin ? "admin" : "visitor";
+        }
+
+        @GetMapping(ADMIN_EXPORT_PATH)
+        @PreAuthorize("hasAuthority('vaco.admin')")
+        String adminExport() {
+            return "csv";
         }
 
         @PostMapping("/ui/queue")
@@ -438,13 +445,31 @@ class IssuerRoutingAuthenticationTests {
     @ParameterizedTest
     @ValueSource(strings = {
         DATA_DELIVERY_PATH,
-        "/ui/data-delivery/export",
+        "/ui/data-delivery/test-results",
         "/ui/pages/company-entries/1234567-8",
         "/ui/packages/abc/prepare.download/result",
         "/ui/entries/abc/state",
         "/ui/rules"})
     void publicPagesOpenWithoutSignIn(String path) throws Exception {
         mockMvc.perform(get(path)).andExpect(status().isOk()).andExpect(content().string("visitor"));
+    }
+
+    @Test
+    void visitorCannotReachAnyExportPath() throws Exception {
+        mockMvc.perform(get("/ui/data-delivery/export")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get(ADMIN_EXPORT_PATH)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void signedInNonAdminGetsForbiddenOnAdminExport() throws Exception {
+        mockMvc.perform(get(ADMIN_EXPORT_PATH).header("Authorization", bearer(entraToken(List.of()))))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminReachesAdminExport() throws Exception {
+        mockMvc.perform(get(ADMIN_EXPORT_PATH).header("Authorization", bearer(entraToken(List.of("vaco.admin")))))
+            .andExpect(status().isOk());
     }
 
     @Test
