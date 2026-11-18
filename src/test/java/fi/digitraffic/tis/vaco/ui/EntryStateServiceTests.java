@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -66,11 +67,13 @@ class EntryStateServiceTests {
             .source(task.name())
             .message("Duplicate_Code")
             .severity(FindingSeverity.CRITICAL)
+            .raw("first raw".getBytes())
             .build();
         Finding mappedSecondDuplicate = TestObjects.aFinding(1, task.id())
             .source(task.name())
             .message("duplicate_code")
             .severity(FindingSeverity.CRITICAL)
+            .raw("second raw".getBytes())
             .build();
         Finding mappedError = TestObjects.aFinding(1, task.id())
             .source(task.name())
@@ -104,7 +107,9 @@ class EntryStateServiceTests {
         assertEquals("duplicate_code", duplicate.code());
         assertEquals(FindingSeverity.CRITICAL, duplicate.severity());
         assertEquals(2, duplicate.total());
-        assertEquals(List.of(mappedFirstDuplicate, mappedSecondDuplicate), duplicate.findings());
+        assertEquals(2, duplicate.findings().size());
+        assertArrayEquals(mappedFirstDuplicate.raw(), duplicate.findings().get(0).raw());
+        assertArrayEquals(mappedSecondDuplicate.raw(), duplicate.findings().get(1).raw());
 
         AggregatedFinding errorFinding = report.findings().get(1);
         assertEquals("other_code", errorFinding.code());
