@@ -548,6 +548,17 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         assertThat(stored.businessId(), equalTo(Constants.PUBLIC_VALIDATION_TEST_ID));
     }
 
+    @Test
+    void adminSubmissionToAnyExistingCompanyKeepsTheCompany() throws Exception {
+        Company x = createCompany(uniqueBusinessId());
+        Company y = createCompany(uniqueBusinessId());
+        signInAsAdminOf("submit-admin-" + UUID.randomUUID(), x);
+
+        Entry stored = submitTestData(y.businessId());
+
+        assertThat(stored.businessId(), equalTo(y.businessId()));
+    }
+
     // T16
     @Test
     void anonymousTestDataEntrySendsNoNotifications() throws Exception {

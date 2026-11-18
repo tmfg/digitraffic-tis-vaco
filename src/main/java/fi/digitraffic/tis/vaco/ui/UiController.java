@@ -172,9 +172,9 @@ public class UiController {
 
 
     /**
-     * Creates a validation test from the test data form. The caller needs no sign-in. The server clears every
-     * field that the form does not offer. It keeps the business id only when the caller signed in and may access
-     * that company, and otherwise files the entry under the public test company.
+     * Creates a validation test from the test data form. The caller needs no authentication. The server clears every
+     * field that the form does not offer. It keeps the business id only when the caller is authenticated and may
+     * access that company. Otherwise it files the entry under the public test company.
      */
     @PostMapping(path = "/queue")
     @JsonView(DataVisibility.Public.class)
