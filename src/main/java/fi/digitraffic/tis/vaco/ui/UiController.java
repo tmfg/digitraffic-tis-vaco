@@ -29,6 +29,9 @@ import fi.digitraffic.tis.vaco.queuehandler.QueueController;
 import fi.digitraffic.tis.vaco.queuehandler.QueueHandlerService;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableConversionInput;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableEntry;
+import fi.digitraffic.tis.vaco.queuehandler.model.ImmutableValidationInput;
 import fi.digitraffic.tis.vaco.ruleset.RulesetService;
 import fi.digitraffic.tis.vaco.ruleset.model.Ruleset;
 import fi.digitraffic.tis.vaco.statistics.StatisticsService;
@@ -43,6 +46,8 @@ import fi.digitraffic.tis.vaco.ui.model.ImmutableEntryState;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.ImmutableProcessingResultsPage;
+import fi.digitraffic.tis.vaco.ui.model.ImmutableResultsPageCredentials;
+import fi.digitraffic.tis.vaco.ui.model.ResultsPageCredentials;
 import fi.digitraffic.tis.vaco.ui.model.MagicToken;
 import fi.digitraffic.tis.vaco.ui.model.MagicTokenResponse;
 import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
@@ -80,6 +85,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -287,11 +293,13 @@ public class UiController {
 
                 return ResponseEntity.ok(Resource.resource(
                     ImmutableEntryState.builder()
-                        .entry(asEntryStateResource(entry, entry.publicId()))
+                        .entry(asEntryStateResource(entryStateService.toResultsPageEntry(entry), entry.publicId()))
                         .reports(reports)
                         .addAllSummaries(summaries)
                         .company(company.map(c -> c.name() + " (" +c.businessId() + ")").orElse(entry.businessId()))
-                        .credentials(credentialsService.findByPublicId(entry.credentials()).orElse(null))
+                        .credentials(credentialsService.findByPublicId(entry.credentials())
+                            .map(c -> (ResultsPageCredentials) ImmutableResultsPageCredentials.builder().name(c.name()).build())
+                            .orElse(null))
                         .build()));
             }).orElseGet(() -> Responses.notFound((String.format("Entry with public id %s does not exist", publicId))));
     }
@@ -374,20 +382,40 @@ public class UiController {
     }
 
     /**
-     * @deprecated This endpoint is used by multiple pages which is against our general UI API design. It is not
-     *             outright removed as refactoring everything would be too costly, however please don't reuse UI
-     *             endpoints in the future.
+     * Creates a new entry from a stored entry. The new entry copies only the fields that the user can submit.
+     * It does not copy the metadata or the notification e-mails.
      */
-    @Deprecated(since = "2024-09-24")
-    @GetMapping(path = "/admin/entries")
-    @JsonView(DataVisibility.AdminRestricted.class)
-    @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
-    public ResponseEntity<List<Resource<Entry>>> listCompanyEntries(@RequestParam(name = "businessId") String businessId) {
-        if (meService.isAllowedToAccess(businessId)) {
-            List<Entry> entries = queueHandlerService.getAllQueueEntriesFor(businessId);
-            return ResponseEntity.ok(Streams.collect(entries, e -> asEntryStateResource(e, e.publicId())));
+    @PostMapping(path = "/admin/entries/{publicId}/rerun")
+    @JsonView(DataVisibility.Public.class)
+    @PreAuthorize("hasAuthority('vaco.admin')")
+    public ResponseEntity<Resource<Entry>> rerunEntry(@PathVariable("publicId") String publicId) {
+        return entryService.findEntry(publicId)
+            .map(stored -> queueHandlerService.processQueueEntry(copyForRerun(stored))
+                .map(e -> ResponseEntity.ok(asQueueHandlerResource(e)))
+                .orElseGet(() -> Responses.badRequest("Failed to create entry from entry " + publicId)))
+            .orElseGet(() -> Responses.notFound(String.format("Entry with public id %s does not exist", publicId)));
+    }
+
+    private static Entry copyForRerun(Entry stored) {
+        ImmutableEntry.Builder builder = ImmutableEntry.builder()
+            .publicId(Entry.NON_PERSISTED_PUBLIC_ID)
+            .name(stored.name())
+            .businessId(stored.businessId())
+            .credentials(stored.credentials())
+            .url(stored.url())
+            .context(stored.context())
+            .etag(stored.etag())
+            .format(stored.format().toLowerCase(Locale.ROOT))
+            .sendNotifications(stored.sendNotifications());
+        if (stored.validations() != null) {
+            stored.validations().forEach(v -> builder.addValidations(
+                ImmutableValidationInput.builder().name(v.name()).config(v.config()).build()));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (stored.conversions() != null) {
+            stored.conversions().forEach(c -> builder.addConversions(
+                ImmutableConversionInput.builder().name(c.name()).config(c.config()).build()));
+        }
+        return builder.build();
     }
 
     @GetMapping(path = "/pages/admin-company-entries/{businessId}")

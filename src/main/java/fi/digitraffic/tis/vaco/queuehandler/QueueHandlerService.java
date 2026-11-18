@@ -206,10 +206,6 @@ public class QueueHandlerService {
             .orElseThrow(() -> new UnknownEntityException(publicId, "Entry not found"));
     }
 
-    public List<Entry> getAllQueueEntriesFor(String businessId) {
-        return getAllQueueEntriesFor(businessId, OptionalInt.empty(), Optional.empty());
-    }
-
     public List<Entry> getAllQueueEntriesFor(String businessId, OptionalInt count, Optional<String> name) {
         List<Entry> entries = entryService.findAllByBusinessId(businessId, count, name);
         entries.forEach(entry -> cachingService.cacheEntry(
