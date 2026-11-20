@@ -38,6 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
 
+    private static final String CREDENTIALS_PATH = "/v1/credentials";
+
     private final TypeReference<Resource<Credentials>> credentialsResourceType = new TypeReference<>() {};
 
     private final TypeReference<Resource<List<Credentials>>> listCredentialsResourceType = new TypeReference<>() {};
@@ -109,6 +111,86 @@ class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
         }
     }
 
+    /**
+     * Regression guard: sends the JSON bodies exactly as the VACO UI writes them, as literals, so that the
+     * test does not depend on how the backend serializes its own request types.
+     */
+    @Test
+    void acceptsRequestBodiesInTheShapeTheUiSends() throws Exception {
+        String owner = Constants.FINTRAFFIC_BUSINESS_ID;
+        String createBody = """
+            {
+              "name": "ui credentials",
+              "description": "created with the ui body",
+              "type": "HTTP Basic",
+              "details": { "type": "HTTP Basic", "userId": "user", "password": "secret" },
+              "owner": "%s",
+              "urlPattern": "https://example.com/*"
+            }
+            """.formatted(owner);
+        Resource<Credentials> created = apiResponse(
+            apiCall(post(CREDENTIALS_PATH).content(createBody))
+                .andExpect(status().isCreated())
+                .andReturn(),
+            credentialsResourceType);
+
+        try {
+            String updateBody = """
+                {
+                  "name": "ui credentials updated",
+                  "description": "updated with the ui body",
+                  "type": "HTTP Basic",
+                  "details": { "type": "HTTP Basic", "userId": "another", "password": "other secret" },
+                  "owner": "%s",
+                  "urlPattern": "https://example.com/*"
+                }
+                """.formatted(owner);
+            Resource<Credentials> updated = apiResponse(
+                apiCall(put("/v1/credentials/" + created.data().publicId()).content(updateBody))
+                    .andExpect(status().isOk())
+                    .andReturn(),
+                credentialsResourceType);
+
+            assertThat(updated.data().name(), equalTo("ui credentials updated"));
+        } finally {
+            assertThat(deleteCredentials(created.data().publicId()).data(), equalTo(true));
+        }
+    }
+
+    @Autowired
+    private CredentialsService credentialsService;
+
+    @Test
+    void keepsStoredDetailsWhenUpdateHasNoDetails() throws Exception {
+        String owner = Constants.FINTRAFFIC_BUSINESS_ID;
+        Resource<Credentials> created = createCredentials(CredentialsType.HTTP_BASIC, "keep details", "keep details", owner, ImmutableHttpBasicAuthenticationDetails.of("u1", "p1"));
+        String publicId = created.data().publicId();
+
+        try {
+            String updateBody = """
+                {
+                  "name": "keep details updated",
+                  "description": "updated without details",
+                  "type": "HTTP Basic",
+                  "owner": "%s"
+                }
+                """.formatted(owner);
+            Resource<Credentials> updated = apiResponse(
+                apiCall(put("/v1/credentials/" + publicId).content(updateBody))
+                    .andExpect(status().isOk())
+                    .andReturn(),
+                credentialsResourceType);
+
+            assertThat(updated.data().name(), equalTo("keep details updated"));
+            assertThat(
+                "stored details stay unchanged",
+                credentialsService.findByPublicId(publicId).orElseThrow().details(),
+                equalTo(ImmutableHttpBasicAuthenticationDetails.of("u1", "p1")));
+        } finally {
+            assertThat(deleteCredentials(publicId).data(), equalTo(true));
+        }
+    }
+
     private Resource<Credentials> createCredentials(CredentialsType type, String name, String description, String owner, AuthenticationDetails details) throws Exception {
         CreateCredentialsRequest createRequest = ImmutableCreateCredentialsRequest.builder()
             .type(type)
@@ -118,14 +200,14 @@ class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
             .details(details)
             .build();
 
-        MvcResult createResponse = apiCall(post("/v1/credentials").content(toJson(createRequest)))
+        MvcResult createResponse = apiCall(post(CREDENTIALS_PATH).content(toJson(createRequest)))
             .andExpect(status().isCreated())
             .andReturn();
         return apiResponse(createResponse, credentialsResourceType);
     }
 
     private Resource<List<Credentials>> listCredentials(String businessId) throws Exception {
-        MvcResult createResponse = apiCall(get("/v1/credentials").param("businessId", businessId))
+        MvcResult createResponse = apiCall(get(CREDENTIALS_PATH).param("businessId", businessId))
             .andExpect(status().isOk())
             .andReturn();
         return apiResponse(createResponse, listCredentialsResourceType);
