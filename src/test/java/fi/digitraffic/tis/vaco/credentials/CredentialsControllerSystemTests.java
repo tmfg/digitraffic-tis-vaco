@@ -155,6 +155,40 @@ class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
         }
     }
 
+    @Autowired
+    private CredentialsService credentialsService;
+
+    @Test
+    void keepsStoredDetailsWhenUpdateHasNoDetails() throws Exception {
+        String owner = Constants.FINTRAFFIC_BUSINESS_ID;
+        Resource<Credentials> created = createCredentials(CredentialsType.HTTP_BASIC, "keep details", "keep details", owner, ImmutableHttpBasicAuthenticationDetails.of("u1", "p1"));
+        String publicId = created.data().publicId();
+
+        try {
+            String updateBody = """
+                {
+                  "name": "keep details updated",
+                  "description": "updated without details",
+                  "type": "HTTP Basic",
+                  "owner": "%s"
+                }
+                """.formatted(owner);
+            Resource<Credentials> updated = apiResponse(
+                apiCall(put("/v1/credentials/" + publicId).content(updateBody))
+                    .andExpect(status().isOk())
+                    .andReturn(),
+                credentialsResourceType);
+
+            assertThat(updated.data().name(), equalTo("keep details updated"));
+            assertThat(
+                "stored details stay unchanged",
+                credentialsService.findByPublicId(publicId).orElseThrow().details(),
+                equalTo(ImmutableHttpBasicAuthenticationDetails.of("u1", "p1")));
+        } finally {
+            assertThat(deleteCredentials(publicId).data(), equalTo(true));
+        }
+    }
+
     private Resource<Credentials> createCredentials(CredentialsType type, String name, String description, String owner, AuthenticationDetails details) throws Exception {
         CreateCredentialsRequest createRequest = ImmutableCreateCredentialsRequest.builder()
             .type(type)
