@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -72,6 +73,12 @@ public class AdminToolsService {
         return adminToolsRepository.getDataDeliveryOverview(businessIds);
     }
 
+    /**
+     * Writes the data delivery overview as CSV.
+     *
+     * @param outputStream Target of the CSV
+     * @param language Language of the headers and of the public test company name
+     */
     public void exportDataDeliveryToCsv(OutputStream outputStream, String language) {
         CSVFormat format = CSVFormat.DEFAULT.builder()
             .setHeader(getDataDeliveryCsvHeaders(language))
@@ -81,33 +88,59 @@ public class AdminToolsService {
             List<CompanyLatestEntry> data = adminToolsRepository.getDataDeliveryOverview(null);
             String currentBusinessId = "";
             for (CompanyLatestEntry entry : data) {
-                boolean isPublicValidationTest = entry.businessId().equals(Constants.PUBLIC_VALIDATION_TEST_ID);
-                String companyNameToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.companyName();
-                String businessIdToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.businessId();
-
-                boolean putEmptyString = false;
-                if (currentBusinessId.equals(entry.businessId())) {
-                    putEmptyString = true;
-                } else {
+                boolean sameCompanyAsPrevious = currentBusinessId.equals(entry.businessId());
+                if (!sameCompanyAsPrevious) {
                     currentBusinessId = entry.businessId();
                 }
-
-                printer.printRecord(
-                    putEmptyString ? "" : businessIdToShow,
-                    putEmptyString ? "" : companyNameToShow,
-                    entry.context(),
-                    entry.url(),
-                    entry.feedName(),
-                    entry.format(),
-                    entry.convertedFormat(),
-                    entry.status() != null ? entry.status().fieldName() : "",
-                    entry.created() != null ? entry.created().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")) : "",
-                    entry.publicId()
-                );
+                printer.printRecord(dataDeliveryCsvRecord(entry, language, sameCompanyAsPrevious));
             }
         } catch (IOException e) {
             logger.warn("Failed to generate CSV", e); // TODO: some entry references
         }
+    }
+
+    /**
+     * Builds the cells of one CSV row. The business id and the company name are empty when the row
+     * belongs to the same company as the row before it.
+     */
+    private Object[] dataDeliveryCsvRecord(CompanyLatestEntry entry, String language, boolean sameCompanyAsPrevious) {
+        boolean isPublicValidationTest = entry.businessId().equals(Constants.PUBLIC_VALIDATION_TEST_ID);
+        String companyNameToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.companyName();
+        String businessIdToShow = isPublicValidationTest ? getPublicValidationTestName(language) : entry.businessId();
+
+        return new Object[] {
+            sameCompanyAsPrevious ? "" : neutralizeFormula(businessIdToShow),
+            sameCompanyAsPrevious ? "" : neutralizeFormula(companyNameToShow),
+            neutralizeFormula(entry.context()),
+            neutralizeFormula(entry.url()),
+            neutralizeFormula(entry.feedName()),
+            neutralizeFormula(entry.format()),
+            neutralizeFormula(entry.convertedFormat()),
+            entry.status() != null ? entry.status().fieldName() : "",
+            entry.created() != null ? entry.created().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")) : "",
+            neutralizeFormula(entry.publicId())
+        };
+    }
+
+    /**
+     * A bare "-" is the placeholder for a missing value, and a plain number is not an expression.
+     * Both stay unchanged. Anything else that starts with a formula character is still neutralized.
+     */
+    private static final Pattern PLAIN_VALUE = Pattern.compile("-|-?\\d+(\\.\\d+)?");
+
+    /**
+     * A spreadsheet reads a cell that starts with {@code =}, {@code +}, {@code -}, {@code @}, a tab or a
+     * carriage return as a formula. A prefix of a single quote makes it plain text. Anonymous callers can
+     * name an entry, so every free-text cell needs this.
+     */
+    private static String neutralizeFormula(@Nullable String cell) {
+        if (cell == null || cell.isEmpty() || PLAIN_VALUE.matcher(cell).matches()) {
+            return cell;
+        }
+        return switch (cell.charAt(0)) {
+            case '=', '+', '-', '@', '\t', '\r' -> "'" + cell;
+            default -> cell;
+        };
     }
 
     public List<CompanyWithFormatSummary> getCompaniesWithFormatInfos() {

@@ -8,13 +8,11 @@ import fi.digitraffic.tis.vaco.api.model.Link;
 import fi.digitraffic.tis.vaco.api.model.Resource;
 import fi.digitraffic.tis.vaco.api.model.queue.CreateEntryRequest;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
-import fi.digitraffic.tis.vaco.crypt.EncryptionService;
 import fi.digitraffic.tis.vaco.entries.EntryService;
 import fi.digitraffic.tis.vaco.me.MeService;
 import fi.digitraffic.tis.vaco.packages.PackagesController;
 import fi.digitraffic.tis.vaco.queuehandler.mapper.EntryRequestMapper;
 import fi.digitraffic.tis.vaco.queuehandler.model.Entry;
-import fi.digitraffic.tis.vaco.ui.model.ImmutableMagicToken;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +43,6 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 @PreAuthorize("hasAuthority('vaco.apiuser')")
 public class QueueController {
 
-    private final EncryptionService encryptionService;
     private final MeService meService;
     private final QueueHandlerService queueHandlerService;
     private final EntryService entryService;
@@ -56,13 +53,12 @@ public class QueueController {
                            QueueHandlerService queueHandlerService,
                            EntryService entryService,
                            VacoProperties vacoProperties,
-                           EntryRequestMapper entryRequestMapper, EncryptionService encryptionService) {
+                           EntryRequestMapper entryRequestMapper) {
         this.meService = Objects.requireNonNull(meService);
         this.queueHandlerService = Objects.requireNonNull(queueHandlerService);
         this.entryService = Objects.requireNonNull(entryService);
         this.vacoProperties = Objects.requireNonNull(vacoProperties);
         this.entryRequestMapper = Objects.requireNonNull(entryRequestMapper);
-        this.encryptionService = encryptionService;
     }
 
     @PostMapping(path = "")
@@ -109,12 +105,11 @@ public class QueueController {
     private Resource<Entry> asQueueHandlerResource(Entry entry) {
         Map<String, Map<String, Link>> links = new HashMap<>();
 
-        String magicToken = encryptionService.encrypt(ImmutableMagicToken.of(entry.publicId()));
-
         /**
-         * NOTE: Magic link points to the UI side, which is why #baseUrl(), not #contextUrl() is used.
+         * NOTE: The link points to the UI side, which is why the code uses #baseUrl(), not #contextUrl(). The key stays
+         * "magic" so that existing API clients keep working.
          */
-        Link magicLink = new Link(vacoProperties.baseUrl() + "/ui/data/" + entry.publicId() + "?magic=" + magicToken, RequestMethod.GET);
+        Link magicLink = new Link(vacoProperties.baseUrl() + "/ui/data/" + entry.publicId(), RequestMethod.GET);
         Link selfLink = Link.to(
             vacoProperties.baseUrl(),
             RequestMethod.GET,
