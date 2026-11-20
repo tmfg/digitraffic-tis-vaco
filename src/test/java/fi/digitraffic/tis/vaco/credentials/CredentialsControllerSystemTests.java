@@ -38,6 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
 
+    private static final String CREDENTIALS_PATH = "/v1/credentials";
+
     private final TypeReference<Resource<Credentials>> credentialsResourceType = new TypeReference<>() {};
 
     private final TypeReference<Resource<List<Credentials>>> listCredentialsResourceType = new TypeReference<>() {};
@@ -127,7 +129,7 @@ class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
             }
             """.formatted(owner);
         Resource<Credentials> created = apiResponse(
-            apiCall(post("/v1/credentials").content(createBody))
+            apiCall(post(CREDENTIALS_PATH).content(createBody))
                 .andExpect(status().isCreated())
                 .andReturn(),
             credentialsResourceType);
@@ -198,14 +200,14 @@ class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
             .details(details)
             .build();
 
-        MvcResult createResponse = apiCall(post("/v1/credentials").content(toJson(createRequest)))
+        MvcResult createResponse = apiCall(post(CREDENTIALS_PATH).content(toJson(createRequest)))
             .andExpect(status().isCreated())
             .andReturn();
         return apiResponse(createResponse, credentialsResourceType);
     }
 
     private Resource<List<Credentials>> listCredentials(String businessId) throws Exception {
-        MvcResult createResponse = apiCall(get("/v1/credentials").param("businessId", businessId))
+        MvcResult createResponse = apiCall(get(CREDENTIALS_PATH).param("businessId", businessId))
             .andExpect(status().isOk())
             .andReturn();
         return apiResponse(createResponse, listCredentialsResourceType);
