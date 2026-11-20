@@ -69,6 +69,15 @@ public class EntryStateService {
     }
 
     public TaskReport getTaskReport(Task task, Entry entry, Map<String, Ruleset> rulesets) {
+        return getTaskReport(task, entry, rulesets, false);
+    }
+
+    /**
+     * Builds the report of one task.
+     *
+     * @param maskUrls True replaces the entry's source URL in finding messages with the URL that a visitor may see
+     */
+    public TaskReport getTaskReport(Task task, Entry entry, Map<String, Ruleset> rulesets, boolean maskUrls) {
         List<FindingRecord> allFindings = findingRepository.findFindingsByTaskId(task.id());
         logger.debug("Found {} findings for entry {} task {}", allFindings.size(), entry.publicId(), task.id());
 
@@ -90,7 +99,7 @@ public class EntryStateService {
         );
 
         Map<String, List<FindingRecord>> findingsByMessage = allFindings.stream()
-            .collect(Collectors.groupingBy(f -> f.message().toLowerCase()));
+            .collect(Collectors.groupingBy(f -> (maskUrls ? SourceUrls.maskInText(f.message(), entry.url()) : f.message()).toLowerCase()));
         List<AggregatedFinding> aggregatedWithFindings = new ArrayList<>();
         findingsByMessage.forEach((code, findings) -> aggregatedWithFindings.add(ImmutableAggregatedFinding.builder()
                 .code(code)
@@ -124,11 +133,22 @@ public class EntryStateService {
      * @return Entry with only the shown fields
      */
     public ResultsPageEntry toResultsPageEntry(Entry entry) {
+        return toResultsPageEntry(entry, false);
+    }
+
+    /**
+     * Reduces the entry to the fields that the results page shows.
+     *
+     * @param entry Stored entry
+     * @param maskUrl True hides the query string, the fragment and the user information of the source URL
+     * @return Entry with only the shown fields
+     */
+    public ResultsPageEntry toResultsPageEntry(Entry entry, boolean maskUrl) {
         ImmutableResultsPageEntry.Builder builder = ImmutableResultsPageEntry.builder()
             .publicId(entry.publicId())
             .name(entry.name())
             .format(entry.format())
-            .url(entry.url())
+            .url(maskUrl ? SourceUrls.forVisitor(entry.url()) : entry.url())
             .etag(entry.etag())
             .context(entry.context())
             .created(entry.created())

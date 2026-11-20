@@ -23,7 +23,6 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -67,9 +66,9 @@ class QueueControllerIntegrationTests extends SpringBootIntegrationTestBase {
             () -> assertThat(fetchResult.get("data").get("etag").stringValue(), equalTo(request.etag())),
             () -> assertThat(fetchResult.get("data").get("format").stringValue(), equalTo(request.format())));
 
-        // allow anonymous linking to resource
+        // the results page is public, so the link needs no token
         Link magic = toLink((fetchResult.get("links").get("refs").get("magic")));
-        assertThat(magic.href(), startsWith("http://localhost:8080/ui/data/" + fetchResult.get("data").get("publicId").stringValue() + "?magic="));
+        assertThat(magic.href(), equalTo("http://localhost:8080/ui/data/" + fetchResult.get("data").get("publicId").stringValue()));
 
         assertThat("API endpoints should not expose internal IDs.", fetchResult.get("data").has("id"), equalTo(false));
     }

@@ -182,7 +182,7 @@ public class TestObjects {
             email != null ? email : new Email("king@commonwealth", null),
             cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), Duration.parse("P90D"), 10, 100),
             msGraph != null ? msGraph : new MsGraph("tenantId", "clientId", "clientSecret", "schemaExtension"),
-            encryptionKeys != null ? encryptionKeys : new EncryptionKeys("credentials", "C7AS{&MrNsFUzEXbpBJ4j@DLu2(vP=$3"),
+            encryptionKeys != null ? encryptionKeys : new EncryptionKeys("credentials"),
             stopsAndQuays != null ? stopsAndQuays : new StopsAndQuays("https://stops-and-quays.invalid/export.zip")
         );
 
