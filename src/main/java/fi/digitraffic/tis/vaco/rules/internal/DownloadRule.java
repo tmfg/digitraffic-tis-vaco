@@ -153,6 +153,7 @@ public class DownloadRule implements Rule<Entry, ResultMessage> {
             } else if (TransitDataFormat.SSIM.fieldName().equalsIgnoreCase(entry.format())) {
                 // We only support a single SSIM dataset from Finavia:
                 if (!FinaviaApi.isEntryUrlFinaviaSSIMEndpoint(entry.url())) {
+                    logger.error("An unsupported URL encountered for SSIM entry {}", entry.url());
                     return Optional.empty();
                 }
 

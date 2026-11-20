@@ -3,6 +3,7 @@ package fi.digitraffic.tis.vaco.rules.results;
 import fi.digitraffic.tis.aws.s3.S3Client;
 import fi.digitraffic.tis.vaco.configuration.VacoProperties;
 import fi.digitraffic.tis.vaco.db.UnknownEntityException;
+import fi.digitraffic.tis.vaco.entries.model.Status;
 import fi.digitraffic.tis.vaco.findings.FindingService;
 import fi.digitraffic.tis.vaco.findings.model.Finding;
 import fi.digitraffic.tis.vaco.findings.model.ImmutableFinding;
@@ -50,9 +51,9 @@ public class  SsimFintrafficResultProcessor extends RuleResultProcessor implemen
     public boolean doProcessResults(ResultMessage resultMessage, Entry entry, Task task, Map<String, String> fileNames) {
         logger.info("Processing result from {} for entry {}/task {}", RuleName.SSIM_FINTRAFFIC, entry.publicId(), task.name());
 
-        Set<String> filesFound = createOutputPackages(resultMessage, entry, task, requiredFiles);
+        Set<String> missingFiles = createOutputPackages(resultMessage, entry, task, requiredFiles);
 
-        if (filesFound.isEmpty()) {
+        if (missingFiles.isEmpty()) {
             boolean summaryProcessed = processFile(resultMessage, entry, task, fileNames, "summary.json", summaryPath -> {
                 ssimSummaryService.generateSsimInputSummaries(entry, task, summaryPath);
                 return true;
@@ -63,11 +64,15 @@ public class  SsimFintrafficResultProcessor extends RuleResultProcessor implemen
                 return storeFindings(findings);
             });
 
-            resolveTaskStatus(entry, task);
+            if (!summaryProcessed || !reportProcessed) {
+                resolveTaskStatus(entry, task, Optional.of(Status.FAILED));
+                return false;
+            }
 
-            return summaryProcessed && reportProcessed;
+            resolveTaskStatus(entry, task);
+            return true;
         } else {
-            requiredFilesNotFound(entry, task, filesFound);
+            requiredFilesNotFound(entry, task, missingFiles);
             return false;
         }
     }
