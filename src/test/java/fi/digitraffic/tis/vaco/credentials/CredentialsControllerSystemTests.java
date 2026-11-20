@@ -109,6 +109,52 @@ class CredentialsControllerSystemTests extends SpringBootIntegrationTestBase  {
         }
     }
 
+    /**
+     * Regression guard: sends the JSON bodies exactly as the VACO UI writes them, as literals, so that the
+     * test does not depend on how the backend serializes its own request types.
+     */
+    @Test
+    void acceptsRequestBodiesInTheShapeTheUiSends() throws Exception {
+        String owner = Constants.FINTRAFFIC_BUSINESS_ID;
+        String createBody = """
+            {
+              "name": "ui credentials",
+              "description": "created with the ui body",
+              "type": "HTTP Basic",
+              "details": { "type": "HTTP Basic", "userId": "user", "password": "secret" },
+              "owner": "%s",
+              "urlPattern": "https://example.com/*"
+            }
+            """.formatted(owner);
+        Resource<Credentials> created = apiResponse(
+            apiCall(post("/v1/credentials").content(createBody))
+                .andExpect(status().isCreated())
+                .andReturn(),
+            credentialsResourceType);
+
+        try {
+            String updateBody = """
+                {
+                  "name": "ui credentials updated",
+                  "description": "updated with the ui body",
+                  "type": "HTTP Basic",
+                  "details": { "type": "HTTP Basic", "userId": "another", "password": "other secret" },
+                  "owner": "%s",
+                  "urlPattern": "https://example.com/*"
+                }
+                """.formatted(owner);
+            Resource<Credentials> updated = apiResponse(
+                apiCall(put("/v1/credentials/" + created.data().publicId()).content(updateBody))
+                    .andExpect(status().isOk())
+                    .andReturn(),
+                credentialsResourceType);
+
+            assertThat(updated.data().name(), equalTo("ui credentials updated"));
+        } finally {
+            assertThat(deleteCredentials(created.data().publicId()).data(), equalTo(true));
+        }
+    }
+
     private Resource<Credentials> createCredentials(CredentialsType type, String name, String description, String owner, AuthenticationDetails details) throws Exception {
         CreateCredentialsRequest createRequest = ImmutableCreateCredentialsRequest.builder()
             .type(type)
