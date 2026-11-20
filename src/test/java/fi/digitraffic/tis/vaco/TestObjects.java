@@ -10,15 +10,7 @@ import fi.digitraffic.tis.vaco.company.dto.ImmutablePartnershipRequest;
 import fi.digitraffic.tis.vaco.company.model.ImmutableCompany;
 import fi.digitraffic.tis.vaco.company.model.ImmutablePartnership;
 import fi.digitraffic.tis.vaco.company.model.PartnershipType;
-import fi.digitraffic.tis.vaco.configuration.Aws;
-import fi.digitraffic.tis.vaco.configuration.AzureAd;
-import fi.digitraffic.tis.vaco.configuration.Cleanup;
-import fi.digitraffic.tis.vaco.configuration.Email;
-import fi.digitraffic.tis.vaco.configuration.EncryptionKeys;
-import fi.digitraffic.tis.vaco.configuration.MsGraph;
-import fi.digitraffic.tis.vaco.configuration.S3;
-import fi.digitraffic.tis.vaco.configuration.StopsAndQuays;
-import fi.digitraffic.tis.vaco.configuration.VacoProperties;
+import fi.digitraffic.tis.vaco.configuration.*;
 import fi.digitraffic.tis.vaco.credentials.model.CredentialsType;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableCredentials;
 import fi.digitraffic.tis.vaco.credentials.model.ImmutableHttpBasicAuthenticationDetails;
@@ -183,7 +175,8 @@ public class TestObjects {
             cleanup != null ? cleanup : new Cleanup(Duration.parse("-P-365D"), Duration.parse("P90D"), 10, 100),
             msGraph != null ? msGraph : new MsGraph("tenantId", "clientId", "clientSecret", "schemaExtension"),
             encryptionKeys != null ? encryptionKeys : new EncryptionKeys("credentials"),
-            stopsAndQuays != null ? stopsAndQuays : new StopsAndQuays("https://stops-and-quays.invalid/export.zip")
+            stopsAndQuays != null ? stopsAndQuays : new StopsAndQuays("https://stops-and-quays.invalid/export.zip"),
+            new FinaviaApi("test-api-key")
         );
 
     }

@@ -11,7 +11,8 @@ public enum TransitDataFormat implements PersistableEnum {
     NETEX(Name.NETEX, false),
     SIRI_ET(Name.SIRI_ET, true),
     SIRI_SX(Name.SIRI_SX, true),
-    SIRI_VM(Name.SIRI_VM, true);
+    SIRI_VM(Name.SIRI_VM, true),
+    SSIM(Name.SSIM, false);
 
     private final String fieldName;
     private final boolean realtime;
@@ -55,6 +56,8 @@ public enum TransitDataFormat implements PersistableEnum {
         public static final String SIRI_SX = "siri-sx";
 
         public static final String SIRI_VM = "siri-vm";
+
+        public static final String SSIM = "ssim";
 
         private Name() {}
     }

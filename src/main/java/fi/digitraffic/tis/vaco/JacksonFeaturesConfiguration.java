@@ -8,6 +8,8 @@ import fi.digitraffic.tis.vaco.rules.model.gtfs.ImmutableCanonicalGtfsValidatorC
 import fi.digitraffic.tis.vaco.rules.model.gtfs2netex.ImmutableFintrafficGtfs2NetexConverterConfiguration;
 import fi.digitraffic.tis.vaco.rules.model.netex.ImmutableEnturNetexValidatorConfiguration;
 import fi.digitraffic.tis.vaco.rules.model.netex2gtfs.ImmutableEnturNetex2GtfsConverterConfiguration;
+import fi.digitraffic.tis.vaco.rules.model.ssim.ImmutableFintrafficSsimValidatorConfiguration;
+import fi.digitraffic.tis.vaco.rules.model.ssim2netex.ImmutableFintrafficSsim2NetexConverterConfiguration;
 import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,7 +60,9 @@ public class JacksonFeaturesConfiguration {
             new NamedType(ImmutableEnturNetex2GtfsConverterConfiguration.class, RuleName.NETEX2GTFS_ENTUR),
             new NamedType(ImmutableFintrafficGtfs2NetexConverterConfiguration.class, RuleName.GTFS2NETEX_FINTRAFFIC),
             new NamedType(ImmutableEnturGbfsValidatorConfiguration.class, RuleName.GBFS_ENTUR),
-            new NamedType(ImmutableHttpBasicAuthenticationDetails.class, CredentialsType.Name.HTTP_BASIC)
+            new NamedType(ImmutableHttpBasicAuthenticationDetails.class, CredentialsType.Name.HTTP_BASIC),
+            new NamedType(ImmutableFintrafficSsimValidatorConfiguration.class, RuleName.SSIM_FINTRAFFIC),
+            new NamedType(ImmutableFintrafficSsim2NetexConverterConfiguration.class, RuleName.SSIM2NETEX_FINTRAFFIC)
         );
     }
 }

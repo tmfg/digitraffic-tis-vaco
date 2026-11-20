@@ -67,7 +67,8 @@ public class VacoHttpClient {
      */
     public CompletableFuture<DownloadResponse> downloadFile(Path targetFilePath,
                                                             String uri,
-                                                            Entry entry) {
+                                                            Entry entry,
+                                                            Map<String, String> extraRequestHeaders) {
         logger.info("Downloading {}/{} to {} (eTag {})", entry.publicId(), uri, targetFilePath, entry.etag());
 
         Map<String, String> requestHeaders = new HashMap<>();
@@ -81,6 +82,12 @@ public class VacoHttpClient {
             logger.debug("Skipping If-None-Match header setting for {}/{} due to feature flag 'tasks.prepareDownload.skipDownloadOnStaleETag' being disabled", entry.publicId(), uri);
         } else if (entry.etag() != null && !entry.etag().isEmpty()) {
             requestHeaders.put("If-None-Match", entry.etag());
+        }
+
+        if (extraRequestHeaders != null) {
+            extraRequestHeaders.keySet().forEach(key -> {
+                requestHeaders.put(key, extraRequestHeaders.get(key));
+            });
         }
 
         if (entry.credentials() != null) {

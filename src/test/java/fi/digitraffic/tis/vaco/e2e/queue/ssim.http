@@ -1,0 +1,54 @@
+# To run this file, you'll need private http client environment file. Ask from your team mates.
+
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{clientId}}&grant_type=client_credentials&scope={{scope}}&client_secret={{clientSecret}}
+
+
+> {%
+    client.global.set("tis_token", response.body.access_token)
+%}
+
+###
+
+POST {{serviceRootUri}}/api/queue
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
+
+{
+  "url": "https://apigw.finavia.fi/schedules/all/V1/schedules?format=ssim",
+  "format": "ssim",
+  "businessId": "2302570-2",
+  "etag": "",
+  "name": "SSIM validation / conversion",
+  "validations": [
+    {
+      "name": "ssim.fintraffic",
+      "config": {}
+    }
+  ],
+  "conversions": [
+    {
+      "name": "ssim2netex.fintraffic"
+    },
+    {
+      "name": "netex2gtfs.entur",
+      "config": {
+        "codespace": "FVN",
+        "stopsOnly": false
+      }
+    }
+  ],
+  "metadata": {}
+}
+
+> {%
+    client.global.set("entry_details_link", response.body.links.refs.self.href)
+%}
+
+###
+
+GET {{entry_details_link}}
+Content-Type: application/json
+Authorization: Bearer {{tis_token}}
