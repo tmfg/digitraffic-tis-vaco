@@ -1,0 +1,34 @@
+[
+  {
+    "fileValidationResult": {
+      "file": "free_bike_status",
+      "required": false,
+      "exists": true,
+      "errorsCount": 3,
+      "version": "2.3",
+      "errors": [
+        {
+          "schemaPath": null,
+          "violationPath": "#/data/bikes/0/vehicle_type_id",
+          "message": "#/data/bikes/0/vehicle_type_id: abc123 is not a valid enum value",
+          "keyword": "enum"
+        },
+        {
+          "schemaPath": "#/properties/data/properties/bikes/items/properties/is_disabled",
+          "violationPath": "#/data/bikes/1/is_disabled",
+          "message": "#/data/bikes/1/is_disabled: expected type: Boolean, found: Integer",
+          "keyword": "type"
+        },
+        {
+          "schemaPath": null,
+          "violationPath": "#/data/bikes/1/pricing_plan_id",
+          "message": "#/data/bikes/1/pricing_plan_id: plan3 is not a valid enum value",
+          "keyword": "enum"
+        }
+      ],
+      "validatorErrors": []
+    },
+    "entry": "free_bike_status.json",
+    "errors": []
+  }
+]
