@@ -52,6 +52,7 @@ import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.pages.CompanyEntriesPage;
+import fi.digitraffic.tis.vaco.ui.model.pages.ImmutableCompanyEntriesPage;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -365,7 +366,9 @@ public class UiController {
     @GetMapping(path = "/pages/company-entries/{businessId}")
     @JsonView(DataVisibility.AdminRestricted.class)
     public ResponseEntity<Resource<CompanyEntriesPage>> publicCompanyEntriesPage(@PathVariable("businessId") String businessId) {
-        return ResponseEntity.ok(Resource.resource(uiService.companyEntriesPage(businessId)));
+        return uiService.companyEntriesPage(businessId)
+            .map(page -> ResponseEntity.ok(Resource.resource(page)))
+            .orElseGet(() -> Responses.notFound(String.format("Company with business id %s does not exist", businessId)));
     }
 
     @GetMapping(path = "/admin/data-delivery")
@@ -440,7 +443,8 @@ public class UiController {
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<CompanyEntriesPage>> companyEntriesPage(@PathVariable(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
-            return ResponseEntity.ok(Resource.resource(uiService.companyEntriesPage(businessId)));
+            return ResponseEntity.ok(Resource.resource(uiService.companyEntriesPage(businessId)
+                .orElseGet(() -> ImmutableCompanyEntriesPage.builder().build())));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }

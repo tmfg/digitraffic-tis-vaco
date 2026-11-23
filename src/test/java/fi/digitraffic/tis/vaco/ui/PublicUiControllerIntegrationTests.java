@@ -76,6 +76,9 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     private static final String ADMIN_EXPORT_PATH = "/ui/admin/data-delivery/export";
     private static final String PUBLIC_EXPORT_PATH = "/ui/data-delivery/export";
     private static final String TEST_RESULTS_PATH = "/ui/data-delivery/test-results";
+    private static final String COMPANY_ENTRIES_PATH = "/ui/pages/company-entries/";
+    private static final String COMPANY_NAME = "companyName";
+    private static final String UNKNOWN_BUSINESS_ID = "0000000-0";
 
     private final ObjectMapper plainMapper = new ObjectMapper();
 
@@ -327,13 +330,55 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     void anonymousCanListCompanyEntries() throws Exception {
         String id = createVisibleEntry(uniqueUrl(), null);
 
-        MvcResult result = apiCall(get("/ui/pages/company-entries/" + Constants.FINTRAFFIC_BUSINESS_ID))
+        MvcResult result = apiCall(get(COMPANY_ENTRIES_PATH + Constants.FINTRAFFIC_BUSINESS_ID))
             .andExpect(status().isOk())
             .andReturn();
 
         List<String> ids = new java.util.ArrayList<>();
         apiResponse(result).get(DATA).get("entries").forEach(e -> ids.add(e.get(PUBLIC_ID).stringValue()));
         assertThat(ids.contains(id), equalTo(true));
+        String expectedName = companyHierarchyService.findByBusinessId(Constants.FINTRAFFIC_BUSINESS_ID).orElseThrow().name();
+        assertThat(apiResponse(result).get(DATA).get(COMPANY_NAME).stringValue(), equalTo(expectedName));
+    }
+
+    // T22
+    @Test
+    void anonymousGetsNotFoundForUnknownCompanyEntries() throws Exception {
+        assertThat(companyHierarchyService.findByBusinessId(UNKNOWN_BUSINESS_ID).isPresent(), equalTo(false));
+
+        apiCall(get(COMPANY_ENTRIES_PATH + UNKNOWN_BUSINESS_ID)).andExpect(status().isNotFound());
+    }
+
+    // T23
+    @Test
+    void adminAliasKeepsEmptyListForUnknownCompany() throws Exception {
+        assertThat(companyHierarchyService.findByBusinessId(UNKNOWN_BUSINESS_ID).isPresent(), equalTo(false));
+        signInAsAdmin();
+
+        MvcResult result = apiCall(get("/ui/pages/admin-company-entries/" + UNKNOWN_BUSINESS_ID))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertThat(apiResponse(result).get(DATA).get("entries").size(), equalTo(0));
+    }
+
+    // T24
+    @Test
+    void anonymousGetsNoNameForCompanyWithNullName() throws Exception {
+        String businessId = uniqueBusinessId();
+        assertThat(companyHierarchyService.findByBusinessId(businessId).isPresent(), equalTo(false));
+        companyHierarchyService.createCompany(TestObjects.aCompany().name(null).businessId(businessId).build()).orElseThrow();
+        try {
+            MvcResult result = apiCall(get(COMPANY_ENTRIES_PATH + businessId))
+                .andExpect(status().isOk())
+                .andReturn();
+
+            JsonNode name = apiResponse(result).get(DATA).get(COMPANY_NAME);
+            assertThat(name == null || name.isNull(), equalTo(true));
+        } finally {
+            // the data delivery overview cannot map a company with no name, so other tests must not see this one
+            companyHierarchyService.deleteCompany(businessId);
+        }
     }
 
     // G5
