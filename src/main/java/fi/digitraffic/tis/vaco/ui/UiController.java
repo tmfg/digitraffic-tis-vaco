@@ -336,8 +336,8 @@ public class UiController {
     }
 
     /**
-     * Data delivery overview for every company except the public validation test company. No caller sees that
-     * company here. A visitor sees the source URLs without query string, fragment and user information.
+     * Returns the data delivery overview for every company except the public validation test company. No caller sees
+     * that company here. A visitor sees the source URLs without query string, fragment and user information.
      */
     @GetMapping(path = "/data-delivery")
     @JsonView(DataVisibility.AdminRestricted.class)

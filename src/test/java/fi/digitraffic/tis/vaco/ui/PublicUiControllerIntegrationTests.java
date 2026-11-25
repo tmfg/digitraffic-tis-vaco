@@ -74,6 +74,7 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
     private static final String SECRET_QUERY = "token=secret";
     private static final String ADMIN_OID = "Admin Adminson";
     private static final String RESULT = "result";
+    private static final String DATA_DELIVERY_PATH = "/ui/data-delivery";
     private static final String ADMIN_EXPORT_PATH = "/ui/admin/data-delivery/export";
     private static final String PUBLIC_EXPORT_PATH = "/ui/data-delivery/export";
     private static final String TEST_RESULTS_PATH = "/ui/data-delivery/test-results";
@@ -285,7 +286,7 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         String url = uniqueUrl();
         String id = createVisibleEntry(url, null);
 
-        MvcResult result = apiCall(get("/ui/data-delivery")).andExpect(status().isOk()).andReturn();
+        MvcResult result = apiCall(get(DATA_DELIVERY_PATH)).andExpect(status().isOk()).andReturn();
         JsonNode body = apiResponse(result);
 
         assertAll(
@@ -300,7 +301,7 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         String id = createVisibleEntry(url, null);
 
         signInAsAdmin();
-        MvcResult result = apiCall(get("/ui/data-delivery")).andExpect(status().isOk()).andReturn();
+        MvcResult result = apiCall(get(DATA_DELIVERY_PATH)).andExpect(status().isOk()).andReturn();
 
         assertThat(dataDeliveryItem(apiResponse(result), id).get("url").stringValue(), equalTo(url));
     }
@@ -573,9 +574,9 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         String publicEntry = createSuccessfulEntryFor(Constants.PUBLIC_VALIDATION_TEST_ID);
         String otherEntry = createSuccessfulEntryFor(other.businessId());
 
-        JsonNode visitorBody = apiResponse(apiCall(get("/ui/data-delivery")).andExpect(status().isOk()).andReturn());
+        JsonNode visitorBody = apiResponse(apiCall(get(DATA_DELIVERY_PATH)).andExpect(status().isOk()).andReturn());
         signInAsAdmin();
-        JsonNode adminBody = apiResponse(apiCall(get("/ui/data-delivery")).andExpect(status().isOk()).andReturn());
+        JsonNode adminBody = apiResponse(apiCall(get(DATA_DELIVERY_PATH)).andExpect(status().isOk()).andReturn());
 
         assertAll(
             () -> assertThat(businessIds(visitorBody), not(hasItem(Constants.PUBLIC_VALIDATION_TEST_ID))),
