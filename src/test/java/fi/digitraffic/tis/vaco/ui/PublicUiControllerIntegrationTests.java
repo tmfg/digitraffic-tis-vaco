@@ -53,6 +53,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -563,6 +564,47 @@ class PublicUiControllerIntegrationTests extends SpringBootIntegrationTestBase {
         assertAll(
             () -> assertThat(ids.contains(entryPublic), equalTo(true)),
             () -> assertThat(ids.contains(entryOther), equalTo(false)));
+    }
+
+    // T25
+    @Test
+    void dataDeliveryOverviewHasNoPublicTestCompanyForVisitorOrAdmin() throws Exception {
+        Company other = createCompany(uniqueBusinessId());
+        String publicEntry = createSuccessfulEntryFor(Constants.PUBLIC_VALIDATION_TEST_ID);
+        String otherEntry = createSuccessfulEntryFor(other.businessId());
+
+        JsonNode visitorBody = apiResponse(apiCall(get("/ui/data-delivery")).andExpect(status().isOk()).andReturn());
+        signInAsAdmin();
+        JsonNode adminBody = apiResponse(apiCall(get("/ui/data-delivery")).andExpect(status().isOk()).andReturn());
+
+        assertAll(
+            () -> assertThat(businessIds(visitorBody), not(hasItem(Constants.PUBLIC_VALIDATION_TEST_ID))),
+            () -> assertThat(publicIds(visitorBody).contains(publicEntry), equalTo(false)),
+            () -> assertThat(publicIds(visitorBody).contains(otherEntry), equalTo(true)),
+            () -> assertThat(businessIds(adminBody), not(hasItem(Constants.PUBLIC_VALIDATION_TEST_ID))),
+            () -> assertThat(publicIds(adminBody).contains(publicEntry), equalTo(false)),
+            () -> assertThat(publicIds(adminBody).contains(otherEntry), equalTo(true)));
+    }
+
+    // T26
+    @Test
+    void adminExportKeepsPublicTestCompanyEntry() throws Exception {
+        String publicEntry = createSuccessfulEntryFor(Constants.PUBLIC_VALIDATION_TEST_ID);
+        String url = entryService.findEntry(publicEntry).orElseThrow().url();
+        signInAsAdmin();
+
+        assertThat(exportCsv(), containsString(url));
+    }
+
+    // T26
+    @Test
+    void adminAliasKeepsPublicTestCompanyEntry() throws Exception {
+        String publicEntry = createSuccessfulEntryFor(Constants.PUBLIC_VALIDATION_TEST_ID);
+        signInAsAdmin();
+
+        JsonNode body = apiResponse(apiCall(get("/ui/admin/data-delivery")).andExpect(status().isOk()).andReturn());
+
+        assertThat(publicIds(body).contains(publicEntry), equalTo(true));
     }
 
     // T19

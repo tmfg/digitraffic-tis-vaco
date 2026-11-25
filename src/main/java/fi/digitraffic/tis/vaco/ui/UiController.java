@@ -336,14 +336,15 @@ public class UiController {
     }
 
     /**
-     * Data delivery overview for every company. A visitor sees the source URLs without query string, fragment and
-     * user information.
+     * Data delivery overview for every company except the public validation test company. No caller sees that
+     * company here. A visitor sees the source URLs without query string, fragment and user information.
      */
     @GetMapping(path = "/data-delivery")
     @JsonView(DataVisibility.AdminRestricted.class)
     public ResponseEntity<List<Resource<CompanyLatestEntry>>> publicDataDelivery() {
         boolean visitor = !meService.isAdmin();
         List<CompanyLatestEntry> entries = adminToolsService.getDataDeliveryOverview(null).stream()
+            .filter(e -> !Constants.PUBLIC_VALIDATION_TEST_ID.equals(e.businessId()))
             .map(e -> visitor ? ImmutableCompanyLatestEntry.copyOf(e).withUrl(SourceUrls.forVisitor(e.url())) : e)
             .toList();
         return ResponseEntity.ok(Streams.collect(entries, this::asCompanyLatestEntryResource));
