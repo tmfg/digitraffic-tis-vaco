@@ -52,6 +52,7 @@ import fi.digitraffic.tis.vaco.ui.model.MyDataEntrySummary;
 import fi.digitraffic.tis.vaco.ui.model.SwapPartnershipRequest;
 import fi.digitraffic.tis.vaco.ui.model.TaskReport;
 import fi.digitraffic.tis.vaco.ui.model.pages.CompanyEntriesPage;
+import fi.digitraffic.tis.vaco.ui.model.pages.ImmutableCompanyEntriesPage;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -335,14 +336,15 @@ public class UiController {
     }
 
     /**
-     * Data delivery overview for every company. A visitor sees the source URLs without query string, fragment and
-     * user information.
+     * Returns the data delivery overview for every company except the public validation test company. No caller sees
+     * that company here. A visitor sees the source URLs without query string, fragment and user information.
      */
     @GetMapping(path = "/data-delivery")
     @JsonView(DataVisibility.AdminRestricted.class)
     public ResponseEntity<List<Resource<CompanyLatestEntry>>> publicDataDelivery() {
         boolean visitor = !meService.isAdmin();
         List<CompanyLatestEntry> entries = adminToolsService.getDataDeliveryOverview(null).stream()
+            .filter(e -> !Constants.PUBLIC_VALIDATION_TEST_ID.equals(e.businessId()))
             .map(e -> visitor ? ImmutableCompanyLatestEntry.copyOf(e).withUrl(SourceUrls.forVisitor(e.url())) : e)
             .toList();
         return ResponseEntity.ok(Streams.collect(entries, this::asCompanyLatestEntryResource));
@@ -365,7 +367,9 @@ public class UiController {
     @GetMapping(path = "/pages/company-entries/{businessId}")
     @JsonView(DataVisibility.AdminRestricted.class)
     public ResponseEntity<Resource<CompanyEntriesPage>> publicCompanyEntriesPage(@PathVariable("businessId") String businessId) {
-        return ResponseEntity.ok(Resource.resource(uiService.companyEntriesPage(businessId)));
+        return uiService.companyEntriesPage(businessId)
+            .map(page -> ResponseEntity.ok(Resource.resource(page)))
+            .orElseGet(() -> Responses.notFound(String.format("Company with business id %s does not exist", businessId)));
     }
 
     @GetMapping(path = "/admin/data-delivery")
@@ -440,7 +444,8 @@ public class UiController {
     @PreAuthorize("hasAnyAuthority('vaco.admin', 'vaco.company_admin')")
     public ResponseEntity<Resource<CompanyEntriesPage>> companyEntriesPage(@PathVariable(name = "businessId") String businessId) {
         if (meService.isAllowedToAccess(businessId)) {
-            return ResponseEntity.ok(Resource.resource(uiService.companyEntriesPage(businessId)));
+            return ResponseEntity.ok(Resource.resource(uiService.companyEntriesPage(businessId)
+                .orElseGet(() -> ImmutableCompanyEntriesPage.builder().build())));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }

@@ -80,13 +80,21 @@ public class UiService {
             .withCompleted(pe.completed());
     }
 
-    public CompanyEntriesPage companyEntriesPage(String businessId) {
-        List<EntrySummary> entries = Streams.collect(
-            entryRepository.findAllByBusinessId(businessId),
-            r -> uiModelMapper.toEntrySummary(r, contextRepository.find(r)));
+    /**
+     * Builds the entries page of a company.
+     *
+     * @return the page, or empty when no company has the business id
+     */
+    public Optional<CompanyEntriesPage> companyEntriesPage(String businessId) {
+        return companyHierarchyService.findByBusinessId(businessId).map(company -> {
+            List<EntrySummary> entries = Streams.collect(
+                entryRepository.findAllByBusinessId(businessId),
+                r -> uiModelMapper.toEntrySummary(r, contextRepository.find(r)));
 
-        return ImmutableCompanyEntriesPage.builder()
-            .addAllEntries(entries)
-            .build();
+            return ImmutableCompanyEntriesPage.builder()
+                .companyName(Optional.ofNullable(company.name()))
+                .addAllEntries(entries)
+                .build();
+        });
     }
 }
