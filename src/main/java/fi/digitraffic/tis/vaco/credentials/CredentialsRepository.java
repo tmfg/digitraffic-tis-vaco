@@ -98,13 +98,14 @@ public class CredentialsRepository {
         }
     }
     public CredentialsRecord updateCredentials(CredentialsRecord previous, CredentialsType type, String name, String description, AuthenticationDetails details, String urlPattern) {
+        // A null details argument keeps the stored (encrypted) details. All other columns are always overwritten.
         return jdbc.queryForObject(
             """
                UPDATE credentials
                   SET name = ?,
                       description = ?,
                       type = ?::credentials_type,
-                      details = ?,
+                      details = COALESCE(?, details),
                       url_pattern = ?
                 WHERE id = ?
             RETURNING *
@@ -113,7 +114,7 @@ public class CredentialsRepository {
             name,
             description,
             type.fieldName(),
-            encryptionService.encryptBlob(details),
+            details == null ? null : encryptionService.encryptBlob(details),
             urlPattern,
             previous.id()
         );
